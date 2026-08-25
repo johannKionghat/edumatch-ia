@@ -16,7 +16,7 @@ Référence des étapes : le plan d'exécution du projet.
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
 | E01 | Architecture et dépôt local | ✅ validée | 2026-08-24 | `fb2eba3` |
-| E02 | Dépôts distants et protection de `main` | ⬜ | | |
+| E02 | Dépôts distants et protection de `main` | 🟡 en cours | 2026-08-25 | `2041737` |
 
 **E01 — ce qui a été vérifié**
 `git check-ignore` sur des chemins réels : `data/raw/*.csv`, `*adminsdk*.json` et
@@ -24,6 +24,16 @@ Référence des étapes : le plan d'exécution du projet.
 Arborescence complète avec 35 `.gitkeep`.
 
 **E01 — décision prise** : ADR 0001, ELT plutôt qu'ETL.
+
+**E02 — partiellement fait**
+- `edumatch-ia` publié, historique propre (1 commit)
+- `edumatch-cicd` créé
+- ⛔ **Reste** : supprimer et recréer `edumatch-ia`. Le force-push a masqué les
+  fichiers sensibles mais ne les a pas effacés — ils restent lisibles via
+  l'ancien SHA `7d0785e`. Exige le droit `delete_repo`, à autoriser par le
+  candidat.
+- ⛔ **Reste** : protection de `main`. Indisponible sur un dépôt privé en offre
+  gratuite — à activer si passage en Pro, sinon discipline manuelle.
 
 ---
 
