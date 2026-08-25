@@ -1,0 +1,15 @@
+# Développement local. Hérite de base.yaml.
+herite_de: base.yaml
+
+donnees:
+  parcoursup:
+    millesimes: [2024, 2025]         # deux millésimes suffisent pour itérer
+  echantillonnage: 0.10              # 10 % des lignes, itération rapide
+
+modele:
+  hyperparametres:
+    n_estimators: 200                # entraînement court
+
+execution:
+  moteur_volume: local               # Spark en mode local
+  niveau_journal: DEBUG

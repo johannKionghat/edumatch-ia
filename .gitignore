@@ -1,0 +1,67 @@
+# ─── Secrets — jamais versionnés ────────────────────────────────────
+.env
+*.env
+!.env.example
+*adminsdk*.json
+*-firebase-*.json
+credentials*.json
+*.pem
+*.key
+kubeconfig
+
+# ─── Données — régénérables par `make data` ─────────────────────────
+data/raw/*
+data/interim/*
+data/processed/*
+data/external/*
+!data/**/.gitkeep
+# Exception : les échantillons sont versionnés, ils font tourner les tests
+!data/samples/
+!data/samples/**
+
+# ─── Artefacts de modèles — le registre MLflow fait foi ─────────────
+models/*
+!models/.gitkeep
+*.pkl
+*.joblib
+*.onnx
+mlruns/
+mlartifacts/
+
+# ─── Python ─────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ─── Notebooks ──────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ─── dbt ────────────────────────────────────────────────────────────
+target/
+dbt_packages/
+logs/
+
+# ─── Terraform (dépôt CI/CD, par précaution) ────────────────────────
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# ─── Système ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Documents de travail personnels — hors dépôt ───────────────────
+GUIDE_EXECUTION*.md
+PROGRAMME_AUTODIDACTE*.md
+
+# ─── Documents de l'école et de tiers — hors dépôt ───────────────
+docs/sous-docs-projets/reference/

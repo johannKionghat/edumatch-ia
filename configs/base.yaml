@@ -1,0 +1,57 @@
+# Configuration commune à tous les environnements.
+# Les valeurs par environnement surchargent celles-ci.
+# Aucun secret ici : les identifiants passent par des variables d'environnement.
+
+projet:
+  nom: edumatch-ia
+  version: "0.1.0"
+
+donnees:
+  parcoursup:
+    millesimes: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    effectif_minimal_cellule: 1      # sous ce seuil, la cellule est écartée
+  sirene:
+    fichiers: [StockEtablissement, StockEtablissementHistorique,
+               StockUniteLegale, StockUniteLegaleHistorique]
+    filtres:
+      etat_administratif: A          # actifs uniquement
+      caractere_employeur: true      # un non-employeur n'est pas un débouché
+      diffusible: true
+
+modele:
+  type: lightgbm
+  objectif: regression_proportion
+  ponderation: effectif_cellule      # une cellule de 3 ne vaut pas une de 500
+  split:
+    entrainement: [2018, 2019, 2020, 2021, 2022, 2023]
+    validation: [2024]
+    test: [2025]                     # touché UNE SEULE FOIS, à la fin
+  hyperparametres:
+    num_leaves: 31
+    max_depth: 8
+    learning_rate: 0.05
+    min_child_samples: 20
+    reg_alpha: 0.1
+    reg_lambda: 0.1
+    n_estimators: 2000
+    early_stopping_rounds: 100
+
+evaluation:
+  metrique_principale: mae_ponderee
+  calibration: true
+  courbe_apprentissage: [0.10, 0.25, 0.50, 1.00]
+  baseline: taux_session_precedente
+
+equite:
+  dimensions: [type_bac, boursier, genre, territoire]
+  variables_interdites: [genre]      # audit a posteriori uniquement
+  substituts_a_tester: [academie, etablissement_origine]
+  seuil_impact_disparate: 0.80       # règle des quatre cinquièmes
+
+derive:
+  reference: distribution_entrainement
+  tests: [psi, kolmogorov_smirnov]
+  seuil_reentrainement: 0.20         # PSI au-delà duquel on réentraîne
+
+api:
+  slo_latence_p95_ms: 300

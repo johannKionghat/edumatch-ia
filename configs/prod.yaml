@@ -1,0 +1,13 @@
+# Production. Données complètes, infrastructure élastique.
+herite_de: base.yaml
+
+execution:
+  moteur_volume: cluster
+  niveau_journal: WARNING
+
+api:
+  replicas: 2
+  autoscaling:
+    min: 2
+    max: 12                          # saisonnalité : rapport 1 à 6
+    cible_cpu_pourcent: 70

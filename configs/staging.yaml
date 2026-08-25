@@ -1,0 +1,9 @@
+# Pré-production. Données complètes, infrastructure réduite.
+herite_de: base.yaml
+
+execution:
+  moteur_volume: local
+  niveau_journal: INFO
+
+api:
+  replicas: 1
