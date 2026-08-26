@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 1 / 46 étapes validées.**
+**État : 2 / 46 étapes validées.**
 
 ---
 
@@ -16,7 +16,7 @@ Référence des étapes : le plan d'exécution du projet.
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
 | E01 | Architecture et dépôt local | ✅ validée | 2026-08-24 | `fb2eba3` |
-| E02 | Dépôts distants et protection de `main` | 🟡 en cours | 2026-08-25 | `2041737` |
+| E02 | Dépôts distants et protection de `main` | ✅ validée | 2026-08-26 | `e895ecd` |
 
 **E01 — ce qui a été vérifié**
 `git check-ignore` sur des chemins réels : `data/raw/*.csv`, `*adminsdk*.json` et
@@ -25,15 +25,21 @@ Arborescence complète avec 35 `.gitkeep`.
 
 **E01 — décision prise** : ADR 0001, ELT plutôt qu'ETL.
 
-**E02 — partiellement fait**
-- `edumatch-ia` publié, historique propre (1 commit)
-- `edumatch-cicd` créé
-- ⛔ **Reste** : supprimer et recréer `edumatch-ia`. Le force-push a masqué les
-  fichiers sensibles mais ne les a pas effacés — ils restent lisibles via
-  l'ancien SHA `7d0785e`. Exige le droit `delete_repo`, à autoriser par le
-  candidat.
-- ⛔ **Reste** : protection de `main`. Indisponible sur un dépôt privé en offre
-  gratuite — à activer si passage en Pro, sinon discipline manuelle.
+**E02 — ce qui a été vérifié**
+- `edumatch-ia` et `edumatch-cicd` créés, privés
+- Un premier dépôt avait été publié avec des documents de tiers. Il a été
+  **supprimé** puis recréé : l'ancien commit `7d0785e` n'est plus résolvable
+  (`404`), l'effacement est réel — un force-push n'aurait fait que masquer
+- Historique publié vérifié motif par motif : **0 occurrence** de `retours`,
+  `reference/`, notes de travail, `_legacy` ou secret, dans **tout**
+  l'historique
+- Aucune trace d'outillage dans les messages de commit
+
+**E02 — limite déclarée**
+La protection de branche est indisponible sur un dépôt privé en offre gratuite
+(`Upgrade to GitHub Pro or make this repository public`). Compensée par le gate
+de vérification, qui bloque tout push dont le commit n'a pas passé les contrôles
+de tests **et** de contenu.
 
 ---
 
