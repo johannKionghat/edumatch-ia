@@ -15,8 +15,8 @@ Référence des étapes : le plan d'exécution du projet.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E01 | Architecture et dépôt local | ✅ validée | 2026-08-24 | `fb2eba3` |
-| E02 | Dépôts distants et protection de `main` | ✅ validée | 2026-08-26 | `e895ecd` |
+| E01 | Architecture et dépôt local | ✅ validée | 2026-08-24 | `e0713ed` |
+| E02 | Dépôts distants et protection de `main` | ✅ validée | 2026-08-26 | `86cc89b` |
 
 **E01 — ce qui a été vérifié**
 `git check-ignore` sur des chemins réels : `data/raw/*.csv`, `*adminsdk*.json` et
