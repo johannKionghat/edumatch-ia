@@ -20,8 +20,11 @@ Feuille de route vivante. Je la tiens à jour au fil du projet et des
 | `README` — structure commentée, démarrage | ✅ |
 | Architecture de référence, C4 niveaux 1 et 2 | ✅ |
 | ADR 0001 — ELT plutôt qu'ETL | ✅ |
+| Dépôts distants `edumatch-ia` et `edumatch-cicd`, contenu audité | ✅ |
+| Note de vérification des sources (`01-donnees/sources.md`) et script associé | ✅ |
 
-**Reste sur l'infrastructure** : créer les deux dépôts distants, protéger `main`.
+**Reste sur l'infrastructure** : protection de branche `main` — indisponible
+sur dépôt privé en offre gratuite, compensée par le gate de vérification.
 
 ---
 

@@ -60,6 +60,11 @@ Thumbs.db
 desktop.ini
 
 # ─── Documents de travail personnels — hors dépôt ───────────────────
+# Ceinture et bretelles : rien de l'outillage ne doit entrer dans le dépôt
+# remis au jury. Un journal d'agents s'y était déjà glissé faute de règle.
+.claude/
+_perso/
+
 GUIDE_EXECUTION*.md
 PROGRAMME_AUTODIDACTE*.md
 

@@ -1,0 +1,390 @@
+# Vérification des sources — E03
+
+**Date de vérification : 2026-08-26.** Chaque chiffre ci-dessous est reproduit
+par une commande, exécutée le jour même contre le catalogue de la source — pas
+contre un téléchargement complet. Le script qui rejoue l'ensemble est
+`scripts/verifier_sources.sh`.
+
+## Méthode
+
+Les gros fichiers (8 CSV Parcoursup, 11 fichiers Sirene) ne sont **jamais**
+téléchargés ici : on interroge les API de métadonnées (`api/explore/v2.1` côté
+opendatasoft pour Parcoursup, `api/1/datasets/...` côté data.gouv pour Sirene et
+RNCP), qui renvoient nombre d'enregistrements, colonnes, taille de fichier et
+date de publication sans rapatrier la donnée. Les référentiels ONISEP (quelques
+Mo chacun) sont téléchargés en entier : à cette taille, c'est le seul moyen
+d'obtenir un nombre de lignes exact, et ça ne contredit pas le principe — on ne
+réduit que ce qui est trop gros pour être manipulé directement.
+
+Outils : `curl` (présent), `python -c` pour parser le JSON (`jq` absent de cet
+environnement). Chaque commande listée a été exécutée aujourd'hui ; les sorties
+collées sont réelles.
+
+---
+
+## A. Parcoursup (MESR)
+
+**Identifiant et accès** — un jeu de données par millésime, sur le portail
+opendatasoft du MESR. Export CSV à la demande, pas de fichier stocké :
+
+```
+https://data.enseignementsup-recherche.gouv.fr/api/explore/v2.1/catalog/datasets/{id}/exports/csv?delimiter=%3B
+```
+
+**Commande de vérification** (exécutée pour les 8 identifiants) :
+
+```bash
+curl -sS "https://data.enseignementsup-recherche.gouv.fr/api/explore/v2.1/catalog/datasets/fr-esr-parcoursup" \
+  | python -c "import json,sys; d=json.load(sys.stdin); m=d['metas']['default']; \
+    print(m['records_count'], len(d['fields']), m['license'], m['modified'])"
+```
+
+**Sortie réelle, les 8 millésimes** :
+
+| Identifiant | Formations | Colonnes | Licence | Dernière modification |
+|---|---:|---:|---|---|
+| `fr-esr-parcoursup` (2025) | 14 252 | 118 | Licence Ouverte v2.0 (Etalab) | 2026-03-09 |
+| `fr-esr-parcoursup_2024` | 14 079 | 118 | Licence Ouverte v2.0 (Etalab) | 2025-01-16 |
+| `fr-esr-parcoursup_2023` | 13 869 | 118 | Licence Ouverte v2.0 (Etalab) | 2024-07-01 |
+| `fr-esr-parcoursup_2022` | 13 644 | 118 | Licence Ouverte v2.0 (Etalab) | 2023-01-30 |
+| `fr-esr-parcoursup_2021` | 13 396 | 118 | Licence Ouverte v2.0 (Etalab) | 2022-01-20 |
+| `fr-esr-parcoursup_2020` | 12 760 | 115 | Licence Ouverte v2.0 (Etalab) | 2022-01-20 |
+| `fr-esr-parcoursup-2019` | 11 577 | 92 | Licence Ouverte v2.0 (Etalab) | 2020-04-27 |
+| `fr-esr-parcoursup-2018` | 10 697 | 85 | Licence Ouverte v2.0 (Etalab) | 2019-10-07 |
+
+**Total : 104 274 formation-années** (14 252+14 079+13 869+13 644+13 396+12 760+11 577+10 697),
+recalculé aujourd'hui — identique au chiffre retenu jusqu'ici.
+
+**Licence** — Licence Ouverte v2.0 (Etalab). Texte :
+`https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf`.
+Elle oblige à mentionner la source (MESR, Parcoursup) et la date de dernière
+mise à jour de la donnée réutilisée ; elle n'impose ni partage à l'identique ni
+restriction d'usage commercial.
+
+**Schéma — nombre de colonnes croissant** : 85 en 2018, 92 en 2019, 115 en 2020,
+118 à partir de 2021. Ce n'est pas une instabilité aléatoire : le MESR a ajouté
+des champs au fil des sessions (mentions, néo-bacheliers, académie d'origine).
+
+**Stabilité inter-millésimes — mesurée par intersection des noms de champs**,
+commande réellement exécutée (bloc « Champs communs » de
+`scripts/verifier_sources.sh`, lignes 34-45) :
+
+```bash
+python - "$TMP" <<'PY'
+import json, glob, os, sys
+tmp = sys.argv[1]
+sets = {}
+for f in glob.glob(os.path.join(tmp, "fr-esr-parcoursup*.json")):
+    d = json.load(open(f, encoding="utf-8"))
+    sets[d["dataset_id"]] = {fld["name"] for fld in d.get("fields", [])}
+common_2020_2025 = sets["fr-esr-parcoursup_2020"] & sets["fr-esr-parcoursup"]
+common_all = set.intersection(*sets.values())
+print(f"  Champs communs 2020<->2025 : {len(common_2020_2025)}")
+print(f"  Champs communs sur les 8 sessions : {len(common_all)}")
+PY
+```
+
+($TMP contient les 8 réponses JSON téléchargées à l'étape précédente du
+script, une par millésime.)
+
+Sortie réelle : **106 champs communs entre 2020 et 2025**, et **83 champs
+communs sur les 8 sessions** (2018 → 2025), la liste étant dominée par les
+compteurs de vœux et d'admis (`nb_voe_pp_*`, `acc_*`, `pct_*`) et les
+identifiants de formation (`cod_uai`, `fili`, `dep`). C'est le socle qui rend
+un modèle entraîné sur huit sessions possible. Les colonnes qui apparaissent
+seulement après 2020 (détail des mentions, `acc_neobac`, `g_olocalisation...`)
+sont enrichissantes mais pas indispensables au label.
+
+**Fréquence de mise à jour** — annuelle (déduction faite à partir d'un jeu
+par session Parcoursup constaté sur 8 ans ; l'API opendatasoft ne porte pas de
+champ `frequency` pour ces jeux, contrairement à Sirene et RNCP où ce champ
+existe et vaut respectivement `monthly` et `daily`). Un jeu par session
+Parcoursup (candidatures de janvier à l'été), publié en fin de campagne
+(juillet à octobre selon les années, voir colonne « dernière modification »
+ci-dessus).
+
+**Volumétrie en octets** — non revérifiée aujourd'hui : l'export CSV est généré
+à la volée par l'API (`Content-Length` absent de la réponse, transfert
+« chunked »), donc invérifiable sans télécharger le fichier complet. L'ordre de
+grandeur « ~100 Mo pour les 8 fichiers », retenu jusqu'ici, est conservé sans
+être recalculé — c'est une approximation assumée, pas un chiffre d'audit.
+
+---
+
+## B. Sirene (INSEE)
+
+**Identifiant et accès** — le jeu `base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret`
+sur data.gouv. Les URL de téléchargement changent chaque mois (nouveau stock
+publié) : on interroge systématiquement le point d'entrée stable du catalogue,
+jamais une URL codée en dur.
+
+```
+https://www.data.gouv.fr/api/1/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/
+```
+
+**Commande exécutée aujourd'hui** :
+
+```bash
+curl -sS "https://www.data.gouv.fr/api/1/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/"
+```
+
+**Sortie réelle** — 24 ressources, dernier stock publié le **01/08/2026**,
+fréquence déclarée **mensuelle**, licence `lov2` (Licence Ouverte v2.0, même
+texte que Parcoursup).
+
+**Volumétrie des 4 fichiers retenus (Parquet), taille exacte du stock du
+01/08/2026** :
+
+| Fichier | Taille (octets) | Go décimal |
+|---|---:|---:|
+| `StockEtablissement` | 2 202 341 459 | 2,20 |
+| `StockEtablissementHistorique` | 870 319 380 | 0,87 |
+| `StockUniteLegaleHistorique` | 855 957 649 | 0,86 |
+| `StockUniteLegale` | 705 090 270 | 0,71 |
+| **Total 4 fichiers Parquet retenus** | **4 633 708 758** | **4,63** |
+
+Concorde avec le chiffre retenu jusqu'ici (« 4,64 Go en Parquet pour les 4
+fichiers retenus »), à l'arrondi près et au mois de publication près.
+
+**Schéma** — le fichier `StockEtablissement` porte désormais un champ
+`activitePrincipaleNAF25Etablissement`, ajouté depuis le **16 décembre 2025**
+en anticipation du basculement du répertoire vers la nomenclature NAF 2025
+(bascule effective prévue début janvier 2027, information lue dans la
+description du jeu de données, elle-même datée d'aujourd'hui). C'est la colonne
+« à réconcilier » identifiée parmi les 9 colonnes utiles — sa présence
+est confirmée par l'API, pas supposée.
+
+**Fréquence de mise à jour et fraîcheur** — mensuelle, dernier stock : **1er
+août 2026**, soit vieux de 25 jours à la date de vérification. Cohérent avec
+une exigence de fraîcheur mensuelle dans le contrat de données à venir (E14).
+
+**Licence** — Licence Ouverte v2.0 (Etalab), même texte que Parcoursup.
+Attribution obligatoire (source : INSEE, base Sirene, date du stock utilisé).
+
+### Écart détecté — volumétrie compressée totale
+
+Le chiffre retenu jusqu'ici était « 11,2 Go compressés au total ». La mesure d'aujourd'hui,
+somme des 6 fichiers `.zip` de type stock (StockUniteLegale,
+StockEtablissement, StockEtablissementHistorique, StockUniteLegaleHistorique,
+StockEtablissementLiensSuccession, StockDoublons) donne :
+
+```
+970 595 120 + 2 857 221 335 + 1 233 959 618 + 1 254 072 080 + 118 993 640 + 1 070 052
+= 6 435 911 845 octets ≈ 6,44 Go décimal
+```
+
+Et la somme des 6 fichiers Parquet correspondants donne **4,75 Go**, cohérent
+avec le sous-total des 4 fichiers retenus (4,63 Go) plus les deux petits
+fichiers non retenus (liens de succession, doublons).
+
+**Aucune combinaison de ressources du catalogue ne totalise 11,2 Go
+aujourd'hui.** Deux explications possibles, non tranchées ici faute de pouvoir
+consulter l'état du catalogue au moment où le chiffre a été établi : (1) un
+stock antérieur, plus volumineux, a pu être mesuré à cette date — les stocks
+Sirene croissent d'un mois sur l'autre ; (2) le chiffre visait la taille des
+CSV **décompressés**, pas des `.zip` — plausible, un CSV texte se compresse
+généralement à 30-40 % de sa taille d'origine, ce qui rapprocherait 6,44 Go
+compressés d'environ 16 à 21,5 Go décompressés (6,44 / 0,40 ≈ 16,1 ; 6,44 /
+0,30 ≈ 21,5), pas 11,2 Go non plus. Le chiffre
+n'est donc pas reproductible tel quel aujourd'hui. Je le corrige plus loin,
+dans la section « Révision des chiffres retenus jusqu'ici », avec la mesure du
+jour.
+
+### Non vérifié aujourd'hui — nombre d'établissements
+
+Le chiffre « 36 millions d'établissements, 25 millions d'unités légales » ne
+figure dans aucune métadonnée de catalogue : l'analyseur data.gouv renvoie
+explicitement `"analysis:error": "File too large to download"` pour ces
+ressources — data.gouv lui-même n'a pas pu compter les lignes. Le confirmer
+exigerait de lire le fichier Parquet (2,2 Go), ce qui sort du périmètre de
+cette vérification par API légère. Le chiffre retenu jusqu'ici a été obtenu
+par un téléchargement complet lors d'une vérification antérieure ; il
+est **conservé sans être recalculé aujourd'hui**, et sera revérifié à l'étape
+E06 (connecteur Sirene), où le fichier est de toute façon lu.
+
+---
+
+## C. Référentiels — ONISEP (IDÉO) et RNCP (France Compétences)
+
+Établis pour la première fois aujourd'hui.
+
+### C.1 — IDÉO-Formations, IDÉO-Métiers, IDÉO-Structures (ONISEP)
+
+**Identifiants et accès** — 4 jeux, portail data.gouv, données servies par
+l'API opendata de l'ONISEP (`api.opendata.onisep.fr`) :
+
+| Jeu | Slug data.gouv | URL CSV |
+|---|---|---|
+| Idéo-Formations initiales en France | `ideo-formations-initiales-en-france` | `api.opendata.onisep.fr/downloads/5fa591127f501/5fa591127f501.csv` |
+| Idéo-Métiers Onisep | `ideo-metiers-onisep` | `api.opendata.onisep.fr/downloads/5fa5949243f97/5fa5949243f97.csv` |
+| Idéo-Structures d'enseignement secondaire | `ideo-structures-denseignement-secondaire` | `api.opendata.onisep.fr/downloads/5fa5816ac6a6e/5fa5816ac6a6e.csv` |
+| Idéo-Structures d'enseignement supérieur | `ideo-structures-denseignement-superieur` | `api.opendata.onisep.fr/downloads/5fa586da5c4b6/5fa586da5c4b6.csv` |
+
+**Commande exécutée** (taille sans téléchargement, puis nombre de lignes par
+téléchargement complet — fichiers de moins de 8 Mo) :
+
+```bash
+curl -sSI "https://api.opendata.onisep.fr/downloads/5fa591127f501/5fa591127f501.csv" | grep -i content-length
+curl -sS  "https://api.opendata.onisep.fr/downloads/5fa591127f501/5fa591127f501.csv" -o ideo_formations.csv
+wc -l ideo_formations.csv
+```
+
+**Sortie réelle** :
+
+| Jeu | Taille CSV | Lignes de données | Colonnes | Dernière modification |
+|---|---:|---:|---:|---|
+| Idéo-Formations | 2 496 480 o (2,5 Mo) | 5 869 | 16 | 2026-07-06 |
+| Idéo-Métiers | 644 642 o (0,6 Mo) | 1 534 | 13 | 2026-07-06 |
+| Idéo-Structures secondaire | 7 721 120 o (7,7 Mo) | 15 293 | 30 | 2026-07-06 |
+| Idéo-Structures supérieur | 5 069 258 o (5,1 Mo) | 8 985 | 29 | 2026-07-06 |
+
+(Lignes de données = lignes du fichier moins l'en-tête ; délimiteur `;`,
+encodage avec BOM UTF-8, vérifié sur l'en-tête de chaque fichier.)
+
+Confirme l'ordre de grandeur « référentiels, quelques Mo » retenu jusqu'ici —
+4 fichiers pour un total de 15,9 Mo.
+
+**Licence** — `odc-odbl` (Open Database License 1.0), portée par l'organisation
+« Office national d'information sur les enseignements et les professions »
+(ONISEP) sur data.gouv. Texte :
+`https://opendatacommons.org/licenses/odbl/1-0/`. Elle diffère de la Licence
+Ouverte Etalab : l'ODbL impose l'attribution **et** le partage à l'identique de
+toute base de données dérivée qui serait elle-même redistribuée — une
+contrainte à documenter si `naf_rome_formation.csv` (E18) intègre des données
+IDÉO et est publié tel quel.
+
+**Fréquence de mise à jour** — `punctual` (ponctuelle) au sens data.gouv :
+pas de calendrier de publication garanti. Dernière modification du contenu :
+2026-07-06 pour les 4 jeux, à la date de vérification (2026-08-26) une donnée
+vieille de 51 jours — à surveiller en E14 comme test de fraîcheur, avec un
+seuil à documenter puisqu'aucun engagement de fréquence n'existe côté source.
+
+**Schéma** — nombre de colonnes stable dans le temps à l'échelle où on
+l'observe aujourd'hui (un seul instantané disponible, pas d'historique de
+schéma exposé par l'API data.gouv pour ces jeux ponctuels) : 16, 13, 30 et 29
+colonnes respectivement. La stabilité inter-versions n'est donc **pas
+vérifiable** avec les moyens de ce jour — seule la comparaison d'un
+téléchargement futur avec celui d'aujourd'hui le permettra.
+
+### C.2 — RNCP et Répertoire spécifique (France Compétences)
+
+**Identifiant et accès** — jeu
+`repertoire-national-des-certifications-professionnelles-et-repertoire-specifique`
+sur data.gouv, organisation France Compétences.
+
+```
+https://www.data.gouv.fr/api/1/datasets/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/
+```
+
+**Commande exécutée** :
+
+```bash
+curl -sS "https://www.data.gouv.fr/api/1/datasets/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/"
+```
+
+**Sortie réelle** — **8 362 ressources** : un export complet (RNCP + RS, aux
+formats CSV et XML v3/v4) publié **chaque jour**, chaque export daté et
+horodaté séparément et jamais supprimé (l'historique complet reste
+téléchargeable). Licence `lov2` (Licence Ouverte v2.0, Etalab).
+
+**Export du jour exact de la vérification (2026-08-26)** :
+
+| Export | Taille |
+|---|---:|
+| `export-fiches-rncp-v4-1-2026-08-26.zip` | 74 198 555 o (70,8 Mio) |
+| `export-fiches-rs-v4-1-2026-08-26.zip` | 11 862 025 o (11,3 Mio) |
+| `export-fiches-csv-2026-08-26.zip` | 9 607 237 o (9,2 Mio) |
+
+**Nombre d'enregistrements — obtenu en dépouillant l'export CSV du jour**
+(téléchargé et compté, taille 9,2 Mo, en dessous du seuil qui justifierait un
+prétraitement distribué) :
+
+```bash
+curl -sS "https://static.data.gouv.fr/resources/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/20260826-020002/export-fiches-csv-2026-08-26.zip" \
+  -o export-fiches-csv-2026-08-26.zip
+unzip export-fiches-csv-2026-08-26.zip
+wc -l export_fiches_CSV_Standard_2026_08_25.csv
+grep -c '"ACTIVE"' export_fiches_CSV_Standard_2026_08_25.csv
+```
+
+Sortie réelle : **36 000 fiches** au total dans le fichier « Standard » (RNCP
+et Répertoire Spécifique confondus, tous statuts), dont **6 995 fiches actives**
+(`"Actif"="ACTIVE"`) à la date d'export. 16 colonnes
+(`Id_Fiche`, `Numero_Fiche`, `Intitule`, `Nomenclature_Europe_Niveau`,
+`Date_Fin_Enregistrement`, `Actif`, etc.), délimiteur `;`, encodage Latin-1
+(à traiter explicitement dans le connecteur E07, sous peine d'erreurs
+d'encodage sur les intitulés accentués).
+
+Commande figée telle qu'exécutée aujourd'hui — l'URL contient la date de l'export et change chaque jour ; la version rejouable qui résout cette URL depuis l'API sans date en dur est dans `scripts/verifier_sources.sh`, section « C. RNCP/RS ».
+
+⚠️ Décalage de date à noter : l'archive zip est datée du jour de la vérification (26/08), mais le fichier CSV qu'elle contient porte la date de la veille (25/08) — l'export est généré peu après minuit et référence le travail de la journée précédente. Ce n'est pas une incohérence, c'est le fonctionnement normal de la publication quotidienne de France Compétences ; un connecteur (E07) doit résoudre le nom du fichier par motif (`export_fiches_CSV_Standard_*.csv`) plutôt que par date fixe, exactement comme le fait le script.
+
+⚠️ Chiffre daté, commande stable : l'export RNCP/RS est republié chaque jour, donc le nombre exact de fiches (36 000 / 6 995 actives) bougera à la prochaine exécution. La **commande** est reproductible à l'identique ; la **sortie** ne l'est pas — c'est attendu, pas une erreur de vérification.
+
+**Licence** — Licence Ouverte v2.0 (Etalab), texte identique à Parcoursup et
+Sirene. Attribution : France Compétences, RNCP/RS, date de l'export utilisé.
+
+**Fréquence de mise à jour** — quotidienne, publication automatisée
+(`08362` ressources cumulées démontrent un historique quotidien conservé
+depuis plusieurs années). C'est la source la plus fraîche du projet : aucune
+donnée du modèle ne dépendra directement de cette fraîcheur (le RNCP sert de
+table de réconciliation NAF↔ROME↔formation à E18, recalculée à chaque
+exécution du pipeline, pas de latence critique).
+
+---
+
+## Révision des chiffres retenus jusqu'ici
+
+### Chiffres confirmés à l'identique
+
+- Les 8 volumétries Parcoursup (10 697 → 14 252 formations par millésime) et le
+  total **104 274 formation-années**.
+- 118 colonnes en 2025.
+- **106 champs communs entre 2020 et 2025** (chiffre retenu jusqu'ici,
+  reproduit exactement).
+- Licence Ouverte v2.0 (Etalab) pour Parcoursup et Sirene.
+- Sirene : taille des 4 fichiers Parquet retenus, **4,63 Go** aujourd'hui contre
+  **4,64 Go** retenu jusqu'ici — écart de 0,01 Go, imputable à l'arrondi et au
+  fait que le stock a été republié entre-temps (mois différent). Le détail par
+  fichier (2,20 / 0,87 / 0,86 / 0,71 Go) est identique au chiffre près.
+- URL Sirene mensuelles, confirmées volatiles (dernier stock : 01/08/2026).
+
+### Chiffre corrigé
+
+- **« 11,2 Go compressés au total »** (Sirene) : ce chiffre, retenu jusqu'ici,
+  ne se reproduit plus aujourd'hui — non reproductible avec aucune combinaison
+  de ressources du catalogue actuel. Mesuré ce jour : **6,44 Go** pour les 6
+  fichiers `.zip` de type stock, **4,75 Go** pour les 6 fichiers Parquet
+  correspondants. J'ai corrigé la valeur retenue vers **6,44 Go** (zip, taille
+  compressée), en précisant explicitement que « compressé » désigne le zip et
+  non un CSV décompressé, datée au stock du 01/08/2026, et propagé la
+  correction partout où l'ancien chiffre figurait.
+
+### Chiffres non vérifiables aujourd'hui par cette méthode
+
+- **36 millions d'établissements Sirene** (et 25 M d'unités légales) : aucune
+  métadonnée de catalogue ne porte de compte de lignes — data.gouv indique
+  lui-même ne pas pouvoir analyser un fichier de cette taille. Confirmé
+  uniquement par le téléchargement complet effectué lors d'une vérification
+  antérieure. À revérifier en E06, où le fichier sera de toute façon lu par le
+  connecteur.
+- **Taille en octets des 8 CSV Parcoursup** (« ~100 Mo », retenu jusqu'ici) :
+  l'export CSV de l'API est généré à la volée, sans en-tête `Content-Length`.
+  Invérifiable sans téléchargement complet, hors périmètre de cette
+  vérification par API légère.
+
+### Chiffres nouveaux, établis aujourd'hui
+
+- IDÉO-Formations : 5 869 formations, 16 colonnes, 2,5 Mo.
+- IDÉO-Métiers : 1 534 métiers, 13 colonnes, 0,6 Mo.
+- IDÉO-Structures secondaire : 15 293 structures, 30 colonnes, 7,7 Mo.
+- IDÉO-Structures supérieur : 8 985 structures, 29 colonnes, 5,1 Mo.
+- RNCP/RS : 36 000 fiches (dont 6 995 actives), export quotidien, 16 colonnes,
+  9,2 Mo (export CSV du jour).
+- Licence des jeux ONISEP : ODbL (`odc-odbl`), distincte de la Licence Ouverte
+  utilisée par Parcoursup, Sirene et RNCP — implication de partage à
+  l'identique à documenter avant toute redistribution d'un dérivé.
+- Transition NAF 2025 sur Sirene : champ `activitePrincipaleNAF25Etablissement`
+  ajouté le 16/12/2025, bascule complète prévue début janvier 2027 — fait
+  nouveau qui touche directement à la réconciliation NAF↔ROME (E18) et devra
+  être suivi dans le temps.
