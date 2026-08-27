@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 2 / 46 étapes validées.**
+**État : 3 / 46 étapes validées.**
 
 ---
 
@@ -47,12 +47,39 @@ de tests **et** de contenu.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E03 | Vérification des sources sur data.gouv | ⬜ | | |
+| E03 | Vérification des sources sur data.gouv | ✅ validée | 2026-08-26 | `17a3228` |
 | E04 | Configuration centralisée `config.py` | ⬜ | | |
 | E05 | Connecteur Parcoursup | ⬜ | | |
 | E06 | Connecteur Sirene | ⬜ | | |
 | E07 | Connecteur référentiels | ⬜ | | |
 | E08 | Échantillons versionnés | ⬜ | | |
+
+**E03 — ce qui a été vérifié**
+- 4 sources interrogées par API de métadonnées (pas de téléchargement des gros
+  fichiers) : Parcoursup (8 identifiants opendatasoft), Sirene (catalogue
+  data.gouv), ONISEP/IDÉO (4 jeux, téléchargés en entier car sous 8 Mo), RNCP
+  (export quotidien France Compétences)
+- Chiffres Parcoursup confirmés à l'identique : 104 274 formation-années,
+  118 colonnes en 2025, 106 champs communs 2020-2025. Fait nouveau : **83
+  champs communs sur les 8 sessions**
+- Référentiels ONISEP et RNCP établis pour la première fois — absents jusqu'ici
+  de mes notes de cadrage. Licence ONISEP identifiée comme **ODbL**, distincte
+  de la Licence Ouverte des trois autres sources
+- **Écart Sirene détecté et résolu** : le chiffre « 11,2 Go compressés »,
+  retenu jusqu'ici, ne se reproduit avec aucune combinaison de
+  ressources du catalogue actuel. Mesure du jour, sur le stock du 01/08/2026 :
+  6,44 Go pour les 6 fichiers ZIP de type stock, 4,75 Go en Parquet pour ces 6
+  fichiers, 4,63 Go pour les 4 fichiers Parquet retenus par le projet. J'ai
+  arbitré la correction vers **6,44 Go**, propagée partout où le chiffre
+  figurait, datée au stock du jour
+- Audit de la documentation : un bloquant trouvé — `sources.md` affirmait que
+  `scripts/verifier_sources.sh` reproduisait l'intégralité des chiffres, alors
+  que la section C (référentiels) n'y était pas rejouée. Corrigé : le script
+  couvre désormais les 3 sections A, B, C
+
+**E03 — décision prise** : aucune (pas d'ADR — E03 est une vérification, pas un
+arbitrage d'architecture). Correction de chiffre actée dans mes notes de
+cadrage.
 
 ## Phase 2 — Analyse exploratoire
 
@@ -144,4 +171,4 @@ de tests **et** de contenu.
 | ✅ | Validée : livrable existant, critère vérifié, argumentaire rendu |
 | 🟡 | En cours |
 | ⬜ | Non commencée |
-| ⛔ | Bloquée — dépendance non validée, ou blocage `dpo` / `security-reviewer` |
+| ⛔ | Bloquée — dépendance non validée, ou réserve de conformité ou de sécurité |
