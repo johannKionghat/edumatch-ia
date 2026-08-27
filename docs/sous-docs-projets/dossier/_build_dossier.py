@@ -265,14 +265,15 @@ table([
     ["Base Sirene (INSEE)",
      "Tissu économique : activité, commune, effectifs, créations et cessations depuis 1973. "
      "Densité et dynamique des employeurs par secteur et par bassin.",
-     "36 millions d'établissements et 25 millions d'unités légales ; 11,2 Go compressés, "
-     "25 à 30 Go décompressés ; disponible en Parquet",
+     "36 millions d'établissements et 25 millions d'unités légales ; 6,44 Go compressés (ZIP) "
+     "et 4,63 Go en Parquet pour les quatre fichiers retenus, stock du 1er août 2026",
      "Licence Ouverte v2.0"],
     ["Référentiels ONISEP, IDEO et RNCP",
      "Description des formations, des métiers et des certifications ; support de la mise en "
      "correspondance entre activité économique et formation.",
-     "Référentiels de quelques mégaoctets, mis à jour en continu",
-     "Licence Ouverte"],
+     "IDÉO : 5 869 formations, 1 534 métiers, 24 278 structures (15,9 Mo). RNCP et Répertoire spécifique : 36 000 fiches dont 6 995 actives, export quotidien",
+     "ONISEP et IDÉO : ODbL — partage à l'identique obligatoire sur tout dérivé redistribué. "
+     "RNCP (France Compétences) : Licence Ouverte v2.0"],
 ], header=True)
 
 para("Les données présentent les trois dimensions (3V) de façon non triviale :")
