@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 3 / 46 étapes validées.**
+**État : 4 / 46 étapes validées.**
 
 ---
 
@@ -48,7 +48,7 @@ de tests **et** de contenu.
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
 | E03 | Vérification des sources sur data.gouv | ✅ validée | 2026-08-26 | `17a3228` |
-| E04 | Configuration centralisée `config.py` | ⬜ | | |
+| E04 | Configuration centralisée `config.py` | ✅ validée | 2026-08-28 | `c0726b0` |
 | E05 | Connecteur Parcoursup | ⬜ | | |
 | E06 | Connecteur Sirene | ⬜ | | |
 | E07 | Connecteur référentiels | ⬜ | | |
@@ -80,6 +80,36 @@ de tests **et** de contenu.
 **E03 — décision prise** : aucune (pas d'ADR — E03 est une vérification, pas un
 arbitrage d'architecture). Correction de chiffre actée dans mes notes de
 cadrage.
+
+**E04 — ce qui a été vérifié**
+- `src/edumatch/config.py` (470 lignes) charge `configs/base.yaml`, le surcharge
+  par `configs/{env}.yaml`, puis par les variables d'environnement. Précédence
+  prouvée dans les deux sens : `dev` restreint à [2024, 2025], `prod` hérite des
+  huit millésimes
+- **25 tests** répartis en trois fichiers thématiques, tous sous 500 lignes :
+  `PYTHONPATH=src python -m pytest tests/unit/ -q` → 25 passed
+- Le critère « aucun chemin ni seuil en dur » est vérifié par un test qui
+  analyse l'arbre syntaxique de `config.py`. Une première version, par
+  expression régulière, laissait passer un seuil écrit `4 / 5` ou un chemin
+  concaténé : la mutation l'a prouvé, le test a été réécrit. Il documente
+  lui-même ce qu'il n'attrape pas
+- La configuration résout ses chemins relativement au dépôt : exécutée depuis
+  un autre support, elle pointe vers le `data/` de ce support, sans modification
+
+**E04 — trois défauts trouvés en validation, tous corrigés**
+1. `EDUMATCH_DATA_ROOT=""` (vide) n'est pas une variable absente : la valeur par
+   défaut ne s'appliquait pas et `Path("")` se résolvait en répertoire courant,
+   silencieusement. Désormais rejeté par une erreur explicite
+2. `load_settings("prod")` pouvait retourner un objet annonçant `env = dev` tout
+   en portant les valeurs de prod, quand `EDUMATCH_ENV` était posée dans le
+   shell. Deux mécanismes de résolution ne se parlaient pas. La contradiction
+   lève maintenant une erreur qui nomme les deux valeurs
+3. Le canal `.env` n'était jamais lu (`env_file` non configuré). Corrigé, testé
+
+**E04 — décisions prises** : ADR 0003 (configuration centralisée). `data/` reste
+dans le dépôt, ignoré par Git ; `EDUMATCH_DATA_ROOT` existe pour le déploiement
+— hébergement distant, conteneur, intégration continue — pas pour contourner le
+poste de développement.
 
 ## Phase 2 — Analyse exploratoire
 

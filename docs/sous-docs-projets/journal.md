@@ -15,6 +15,23 @@ Format :
 
 ---
 
+## 2026-08-28 — E04, configuration centralisée
+
+Écrit `src/edumatch/config.py` : modèles typés, validation au démarrage,
+précédence `base.yaml` < `{env}.yaml` < variables d'environnement. 25 tests,
+répartis en trois fichiers thématiques.
+
+Trois défauts trouvés en validation et corrigés : une racine de données vide
+qui se résolvait silencieusement en répertoire courant ; un objet de
+configuration qui pouvait annoncer un environnement différent de son contenu ;
+un canal `.env` jamais lu. Le test qui garantit l'absence de valeur en dur a été
+réécrit en analyse syntaxique après qu'une mutation a montré qu'un seuil écrit
+`4 / 5` lui échappait.
+
+Écrit l'ADR 0003 (configuration centralisée) et l'ADR 0002 (refus de Databricks).
+Corrigé la volumétrie Sirene et la licence des référentiels dans le dossier de
+certification : l'ONISEP est sous ODbL, pas sous Licence Ouverte.
+
 ## 2026-08-26
 
 **Fait** : E03 validée — vérification des 4 sources (Parcoursup, Sirene,
