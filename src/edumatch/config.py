@@ -81,6 +81,34 @@ class ProjetConfig(_Strict):
 class ParcoursupConfig(_Strict):
     millesimes: list[int] = Field(min_length=1)
     effectif_minimal_cellule: int = Field(ge=1)
+    # Un identifiant de jeu de données par millésime : sa forme (tiret,
+    # souligné, ou aucun suffixe pour le millésime courant) change d'une
+    # année à l'autre, aucune règle ne permet de la déduire.
+    identifiants: dict[int, str]
+    url_export_gabarit: str  # gabarit de l'URL d'export CSV, {identifiant} à substituer
+    delimiteur: str
+
+    @model_validator(mode="after")
+    def _identifiants_couvrent_les_millesimes(self) -> "ParcoursupConfig":
+        """Chaque millésime déclaré doit avoir son identifiant (l'inverse est toléré, cas de dev.yaml)."""
+        manquants = set(self.millesimes) - set(self.identifiants)
+        if manquants:
+            raise ValueError(
+                "donnees.parcoursup.identifiants ne couvre pas le(s) "
+                f"millésime(s) {sorted(manquants)} déclaré(s) dans "
+                "donnees.parcoursup.millesimes."
+            )
+        return self
+
+    @field_validator("url_export_gabarit")
+    @classmethod
+    def _gabarit_contient_le_parametre_identifiant(cls, valeur: str) -> str:
+        if "{identifiant}" not in valeur:
+            raise ValueError(
+                "donnees.parcoursup.url_export_gabarit doit contenir le "
+                "paramètre '{identifiant}' à substituer."
+            )
+        return valeur
 
 
 class SireneFiltresConfig(_Strict):

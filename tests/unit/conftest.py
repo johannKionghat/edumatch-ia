@@ -20,6 +20,12 @@ donnees:
   parcoursup:
     millesimes: [2020, 2021, 2022]
     effectif_minimal_cellule: 1
+    identifiants:
+      2020: fr-esr-parcoursup_2020
+      2021: fr-esr-parcoursup_2021
+      2022: fr-esr-parcoursup_2022
+    url_export_gabarit: "https://exemple.test/datasets/{identifiant}/exports/csv?delimiter=%3B"
+    delimiteur: ";"
   sirene:
     fichiers: [StockEtablissement]
     filtres:

@@ -10,6 +10,22 @@ donnees:
   parcoursup:
     millesimes: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
     effectif_minimal_cellule: 1      # sous ce seuil, la cellule est écartée
+    # Identifiants du jeu de données par millésime sur le portail du MESR,
+    # vérifiés le 2026-08-26 (voir docs/sous-docs-projets/01-donnees/sources.md).
+    # La forme change d'une année à l'autre : tiret jusqu'en 2019, souligné à
+    # partir de 2020, aucun suffixe pour le millésime en cours (2025).
+    identifiants:
+      2018: fr-esr-parcoursup-2018
+      2019: fr-esr-parcoursup-2019
+      2020: fr-esr-parcoursup_2020
+      2021: fr-esr-parcoursup_2021
+      2022: fr-esr-parcoursup_2022
+      2023: fr-esr-parcoursup_2023
+      2024: fr-esr-parcoursup_2024
+      2025: fr-esr-parcoursup
+    url_export_gabarit: >-
+      https://data.enseignementsup-recherche.gouv.fr/api/explore/v2.1/catalog/datasets/{identifiant}/exports/csv?delimiter=%3B
+    delimiteur: ";"
   sirene:
     fichiers: [StockEtablissement, StockEtablissementHistorique,
                StockUniteLegale, StockUniteLegaleHistorique]
