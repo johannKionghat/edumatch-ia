@@ -130,7 +130,7 @@ données daté et une exécution enregistrée.
 | Source | Volumétrie vérifiée | Licence |
 |---|---|---|
 | Parcoursup 2018-2025 (MESR) | 104 274 formation-années, 118 colonnes | Licence Ouverte v2.0 |
-| Base Sirene (INSEE) | 36 M établissements, 4,64 Go en Parquet | Licence Ouverte v2.0 |
+| Base Sirene (INSEE) | 36 M établissements, 4,63 Go en Parquet (4 fichiers retenus, stock du 01/08/2026) | Licence Ouverte v2.0 |
 | ONISEP, IDEO, RNCP | référentiels | Licence Ouverte |
 
 **Le label** — taux d'admission observé par cellule

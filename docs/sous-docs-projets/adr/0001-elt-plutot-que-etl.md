@@ -21,7 +21,7 @@ ELT.
 
 - Modifier une règle de nettoyage ne demande pas de re-télécharger les sources.
 - Le lignage brut → final est conservé : exigence du Bloc 3, critère 3.8.
-- Coût : stockage du brut, négligeable ici (Parcoursup ~100 Mo, Sirene 4,64 Go).
+- Coût : stockage du brut, négligeable ici (Parcoursup ~100 Mo, Sirene 4,63 Go).
 - La couche bronze est **immuable** : on n'y écrit jamais deux fois le même
   fichier.
 
