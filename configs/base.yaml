@@ -29,6 +29,13 @@ donnees:
   sirene:
     fichiers: [StockEtablissement, StockEtablissementHistorique,
                StockUniteLegale, StockUniteLegaleHistorique]
+    # Aucune URL de fichier ici : les liens Sirene changent chaque mois
+    # (nouveau stock republié par l'INSEE). Seuls l'identifiant du jeu de
+    # données et le gabarit de l'API du catalogue sont stables ; l'URL de
+    # chaque fichier est résolue à l'exécution (voir ingestion/sirene.py).
+    jeu_de_donnees: base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret
+    url_catalogue_gabarit: >-
+      https://www.data.gouv.fr/api/1/datasets/{jeu_de_donnees}/
     filtres:
       etat_administratif: A          # actifs uniquement
       caractere_employeur: true      # un non-employeur n'est pas un débouché

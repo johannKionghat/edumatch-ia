@@ -28,6 +28,8 @@ donnees:
     delimiteur: ";"
   sirene:
     fichiers: [StockEtablissement]
+    jeu_de_donnees: base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret
+    url_catalogue_gabarit: "https://exemple.test/api/1/datasets/{jeu_de_donnees}/"
     filtres:
       etat_administratif: A
       caractere_employeur: true

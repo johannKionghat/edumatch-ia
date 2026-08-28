@@ -120,6 +120,22 @@ class SireneFiltresConfig(_Strict):
 class SireneConfig(_Strict):
     fichiers: list[str] = Field(min_length=1)
     filtres: SireneFiltresConfig
+    # Sirene n'a pas de gabarit d'URL fixe comme Parcoursup : les liens de
+    # téléchargement changent chaque mois (nouveau stock republié). Seul le
+    # jeu de données et le gabarit de l'API du catalogue sont stables ; l'URL
+    # de chaque fichier est résolue à l'exécution en interrogeant ce catalogue.
+    jeu_de_donnees: str
+    url_catalogue_gabarit: str  # gabarit vers l'API data.gouv, {jeu_de_donnees} à substituer
+
+    @field_validator("url_catalogue_gabarit")
+    @classmethod
+    def _gabarit_contient_le_parametre_jeu_de_donnees(cls, valeur: str) -> str:
+        if "{jeu_de_donnees}" not in valeur:
+            raise ValueError(
+                "donnees.sirene.url_catalogue_gabarit doit contenir le "
+                "paramètre '{jeu_de_donnees}' à substituer."
+            )
+        return valeur
 
 
 class DonneesConfig(_Strict):

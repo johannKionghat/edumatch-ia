@@ -41,6 +41,8 @@ import requests
 
 from edumatch.config import Settings, get_settings
 from edumatch.ingestion._flux import (
+    ErreurDefinitive,
+    ErreurTransitoire,
     ecrire_manifeste,
     empreinte_sha256,
     fichier_intact,
@@ -55,10 +57,35 @@ NOM_FICHIER_MANIFESTE = "manifeste.json"
 
 
 class ErreurTelechargementParcoursup(RuntimeError):
-    """Le téléchargement d'un millésime a échoué de façon non transitoire.
+    """Le téléchargement d'un millésime a échoué.
 
     Levée plutôt que masquée : un appelant (tâche d'orchestration, script) ne
     doit jamais recevoir un fichier partiel sans le savoir.
+
+    Base commune, conservée pour que `pytest.raises(ErreurTelechargementParcoursup)`
+    et tout appelant qui ne distingue pas encore les deux natures d'échec
+    continuent de fonctionner sans changement. Un appelant qui doit décider
+    entre retenter et alerter capture plutôt l'une des deux sous-classes
+    ci-dessous — ou le vocabulaire commun `ErreurTransitoire` /
+    `ErreurDefinitive` de `_flux.py`, partagé avec Sirene.
+    """
+
+
+class ErreurReseauParcoursup(ErreurTelechargementParcoursup, ErreurTransitoire):
+    """Le fichier d'un millésime était injoignable : échec transitoire, à retenter.
+
+    Levée sur `requests.RequestException` — coupure réseau, délai dépassé,
+    5xx. Le gabarit d'URL et la configuration du millésime ne sont pas en
+    cause, seul l'accès à cet instant a échoué.
+    """
+
+
+class ErreurConfigurationParcoursup(ErreurTelechargementParcoursup, ErreurDefinitive):
+    """Le millésime demandé n'est pas configuré : échec définitif, à ne pas retenter.
+
+    Retenter ne fera pas apparaître un identifiant qui n'existe pas dans
+    `donnees.parcoursup.millesimes` : seule une mise à jour de la
+    configuration (ou une correction de l'appelant) peut le résoudre.
     """
 
 
@@ -104,7 +131,7 @@ def _identifiant_valide(millesime: int, settings: Settings) -> str:
     """Vérifie que le millésime est configuré et renvoie son identifiant de jeu de données."""
     parcoursup_config = settings.donnees.parcoursup
     if millesime not in parcoursup_config.millesimes:
-        raise ErreurTelechargementParcoursup(
+        raise ErreurConfigurationParcoursup(
             f"Millésime {millesime} absent de donnees.parcoursup.millesimes "
             f"({parcoursup_config.millesimes}) : rien à télécharger."
         )
@@ -142,8 +169,11 @@ def telecharger_millesime(
         forcer: ignore le contrôle d'idempotence et retélécharge.
 
     Raises:
-        ErreurTelechargementParcoursup: millésime non configuré, ou échec
-            réseau / HTTP lors du téléchargement.
+        ErreurConfigurationParcoursup: le millésime n'est pas déclaré dans
+            la configuration — définitif, retenter ne suffit pas.
+        ErreurReseauParcoursup: échec réseau ou HTTP lors du téléchargement —
+            transitoire, une nouvelle tentative après temporisation peut
+            suffire.
     """
     settings = settings or get_settings()
     identifiant = _identifiant_valide(millesime, settings)
@@ -170,7 +200,7 @@ def telecharger_millesime(
             # On ne masque pas la cause : l'écriture atomique a déjà nettoyé
             # tout fichier `.part` résiduel, on ne fait que traduire
             # l'exception dans le vocabulaire de ce connecteur.
-            raise ErreurTelechargementParcoursup(
+            raise ErreurReseauParcoursup(
                 f"Échec du téléchargement du millésime {millesime} depuis {url} : {erreur}"
             ) from erreur
 

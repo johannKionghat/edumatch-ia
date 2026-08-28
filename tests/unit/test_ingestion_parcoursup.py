@@ -16,7 +16,10 @@ import pytest
 import requests
 
 from edumatch.config import load_settings
+from edumatch.ingestion._flux import ErreurDefinitive, ErreurTransitoire
 from edumatch.ingestion.parcoursup import (
+    ErreurConfigurationParcoursup,
+    ErreurReseauParcoursup,
     ErreurTelechargementParcoursup,
     telecharger_millesime,
     telecharger_tous,
@@ -298,3 +301,38 @@ def test_aucun_identifiant_ni_url_de_jeu_de_donnees_en_dur() -> None:
 
     assert "fr-esr-parcoursup" not in source
     assert "data.enseignementsup-recherche.gouv.fr" not in source
+
+
+# ─── Transitoire contre définitif — même vocabulaire que Sirene ─────────────
+#
+# Le DAG Airflow (E33) doit pouvoir choisir entre retenter et alerter sans
+# connaître le connecteur en cause : ces tests prouvent que Parcoursup lève
+# la même hiérarchie que Sirene (`ErreurTransitoire` / `ErreurDefinitive` de
+# `_flux.py`), pas seulement sa propre base `ErreurTelechargementParcoursup`.
+
+
+def test_millesime_non_configure_leve_lerreur_configuration_definitive(settings_test) -> None:
+    with pytest.raises(ErreurConfigurationParcoursup) as excinfo:
+        telecharger_millesime(1999, settings=settings_test, session=SessionFactice())
+
+    assert isinstance(excinfo.value, ErreurTelechargementParcoursup)
+    assert isinstance(excinfo.value, ErreurDefinitive)
+    assert not isinstance(excinfo.value, ErreurTransitoire)
+
+
+def test_coupure_reseau_leve_lerreur_reseau_transitoire(settings_test) -> None:
+    session = SessionFactice(erreur_en_cours_de_flux=requests.exceptions.ConnectionError("coupure"))
+
+    with pytest.raises(ErreurReseauParcoursup) as excinfo:
+        telecharger_millesime(2020, settings=settings_test, session=session)
+
+    assert isinstance(excinfo.value, ErreurTelechargementParcoursup)
+    assert isinstance(excinfo.value, ErreurTransitoire)
+    assert not isinstance(excinfo.value, ErreurDefinitive)
+
+
+def test_erreur_http_pendant_le_telechargement_leve_lerreur_reseau_transitoire(settings_test) -> None:
+    with pytest.raises(ErreurReseauParcoursup) as excinfo:
+        telecharger_millesime(2020, settings=settings_test, session=SessionErreurHttp())
+
+    assert isinstance(excinfo.value, ErreurTransitoire)

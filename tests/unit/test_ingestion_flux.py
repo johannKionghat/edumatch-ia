@@ -19,6 +19,7 @@ from edumatch.ingestion._flux import (
     empreinte_sha256,
     fichier_intact,
     session_http,
+    telecharger_en_flux,
 )
 
 
@@ -108,3 +109,99 @@ def test_fichier_intact_vrai_si_empreinte_correspond(tmp_path: Path) -> None:
     entree = {"empreinte_sha256": empreinte_sha256(chemin)}
 
     assert fichier_intact(chemin, entree) is True
+
+
+# ─── Téléchargement en flux, avec ou sans progression ────────────────────────
+
+
+class _ReponseFluxFactice:
+    """Réponse factice minimale : un statut correct et des blocs à parcourir."""
+
+    def __init__(self, blocs: list[bytes]) -> None:
+        self._blocs = blocs
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def iter_content(self, chunk_size: int):  # noqa: ARG002 - signature imposée par requests
+        yield from self._blocs
+
+    def __enter__(self) -> "_ReponseFluxFactice":
+        return self
+
+    def __exit__(self, *_args: object) -> bool:
+        return False
+
+
+class _SessionTelechargementFactice:
+    """Sert toujours la même liste de blocs, quelle que soit l'URL demandée."""
+
+    def __init__(self, blocs: list[bytes]) -> None:
+        self._blocs = blocs
+
+    def get(self, url: str, stream: bool = True, timeout: float | None = None):  # noqa: ARG002
+        return _ReponseFluxFactice(self._blocs)
+
+
+def test_telecharger_en_flux_sans_rappel_ecrit_le_contenu_complet(tmp_path: Path) -> None:
+    """Le comportement par défaut (`sur_progression=None`) reste celui d'avant l'ajout du paramètre."""
+    session = _SessionTelechargementFactice([b"abc", b"def"])
+    destination = tmp_path / "fichier.bin"
+
+    telecharger_en_flux(session, "https://exemple.test/fichier", destination)  # type: ignore[arg-type]
+
+    assert destination.read_bytes() == b"abcdef"
+
+
+def test_telecharger_en_flux_notifie_la_progression_au_rythme_demande(tmp_path: Path) -> None:
+    """Un intervalle nul déclenche le rappel à chaque bloc : le total cumulé est vérifiable."""
+    session = _SessionTelechargementFactice([b"a" * 10, b"b" * 10, b"c" * 10])
+    destination = tmp_path / "fichier.bin"
+    octets_notifies: list[int] = []
+
+    telecharger_en_flux(
+        session,  # type: ignore[arg-type]
+        "https://exemple.test/fichier",
+        destination,
+        sur_progression=octets_notifies.append,
+        intervalle_progression_secondes=0,
+    )
+
+    assert octets_notifies == [10, 20, 30]
+    assert destination.read_bytes() == b"a" * 10 + b"b" * 10 + b"c" * 10
+
+
+def test_telecharger_en_flux_ne_notifie_jamais_sans_intervalle_ecoule(tmp_path: Path) -> None:
+    """Un intervalle très large ne déclenche aucun rappel avant la fin du transfert : pas de spam."""
+    session = _SessionTelechargementFactice([b"a" * 10, b"b" * 10])
+    destination = tmp_path / "fichier.bin"
+    octets_notifies: list[int] = []
+
+    telecharger_en_flux(
+        session,  # type: ignore[arg-type]
+        "https://exemple.test/fichier",
+        destination,
+        sur_progression=octets_notifies.append,
+        intervalle_progression_secondes=3600,
+    )
+
+    assert octets_notifies == []
+
+
+# ─── Vocabulaire commun d'erreurs — transitoire contre définitif ─────────────
+#
+# `ErreurTransitoire` et `ErreurDefinitive` ne sont jamais levées ici : ce
+# sont des mixins que chaque connecteur combine à sa propre classe d'erreur
+# de base. Ce test vérifie seulement qu'elles existent, qu'elles restent des
+# exceptions ordinaires (aucune ne dérive de l'autre : un échec est l'un ou
+# l'autre, jamais les deux), pour qu'un futur connecteur ne les redéfinisse
+# pas à sa façon.
+
+
+def test_erreur_transitoire_et_definitive_sont_des_exceptions_disjointes() -> None:
+    from edumatch.ingestion._flux import ErreurDefinitive, ErreurTransitoire
+
+    assert issubclass(ErreurTransitoire, Exception)
+    assert issubclass(ErreurDefinitive, Exception)
+    assert not issubclass(ErreurTransitoire, ErreurDefinitive)
+    assert not issubclass(ErreurDefinitive, ErreurTransitoire)

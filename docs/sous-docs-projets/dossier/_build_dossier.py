@@ -197,7 +197,7 @@ para("Le périmètre certifiant se limite à ces deux briques. L'écran de super
 para("Le projet est soumis à des contraintes qui imposent des arbitrages :")
 bullets([
     "Volumétrie et hétérogénéité : cinq sources publiques dont les tailles s'échelonnent sur plus "
-    "de deux ordres de grandeur, du référentiel de quelques mégaoctets à une base de 36 millions "
+    "de deux ordres de grandeur, du référentiel de quelques mégaoctets à une base de 43,9 millions "
     "d'établissements. Les confondre conduirait soit à sous-dimensionner, soit à surdimensionner "
     "l'architecture (section 2).",
     "Performance et fraîcheur : la recommandation doit être calculée en latence interactive, "
@@ -265,7 +265,7 @@ table([
     ["Base Sirene (INSEE)",
      "Tissu économique : activité, commune, effectifs, créations et cessations depuis 1973. "
      "Densité et dynamique des employeurs par secteur et par bassin.",
-     "36 millions d'établissements et 25 millions d'unités légales ; 6,44 Go compressés (ZIP) "
+     "43 896 818 établissements et 29 922 486 unités légales ; 6,44 Go compressés (ZIP) "
      "et 4,63 Go en Parquet pour les quatre fichiers retenus, stock du 1er août 2026",
      "Licence Ouverte v2.0"],
     ["Référentiels ONISEP, IDEO et RNCP",
@@ -278,7 +278,7 @@ table([
 
 para("Les données présentent les trois dimensions (3V) de façon non triviale :")
 bullets([
-    "Volume : 36 millions d'établissements à joindre et agréger par secteur et par territoire, "
+    "Volume : 43,9 millions d'établissements à joindre et agréger par secteur et par territoire, "
     "soit 25 à 30 Go décompressés, à côté d'un référentiel d'admission d'une centaine de "
     "mégaoctets.",
     "Vélocité : publications périodiques traitées en batch (Parcoursup annuel, Sirene mensuel, "
@@ -465,7 +465,7 @@ bullets([
     "gigaoctets.",
 ])
 para("Le nettoyage de la chaîne Sirene mérite une précision, car il conditionne la faisabilité : "
-     "les 36 millions de lignes ne sont jamais nettoyées ligne à ligne. Le format Parquet étant "
+     "les 43,9 millions de lignes ne sont jamais nettoyées ligne à ligne. Le format Parquet étant "
      "orienté colonnes, seules neuf colonnes sur cinquante-quatre sont lues, et le filtrage "
      "(établissements actifs, employeurs, diffusibles) est poussé au niveau du fichier. Le volume "
      "est ainsi réduit avant toute transformation, et les contrôles qualité s'appliquent ensuite "
@@ -476,11 +476,11 @@ encadre("Justification du choix : traitement distribué sur la couche de volume 
     "cas un cluster distribué. Employer Spark sur cette chaîne "
     "serait un surdimensionnement, pénalisable au titre des critères d'arbitrage, de FinOps et de "
     "GreenOps. La chaîne de décision est donc traitée en mono-nœud avec Polars et dbt.",
-    "Le calcul distribué est justifié par la chaîne de volume. La base Sirene compte 36 millions "
-    "d'établissements, soit 25 à 30 Go décompressés. Cette volumétrie est réelle, publique et "
-    "vérifiée par téléchargement : elle n'est pas déclarée.",
+    "Le calcul distribué est justifié par la chaîne de volume. La base Sirene compte 43 896 818 "
+    "établissements (métadonnée Parquet mesurée le 1er août 2026), soit 25 à 30 Go décompressés. "
+    "Cette volumétrie est réelle, publique et vérifiée par téléchargement : elle n'est pas déclarée.",
     "Ce n'est d'ailleurs pas la taille du stockage qui impose le traitement distribué, mais la "
-    "nature du calcul : il faut joindre 36 millions d'établissements aux formations par "
+    "nature du calcul : il faut joindre 43,9 millions d'établissements aux formations par "
     "nomenclature d'activité et par territoire, puis agréger par secteur, par bassin et par année "
     "sur dix ans d'historique. Le volume intermédiaire de jointure excède largement celui des "
     "sources. Le format Parquet, en colonnes, est lu nativement par Spark.",

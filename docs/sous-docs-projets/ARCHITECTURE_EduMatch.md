@@ -15,7 +15,7 @@ Alignée sur le dossier de certification (RNCP 38777) et le guide d'exécution �
  8 millésimes, 82 Mo      │  Modèle d'accessibilité     │       étudiants, reconversion)
                           │  Score à 3 termes           │
  Sirene (INSEE) ─────────▶│  API de matching            │◀───── Conseillers d'orientation
- 36 M étab., 4,6 Go Pq    │  Écran de supervision       │       (contrôle humain, art. 14)
+ 43,9 M étab., 4,6 Go Pq  │  Écran de supervision       │       (contrôle humain, art. 14)
                           │  Chatbot RAG (secondaire)   │
  ONISEP / RNCP / IDEO ───▶│                             │◀───── DPO / Auditeurs
  référentiels, qq Mo      └─────────────────────────────┘       (journaux, registres)
@@ -292,7 +292,7 @@ Trois propriétés non négociables du DAG, toutes testées et filmées : **idem
 
 ## 9. Ce que cette architecture optimise — les cinq arbitrages
 
-1. **Distribué là où c'est nécessaire, et seulement là.** Spark sur Sirene (jointure 36 M × formations), Polars + dbt sur Parcoursup (82 Mo, mesuré en E05, corrigé depuis l'estimation ~100 Mo). Le seuil est une règle, pas un principe.
+1. **Distribué là où c'est nécessaire, et seulement là.** Spark sur Sirene (jointure 43,9 M d'établissements × formations, chiffre mesuré en E06 par métadonnée Parquet — corrigé depuis l'estimation 36 M, jamais recalculée), Polars + dbt sur Parcoursup (82 Mo, mesuré en E05, corrigé depuis l'estimation ~100 Mo). Le seuil est une règle, pas un principe.
 2. **Latence par précalcul, pas par cache.** Espace des cellules fini → SHAP et agrégats débouchés précalculés → SLO garanti par construction, sans Redis ni couche supplémentaire à opérer.
 3. **Coût par élasticité.** HPA dimensionné sur la saisonnalité 1:6 ; local jusqu'à J7, cloud provisionné/détruit par Terraform à J8. FinOps et GreenOps alignés.
 4. **Conformité par construction.** La séparation volume/décision fait que le périmètre RGPD est minimal *architecturalement*, pas par une politique qu'il faudrait faire respecter.

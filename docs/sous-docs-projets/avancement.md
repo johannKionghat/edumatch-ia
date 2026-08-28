@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 5 / 46 étapes validées.**
+**État : 6 / 46 étapes validées.**
 
 ---
 
@@ -50,7 +50,7 @@ de tests **et** de contenu.
 | E03 | Vérification des sources sur data.gouv | ✅ validée | 2026-08-26 | `17a3228` |
 | E04 | Configuration centralisée `config.py` | ✅ validée | 2026-08-28 | `c0726b0` |
 | E05 | Connecteur Parcoursup | ✅ validée | 2026-08-28 | `144ee20` |
-| E06 | Connecteur Sirene | ⬜ | | |
+| E06 | Connecteur Sirene | ✅ validée | 2026-08-28 | *à venir* |
 | E07 | Connecteur référentiels | ⬜ | | |
 | E08 | Échantillons versionnés | ⬜ | | |
 
@@ -143,12 +143,90 @@ réellement téléchargés, la mesure directe donne **82 Mo**
 (`du -sh data/raw/parcoursup/`, 2026-08-28). Je corrige la valeur partout où
 elle figurait dans le dépôt. Le raisonnement qui s'appuyait dessus n'est pas
 affaibli : le seuil de bascule vers Spark oppose un catalogue Parcoursup petit
-(82 Mo, un seul nœud, Polars/dbt) à Sirene (36 M de lignes, PySpark) — un écart
-encore plus net avec 82 Mo qu'avec 100 Mo.
+(82 Mo, un seul nœud, Polars/dbt) à Sirene (36 M de lignes retenues à l'époque,
+PySpark) — un écart encore plus net avec 82 Mo qu'avec 100 Mo.
+*Le « 36 M » ci-dessus était lui-même une estimation jamais recalculée : voir
+la correction en E06, ci-dessous — 43,9 M lignes mesurées.*
 
 **E05 — décision prise** : aucun ADR nouveau sur le fond du connecteur — l'ADR
 0002 (pas de Databricks) est mis à jour avec le chiffre corrigé. Deux choix
 structurants de ce commit ont justifié un ADR séparé : voir ADR 0004.
+
+**E06 — ce qui a été vérifié**
+- `src/edumatch/ingestion/sirene.py` (490 lignes) : résolution des 4 fichiers
+  configurés par interrogation du catalogue data.gouv (`resoudre_ressources`),
+  puis téléchargement (`telecharger_fichier`, `telecharger_tous`) avec les
+  mêmes garanties que Parcoursup — idempotence par empreinte, écriture
+  atomique, manifeste — sur les primitives déjà extraites dans `_flux.py`
+  (enrichi d'un rappel de progression facultatif, sans effet sur Parcoursup)
+- Suite de tests, paquet non installé : `python -m pytest -q` → **80 passed**
+  (`tests/unit/test_ingestion_sirene.py`, 22 cas, sans aucun accès réseau —
+  session HTTP factice ; `tests/unit/test_ingestion_sirene_erreurs.py`,
+  7 cas séparés, sur le vocabulaire d'erreur et la vérification de taille
+  ci-dessous ; `test_ingestion_flux.py` et `test_ingestion_parcoursup.py`
+  complétés en cohérence)
+- Vocabulaire d'erreur transitoire/définitif partagé entre les deux
+  connecteurs (`ErreurTransitoire`, `ErreurDefinitive` dans `_flux.py`) :
+  `ErreurReseauSirene`/`ErreurReseauParcoursup` sur les échecs réseau,
+  `ErreurCatalogueSirene`/`ErreurConfigurationParcoursup` sur les échecs qui
+  tiennent au contrat de la source. Objectif : le futur DAG (E33) décide de
+  retenter ou d'alerter sans connaître la classe interne du connecteur
+- Vérification de la taille annoncée par le catalogue contre la taille
+  réellement écrite après téléchargement : un écart de plus de 5 %
+  est journalisé en avertissement (`ECART_TAILLE_SIRENE`), jamais levé —
+  `filesize` n'est pas garanti par contrat côté catalogue
+- Résolution rejouée contre le catalogue réel aujourd'hui
+  (`resoudre_ressources()`) : les 4 URL obtenues correspondent exactement à
+  celles enregistrées dans `data/raw/sirene/manifeste.json` lors du
+  téléchargement effectif, stock du **01/08/2026**
+- Les 4 fichiers réellement téléchargés (`data/raw/sirene/`, tailles
+  identiques aux tailles annoncées par le catalogue) : `StockEtablissement`
+  2 202 341 459 o · `StockEtablissementHistorique` 870 319 380 o ·
+  `StockUniteLegale` 705 090 270 o · `StockUniteLegaleHistorique`
+  855 957 649 o — **total 4 633 708 758 o = 4,63 Go décimaux (4,4 Gio)**
+- Contenu mesuré par métadonnée Parquet (`pyarrow.parquet.ParquetFile(...).metadata`,
+  sans lire une valeur) : `StockEtablissement` **43 896 818 lignes × 54
+  colonnes** · `StockEtablissementHistorique` 95 865 102 × 18 ·
+  `StockUniteLegale` **29 922 486 × 35** · `StockUniteLegaleHistorique`
+  71 355 318 × 28. Les 9 colonnes utiles au projet sont toutes présentes,
+  y compris `activitePrincipaleNAF25Etablissement`
+- Chiffre nouveau, mesuré ce jour : sur les 43 896 818 établissements,
+  **16 715 258 sont actifs (38,1 %)** et **2 436 624 sont actifs ET
+  employeurs (5,6 %)** — lecture de 2 colonnes sur 54, **35,4 secondes**
+
+**E06 — correction de chiffre propagée**
+« 36 millions d'établissements, 25 millions d'unités légales », retenu
+jusqu'ici dans la documentation et mes notes de cadrage, n'avait jamais été
+recalculé depuis sa première mesure — même famille d'erreur que le « 11,2 Go »
+(E03) et le « ~100 Mo » (E05) : un chiffre entré une fois, jamais revérifié
+contre le fichier réel une fois qu'il a existé sur disque. Mesuré aujourd'hui
+par métadonnée Parquet : **43 896 818 établissements, 29 922 486 unités
+légales** — le chiffre retenu était **sous-estimé**, pas surestimé. Corrigé
+dans `01-donnees/sources.md`, `03-pipeline/ingestion.md`, l'ADR 0002 et
+`ARCHITECTURE_EduMatch.md`.
+
+Cette correction **renforce** l'argument qui écarte Databricks au profit de
+PySpark local (ADR 0002) : le volume à parcourir est plus élevé que ce qui
+était annoncé. La nuance qui compte plus que le chiffre brut : les filtres du
+projet (actif, employeur, diffusible) ne retiennent que 2 436 624 lignes sur
+43 896 818 (5,6 %) — mais c'est la **lecture** des 43,9 M de lignes, pas le
+résultat filtré, qui dimensionne le traitement, puisqu'il faut les parcourir
+pour savoir lesquelles passent le filtre. Et le fait que cette lecture de
+2 colonnes sur 54 prenne 35,4 secondes sur un poste ordinaire est précisément
+ce qui justifie un Spark **local**, sans cluster managé, pour le job réel
+(E17, jointure et agrégation) — voir ADR 0002 mis à jour.
+
+**E06 — décisions prises**
+- ADR 0005 — résolution dynamique de l'URL Sirene par interrogation du
+  catalogue data.gouv, contre une URL en configuration (intenable dès le
+  mois suivant : le chemin de l'URL porte l'horodatage de publication du
+  stock). Coût assumé : une dépendance réseau supplémentaire au moment de
+  l'exécution, à traiter comme une panne transitoire dans le DAG (E33), pas
+  comme une erreur de configuration.
+- ADR 0006 — vocabulaire commun d'erreur transitoire/définitif, partagé entre
+  Parcoursup et Sirene via `_flux.py`. Rétrofité sur Parcoursup dans le même
+  commit, pour que le futur DAG traite les deux connecteurs de façon uniforme
+  plutôt que de découvrir la distinction séparément pour chacun.
 
 ## Phase 2 — Analyse exploratoire
 

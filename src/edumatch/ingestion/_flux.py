@@ -16,6 +16,9 @@ fichier public et doit garantir l'idempotence et l'écriture atomique :
 - lecture et écriture d'un manifeste de traçabilité, avec la règle : un
   manifeste absent ou corrompu ne bloque jamais la chaîne, mais ne doit
   jamais non plus faire disparaître silencieusement la trace d'un incident
+- le vocabulaire commun aux erreurs transitoires et définitives, que chaque
+  connecteur combine à sa propre classe d'erreur (voir `ErreurTransitoire` et
+  `ErreurDefinitive` ci-dessous)
 
 Ce qui n'est délibérément **pas** ici : la résolution d'une URL à partir d'un
 identifiant de millésime ou d'une recherche dans un catalogue. C'est une
@@ -29,10 +32,11 @@ import hashlib
 import json
 import logging
 import os
+import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import IO, Iterator
+from typing import IO, Callable, Iterator
 
 import requests
 
@@ -41,6 +45,47 @@ LOGGER = logging.getLogger(__name__)
 # Taille de bloc pour la lecture et l'écriture en flux : évite de charger un
 # fichier de plusieurs dizaines de Mo entièrement en mémoire.
 TAILLE_BLOC_OCTETS_DEFAUT = 1024 * 1024
+
+
+# ─── Vocabulaire commun d'erreurs ─────────────────────────────────────────────
+#
+# Chaque connecteur (Parcoursup, Sirene, référentiels) garde sa propre classe
+# d'erreur de base — `ErreurTelechargementParcoursup`, `ErreurTelechargementSirene`
+# — pour que les tests et les appelants qui ne s'intéressent qu'à « ce
+# connecteur a échoué » continuent d'écrire `pytest.raises(ErreurTelechargementX)`
+# sans rien changer. Ce qui manquait, et que tout connecteur doit offrir sans
+# le redéfinir chacun à sa façon, c'est la distinction qu'un orchestrateur a
+# besoin de faire *avant même de savoir quel connecteur a échoué* : faut-il
+# retenter, ou faut-il alerter un humain ?
+#
+# Ces deux classes sont des mixins, posées ici parce qu'elles ne portent
+# aucune connaissance d'une source précise — exactement le critère qui
+# gouverne le contenu de ce module. Chaque connecteur les combine par héritage
+# multiple avec sa propre classe de base :
+#
+#     class ErreurReseauSirene(ErreurTelechargementSirene, ErreurTransitoire): ...
+#
+# Un `except ErreurTransitoire` dans le DAG attrape alors l'échec réseau de
+# n'importe quel connecteur, sans connaître leurs classes de base respectives
+# ni inspecter le texte du message.
+
+
+class ErreurTransitoire(Exception):
+    """Échec dont une nouvelle tentative, après temporisation, a une chance raisonnable de réussir.
+
+    Typiquement une coupure réseau, un délai d'attente dépassé, une erreur
+    HTTP 5xx ou de quota : la source elle-même n'a pas changé de contrat, seul
+    l'accès à cet instant a échoué.
+    """
+
+
+class ErreurDefinitive(Exception):
+    """Échec qu'une nouvelle tentative ne peut pas résoudre : le contrat de la source a changé.
+
+    Typiquement un catalogue mal formé, une ressource introuvable ou
+    ambiguë, un champ obligatoire absent : retenter reproduirait exactement
+    le même échec. Un humain doit être alerté, pas un compteur de tentatives.
+    """
 
 # Délai maximal d'attente réseau, en secondes, avant d'abandonner une requête.
 # Une valeur explicite plutôt que le défaut de `requests` (aucun délai, donc
@@ -112,6 +157,8 @@ def telecharger_en_flux(
     *,
     timeout: float = DELAI_ATTENTE_SECONDES_DEFAUT,
     taille_bloc: int = TAILLE_BLOC_OCTETS_DEFAUT,
+    sur_progression: Callable[[int], None] | None = None,
+    intervalle_progression_secondes: float = 10.0,
 ) -> None:
     """Télécharge `url` en flux vers `destination`, avec écriture atomique.
 
@@ -121,13 +168,34 @@ def telecharger_en_flux(
     (coupure réseau en cours de flux) traverse `ecriture_atomique`, qui
     supprime le fichier partiel avant de la propager : l'appelant reste seul
     responsable de traduire cette exception en erreur de son domaine.
+
+    `sur_progression`, optionnel, reçoit le nombre total d'octets déjà écrits,
+    au rythme maximal `intervalle_progression_secondes` (jamais plus souvent,
+    quelle que soit la taille des blocs reçus du réseau). Sans lui — le cas
+    par défaut, celui de Parcoursup, quelques dizaines de Mo téléchargés en
+    quelques secondes — aucun décompte n'est effectué et le comportement est
+    identique à celui d'avant l'ajout de ce paramètre. La primitive ne décide
+    ni du format du message ni de sa destination (journal, métrique...),
+    seulement de la cadence à laquelle l'appelant est notifié : c'est le seul
+    élément réellement répété entre connecteurs, le contenu du message reste
+    propre à chacun (le nom du fichier Sirene n'a pas de sens ici).
     """
     with session.get(url, stream=True, timeout=timeout) as reponse:
         reponse.raise_for_status()
+        octets_recus = 0
+        dernier_appel = time.monotonic()
         with ecriture_atomique(destination, mode="wb") as flux_sortie:
             for bloc in reponse.iter_content(chunk_size=taille_bloc):
-                if bloc:
-                    flux_sortie.write(bloc)
+                if not bloc:
+                    continue
+                flux_sortie.write(bloc)
+                if sur_progression is None:
+                    continue
+                octets_recus += len(bloc)
+                maintenant = time.monotonic()
+                if maintenant - dernier_appel >= intervalle_progression_secondes:
+                    sur_progression(octets_recus)
+                    dernier_appel = maintenant
 
 
 # ─── Empreinte et contrôle d'intégrité ─────────────────────────────────────────

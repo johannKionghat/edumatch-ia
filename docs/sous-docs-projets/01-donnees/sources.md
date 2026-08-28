@@ -5,6 +5,12 @@ par une commande, exécutée le jour même contre le catalogue de la source — 
 contre un téléchargement complet. Le script qui rejoue l'ensemble est
 `scripts/verifier_sources.sh`.
 
+**Mise à jour du 2026-08-28 (E06)** : les 4 fichiers Sirene retenus ont été
+réellement téléchargés (`data/raw/sirene/`). Le nombre de lignes, invérifiable
+par l'API de métadonnées le 26/08, est mesuré ici pour la première fois par
+métadonnée Parquet — voir la section B, sous-section « Nombre d'établissements
+et d'unités légales — corrigé en E06 ».
+
 ## Méthode
 
 Les gros fichiers (8 CSV Parcoursup, 11 fichiers Sirene) ne sont **jamais**
@@ -192,17 +198,81 @@ n'est donc pas reproductible tel quel aujourd'hui. Je le corrige plus loin,
 dans la section « Révision des chiffres retenus jusqu'ici », avec la mesure du
 jour.
 
-### Non vérifié aujourd'hui — nombre d'établissements
+### Nombre d'établissements et d'unités légales — corrigé en E06
 
-Le chiffre « 36 millions d'établissements, 25 millions d'unités légales » ne
-figure dans aucune métadonnée de catalogue : l'analyseur data.gouv renvoie
-explicitement `"analysis:error": "File too large to download"` pour ces
-ressources — data.gouv lui-même n'a pas pu compter les lignes. Le confirmer
-exigerait de lire le fichier Parquet (2,2 Go), ce qui sort du périmètre de
-cette vérification par API légère. Le chiffre retenu jusqu'ici a été obtenu
-par un téléchargement complet lors d'une vérification antérieure ; il
-est **conservé sans être recalculé aujourd'hui**, et sera revérifié à l'étape
-E06 (connecteur Sirene), où le fichier est de toute façon lu.
+Le chiffre « 36 millions d'établissements, 25 millions d'unités légales »,
+retenu jusqu'ici, ne figurait dans aucune métadonnée de catalogue : l'analyseur
+data.gouv renvoie explicitement `"analysis:error": "File too large to
+download"` pour ces ressources — data.gouv lui-même n'a pas pu compter les
+lignes. Il fallait lire le fichier Parquet pour trancher. C'est fait à l'étape
+E06 (connecteur Sirene), une fois les 4 fichiers réellement téléchargés le
+2026-08-28 (`data/raw/sirene/`, manifeste à l'appui) : la métadonnée Parquet
+porte le nombre de lignes en clair, sans lire une seule valeur.
+
+```bash
+python -c "
+import pyarrow.parquet as pq
+for f in ['StockEtablissement','StockEtablissementHistorique','StockUniteLegale','StockUniteLegaleHistorique']:
+    pf = pq.ParquetFile(f'data/raw/sirene/{f}.parquet')
+    print(f, pf.metadata.num_rows, pf.metadata.num_columns)
+"
+```
+
+Sortie réelle, sur le stock du 01/08/2026 :
+
+| Fichier | Lignes | Colonnes |
+|---|---:|---:|
+| `StockEtablissement` | **43 896 818** | 54 |
+| `StockEtablissementHistorique` | 95 865 102 | 18 |
+| `StockUniteLegale` | **29 922 486** | 35 |
+| `StockUniteLegaleHistorique` | 71 355 318 | 28 |
+
+**Le chiffre retenu jusqu'ici était sous-estimé** : 43 896 818 établissements
+contre 36 millions annoncés, 29 922 486 unités légales contre 25 millions.
+Je corrige partout où l'ancien ordre de grandeur figurait — même famille
+d'erreur que le « 11,2 Go » et le « ~100 Mo » : un chiffre entré une fois,
+jamais revérifié contre le fichier réel une fois qu'il a existé sur disque.
+
+**Cette correction renforce l'argument qui justifie Spark plutôt que
+Databricks ou un traitement mono-nœud** (ADR 0002) : le volume à parcourir est
+plus élevé que ce qui était annoncé, pas moins.
+
+**La nuance qui compte plus que le chiffre brut** : sur les 43 896 818 lignes
+de `StockEtablissement`, les filtres du projet (`etat_administratif: A`,
+`caractere_employeur: true`) n'en retiennent que 2 436 624 — 5,6 %. Ce n'est
+pas le résultat filtré qui dimensionne le traitement, c'est la **lecture** :
+il faut parcourir les 43,9 M de lignes pour savoir lesquelles passent le
+filtre. C'est très exactement l'argument de la projection colonnaire déjà
+tenu pour ce fichier (9 colonnes sur 54, jamais 54) : réduire tôt, mais on ne
+réduit qu'après avoir lu.
+
+**Mesure du jour, chiffres nouveaux, sur les 2 colonnes utiles au filtre**
+(`etatAdministratifEtablissement`, `caractereEmployeurEtablissement`) :
+
+```bash
+python -c "
+import time, pyarrow.parquet as pq, pyarrow.compute as pc
+t0 = time.perf_counter()
+table = pq.read_table('data/raw/sirene/StockEtablissement.parquet',
+    columns=['etatAdministratifEtablissement','caractereEmployeurEtablissement'])
+n = table.num_rows
+actifs_mask = pc.equal(table.column('etatAdministratifEtablissement'), 'A')
+actifs = pc.sum(pc.cast(actifs_mask, 'int64')).as_py()
+employeur_mask = pc.equal(table.column('caractereEmployeurEtablissement'), 'O')
+both = pc.and_(actifs_mask, employeur_mask)
+actifs_employeurs = pc.sum(pc.cast(both, 'int64')).as_py()
+print('total', n, 'actifs', actifs, 'actifs_employeurs', actifs_employeurs, 'duree_s', round(time.perf_counter()-t0,1))
+"
+```
+
+Sortie réelle : **16 715 258 établissements actifs (38,1 % du total)**, dont
+**2 436 624 actifs ET employeurs (5,6 % du total)** — c'est ce sous-ensemble
+qui constitue un débouché réel au sens du projet (un établissement inactif ou
+sans salarié n'en est pas un). Lecture de 2 colonnes sur 54, **35,4 secondes**
+sur ce poste : c'est ce chiffre, pas le nombre de lignes filtrées, qui montre
+pourquoi un parcours mono-nœud de ce fichier reste praticable en local — et
+qui borne le temps qu'un job Spark équivalent devra battre, pas seulement
+égaler, pour se justifier (E17).
 
 ---
 
@@ -361,15 +431,15 @@ exécution du pipeline, pas de latence critique).
   compressée), en précisant explicitement que « compressé » désigne le zip et
   non un CSV décompressé, datée au stock du 01/08/2026, et propagé la
   correction partout où l'ancien chiffre figurait.
+- **« 36 millions d'établissements, 25 millions d'unités légales »** : chiffre
+  sous-estimé, jamais recalculé depuis sa première mesure. Compté aujourd'hui
+  par métadonnée Parquet une fois les fichiers réellement posés sur disque
+  (E06) : **43 896 818 établissements, 29 922 486 unités légales**, stock du
+  01/08/2026. Voir la section B ci-dessus pour la commande et le détail des 4
+  fichiers. Corrigé partout où l'ancien ordre de grandeur figurait.
 
 ### Chiffres non vérifiables aujourd'hui par cette méthode
 
-- **36 millions d'établissements Sirene** (et 25 M d'unités légales) : aucune
-  métadonnée de catalogue ne porte de compte de lignes — data.gouv indique
-  lui-même ne pas pouvoir analyser un fichier de cette taille. Confirmé
-  uniquement par le téléchargement complet effectué lors d'une vérification
-  antérieure. À revérifier en E06, où le fichier sera de toute façon lu par le
-  connecteur.
 - **Taille en octets des 8 CSV Parcoursup** : invérifiable par l'API de
   métadonnées (pas de `Content-Length`), hors périmètre de cette vérification
   du 26/08. **Mesurée depuis, en E05** (2026-08-28) une fois les fichiers
@@ -391,3 +461,7 @@ exécution du pipeline, pas de latence critique).
   ajouté le 16/12/2025, bascule complète prévue début janvier 2027 — fait
   nouveau qui touche directement à la réconciliation NAF↔ROME (E18) et devra
   être suivi dans le temps.
+- Sur `StockEtablissement` (43 896 818 lignes) : **16 715 258 établissements
+  actifs (38,1 %)**, dont **2 436 624 actifs ET employeurs (5,6 %)** — c'est ce
+  dernier sous-ensemble qui constitue un débouché réel au sens du projet.
+  Lecture de 2 colonnes sur 54 en **35,4 secondes** sur ce poste.

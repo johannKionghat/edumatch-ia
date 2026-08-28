@@ -15,6 +15,51 @@ Format :
 
 ---
 
+## 2026-08-28 — E06, connecteur Sirene et correction du chiffre d'établissements
+
+**Fait** : E06 validée — `ingestion/sirene.py` résout les 4 fichiers stock
+configurés en interrogeant le catalogue data.gouv à l'exécution (aucune URL de
+fichier codée en dur : les liens changent chaque mois, l'horodatage de
+publication fait partie du chemin), puis les télécharge avec les mêmes
+garanties que Parcoursup — idempotence par empreinte, écriture atomique,
+manifeste — sur les primitives partagées de `_flux.py`, enrichies d'un rappel
+de progression pour les transferts de plusieurs Go. Les deux connecteurs
+partagent désormais un vocabulaire d'erreur transitoire/définitif
+(`ErreurTransitoire`, `ErreurDefinitive` dans `_flux.py`), pour que le futur
+DAG retente ou alerte sans connaître la classe interne du connecteur en cause
+— Parcoursup a été rétrofité dans le même commit. Une vérification de la
+taille annoncée par le catalogue contre la taille réellement écrite journalise
+un avertissement au-delà d'un écart de 5 %, sans jamais bloquer la chaîne.
+Suite complète du dépôt à 80 tests passants. Résolution rejouée aujourd'hui
+contre le catalogue réel :
+les 4 URL obtenues correspondent exactement à celles du manifeste enregistré
+lors du téléchargement effectif, stock du 01/08/2026.
+
+Correction de chiffre : « 36 millions d'établissements, 25 millions d'unités
+légales », retenu depuis le début du projet, n'avait jamais été recalculé
+depuis sa première mesure. Une fois les 4 fichiers réellement téléchargés, la
+métadonnée Parquet donne **43 896 818 établissements, 29 922 486 unités
+légales** — le chiffre retenu était sous-estimé. Corrigé dans
+`01-donnees/sources.md`, `03-pipeline/ingestion.md`, l'ADR 0002,
+`ARCHITECTURE_EduMatch.md` et le dossier de certification (`_build_dossier.py`,
+régénéré). La correction renforce l'argument qui écarte Databricks au profit
+de PySpark local : le volume est plus élevé que ce qui était annoncé, pas
+moins. Nuance ajoutée : les filtres du projet ne retiennent que 2 436 624
+lignes sur 43 896 818 (5,6 %), mais c'est la lecture du fichier entier, pas le
+résultat filtré, qui dimensionne le traitement — et cette lecture (2 colonnes
+sur 54) prend 35,4 secondes sur un poste ordinaire, ce qui justifie un Spark
+local plutôt qu'un service managé pour le job réel (E17).
+
+**Décisions** : ADR 0005 — résolution dynamique de l'URL Sirene contre une URL
+en configuration. Coût assumé : une dépendance au catalogue au moment de
+l'exécution, à traiter comme une panne transitoire dans le futur DAG, pas
+comme une erreur de configuration. ADR 0006 — vocabulaire commun d'erreur
+transitoire/définitif entre les deux connecteurs.
+
+**Bloqué sur** : rien. Prochaine étape : E07, connecteur référentiels.
+
+**Jury** : aucune évaluation ce jour.
+
 ## 2026-08-28 — E05, connecteur Parcoursup
 
 **Fait** : E05 validée — `ingestion/parcoursup.py` télécharge les 8 millésimes
