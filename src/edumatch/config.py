@@ -1,0 +1,470 @@
+"""Configuration centralisée du projet, typée avec Pydantic.
+
+Aucun chemin ni seuil ne doit apparaître en dur ailleurs dans le code : tout
+paramètre métier vient de `configs/*.yaml`, tout secret vient de
+l'environnement.
+
+Précédence de résolution (du plus faible au plus fort) :
+
+    configs/base.yaml  <  configs/{env}.yaml  <  fichier .env  <  variable
+    d'environnement exportée par le shell ou l'orchestrateur
+
+`data/` fait partie du dépôt : par défaut, `EDUMATCH_DATA_ROOT` pointe donc
+vers `<dépôt>/data`, sauf `data/samples/` qui y reste toujours, quelle que
+soit cette variable. Les arbitrages détaillés — pourquoi Pydantic Settings,
+pourquoi cette précédence à trois couches, pourquoi `EDUMATCH_DATA_ROOT` est
+pilotable malgré ce défaut — sont dans
+`docs/sous-docs-projets/adr/0003-configuration-centralisee.md`.
+
+Seule exception assumée à « aucun chemin en dur » : le défaut de
+`_defaut_racine_donnees()`. Ce n'est pas un paramètre métier venant de
+`configs/*.yaml`, c'est le comportement du programme en l'absence de toute
+configuration — voir l'ADR.
+"""
+
+from __future__ import annotations
+
+import os
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal, get_args
+
+import yaml
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
+
+# Racine du dépôt : src/edumatch/config.py -> src/edumatch -> src -> edumatch-ia
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CONFIGS_DIR = PROJECT_ROOT / "configs"
+
+# Source de vérité unique pour les environnements valides : le type Literal
+# utilisé par Settings.env. ENVIRONNEMENTS_VALIDES en est dérivé, plutôt que
+# recopié, pour qu'ajouter un environnement ne demande qu'une modification.
+EnvironnementValide = Literal["dev", "staging", "prod"]
+ENVIRONNEMENTS_VALIDES: tuple[str, ...] = get_args(EnvironnementValide)
+
+
+class ConfigurationError(RuntimeError):
+    """Erreur de configuration explicite : un fichier, un champ, une raison.
+
+    Levée plutôt que de laisser une valeur par défaut masquer un problème.
+    """
+
+
+# ─── Modèles reflétant configs/base.yaml ────────────────────────────────────
+
+
+class _Strict(BaseModel):
+    """Base commune : rejette tout champ inconnu, interdit la mutation.
+
+    Un champ inconnu dans un YAML est presque toujours une faute de frappe ou
+    une clé oubliée après renommage. Le signaler au démarrage coûte moins cher
+    que de le découvrir en production.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class ProjetConfig(_Strict):
+    nom: str
+    version: str
+
+
+class ParcoursupConfig(_Strict):
+    millesimes: list[int] = Field(min_length=1)
+    effectif_minimal_cellule: int = Field(ge=1)
+
+
+class SireneFiltresConfig(_Strict):
+    etat_administratif: str
+    caractere_employeur: bool
+    diffusible: bool
+
+
+class SireneConfig(_Strict):
+    fichiers: list[str] = Field(min_length=1)
+    filtres: SireneFiltresConfig
+
+
+class DonneesConfig(_Strict):
+    parcoursup: ParcoursupConfig
+    sirene: SireneConfig
+    # Uniquement présent en dev, pour itérer sur un échantillon.
+    echantillonnage: float | None = Field(default=None, gt=0, le=1)
+
+
+class SplitConfig(_Strict):
+    entrainement: list[int] = Field(min_length=1)
+    validation: list[int] = Field(min_length=1)
+    test: list[int] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _millesimes_disjoints(self) -> "SplitConfig":
+        """Empêche la fuite de données : aucun millésime dans deux jeux à la fois.
+
+        Le split est temporel (invariant du projet) : entraînement, validation
+        et test doivent être des ensembles de millésimes disjoints, faute de
+        quoi une session serait apprise puis réutilisée pour l'évaluer.
+        """
+        ensembles = {
+            "entrainement": set(self.entrainement),
+            "validation": set(self.validation),
+            "test": set(self.test),
+        }
+        noms = list(ensembles)
+        for i, nom_a in enumerate(noms):
+            for nom_b in noms[i + 1 :]:
+                intersection = ensembles[nom_a] & ensembles[nom_b]
+                if intersection:
+                    raise ValueError(
+                        f"modele.split.{nom_a} et modele.split.{nom_b} partagent "
+                        f"le(s) millésime(s) {sorted(intersection)} : le split "
+                        "doit être temporel et strictement disjoint."
+                    )
+        if max(self.entrainement) >= min(self.validation):
+            raise ValueError(
+                "modele.split : le dernier millésime d'entraînement doit précéder "
+                "le premier millésime de validation."
+            )
+        if max(self.validation) >= min(self.test):
+            raise ValueError(
+                "modele.split : le dernier millésime de validation doit précéder "
+                "le premier millésime de test."
+            )
+        return self
+
+
+class HyperparametresConfig(_Strict):
+    num_leaves: int = Field(ge=2)
+    max_depth: int = Field(ge=1)
+    learning_rate: float = Field(gt=0, le=1)
+    min_child_samples: int = Field(ge=1)
+    reg_alpha: float = Field(ge=0)
+    reg_lambda: float = Field(ge=0)
+    n_estimators: int = Field(ge=1)
+    early_stopping_rounds: int = Field(ge=1)
+
+
+class ModeleConfig(_Strict):
+    type: str
+    objectif: str
+    ponderation: str
+    split: SplitConfig
+    hyperparametres: HyperparametresConfig
+
+
+class EvaluationConfig(_Strict):
+    metrique_principale: str
+    calibration: bool
+    courbe_apprentissage: list[float] = Field(min_length=1)
+    baseline: str
+
+
+class EquiteConfig(_Strict):
+    dimensions: list[str] = Field(min_length=1)
+    variables_interdites: list[str]
+    substituts_a_tester: list[str]
+    seuil_impact_disparate: float = Field(gt=0, le=1)
+
+
+class DeriveConfig(_Strict):
+    reference: str
+    tests: list[str] = Field(min_length=1)
+    seuil_reentrainement: float = Field(gt=0, lt=1)
+
+
+class AutoscalingConfig(_Strict):
+    min: int = Field(ge=1)
+    max: int = Field(ge=1)
+    cible_cpu_pourcent: int = Field(ge=1, le=100)
+
+    @model_validator(mode="after")
+    def _bornes_coherentes(self) -> "AutoscalingConfig":
+        if self.min > self.max:
+            raise ValueError("api.autoscaling.min doit être inférieur ou égal à api.autoscaling.max")
+        return self
+
+
+class ApiConfig(_Strict):
+    slo_latence_p95_ms: int = Field(gt=0)
+    # replicas et autoscaling n'existent qu'à partir de staging/prod.
+    replicas: int | None = Field(default=None, ge=1)
+    autoscaling: AutoscalingConfig | None = None
+
+
+class ExecutionConfig(_Strict):
+    moteur_volume: Literal["local", "cluster"]
+    niveau_journal: Literal["DEBUG", "INFO", "WARNING", "ERROR"]
+
+
+# ─── Fusion des fichiers YAML ────────────────────────────────────────────────
+
+
+def _deep_merge(base: dict, surcharge: dict) -> dict:
+    """Fusionne deux dictionnaires, `surcharge` l'emportant sur `base`.
+
+    Les sous-dictionnaires sont fusionnés récursivement clé par clé. Les
+    listes ne sont pas fusionnées : une liste dans `surcharge` remplace
+    entièrement celle de `base` (c'est le comportement attendu de
+    dev.yaml, qui réduit délibérément la liste des millésimes).
+    """
+    fusion = dict(base)
+    for cle, valeur in surcharge.items():
+        existante = fusion.get(cle)
+        if isinstance(existante, dict) and isinstance(valeur, dict):
+            fusion[cle] = _deep_merge(existante, valeur)
+        else:
+            fusion[cle] = valeur
+    return fusion
+
+
+def _charger_yaml(chemin: Path) -> dict:
+    if not chemin.exists():
+        raise ConfigurationError(
+            f"Fichier de configuration introuvable : {chemin}. "
+            "Vérifier configs/ ou la variable EDUMATCH_ENV."
+        )
+    try:
+        contenu = yaml.safe_load(chemin.read_text(encoding="utf-8"))
+    except yaml.YAMLError as erreur:
+        raise ConfigurationError(f"{chemin} : YAML malformé — {erreur}") from erreur
+    if contenu is None:
+        return {}
+    if not isinstance(contenu, dict):
+        raise ConfigurationError(
+            f"{chemin} : le document YAML racine doit être une table (clé: valeur), "
+            f"obtenu {type(contenu).__name__}."
+        )
+    return contenu
+
+
+def _fusionner_configuration(environnement: str, configs_dir: Path) -> dict:
+    """Charge base.yaml puis {environnement}.yaml et les fusionne.
+
+    Un seul niveau d'héritage est supporté : `{environnement}.yaml` doit
+    déclarer `herite_de: base.yaml`. C'est une vérification volontairement
+    stricte — une chaîne d'héritage plus longue rendrait la configuration
+    résolue difficile à auditer à l'œil.
+    """
+    if environnement not in ENVIRONNEMENTS_VALIDES:
+        raise ConfigurationError(
+            f"EDUMATCH_ENV={environnement!r} invalide. "
+            f"Valeurs acceptées : {', '.join(ENVIRONNEMENTS_VALIDES)}."
+        )
+
+    base = _charger_yaml(configs_dir / "base.yaml")
+    surcharge = _charger_yaml(configs_dir / f"{environnement}.yaml")
+
+    herite_de = surcharge.pop("herite_de", None)
+    if herite_de != "base.yaml":
+        raise ConfigurationError(
+            f"configs/{environnement}.yaml : le champ 'herite_de' vaut "
+            f"{herite_de!r}, attendu 'base.yaml'. Un seul niveau d'héritage "
+            "est pris en charge."
+        )
+
+    return _deep_merge(base, surcharge)
+
+
+# ─── Racine des données ──────────────────────────────────────────────────────
+
+
+def _defaut_racine_donnees() -> Path:
+    """Valeur par défaut de EDUMATCH_DATA_ROOT : le dossier data/ du dépôt.
+
+    Résolu depuis l'emplacement du paquet (`PROJECT_ROOT`), donc déjà
+    absolu et indépendant du répertoire courant au lancement — identique
+    sous Windows et sous Linux. C'est le comportement du poste de
+    développement ; le déploiement (Scaleway, conteneur, CI) surcharge cette
+    valeur via la variable d'environnement.
+    """
+    return PROJECT_ROOT / "data"
+
+
+# ─── Point d'entrée : Settings ───────────────────────────────────────────────
+
+
+class Settings(BaseSettings):
+    """Configuration résolue du projet : YAML fusionné, puis surchargé par l'environnement.
+
+    Ne pas instancier directement en dehors des tests : utiliser
+    `get_settings()`, qui met le résultat en cache pour tout le processus.
+    """
+
+    model_config = SettingsConfigDict(
+        env_prefix="EDUMATCH_",
+        env_nested_delimiter="__",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="forbid",
+        frozen=True,
+        validate_default=True,
+    )
+
+    # Sélection d'environnement et racine des données : pas de contrepartie
+    # YAML, uniquement pilotables par variable d'environnement.
+    env: EnvironnementValide = "dev"
+    data_root: Path = Field(default_factory=_defaut_racine_donnees)
+
+    @field_validator("data_root", mode="before")
+    @classmethod
+    def _rejeter_data_root_vide_ou_relatif(cls, valeur: object) -> object:
+        """Refuse une racine de données vide, blanche ou relative.
+
+        Seule et unique validation de `data_root`, quelle que soit sa
+        provenance (YAML fusionné, `.env`, variable d'environnement) : sans
+        elle, `Path("")` vaudrait '.', le répertoire courant, un emplacement
+        non maîtrisé selon le point de lancement. `load_settings()` traduit
+        la `ValidationError` levée ici en `ConfigurationError`, pour que
+        l'appelant reçoive le même type d'erreur qu'aux autres points de ce
+        module, indépendamment du canal par lequel la valeur est arrivée.
+        """
+        if valeur is None:
+            return valeur  # absent : le default_factory (data/ du dépôt) s'applique
+        texte = str(valeur).strip()
+        if not texte:
+            raise ValueError(
+                "data_root est vide ou ne contient que des espaces : "
+                "Path('') se résoudrait en le répertoire courant."
+            )
+        chemin = Path(texte)
+        if not chemin.is_absolute():
+            raise ValueError(f"data_root={texte!r} doit être un chemin absolu.")
+        return chemin
+
+    # Reflet typé de configs/*.yaml, fusionné en amont.
+    projet: ProjetConfig
+    donnees: DonneesConfig
+    modele: ModeleConfig
+    evaluation: EvaluationConfig
+    equite: EquiteConfig
+    derive: DeriveConfig
+    api: ApiConfig
+    execution: ExecutionConfig
+
+    # Secrets — uniquement lisibles depuis l'environnement, jamais du YAML.
+    # `validation_alias` court-circuite le préfixe EDUMATCH_ pour coller aux
+    # noms déjà en usage dans .env.example et docker-compose.yml.
+    postgres_host: str | None = Field(default=None, validation_alias="POSTGRES_HOST")
+    postgres_port: int | None = Field(default=None, validation_alias="POSTGRES_PORT")
+    postgres_db: str | None = Field(default=None, validation_alias="POSTGRES_DB")
+    postgres_user: str | None = Field(default=None, validation_alias="POSTGRES_USER")
+    postgres_password: SecretStr | None = Field(default=None, validation_alias="POSTGRES_PASSWORD")
+    mlflow_tracking_uri: str | None = Field(default=None, validation_alias="MLFLOW_TRACKING_URI")
+    mistral_api_key: SecretStr | None = Field(default=None, validation_alias="MISTRAL_API_KEY")
+    scw_access_key: str | None = Field(default=None, validation_alias="SCW_ACCESS_KEY")
+    scw_secret_key: SecretStr | None = Field(default=None, validation_alias="SCW_SECRET_KEY")
+    scw_default_project_id: str | None = Field(default=None, validation_alias="SCW_DEFAULT_PROJECT_ID")
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Ordonne les sources pour appliquer la précédence documentée en tête de module.
+
+        L'ordre du tuple va de la priorité la plus haute à la plus basse.
+        `init_settings` porte ici le YAML déjà fusionné (base < environnement),
+        transmis explicitement par `load_settings`. Le placer après
+        `env_settings` et `dotenv_settings` garantit qu'une variable
+        d'environnement, réelle ou issue d'un fichier .env, l'emporte
+        toujours sur le YAML.
+        """
+        return env_settings, dotenv_settings, init_settings, file_secret_settings
+
+    # ─── Chemins dérivés de data_root ────────────────────────────────────
+
+    @property
+    def raw_dir(self) -> Path:
+        """Données brutes, immuables — équivalent bronze."""
+        return self.data_root / "raw"
+
+    @property
+    def interim_dir(self) -> Path:
+        """Données nettoyées, réconciliées — équivalent silver."""
+        return self.data_root / "interim"
+
+    @property
+    def processed_dir(self) -> Path:
+        """Données prêtes pour la modélisation — équivalent gold."""
+        return self.data_root / "processed"
+
+    @property
+    def external_dir(self) -> Path:
+        """Référentiels tiers (ONISEP, RNCP, IDEO...)."""
+        return self.data_root / "external"
+
+    @property
+    def samples_dir(self) -> Path:
+        """Échantillons versionnés pour les tests — reste dans le dépôt, pas sous data_root."""
+        return PROJECT_ROOT / "data" / "samples"
+
+
+def load_settings(environnement: str | None = None, configs_dir: Path | None = None) -> Settings:
+    """Construit une instance de Settings pour l'environnement demandé.
+
+    Args:
+        environnement: `dev`, `staging` ou `prod`. À défaut, lu depuis la
+            variable d'environnement `EDUMATCH_ENV`, avec `dev` en repli
+            explicite (poste de développement sans configuration).
+        configs_dir: dossier contenant les YAML. Paramétrable pour les tests,
+            sinon `<racine du dépôt>/configs`.
+
+    Raises:
+        ConfigurationError: fichier manquant, héritage incorrect, YAML
+            malformé, nom d'environnement inconnu, EDUMATCH_DATA_ROOT vide,
+            blanche ou relative, ou argument explicite en contradiction avec
+            EDUMATCH_ENV.
+        pydantic.ValidationError: une valeur du YAML fusionné ou de
+            l'environnement ne respecte pas le schéma — le message pointe le
+            champ fautif et la raison.
+    """
+    env_variable = os.environ.get("EDUMATCH_ENV")
+    if environnement is not None and env_variable is not None and env_variable != environnement:
+        raise ConfigurationError(
+            f"load_settings({environnement!r}) contredit EDUMATCH_ENV={env_variable!r}. "
+            "Deux mécanismes choisiraient un environnement différent : le YAML chargé "
+            f"serait {environnement!r} mais Settings.env vaudrait {env_variable!r}, "
+            "puisqu'une variable d'environnement prime toujours sur le YAML. "
+            "Aligner les deux (ne garder que l'un des deux), plutôt que de laisser "
+            "l'objet résultant annoncer un environnement différent de son contenu."
+        )
+    env_resolu = environnement or env_variable or "dev"
+    dossier = configs_dir or CONFIGS_DIR
+    config_fusionnee = _fusionner_configuration(env_resolu, dossier)
+    config_fusionnee.setdefault("env", env_resolu)
+    try:
+        return Settings(**config_fusionnee)
+    except ValidationError as erreur:
+        erreurs_data_root = [e for e in erreur.errors() if e["loc"] and e["loc"][0] == "data_root"]
+        if not erreurs_data_root:
+            raise
+        detail = "; ".join(e["msg"] for e in erreurs_data_root)
+        raise ConfigurationError(
+            f"EDUMATCH_DATA_ROOT invalide (qu'elle vienne d'une variable "
+            f"d'environnement, d'un fichier .env ou du YAML) : {detail}"
+        ) from erreur
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Point d'entrée unique de la configuration, mis en cache pour le processus.
+
+    Le cache évite de relire et revalider les YAML à chaque appel — la
+    configuration ne change pas en cours d'exécution. `get_settings.cache_clear()`
+    permet de forcer un rechargement (utile en test, quand l'environnement
+    change entre deux cas).
+    """
+    return load_settings()

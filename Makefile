@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down data quality features train evaluate api test lint fmt docs clean
+.PHONY: help install up down config data quality features train evaluate api test lint fmt docs clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -16,6 +16,18 @@ up:  ## Démarre PostgreSQL, MLflow et Airflow
 
 down:  ## Arrête tout et supprime les volumes
 	docker compose down -v
+
+config:  ## Affiche la configuration résolue pour EDUMATCH_ENV (secrets masqués)
+	# SecretStr masque déjà ces champs par défaut dans son repr ; le pop()
+	# ci-dessous est une défense en profondeur explicite pour du JSON exporté
+	# tel quel (copié-collé, journal, ticket) — pas un doublon à retirer.
+	PYTHONPATH=src python -c "\
+import json; \
+from edumatch.config import get_settings; \
+s = get_settings(); \
+d = s.model_dump(mode='json'); \
+[d.pop(k, None) for k in ('postgres_password', 'mistral_api_key', 'scw_secret_key')]; \
+print(json.dumps(d, indent=2, ensure_ascii=False))"
 
 # ─── Données ────────────────────────────────────────────────────────
 data:  ## Régénère TOUTES les données dérivées depuis data/raw
