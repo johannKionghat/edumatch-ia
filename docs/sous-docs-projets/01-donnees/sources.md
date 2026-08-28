@@ -103,11 +103,13 @@ Parcoursup (candidatures de janvier à l'été), publié en fin de campagne
 (juillet à octobre selon les années, voir colonne « dernière modification »
 ci-dessus).
 
-**Volumétrie en octets** — non revérifiée aujourd'hui : l'export CSV est généré
-à la volée par l'API (`Content-Length` absent de la réponse, transfert
-« chunked »), donc invérifiable sans télécharger le fichier complet. L'ordre de
-grandeur « ~100 Mo pour les 8 fichiers », retenu jusqu'ici, est conservé sans
-être recalculé — c'est une approximation assumée, pas un chiffre d'audit.
+**Volumétrie en octets** — non vérifiable par l'API de métadonnées : l'export
+CSV est généré à la volée (`Content-Length` absent de la réponse, transfert
+« chunked »). Mesurée directement le **2026-08-28**, une fois les 8 millésimes
+réellement téléchargés par `ingestion/parcoursup.py` (E05) : **82 Mo** au total
+sur `data/raw/parcoursup/` (`du -sh data/raw/parcoursup/`). Ce chiffre remplace
+l'ordre de grandeur « ~100 Mo », qui n'avait jamais été mesuré faute de fichier
+posé sur disque.
 
 ---
 
@@ -368,10 +370,11 @@ exécution du pipeline, pas de latence critique).
   uniquement par le téléchargement complet effectué lors d'une vérification
   antérieure. À revérifier en E06, où le fichier sera de toute façon lu par le
   connecteur.
-- **Taille en octets des 8 CSV Parcoursup** (« ~100 Mo », retenu jusqu'ici) :
-  l'export CSV de l'API est généré à la volée, sans en-tête `Content-Length`.
-  Invérifiable sans téléchargement complet, hors périmètre de cette
-  vérification par API légère.
+- **Taille en octets des 8 CSV Parcoursup** : invérifiable par l'API de
+  métadonnées (pas de `Content-Length`), hors périmètre de cette vérification
+  du 26/08. **Mesurée depuis, en E05** (2026-08-28) une fois les fichiers
+  posés sur disque : **82 Mo**, contre « ~100 Mo » retenu jusque-là — voir la
+  section A ci-dessus et `avancement.md`.
 
 ### Chiffres nouveaux, établis aujourd'hui
 

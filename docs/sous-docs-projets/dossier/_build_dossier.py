@@ -259,8 +259,8 @@ table([
     ["Parcoursup, sessions 2018 à 2025 (MESR)",
      "Résultats d'admission par formation et par profil de candidat. Source du label du "
      "modèle appris.",
-     "104 274 formation-années, 118 colonnes, environ 100 Mo. 77 159 cellules exploitables "
-     "par millésime",
+     "104 274 formation-années, 118 colonnes (2025), 82 Mo mesurés sur les 8 CSV posés sur "
+     "disque. 77 159 cellules exploitables par millésime",
      "Licence Ouverte v2.0"],
     ["Base Sirene (INSEE)",
      "Tissu économique : activité, commune, effectifs, créations et cessations depuis 1973. "
@@ -472,7 +472,7 @@ para("Le nettoyage de la chaîne Sirene mérite une précision, car il condition
      "à des agrégats de quelques centaines de milliers de lignes, inspectables et testables.")
 
 encadre("Justification du choix : traitement distribué sur la couche de volume seulement", [
-    "Quelques dizaines de milliers de formations, soit environ 100 Mo, ne justifient en aucun "
+    "Quelques dizaines de milliers de formations, soit 82 Mo mesurés sur disque, ne justifient en aucun "
     "cas un cluster distribué. Employer Spark sur cette chaîne "
     "serait un surdimensionnement, pénalisable au titre des critères d'arbitrage, de FinOps et de "
     "GreenOps. La chaîne de décision est donc traitée en mono-nœud avec Polars et dbt.",

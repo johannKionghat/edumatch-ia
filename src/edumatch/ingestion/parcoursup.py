@@ -11,7 +11,8 @@ de données :
 
 - **Idempotence** : rejouer le téléchargement d'un millésime déjà présent et
   intact ne retélécharge rien. C'est ce qui permet de relancer la chaîne
-  après un incident sans dupliquer ni retélécharger inutilement 100 Mo.
+  après un incident sans dupliquer ni retélécharger inutilement les 82 Mo
+  des huit millésimes.
 - **Écriture atomique** : chaque fichier est écrit sous un nom temporaire
   (`.part`) puis renommé vers son nom définitif seulement une fois le
   téléchargement terminé avec succès. Une interruption au milieu du transfert

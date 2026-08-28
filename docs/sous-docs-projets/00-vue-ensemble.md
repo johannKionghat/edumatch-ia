@@ -22,14 +22,15 @@ Multiplicatif : si un terme s'annule, la recommandation disparaît.
 
 ## État d'avancement
 
-**L'architecture est en place ; aucun code métier n'est encore écrit.** Le dépôt
-part d'une base propre, sans reprise de l'ancien MVP.
+**L'architecture est en place, la configuration est centralisée et le premier
+connecteur d'ingestion (Parcoursup) fonctionne.** Le dépôt part d'une base
+propre, sans reprise de l'ancien MVP.
 
 | Bloc | Avancement |
 |---|---|
 | 1 — Gouvernance | à démarrer |
-| 2 — Architecture | structure et outillage posés, infrastructure à construire |
-| 3 — Pipeline | à démarrer |
+| 2 — Architecture | structure, outillage et configuration posés, infrastructure à construire |
+| 3 — Pipeline | connecteur Parcoursup opérationnel (8 millésimes, idempotent) |
 | 4 — Déploiement | à démarrer |
 
 Le détail de ce qui reste est dans [`reste-a-faire.md`](reste-a-faire.md).
@@ -65,4 +66,4 @@ fur et à mesure que les modules correspondants seront écrits.
 | `jury/` | Les évaluations successives du jury |
 
 ---
-*Mise à jour : à la création du dossier de documentation.*
+*Mise à jour : 2026-08-28, commit `144ee20`.*

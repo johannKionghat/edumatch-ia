@@ -15,6 +15,41 @@ Format :
 
 ---
 
+## 2026-08-28 — E05, connecteur Parcoursup
+
+**Fait** : E05 validée — `ingestion/parcoursup.py` télécharge les 8 millésimes
+déclarés en configuration, avec idempotence par empreinte SHA-256 et écriture
+atomique. Les primitives communes (flux HTTP, empreinte, écriture atomique,
+manifeste) sont extraites dans `_flux.py`, avant que Sirene et les
+référentiels ne les dupliquent. Suite complète du dépôt à 44 tests passants.
+Volumétrie et schéma mesurés directement sur les 8 CSV posés sur disque :
+104 274 formation-années au total, dérive de schéma confirmée (85 colonnes en
+2018, jusqu'à 118 à partir de 2021), idempotence rejouée sur l'API réelle (les
+8 millésimes renvoient `telecharge=False` au second passage).
+
+Correction de chiffre : le poids des 8 CSV Parcoursup, jamais mesuré (l'export
+de l'API ne porte pas de `Content-Length`), était estimé « ~100 Mo » dans la
+documentation et mes notes de cadrage. Mesure directe une fois les fichiers
+téléchargés : **82 Mo** (`du -sh data/raw/parcoursup/`). Corrigé dans
+`01-donnees/sources.md`, `03-pipeline/ingestion.md`, l'ADR 0002 et le dossier
+de certification (`_build_dossier.py`, régénéré). Le raisonnement qui appuie
+le choix de ne pas distribuer la chaîne de décision (Polars/dbt plutôt que
+Spark) s'en trouve renforcé, pas affaibli.
+
+**Décisions** : ADR 0004 — extraction des primitives partagées avant la
+deuxième occurrence plutôt qu'après trois duplications ; mise en quarantaine
+d'un manifeste corrompu plutôt qu'écrasement silencieux.
+
+**Corrigé** : un signalement de revue de code annonçait une perte d'entrées du
+manifeste en fonctionnement normal. Reproduit avant correction : le risque
+n'existait qu'en cas de manifeste déjà corrompu, pas en marche normale — déjà
+couvert par la décision de quarantaine. Aucun correctif supplémentaire
+nécessaire.
+
+**Bloqué sur** : rien. Prochaine étape : E06, connecteur Sirene.
+
+**Jury** : aucune évaluation ce jour.
+
 ## 2026-08-28 — E04, configuration centralisée
 
 Écrit `src/edumatch/config.py` : modèles typés, validation au démarrage,

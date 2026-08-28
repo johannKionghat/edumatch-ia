@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 4 / 46 étapes validées.**
+**État : 5 / 46 étapes validées.**
 
 ---
 
@@ -49,7 +49,7 @@ de tests **et** de contenu.
 |---|---|---|---|---|
 | E03 | Vérification des sources sur data.gouv | ✅ validée | 2026-08-26 | `17a3228` |
 | E04 | Configuration centralisée `config.py` | ✅ validée | 2026-08-28 | `c0726b0` |
-| E05 | Connecteur Parcoursup | ⬜ | | |
+| E05 | Connecteur Parcoursup | ✅ validée | 2026-08-28 | `144ee20` |
 | E06 | Connecteur Sirene | ⬜ | | |
 | E07 | Connecteur référentiels | ⬜ | | |
 | E08 | Échantillons versionnés | ⬜ | | |
@@ -110,6 +110,45 @@ cadrage.
 dans le dépôt, ignoré par Git ; `EDUMATCH_DATA_ROOT` existe pour le déploiement
 — hébergement distant, conteneur, intégration continue — pas pour contourner le
 poste de développement.
+
+**E05 — ce qui a été vérifié**
+- `src/edumatch/ingestion/parcoursup.py` (221 lignes) télécharge les 8
+  millésimes déclarés dans `configs/base.yaml` vers `data/raw/parcoursup/`. Les
+  primitives communes à tout connecteur (flux HTTP, empreinte SHA-256,
+  écriture atomique, manifeste) sont extraites dans `_flux.py` (220 lignes),
+  avant l'écriture du connecteur Sirene — pas après une première duplication
+- Suite de tests, paquet non installé, sans `PYTHONPATH` positionné dans
+  l'environnement : `python -m pytest -q` → **44 passed**
+- Volumétrie réelle des 8 CSV posés sur `data/raw/parcoursup/` : `du -sh
+  data/raw/parcoursup/` → **82 Mo**. Comptage ligne à ligne par millésime,
+  conforme à `01-donnees/sources.md` : 104 274 formation-années au total
+  (2018 : 10 697 · 2019 : 11 577 · 2020 : 12 760 · 2021 : 13 396 · 2022 :
+  13 644 · 2023 : 13 869 · 2024 : 14 079 · 2025 : 14 252)
+- Colonnes mesurées sur les fichiers réellement posés sur disque (pas sur la
+  seule métadonnée du catalogue) : 85 en 2018, 92 en 2019, 115 en 2020, 118 de
+  2021 à 2025 — dérive de schéma confirmée, cohérente avec E03
+- Idempotence rejouée sur l'API réelle, config `prod` (8 millésimes) : les 8
+  fichiers déjà présents renvoient `telecharge=False` au second passage, sans
+  requête HTTP de téléchargement
+- Écriture atomique : le fichier apparaît sous son nom définitif seulement une
+  fois complet (`.part` renommé par `os.replace`, atomique y compris sous
+  Windows où `Path.rename` échoue si la cible existe déjà)
+
+**E05 — correction de chiffre propagée**
+La documentation et mes notes de cadrage donnaient « ~100 Mo » pour le poids
+des 8 CSV Parcoursup — un ordre de grandeur jamais mesuré, faute de fichier
+posé sur disque (l'export de l'API est généré à la volée, sans en-tête
+`Content-Length`, voir `01-donnees/sources.md`). Une fois les 8 fichiers
+réellement téléchargés, la mesure directe donne **82 Mo**
+(`du -sh data/raw/parcoursup/`, 2026-08-28). Je corrige la valeur partout où
+elle figurait dans le dépôt. Le raisonnement qui s'appuyait dessus n'est pas
+affaibli : le seuil de bascule vers Spark oppose un catalogue Parcoursup petit
+(82 Mo, un seul nœud, Polars/dbt) à Sirene (36 M de lignes, PySpark) — un écart
+encore plus net avec 82 Mo qu'avec 100 Mo.
+
+**E05 — décision prise** : aucun ADR nouveau sur le fond du connecteur — l'ADR
+0002 (pas de Databricks) est mis à jour avec le chiffre corrigé. Deux choix
+structurants de ce commit ont justifié un ADR séparé : voir ADR 0004.
 
 ## Phase 2 — Analyse exploratoire
 

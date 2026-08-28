@@ -22,6 +22,9 @@ Feuille de route vivante. Je la tiens à jour au fil du projet et des
 | ADR 0001 — ELT plutôt qu'ETL | ✅ |
 | Dépôts distants `edumatch-ia` et `edumatch-cicd`, contenu audité | ✅ |
 | Note de vérification des sources (`01-donnees/sources.md`) et script associé | ✅ |
+| `config.py` — configuration centralisée typée, validée au démarrage | ✅ |
+| `ingestion/parcoursup.py` — connecteur des 8 millésimes, idempotent | ✅ |
+| `ingestion/_flux.py` — primitives partagées (flux, empreinte, écriture atomique, manifeste) | ✅ |
 
 **Reste sur l'infrastructure** : protection de branche `main` — indisponible
 sur dépôt privé en offre gratuite, compensée par le gate de vérification.
@@ -61,7 +64,10 @@ posées.*
 
 ## Bloc 3 — Pipelines
 
-- [ ] `ingestion/parcoursup.py` — 8 millésimes, idempotent, écriture atomique
+- [x] `ingestion/parcoursup.py` — 8 millésimes, idempotent, écriture atomique
+- [ ] Détail mineur : le docstring de `parcoursup.py` cite encore « 100 Mo » à
+      titre d'exemple (pas un chiffre affirmé comme mesuré) ; à aligner sur les
+      82 Mo mesurés en E05 à la prochaine modification de ce fichier
 - [ ] `ingestion/sirene.py` — catalogue mensuel, Parquet
 - [ ] `ingestion/referentiels.py` — ONISEP, RNCP, IDEO
 - [ ] `quality/expectations/` — schéma, complétude, cohérence, fraîcheur, **bloquantes**

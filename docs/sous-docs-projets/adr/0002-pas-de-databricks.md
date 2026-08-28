@@ -9,7 +9,10 @@ Le projet ne comporte **qu'un seul traitement distribué** : l'agrégation Siren
 fichiers retenus) et porte 54 colonnes dont 9 utiles — les 45 autres ne sont jamais
 chargées, par projection colonnaire. Le job tourne mensuellement en quelques minutes et
 sort des agrégats commune × NAF de quelques dizaines de Mo. Parcoursup (104 274
-formation-années, ~100 Mo) reste en Polars et dbt sur un seul nœud.
+formation-années, **82 Mo mesurés sur disque le 28/08/2026** — `du -sh
+data/raw/parcoursup/`, corrigé depuis l'estimation « ~100 Mo » retenue avant
+que les 8 fichiers ne soient réellement téléchargés) reste en Polars et dbt sur
+un seul nœud.
 
 ## Options envisagées
 
