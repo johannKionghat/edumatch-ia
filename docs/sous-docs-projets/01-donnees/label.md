@@ -35,8 +35,17 @@ cellule « bac général », 83,6 % seulement une cellule « bac professionnel
 boursier ». Les six cellules ne couvrent donc pas la même population, et une
 comparaison directe entre elles demande de la prudence.
 
-**77 159 cellules par millésime, entre 560 000 et 625 000 sur les huit
-sessions.**
+**77 159 cellules pour la session 2025.**
+
+⚠️ **Correction (E12, `notebooks/04-jgk-eda-stabilite-millesimes.ipynb`)** :
+le numérateur `prop_tot_*` n'est ventilé par type de baccalauréat qu'à partir
+de la session 2020. Le label tel que défini ci-dessus n'est donc calculable
+que sur **six sessions (2020-2025), pas huit** — 2018 et 2019 n'ont pas de
+cible exploitable. Le total exploitable est de **440 030 cellules**
+(67 768 · 71 080 · 72 784 · 74 831 · 76 408 · 77 159 selon la session), et non
+560 000 à 625 000 comme annoncé en supposant huit sessions utilisables. Détail
+et conséquences pour le split d'entraînement : `04-modele/evaluation.md` et
+l'ADR 0012.
 
 ## Les deux alternatives écartées, et pourquoi
 
@@ -119,11 +128,42 @@ Détaillées avec leurs conséquences dans l'ADR 0009 :
    chaque cellule à poids égal.
 4. Ne pas exclure les petites cellules par un seuil d'effectif minimal.
 
+## La cible n'est pas stationnaire dans le temps (E12)
+
+Deux définitions de la difficulté d'admission divergent d'une session à
+l'autre : le taux agrégé toutes cellules confondues **baisse** de 40,5 % à
+36,7 % entre 2020 et 2025, pendant que la **moyenne des taux par formation**
+— la cible réellement apprise par le modèle — **monte** de 0,491 à 0,522
+(avec un pic à 0,534 en 2024). L'explication tient au catalogue lui-même : il
+passe de 12 760 à 14 252 formations sur la période, et les formations
+nouvelles sont en moyenne plus petites et moins tendues, ce qui tire la
+moyenne par formation vers le haut sans que chaque formation individuelle ne
+devienne plus accessible. Un dispositif de surveillance de dérive qui
+suivrait le seul taux agrégé conclurait à l'inverse de la réalité vécue par
+un candidat regardant une formation donnée.
+
+Deux ruptures de série, distinctes de la cible elle-même :
+
+- **2020** : la part de mentions très bien passe de 7,4 % à 11,8 % (barème
+  d'examen modifié), le retour à la normale est lent (encore 29,8 % de
+  sans-mention en 2021). Les variables construites à partir des mentions
+  sont contaminées sur 2020 et 2021, la cible ne l'est pas.
+- **2019 puis 2025** : la part de vœux boursiers passe de 12,5 % à 13,8 %
+  puis à 16,3 % en 2020, stable quatre ans, avant de retomber à 13,8 % en
+  2025. Le statut de boursier étant une dimension des cellules de label, les
+  cellules `_brs` du jeu de test 2025 ne décrivent pas tout à fait la même
+  population que celles de l'entraînement.
+
+Conséquence pour le protocole d'évaluation, détaillée dans
+`04-modele/evaluation.md` et l'ADR 0012 : entraînement 2020-2023, validation
+2024, test 2025 — avec trois réserves écrites avant tout résultat.
+
 ## Ce que cela implique pour l'évaluation du modèle
 
 Détaillé dans `04-modele/evaluation.md` : une cible bornée avec masses aux
 extrêmes appelle une erreur absolue moyenne pondérée plutôt qu'une erreur
-quadratique, et une vérification explicite de la calibration aux bornes.
+quadratique, une vérification explicite de la calibration aux bornes, et un
+protocole temporel qui tient compte des deux ruptures ci-dessus.
 
 ---
-*Mise à jour : 2026-08-29, commit `7bcd5ef`.*
+*Mise à jour : 2026-08-29, commit `be2787c`.*

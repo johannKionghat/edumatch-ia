@@ -15,6 +15,123 @@ Format :
 
 ---
 
+## 2026-08-29 — E12, stabilité inter-millésimes et révision du protocole d'évaluation
+
+**Fait** : E12 validée — `notebooks/04-jgk-eda-stabilite-millesimes.ipynb`
+(18 cellules dont 11 de commentaire, 2 figures exportées). Clôture la phase
+exploratoire. Constat central : le numérateur du label ventilé par type de
+baccalauréat n'existe qu'à partir de la session 2020 — le label n'est
+calculable que sur six sessions, pas huit. Volumétrie corrigée : **440 030
+cellules exploitables** sur 2020-2025 (67 768 · 71 080 · 72 784 · 74 831 ·
+76 408 · 77 159), contre 560 000 à 625 000 annoncées en supposant huit
+sessions utilisables.
+
+La cible n'est pas stationnaire, et deux définitions divergent : le taux
+agrégé baisse de 40,5 % à 36,7 % entre 2020 et 2025, pendant que la moyenne
+des taux par formation — la cible réellement apprise — monte de 0,491 à
+0,522, le catalogue s'élargissant de formations plus petites et moins
+tendues. Deux ruptures de série identifiées, sur les mentions (2020) et sur
+la part de vœux boursiers (2019-2020 puis 2025), toutes deux documentées
+sans écarter la session 2020 : l'anomalie porte sur des variables
+candidates, pas sur le label lui-même.
+
+**Corrigé** : la volumétrie du label (440 030 cellules sur six sessions,
+et non 560 000 à 625 000 sur huit) dans `01-donnees/label.md`,
+`01-donnees/sources.md` et `04-modele/evaluation.md`.
+
+**Décisions** : ADR 0012 — protocole d'évaluation révisé : entraînement
+2020-2023 (286 463 cellules), validation 2024, test 2025, avec trois
+réserves écrites avant tout résultat (mentions contaminées 2020-2021,
+métriques ventilées par statut boursier, dégradation possible entre
+validation et test imputable à la non-stationnarité de la cible avant
+d'être imputable au modèle). Alternative écartée : construire un label dès
+2018 à partir de `acc_bg` — mesurerait l'acceptation, pas l'admission, et
+produirait un label composite incohérent avec lui-même selon la session.
+
+**Bloqué sur** : rien. Prochaine étape : E13, décision de variables (ADR),
+qui synthétise E10, E11 et E12.
+
+**Jury** : aucune évaluation ce jour.
+
+---
+
+## 2026-08-29 — E11, équité et substituts du genre
+
+**Fait** : E11 validée — `notebooks/03-jgk-eda-equite-substituts.ipynb`
+(17 cellules dont 9 de commentaire, 3 figures exportées). À formation égale,
+l'écart d'admission entre femmes et hommes est proche de nul : médiane à
+−0,04 point sur 11 099 formations comparables, inférieur à 5 points dans
+83,8 % des cas. L'inégalité observée dans le système d'orientation se joue
+donc en amont, dans le choix des formations, pas à l'admission.
+
+Substituts du genre mesurés par information mutuelle, corrigée du nombre de
+modalités par permutation (5 tirages, graine 42) : `cod_uai` 28,9 % net ·
+`fili` (filière) 19,5 % · `ville_etab` 10,2 % · `select_form` 5,6 % · `dep`
+2,3 % · `acad_mies` (académie) 1,4 %. **L'hypothèse de départ est
+infirmée** : l'académie, désignée comme substitut à surveiller, arrive
+dernière ; le deuxième substitut le plus puissant est la filière, variable
+indispensable qu'on ne peut pas retirer du modèle. L'exclusion du genre à
+l'entrée est donc nécessaire mais insuffisante — dispositif retenu à trois
+niveaux : exclusion, mesure des substituts, audit a posteriori sur les
+prédictions (E26).
+
+**Corrigé** : 179 formations n'admettant aucun candidat faussaient à 0 % un
+ratio de féminisation sans rapport avec la réalité d'un processus
+d'admission qui n'a pas eu lieu — un pourcentage se lit avec son
+dénominateur. Le constat de formations à moins de 20 % de femmes passe de
+2 954 à **2 775 (19,7 %)**, dénominateur non nul. Deuxième correction :
+sans la correction de cardinalité par permutation, `cod_uai` aurait été
+crédité d'un pouvoir explicatif deux fois trop grand — une variable à haute
+cardinalité capte mécaniquement de l'information mutuelle avec n'importe
+quelle cible.
+
+**Décisions** : ADR 0011 — dispositif d'équité à trois niveaux (exclusion,
+mesure des substituts, audit a posteriori), la filière étant conservée
+comme variable malgré sa corrélation résiduelle au genre, faute
+d'alternative qui ne détruirait pas la capacité prédictive du modèle.
+
+**Bloqué sur** : rien. Prochaine étape : E12, stabilité inter-millésimes.
+
+**Jury** : aucune évaluation ce jour.
+
+---
+
+## 2026-08-29 — E10, écarts entre baccalauréats et sélectivité
+
+**Fait** : E10 validée — `notebooks/02-jgk-eda-ecarts-selectivite.ipynb`
+(18 cellules dont 10 de commentaire, 3 figures exportées). Comparaison
+appariée (la même formation avec elle-même) sur les 12 552 formations
+recevant des vœux des deux profils de bac : écart médian de +8,5 points en
+faveur du bac général, mais 26,8 % des formations avantagent le bac
+professionnel — il n'existe pas un désavantage uniforme, mais une forte
+hétérogénéité selon la filière. CPGE, BUT et PASS affichent une médiane de
+taux nulle pour le bac professionnel : dans plus de la moitié de ces
+formations, un candidat de cette voie ne reçoit aucune proposition. La
+tension (`voe_tot / capa_fin`) explique fortement le taux observé, de 1,000
+à 0,182 du quintile le moins tendu au plus tendu.
+
+**Corrigé (constat, pas un chiffre déjà publié)** : `voe_tot` n'est pas
+utilisable comme variable du modèle malgré son fort pouvoir explicatif —
+elle n'existe qu'à la clôture de la campagne, après le moment où le système
+doit répondre à un candidat qui formule encore son vœu. Ce n'est pas une
+fuite temporelle au sens strict, mais une inadéquation entre la
+disponibilité de la variable et le moment de l'inférence. Décalage temporel
+identifié en compensation : `cod_aff_form`, absente avant 2020, se
+reconstruit à 92,4 % (2018) et 94,6 % (2019) à partir du paramètre `g_ta_cod`
+du lien vers la fiche de formation, avec un taux de jointure d'une session à
+la suivante de 82 % à 95 %.
+
+**Décisions** : ADR 0010 — exclusion de `voe_tot` de la session courante des
+variables du modèle, seule une version décalée d'au moins une session étant
+éligible ; reconstruction de la clé de formation pour 2018-2019, avec test
+de couverture à chaque exécution du pipeline.
+
+**Bloqué sur** : rien. Prochaine étape : E11, équité et substituts du genre.
+
+**Jury** : aucune évaluation ce jour.
+
+---
+
 ## 2026-08-29 — E09, analyse exploratoire du label
 
 **Fait** : E09 validée — `notebooks/01-jgk-eda-label.ipynb` (34 cellules, dont

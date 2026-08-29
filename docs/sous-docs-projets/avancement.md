@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 9 / 46 étapes validées.**
+**État : 12 / 46 étapes validées.**
 
 ---
 
@@ -363,9 +363,9 @@ l'échantillon.
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
 | E09 | EDA — label et distributions | ✅ validée | 2026-08-29 | `7bcd5ef` |
-| E10 | EDA — écarts et sélectivité | ⬜ | | |
-| E11 | EDA — équité et substituts | ⬜ | | |
-| E12 | EDA — stabilité inter-millésimes | ⬜ | | |
+| E10 | EDA — écarts et sélectivité | ✅ validée | 2026-08-29 | `4f4bdc9` |
+| E11 | EDA — équité et substituts | ✅ validée | 2026-08-29 | `cbf9be2` |
+| E12 | EDA — stabilité inter-millésimes | ✅ validée | 2026-08-29 | `be2787c` |
 | E13 | Décision de variables (ADR) | ⬜ | | |
 
 **E09 — ce qui a été vérifié**
@@ -414,6 +414,128 @@ l'alternative `acc / nb_voe_pp` ne dépasse jamais 1 mais mesurerait
 l'acceptation), borner à 1 en énonçant pourquoi, pondérer par l'effectif de la
 cellule à l'entraînement, ne pas exclure les petites cellules (un seuil à
 30 vœux écarterait 26 % des observations).
+
+**E10 — ce qui a été vérifié**
+- `notebooks/02-jgk-eda-ecarts-selectivite.ipynb` (18 cellules dont 10 de
+  commentaire), 3 figures exportées dans `reports/figures/`
+- Comparaison **appariée** : la même formation observée avec elle-même, sur
+  les 12 552 formations recevant des vœux des deux profils de bac. Comparer
+  deux moyennes globales aurait mélangé la sélectivité propre des formations
+  et le choix d'orientation des candidats — un biais de composition, pas une
+  mesure d'écart
+- Écart médian **+8,5 points** en faveur du bac général, mais 63,9 % des
+  formations avantagent le bac général et **26,8 % avantagent le bac
+  professionnel** ; un tiers présentent un écart supérieur à 20 points. Il
+  n'existe donc pas un désavantage uniforme, mais une forte hétérogénéité
+- Écart médian par filière : BTS +1,1 point (quasi neutre, 5 231 formations)
+  · Licence +7,4 · École de Commerce +9,2 · EFTS +12,0 · PASS +14,9 ·
+  Licence-LAS +18,8 · BUT +25,7 · IFSI +33,2 · CPGE +42,3. **CPGE, BUT et
+  PASS affichent une médiane de taux NULLE pour le bac professionnel** :
+  dans plus de la moitié de ces formations, un candidat de cette voie ne
+  reçoit aucune proposition
+- La tension (`voe_tot / capa_fin`) explique fortement le taux observé : de
+  1,000 à 0,182 du quintile le moins tendu au plus tendu, médiane à 11,4
+  vœux par place
+
+**E10 — fuite fonctionnelle identifiée, à traiter avant E20**
+`voe_tot` n'existe pas au moment où un lycéen formule ses vœux : ce n'est pas
+une fuite temporelle au sens strict — la variable précède chronologiquement
+la décision d'admission — mais une inadéquation au cas d'usage, la variable
+n'étant disponible qu'après le moment où le système doit répondre. Un modèle
+qui l'utiliserait serait excellent en évaluation et inutilisable en
+production. Décalage temporel praticable identifié : `cod_aff_form` est
+absente avant 2020, mais l'identifiant est encodé dans le paramètre
+`g_ta_cod` du lien vers la fiche de formation — vérifié par coïncidence
+exacte sur les millésimes où les deux coexistent. Reconstruite, la clé
+couvre 92,4 % des lignes en 2018 et 94,6 % en 2019, avec un taux de jointure
+d'une session à la suivante de 82 % à 95 %.
+
+**E10 — décision prise** : aucun ADR séparé — la fuite fonctionnelle et le
+décalage temporel sont actés dans l'ADR 0010, avec E11 et E12 (voir plus bas).
+
+**E11 — ce qui a été vérifié**
+- `notebooks/03-jgk-eda-equite-substituts.ipynb` (17 cellules dont 9 de
+  commentaire), 3 figures exportées
+- **Correction de chiffre** : 179 formations n'admettent aucun candidat, et
+  leur `pct_f` vaut mécaniquement 0 %. Les compter portait le constat de
+  2 775 à 2 954 formations à moins de 20 % de femmes. Le chiffre juste,
+  dénominateur non nul, est **2 775 (19,7 %)**
+- Féminisation polarisée : 19,7 % sous 20 % de femmes, 17,9 % au-dessus de
+  80 %, 21,5 % seulement entre 40 et 60 %. Part globale de femmes admises :
+  56,3 %
+- **À formation égale**, sur 11 099 formations avec au moins 30 vœux de
+  chaque sexe : écart médian **−0,04 point**, inférieur à 5 points dans
+  **83,8 %** des cas, femmes avantagées dans 48,8 % des cas contre 50,8 %
+  pour les hommes. L'inégalité se joue en amont du choix, pas à l'admission
+  — réserve de méthode : le fichier ne ventile les propositions par sexe que
+  pour les admis, pas pour l'ensemble des vœux, la comparaison porte donc
+  sur une quantité différente de celle du label
+- Substituts du genre mesurés par information mutuelle, **corrigée du
+  nombre de modalités par permutation** (5 tirages, graine 42) : `cod_uai`
+  observé 57,5 % / hasard 28,5 % / net **28,9 %** · `fili` 19,6 % / 0,1 % /
+  **19,5 %** · `ville_etab` 19,1 % / 8,9 % / **10,2 %** · `select_form`
+  5,6 % / 0,0 % / **5,6 %** · `dep` 3,1 % / 0,8 % / **2,3 %** · `acad_mies`
+  1,6 % / 0,2 % / **1,4 %**
+
+**E11 — deux conséquences majeures**
+Sans la correction de cardinalité, `cod_uai` aurait été crédité d'un pouvoir
+explicatif deux fois trop grand. Et surtout : **l'hypothèse de départ est
+infirmée** — l'académie, désignée jusqu'ici comme substitut à surveiller,
+n'explique que 1,4 % ; le deuxième substitut le plus puissant est la
+**filière**, variable indispensable au système qu'on ne peut pas retirer. Le
+modèle reconstituera donc partiellement le genre quoi qu'il arrive :
+l'exclusion de la variable de genre est nécessaire mais insuffisante.
+Dispositif retenu à trois niveaux : exclusion du genre à l'entrée, mesure
+des substituts (ce carnet), audit d'équité a posteriori sur les prédictions
+(E26). Détaillé dans `04-modele/equite.md`.
+
+**E11 — décision prise** : actée dans l'ADR 0011, avec le dispositif à trois
+niveaux.
+
+**E12 — ce qui a été vérifié**
+- `notebooks/04-jgk-eda-stabilite-millesimes.ipynb` (18 cellules dont 11 de
+  commentaire), 2 figures exportées. Clôture la phase exploratoire
+- **Le numérateur `prop_tot_*` ventilé par type de baccalauréat n'existe
+  qu'à partir de 2020.** Le label n'est calculable que sur **six sessions**
+  (2020-2025), pas huit. La répartition déclarée jusqu'ici (entraînement
+  2018-2023) plaçait deux sessions sans cible dans le jeu d'entraînement
+- **Volumétrie corrigée : 440 030 cellules exploitables** sur 2020-2025
+  (67 768 · 71 080 · 72 784 · 74 831 · 76 408 · 77 159), contre 560 000 à
+  625 000 annoncées en supposant huit sessions utilisables. Le chiffre de
+  77 159 cellules pour 2025 seul reste confirmé
+- Alternative écartée : construire un label dès 2018 à partir de `acc_bg`,
+  présent sur toute la période. `acc` compte les inscrits, pas les
+  propositions — ce serait une autre cible, et un label composite selon la
+  session serait incohérent avec lui-même
+- **La cible n'est pas stationnaire, et les deux définitions divergent** :
+  taux agrégé 40,5 % → 36,7 % de 2020 à 2025, pendant que la moyenne par
+  formation monte de 0,491 à 0,522 (pic à 0,534 en 2024). Explication : le
+  catalogue passe de 12 760 à 14 252 formations, les nouvelles étant plus
+  petites et moins tendues. Un dispositif de surveillance suivant une seule
+  définition conclurait à l'inverse de la réalité
+- **Rupture 2020, contrôle continu** : mentions très bien 7,4 % → 11,8 %,
+  sans-mention 43,4 % → 29,8 %. Retour lent (2021 encore à 29,8 %), niveau
+  d'avant jamais retrouvé. Les variables de mention sont contaminées pour
+  2020 et 2021
+- **Rupture boursiers, en 2019 puis en 2025** : part de vœux boursiers
+  12,5 % → 13,8 % → 16,3 % en 2020, stable quatre ans, puis rechute à
+  13,8 % en 2025. Le statut de boursier étant une dimension des cellules de
+  label, les cellules `_brs` du jeu de test ne décrivent pas la même
+  population que celles de l'entraînement
+- La session 2020 est **conservée** : l'anomalie porte sur les mentions, pas
+  sur la cible — tension médiane 11,8 alignée sur les autres sessions,
+  masses aux bornes dans la norme. L'écarter aurait coûté un quart de
+  l'entraînement sans fondement mesuré
+
+**E12 — protocole d'évaluation révisé**
+Entraînement 2020-2023, validation 2024, test 2025 — trois réserves écrites
+avant tout résultat : mentions écartées ou signalées pour 2020-2021,
+métriques ventilées par statut de boursier, dégradation attendue entre
+validation et test à ne pas imputer d'emblée au modèle. Détail :
+`04-modele/evaluation.md`.
+
+**E12 — décision prise** : ADR 0012 — révision du protocole d'évaluation et
+conservation de la session 2020.
 
 ## Phase 3 — Qualité et transformation
 

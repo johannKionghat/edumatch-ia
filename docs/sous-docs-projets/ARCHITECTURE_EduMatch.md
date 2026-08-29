@@ -83,7 +83,7 @@ GOLD    modèle en étoile                    densité, dynamique 10 ans,
                    ▼
         TABLE NAF ↔ ROME ↔ FORMATION  (actif versionné, testé, couverture déclarée)
                    ▼
-        TABLE DE VARIABLES (~625 000 cellules × ~30 variables)
+        TABLE DE VARIABLES (440 030 cellules × ~30 variables)
                    ▼
         ENTRAÎNEMENT → ÉVALUATION → [seuil] → PROMOTION MLflow → DÉPLOIEMENT
 ```

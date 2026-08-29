@@ -27,6 +27,15 @@ par l'outil de vérification lui-même**, pas par une évolution de la source �
 et l'encodage annoncé pour le RNCP (Latin-1) était faux, le fichier réel est en
 UTF-8.
 
+**Mise à jour du 2026-08-29 (E12)** : la phase exploratoire sur Parcoursup
+(`notebooks/02` à `04-jgk-eda-*.ipynb`) a établi que le numérateur du label
+ventilé par type de baccalauréat (`prop_tot_{bg|bt|bp}[_brs]`) n'existe qu'à
+partir de la session 2020, et que la part de vœux boursiers connaît deux
+ruptures de série (2019-2020, puis 2025). Ces deux constats ne changent rien
+au schéma ni à la volumétrie brute du fichier Parcoursup mesurés ici, mais
+bornent ce qui est réellement exploitable pour l'entraînement du modèle —
+détail dans `01-donnees/label.md` et `04-modele/evaluation.md`.
+
 ## Méthode
 
 Les gros fichiers (8 CSV Parcoursup, 11 fichiers Sirene) ne sont **jamais**
@@ -112,8 +121,10 @@ script, une par millésime.)
 Sortie réelle : **106 champs communs entre 2020 et 2025**, et **83 champs
 communs sur les 8 sessions** (2018 → 2025), la liste étant dominée par les
 compteurs de vœux et d'admis (`nb_voe_pp_*`, `acc_*`, `pct_*`) et les
-identifiants de formation (`cod_uai`, `fili`, `dep`). C'est le socle qui rend
-un modèle entraîné sur huit sessions possible. Les colonnes qui apparaissent
+identifiants de formation (`cod_uai`, `fili`, `dep`). C'est le socle de variables
+disponible sur toute la période. Il ne suffit toutefois pas à rendre un modèle
+entraîné sur huit sessions possible : le numérateur du label n'existe qu'à
+partir de 2020, comme je l'ai constaté ensuite. Les colonnes qui apparaissent
 seulement après 2020 (détail des mentions, `acc_neobac`, `g_olocalisation...`)
 sont enrichissantes mais pas indispensables au label.
 

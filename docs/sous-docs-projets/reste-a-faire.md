@@ -29,6 +29,9 @@ Feuille de route vivante. Je la tiens à jour au fil du projet et des
 | `ingestion/referentiels.py`, `_referentiels_rncp.py`, `_referentiels_communs.py` — connecteur ONISEP + RNCP, idempotence par date de publication pour le RNCP | ✅ |
 | `data/samples/` — 17 échantillons versionnés, générés par `ingestion/echantillons.py`, régime juridique documenté (pseudonymisation, intérêt légitime) | ✅ |
 | `notebooks/01-jgk-eda-label.ipynb` — grain, schéma inter-millésimes, définition et bornage du label (ADR 0009) | ✅ |
+| `notebooks/02-jgk-eda-ecarts-selectivite.ipynb` — écarts entre bacs, sélectivité, fuite fonctionnelle (ADR 0010) | ✅ |
+| `notebooks/03-jgk-eda-equite-substituts.ipynb` — équité à l'admission, substituts du genre (ADR 0011) | ✅ |
+| `notebooks/04-jgk-eda-stabilite-millesimes.ipynb` — stabilité inter-millésimes, protocole d'évaluation révisé (ADR 0012) | ✅ |
 
 **Reste sur l'infrastructure** : protection de branche `main` — indisponible
 sur dépôt privé en offre gratuite, compensée par le gate de vérification.
@@ -123,20 +126,51 @@ posées.*
       (E09, 2026-08-29). Grain établi, schéma des 8 sessions réconcilié,
       définition du label et son bornage arrêtés en ADR 0009 — voir
       `01-donnees/label.md`
-- [ ] Écart entre types de baccalauréat, variation par filière
-- [ ] Taux de féminisation par filière, concentration de la ségrégation
-- [ ] Sélectivité par filière
-- [ ] Stabilité inter-millésimes 2018-2025
-- [ ] Corrélations — **les substituts du genre**
+- [x] `notebooks/02-jgk-eda-ecarts-selectivite.ipynb` — écart entre types de
+      baccalauréat (E10, 2026-08-29). Comparaison appariée, hétérogénéité par
+      filière (BTS neutre à CPGE +42,3 points), fuite fonctionnelle de
+      `voe_tot` identifiée et traitée en ADR 0010 — voir `01-donnees/label.md`
+- [x] Sélectivité par filière — couverte dans le même carnet (E10) : la
+      tension `voe_tot / capa_fin` explique le taux de 1,000 à 0,182 du
+      quintile le moins tendu au plus tendu
+- [x] `notebooks/03-jgk-eda-equite-substituts.ipynb` — taux de féminisation
+      par filière, écart d'admission à formation égale, corrélations
+      corrigées de cardinalité (E11, 2026-08-29) — voir `04-modele/equite.md`
+      et l'ADR 0011
+- [x] Corrélations — les substituts du genre — couverte dans le même carnet
+      (E11) : l'académie, désignée à surveiller, n'explique que 1,4 % net ;
+      la filière en explique 19,5 % et ne peut pas être retirée — dispositif
+      d'équité à trois niveaux retenu
+- [x] `notebooks/04-jgk-eda-stabilite-millesimes.ipynb` — stabilité
+      inter-millésimes (E12, 2026-08-29). Label calculable sur six sessions
+      seulement (2020-2025), volumétrie corrigée à 440 030 cellules,
+      protocole d'évaluation révisé (ADR 0012) — voir `04-modele/evaluation.md`
 
-> Journée à faire soi-même. C'est la seule source de matière personnelle pour la
-> soutenance.
+Phase exploratoire close. Reste : E13, décision de variables (ADR de
+synthèse des trois carnets ci-dessus), qui précède la phase 3 (qualité et
+transformation).
 
 ---
 
 ## ⚠️ Incohérences relevées
 
-*Aucune.*
+**⚠️ INCOHÉRENCE — volumétrie du label dans le dossier de certification
+(2026-08-29, constatée en documentant E12)**
+
+Le dossier de certification (`dossier/_build_dossier.py`, ligne 620-621) et
+`ARCHITECTURE_EduMatch.md` (ligne 86) annoncent « 77 159 cellules
+exploitables par millésime ; 560 000 à 625 000 observations sur les huit
+sessions ». L'analyse de stabilité inter-millésimes (E12,
+`notebooks/04-jgk-eda-stabilite-millesimes.ipynb`) établit que le numérateur
+du label n'existe qu'à partir de la session 2020 : le volume réellement
+exploitable est de **440 030 cellules sur six sessions**, pas huit. Le
+chiffre de 77 159 pour la seule session 2025 reste exact.
+
+Je n'ai pas corrigé `_build_dossier.py` ni régénéré le `.docx` : la
+consigne du dépôt est de ne jamais éditer ces fichiers à la main et de ne
+les régénérer qu'au moment dédié à la synchronisation du dossier. Le
+constat est déposé ici pour être traité à ce moment, avant toute lecture du
+dossier par le jury.
 
 > Toute divergence entre le code, la documentation et le dossier de
 > certification est inscrite ici sous cette mention, et remontée. Elle n'est

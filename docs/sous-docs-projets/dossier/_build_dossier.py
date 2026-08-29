@@ -617,8 +617,8 @@ table([
     ["Élément", "Valeur retenue"],
     ["Cible", "Taux d'admission observé de la cellule, dans l'intervalle [0, 1]. Label mesuré et "
               "publié : ni simulé, ni dérivé d'un indicateur de substitution"],
-    ["Volumétrie", "77 159 cellules exploitables par millésime ; 560 000 à 625 000 observations "
-                   "sur les huit sessions"],
+    ["Volumétrie", "77 159 cellules exploitables pour la session 2025 ; 440 030 observations "
+                   "sur les six sessions où le label est calculable (2020-2025)"],
     ["Pondération", "Chaque observation est pondérée par l'effectif de la cellule : une cellule "
                     "de trois candidats porte un taux très bruité, une cellule de cinq cents une "
                     "information fiable"],
