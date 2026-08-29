@@ -145,10 +145,47 @@ posées.*
       inter-millésimes (E12, 2026-08-29). Label calculable sur six sessions
       seulement (2020-2025), volumétrie corrigée à 440 030 cellules,
       protocole d'évaluation révisé (ADR 0012) — voir `04-modele/evaluation.md`
+- [x] Décision de variables — classement sans reste des 128 colonnes (9 en
+      liste blanche, 35 décalées, 8 de mention en réserve, 73 exclues), écrit
+      dans `configs/base.yaml` et vérifié par 4 contrôles de contrat (E13,
+      2026-08-29, ADR 0013) — voir `04-modele/specification.md` et
+      `04-modele/equite.md`
 
-Phase exploratoire close. Reste : E13, décision de variables (ADR de
-synthèse des trois carnets ci-dessus), qui précède la phase 3 (qualité et
-transformation).
+**Phase exploratoire close** (E09 à E13). La phase suivante (qualité et
+transformation) s'ouvre sur E14, contrôles qualité bloquants.
+
+---
+
+## Points ouverts issus de la décision de variables (E13)
+
+Trois points non tranchés à l'issue de l'ADR 0013, à ne pas laisser
+s'oublier avant la construction des variables (E20) et l'entraînement (E22).
+
+- [ ] **`capa_fin` — arbitrage qui me revient.** Parcoursup affiche un
+      nombre de places sur chaque fiche pendant la campagne, mais la colonne
+      du fichier de résultats s'appelle « capacité finale », et rien dans
+      les fichiers dont je dispose ne prouve que les deux coïncident.
+      Classée décalée par prudence en attendant. Trancher demande de
+      comparer une fiche affichée en cours de campagne au fichier publié
+      ensuite — une vérification hors des données du dépôt. Le gain serait
+      réel si les deux coïncident : `capa_fin` passerait en liste blanche et
+      deviendrait le dénominateur direct de la tension, mon meilleur
+      prédicteur pressenti.
+- [ ] **Le taux décalé manque pour toute la session cible 2020.**
+      `prop_tot_{bg|bt|bp}[_brs]` n'existe pas en 2019 (ADR 0012). La
+      variable la plus prédictive du jeu — le taux observé de la même
+      cellule l'année précédente — est donc absente pour un quart des
+      sessions d'entraînement. Valeurs laissées manquantes de façon
+      explicite, sans imputation. Conséquence à ne pas oublier lors de
+      l'entraînement (E22) : la baseline de session précédente (E21) n'est
+      mesurable que sur 2021-2025, pas sur l'ensemble de l'entraînement.
+- [ ] **Le contrôle anti-fuite automatique ne vérifie que des noms de
+      colonnes, pas leur sémantique.** Il attrape l'ajout distrait d'un
+      compteur à la liste blanche des 9 colonnes de session prédite ; il ne
+      prouve pas que ces 9 colonnes sont réellement publiées avant
+      l'ouverture de la campagne. Cette preuve relève du raisonnement de
+      l'ADR 0013, pas d'un test automatisé — à rappeler si la liste blanche
+      est un jour étendue.
 
 ---
 

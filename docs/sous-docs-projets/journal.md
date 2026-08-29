@@ -15,6 +15,62 @@ Format :
 
 ---
 
+## 2026-08-29 — E13, décision de variables : liste blanche et clôture de la phase exploratoire
+
+**Fait** : E13 validée — ADR 0013, synthèse colonne par colonne des quatre
+carnets d'exploration sur les **128 colonnes** vues au moins une fois sur les
+huit millésimes Parcoursup. Classement sans reste : **9 colonnes lues sur la
+session prédite** (attributs de catalogue publiés avant la campagne : filière,
+type de formation, sélectivité, contrat, territoire), **35 décalées d'une
+session** (tous les compteurs), **8 de mention retenues sous réserve mais
+écartées par défaut** (contamination du contrôle continu 2020), **73
+exclusions définitives** classées par motif — redondance 23, instabilité 22,
+complétude 10, hors périmètre 10, interdite 4 (ventilations par sexe),
+substitut 3, cardinalité 1.
+
+Le critère de tri n'est pas « la variable est-elle postérieure à l'admission »
+mais « est-elle connue au moment où le lycéen formule ses vœux » : c'est ce
+qui distingue une variable décalée d'une variable exclue, la même colonne
+étant une fuite sur la session courante et une information légitime sur la
+précédente. J'ai retenu une liste blanche plutôt qu'une liste d'exclusion :
+une colonne ajoutée par un millésime futur est refusée par défaut, jusqu'à
+être classée.
+
+Le classement vit dans `configs/base.yaml` (`modele.variables`), typé par
+`VariablesConfig` dans `src/edumatch/config.py`, avec validation de
+disjonction entre catégories. Quatre contrôles de contrat dans
+`tests/data/test_variables_reference.py`, vérifiés par mutation et non par
+relecture. Le split est corrigé en cohérence avec l'ADR 0012 : entraînement
+[2020-2023], validation [2024], test [2025]. **153 tests passent.**
+
+Une hypothèse posée puis corrigée à la mesure : le motif de redondance des 19
+colonnes de pourcentage supposait d'abord `pct_bours = acc_brs / acc_tot` —
+faux, écart jusqu'à 97,5 points. Le dénominateur réel est `acc_neobac`.
+Reconstitution vérifiée à 0,500 point près (l'arrondi) une fois le bon
+dénominateur identifié.
+
+Deux arbitrages d'équité, indépendants l'un de l'autre : `cod_uai` exclu pour
+cardinalité (4 058 établissements) **et** pour son statut de premier
+substitut du genre (28,9 % net) — les deux raisons tiennent séparément.
+`fili`, deuxième substitut le plus fort (19,5 % net), est retenue malgré
+tout : sans elle, le système ne peut plus comparer des formations entre
+elles, et la ségrégation qu'elle porte n'est pas propre au modèle. Position
+assumée, compensée par l'audit d'équité a posteriori (E26).
+
+Trois points laissés ouverts, non masqués : `capa_fin` non tranchée
+(classée décalée par prudence), le taux décalé manquant pour toute la
+session cible 2020, et le contrôle anti-fuite automatique qui ne vérifie que
+des noms de colonnes, pas leur sémantique de publication réelle.
+
+**Décidé** : ADR 0013 — liste blanche sur la session prédite, décalage d'une
+session pour le reste. Cette étape clôt la phase exploratoire (E09 à E13) :
+la phase suivante (qualité et transformation) peut s'appuyer sur un jeu de
+variables arrêté.
+
+**Bloqué sur** : rien. Prochaine étape : E14, contrôles qualité bloquants.
+
+**Jury** : aucune évaluation ce jour.
+
 ## 2026-08-29 — E12, stabilité inter-millésimes et révision du protocole d'évaluation
 
 **Fait** : E12 validée — `notebooks/04-jgk-eda-stabilite-millesimes.ipynb`

@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 12 / 46 étapes validées.**
+**État : 13 / 46 étapes validées.**
 
 ---
 
@@ -366,7 +366,7 @@ l'échantillon.
 | E10 | EDA — écarts et sélectivité | ✅ validée | 2026-08-29 | `4f4bdc9` |
 | E11 | EDA — équité et substituts | ✅ validée | 2026-08-29 | `cbf9be2` |
 | E12 | EDA — stabilité inter-millésimes | ✅ validée | 2026-08-29 | `be2787c` |
-| E13 | Décision de variables (ADR) | ⬜ | | |
+| E13 | Décision de variables (ADR) | ✅ validée | 2026-08-29 | `f7c1449` |
 
 **E09 — ce qui a été vérifié**
 - `notebooks/01-jgk-eda-label.ipynb` (34 cellules, dont 20 de commentaire,
@@ -536,6 +536,68 @@ validation et test à ne pas imputer d'emblée au modèle. Détail :
 
 **E12 — décision prise** : ADR 0012 — révision du protocole d'évaluation et
 conservation de la session 2020.
+
+**E13 — ce qui a été vérifié**
+- ADR 0013 (décision des variables), synthèse colonne par colonne des quatre
+  carnets d'exploration, sur les **128 colonnes** vues au moins une fois sur
+  les huit millésimes : **9 lues sur la session prédite, 35 décalées d'une
+  session, 8 décalées sous réserve (mentions), 73 exclues** — total 128, sans
+  reste
+- Motifs d'exclusion comptés : redondance 23 · instabilité 22 · complétude
+  10 · hors périmètre 10 · interdite 4 · substitut 3 · cardinalité 1
+- Classement écrit dans `configs/base.yaml` (section `modele.variables`),
+  typé par `VariablesConfig` dans `src/edumatch/config.py`, avec validation
+  de disjonction entre catégories
+- Split corrigé : entraînement [2020, 2021, 2022, 2023], validation [2024],
+  test [2025] — vérifié par `load_settings("prod")`
+- **153 tests passent**. Quatre contrôles de contrat dans
+  `tests/data/test_variables_reference.py`, vérifiés par mutation : colonne
+  mal orthographiée, colonne retirée du classement, `voe_tot` déplacé vers
+  la liste blanche, split rouvert à 2018 — les quatre mutations font échouer
+  le test qui les vise, et lui seul
+
+**E13 — le critère de tri, plus large qu'il n'y paraît**
+Le critère n'est pas « la variable est-elle postérieure à la décision
+d'admission » mais « est-elle connue au moment où le lycéen formule ses
+vœux ». C'est pourquoi les compteurs (`voe_tot`, `prop_tot`, `capa_fin`,
+`acc_tot`) ne sont pas exclus mais **décalés d'une session** : la même
+colonne est une fuite lue sur la session courante et une information
+légitime lue sur la précédente. Liste blanche plutôt que liste noire : une
+colonne ajoutée par un millésime futur est exclue par défaut, la chaîne
+s'arrête tant qu'elle n'a pas été classée.
+
+**E13 — une hypothèse vérifiée puis corrigée**
+Le motif de redondance des 19 colonnes de pourcentage repose sur une mesure,
+pas une supposition. Ma première hypothèse — `pct_bours = acc_brs / acc_tot`
+— s'est révélée fausse : écart médian de 3,4 points, jusqu'à 97,5 points au
+maximum. Le dénominateur réel est `acc_neobac`. Reconstitution vérifiée des
+19 colonnes, écart maximal de 0,500 point (l'arrondi) dans tous les cas.
+
+**E13 — deux arbitrages sur l'équité, indépendants l'un de l'autre**
+`cod_uai` est exclu pour deux raisons qui tiennent chacune séparément :
+cardinalité (4 058 établissements, risque de mémorisation) et statut de
+premier substitut du genre mesuré (28,9 % net, ADR 0011). `fili`, deuxième
+substitut le plus fort (19,5 % net), est retenue malgré tout : la retirer
+détruirait l'objet du système sans rendre le modèle aveugle au genre, la
+ségrégation étant portée par la formation elle-même. Position assumée,
+compensée par l'audit d'équité a posteriori (E26). Détail :
+`04-modele/equite.md` et `04-modele/specification.md`.
+
+**E13 — trois points laissés ouverts, non masqués**
+- `capa_fin` n'est pas tranchée : classée décalée par prudence, faute de
+  preuve que la capacité affichée pendant la campagne coïncide avec la
+  colonne publiée ensuite sous ce nom.
+- Le taux décalé manque pour toute la session cible 2020, `prop_tot_*` par
+  type de bac n'existant pas en 2019. Valeurs manquantes laissées
+  explicites, sans imputation.
+- Le contrôle anti-fuite automatique travaille sur des noms de colonnes, pas
+  sur leur sémantique : il empêche l'ajout distrait d'un compteur à la liste
+  blanche, il ne prouve pas que les 9 colonnes retenues sont réellement
+  publiées avant l'ouverture de la campagne. Cette preuve relève de l'ADR
+  0013, pas d'un test automatisé.
+
+**E13 — décision prise** : ADR 0013 — liste blanche sur la session prédite,
+décalage d'une session pour le reste. Clôture la phase exploratoire.
 
 ## Phase 3 — Qualité et transformation
 

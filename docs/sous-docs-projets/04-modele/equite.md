@@ -104,6 +104,34 @@ trois niveaux, et non sur le seul retrait de la variable :
    prédiction entre sous-groupes de genre, mesuré sur les sorties réelles du
    modèle entraîné, pas sur ses entrées.
 
+## L'arbitrage tranché en E13, sur les deux substituts les plus forts
+
+La décision de variables (E13, ADR 0013) a dû trancher, colonne par colonne,
+ce que ce carnet mesurait encore sous forme de constat. Deux arbitrages
+méritent d'être rapportés ici, parce qu'ils engagent directement l'équité :
+
+**`cod_uai` (28,9 % net) est exclu du modèle**, pour deux raisons
+indépendantes l'une de l'autre : sa cardinalité (4 058 établissements, un
+risque de mémorisation qui existe indépendamment de toute question d'équité)
+et son statut de premier substitut du genre mesuré. L'indépendance des deux
+raisons importe : un arbitrage qui ne tiendrait que par l'argument d'équité
+s'effondrerait si un futur audit montrait un impact disparate faible.
+L'information d'établissement ne disparaît pas entièrement pour autant — les
+variables décalées, attachées à la formation, en portent une partie —, ce qui
+confirme que l'exclusion seule ne suffit pas et que le niveau 2 (mesure des
+substituts) doit être rejoué sur le jeu de variables final.
+
+**`fili` (19,5 % net) est retenue, malgré tout.** La retirer détruirait
+l'objet même du système, qui doit comparer des formations entre elles, sans
+rendre le modèle aveugle au genre : la ségrégation par filière existe dans le
+catalogue lui-même, avec ou sans le modèle. C'est une position assumée,
+compensée par l'audit a posteriori de niveau 3. Le seuil qui la ferait
+rouvrir : un impact disparate significatif porté par la filière, mesuré une
+fois le modèle entraîné (E26).
+
+Détail complet des deux arbitrages : `04-modele/specification.md` et
+l'ADR 0013.
+
 ## Ce qui reste à faire (E26)
 
 - Ratio d'impact disparate sur les prédictions, par sexe, académie et
@@ -112,7 +140,8 @@ trois niveaux, et non sur le seul retrait de la variable :
   prédictions du modèle, ou si la filière réintroduit un écart que
   l'admission observée ne présentait pas.
 - Rejouer la mesure de substituts (ce carnet) sur l'ensemble de variables
-  finalement retenu en E20, qui peut différer de ce qui a été exploré ici.
+  finalement retenu en E20 (`04-modele/specification.md`), qui diffère de ce
+  qui a été exploré ici : `cod_uai` et `ville_etab` en sont désormais exclus.
 
 ---
-*Mise à jour : 2026-08-29, commit `cbf9be2`.*
+*Mise à jour : 2026-08-29, commit `f7c1449`.*
