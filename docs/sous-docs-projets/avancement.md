@@ -51,7 +51,7 @@ de tests **et** de contenu.
 | E04 | Configuration centralisée `config.py` | ✅ validée | 2026-08-28 | `c0726b0` |
 | E05 | Connecteur Parcoursup | ✅ validée | 2026-08-28 | `144ee20` |
 | E06 | Connecteur Sirene | ✅ validée | 2026-08-28 | `04efa8e` |
-| E07 | Connecteur référentiels | ✅ validée | 2026-08-29 | *à committer* |
+| E07 | Connecteur référentiels | ✅ validée | 2026-08-29 | `22bf61d` |
 | E08 | Échantillons versionnés | ⬜ | | |
 
 **E03 — ce qui a été vérifié**
