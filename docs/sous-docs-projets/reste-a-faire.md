@@ -152,9 +152,21 @@ posées.*
       `04-modele/equite.md`
 
 **Phase exploratoire close** (E09 à E13). La phase suivante (qualité et
-transformation) s'ouvre sur E14, contrôles qualité bloquants.
+transformation) s'ouvre sur E14, contrôles qualité bloquants, **validée le
+2026-08-29** — voir `03-pipeline/qualite.md` et l'ADR 0014.
 
 ---
+
+## Point ouvert issu des contrôles qualité (E14)
+
+- [ ] **Pas de contrôle de schéma dédié pour `StockEtablissementHistorique`,
+      `StockUniteLegale` et `StockUniteLegaleHistorique`.** Seul
+      `StockEtablissement` porte les 9 colonnes utiles au projet et reçoit un
+      contrôle de schéma, complétude et cohérence complet ; les trois autres
+      fichiers Sirene ont des colonnes différentes (`siren`, pas de `siret`
+      pour l'unité légale) et ne sont soumis qu'au contrôle de fraîcheur. À
+      construire quand un traitement du pipeline commencera à les lire
+      (E18 pour la table de nomenclatures, potentiellement).
 
 ## Points ouverts issus de la décision de variables (E13)
 

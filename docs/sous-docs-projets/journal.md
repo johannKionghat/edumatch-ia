@@ -15,6 +15,38 @@ Format :
 
 ---
 
+## 2026-08-29 — E14, contrôles qualité bloquants
+
+**Fait** : E14 validée — `src/edumatch/quality/` : vocabulaire commun
+(`Anomalie`, `Gravite`, `RapportControle`, `ErreurQualiteBloquante`), un
+contrôle générique de fraîcheur, un module par source (Parcoursup, Sirene,
+référentiels), orchestrés par `run.py` (`make quality`). Quatre familles de
+contrôle — schéma, complétude, cohérence, fraîcheur — avec tous les seuils
+externalisés dans `configs/base.yaml`. 64 tests ajoutés, 217 au total.
+
+Critère de l'étape démontré, pas affirmé : `PYTHONPATH=src python -m
+edumatch.quality.run` sur les données réelles sort en **code 1**. Sirene
+porte 5 dates de création impossibles (2054, 2116, 2202, 2924, 5015),
+vérifiées une à une, qui bloquent la chaîne avant `dbt`. Les 10 613
+immatriculations anticipées à moins de cinq ans restent un avertissement :
+un contrôle « date dans le futur » sans ce seuil aurait bloqué sur 10 618
+lignes dont 10 613 saines.
+
+Trois hypothèses de contrôle écrites puis infirmées par la mesure sur les
+huit millésimes réels : un ratio admission/vœux supposé borné à 1 (monte à
+26 en réalité), un admis supposé avoir toujours un vœu dans sa cellule (482
+contre-exemples), `acc_tot` supposé égal à la somme des quatre bacs (faux
+sur cinq sessions sur huit).
+
+**Décisions** : ADR 0014 — Pandera plutôt que Great Expectations, mesuré
+(447 Ko contre 5,7 Mo, une dépendance nouvelle contre neuf), seuil de
+bascule écrit : un entrepôt partagé entre équipes où l'historique des
+validations serait lui-même un livrable.
+
+**Bloqué sur** : rien. Prochaine étape : E15, dbt bronze vers silver.
+
+**Jury** : aucune évaluation ce jour.
+
 ## 2026-08-29 — E13, décision de variables : liste blanche et clôture de la phase exploratoire
 
 **Fait** : E13 validée — ADR 0013, synthèse colonne par colonne des quatre

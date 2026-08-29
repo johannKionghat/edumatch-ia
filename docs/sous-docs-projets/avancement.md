@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 13 / 46 étapes validées.**
+**État : 14 / 46 étapes validées.**
 
 ---
 
@@ -603,13 +603,57 @@ décalage d'une session pour le reste. Clôture la phase exploratoire.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E14 | Contrôles qualité bloquants | ⬜ | | |
+| E14 | Contrôles qualité bloquants | ✅ validée | 2026-08-29 | `b166378` |
 | E15 | dbt — bronze vers silver | ⬜ | | |
 | E16 | dbt — modèle en étoile | ⬜ | | |
 | E17 | Job Spark Sirene | ⬜ | | |
 | E18 | Table NAF ↔ ROME ↔ formation | ⬜ | | |
 | E19 | Calcul du label | ⬜ | | |
 | E20 | Construction des variables | ⬜ | | |
+
+**E14 — ce qui a été vérifié**
+- `src/edumatch/quality/` : vocabulaire commun (`_diagnostic.py` —
+  `Anomalie`, `Gravite`, `RapportControle`, `ErreurQualiteBloquante`),
+  contrôle générique de fraîcheur (`_fraicheur.py`), un module par source
+  (`parcoursup.py`, `sirene.py`, `referentiels.py`), orchestrés par
+  `run.py`. Quatre familles de contrôle : schéma, complétude, cohérence,
+  fraîcheur. Tous les seuils dans `configs/base.yaml` (section `qualite`),
+  aucun en dur dans le code
+- **Critère central de l'étape, démontré et non affirmé** :
+  `PYTHONPATH=src python -m edumatch.quality.run` sur les données réelles →
+  **code de sortie 1**. Une tâche d'orchestration échouerait, la chaîne
+  s'arrête avant `dbt` (E15)
+- Parcoursup et référentiels : 0 anomalie bloquante sur les données réelles
+- Sirene : **5 établissements** portent une date de création en 2054, 2116,
+  2202, 2924 et 5015 — des fautes de frappe dans le répertoire officiel,
+  vérifiées une à une. Elles bloquent. **10 613 immatriculations
+  anticipées** à moins de cinq ans dans le futur sont légitimes et ne
+  produisent qu'un avertissement
+- 217 tests au total (153 + 64 nouveaux), tournant sur `data/samples/` sans
+  les 4,6 Go de sources réelles
+
+**E14 — la frontière entre bloquer et avertir, justifiée par la mesure**
+Un contrôle naïf « date supérieure à aujourd'hui » aurait bloqué sur 10 618
+lignes dont 10 613 saines, et aurait été désactivé en une semaine. Le seuil
+de cinq ans sépare l'immatriculation anticipée plausible de la faute de
+frappe. Détail : `03-pipeline/qualite.md`.
+
+**E14 — trois hypothèses de contrôle fausses, corrigées avant d'être
+figées** : un ratio admission/vœux supposé borné à 1 (structurel, jusqu'à 26
+en 2025) ; un admis supposé avoir nécessairement un vœu dans sa cellule
+(482 cas réels en 2025) ; `acc_tot` supposé égal à la somme des quatre types
+de bac (faux sur cinq sessions sur huit, rétrogradé en avertissement).
+Écrire un contrôle sans le confronter aux données réelles produit un
+contrôle faux.
+
+**E14 — limite assumée** : pas de contrôle de schéma dédié pour
+`StockEtablissementHistorique`, `StockUniteLegale` et
+`StockUniteLegaleHistorique` — seule leur fraîcheur est contrôlée, aucun
+traitement du pipeline ne les lit encore. Reporté dans `reste-a-faire.md`.
+
+**E14 — décision prise** : ADR 0014 — Pandera plutôt que Great Expectations,
+chiffré (447 Ko contre 5,7 Mo, une dépendance nouvelle contre neuf), avec le
+seuil de bascule écrit.
 
 ## Phase 4 — Modèle
 
