@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 6 / 46 étapes validées.**
+**État : 7 / 46 étapes validées.**
 
 ---
 
@@ -50,8 +50,8 @@ de tests **et** de contenu.
 | E03 | Vérification des sources sur data.gouv | ✅ validée | 2026-08-26 | `17a3228` |
 | E04 | Configuration centralisée `config.py` | ✅ validée | 2026-08-28 | `c0726b0` |
 | E05 | Connecteur Parcoursup | ✅ validée | 2026-08-28 | `144ee20` |
-| E06 | Connecteur Sirene | ✅ validée | 2026-08-28 | *à venir* |
-| E07 | Connecteur référentiels | ⬜ | | |
+| E06 | Connecteur Sirene | ✅ validée | 2026-08-28 | `04efa8e` |
+| E07 | Connecteur référentiels | ✅ validée | 2026-08-29 | *à committer* |
 | E08 | Échantillons versionnés | ⬜ | | |
 
 **E03 — ce qui a été vérifié**
@@ -227,6 +227,69 @@ ce qui justifie un Spark **local**, sans cluster managé, pour le job réel
   Parcoursup et Sirene via `_flux.py`. Rétrofité sur Parcoursup dans le même
   commit, pour que le futur DAG traite les deux connecteurs de façon uniforme
   plutôt que de découvrir la distinction séparément pour chacun.
+
+**E07 — ce qui a été vérifié**
+- `src/edumatch/ingestion/referentiels.py` (point d'entrée public),
+  `_referentiels_rncp.py` (résolution et téléchargement de l'export RNCP du
+  jour) et `_referentiels_communs.py` (vocabulaire d'erreur et primitives
+  partagées entre les deux volets) téléchargent les 4 jeux ONISEP (IDÉO) à URL
+  fixe et l'export RNCP du jour, avec les mêmes garanties que Parcoursup et
+  Sirene — idempotence par empreinte (IDÉO) ou par date de publication (RNCP),
+  écriture atomique, manifeste
+- Suite de tests, paquet non installé : `python -m pytest -q` → **120 passed**
+- Téléchargement réel effectué le 2026-08-29 vers
+  `data/external/referentiels/` : **22 Mo** au total
+  (`du -sh data/external/referentiels/`)
+- Volumétrie IDÉO conforme aux chiffres du 2026-08-26, à la ligne près :
+  formations 5 869 × 16, métiers 1 534 × 13, structures secondaire
+  15 293 × 30, structures supérieur 8 985 × 29 — vérifié par comptage CSV
+  correct (module `csv`, pas `wc -l`)
+- Export RNCP du **2026-08-29** : **30 484 fiches, dont 7 000 actives et
+  23 484 inactives**, 16 colonnes — vérifié par parseur CSV
+
+**E07 — deux corrections importantes, propagées dans `01-donnees/sources.md`
+et `03-pipeline/ingestion.md`**
+
+1. **Un chiffre faussé par l'outil de vérification, pas par la source.** La
+   documentation du 26/08 annonçait « 36 000 fiches RNCP, dont 6 995
+   actives ». En construisant le connecteur, ce chiffre ne se reproduisait
+   pas. Cause : `scripts/verifier_sources.sh` comptait avec `wc -l`, qui
+   compte des retours à la ligne **physiques** — or le CSV RNCP contient des
+   champs de texte multi-lignes entre guillemets (intitulés de certification
+   avec sauts de ligne internes), que `wc -l` prend à tort pour des fiches
+   supplémentaires. Un parseur CSV qui respecte les guillemets (module `csv`)
+   donne **30 484**, confirmé par la somme 7 000 actives + 23 484 inactives =
+   30 484. Le compte des actives, lui, survivait par coïncidence — la chaîne
+   `"ACTIVE"` n'apparaît jamais dans un champ multi-ligne de cet export, ce
+   qui n'a rien d'une garantie pour un futur export. **Corrigé** :
+   `scripts/verifier_sources.sh` compte désormais avec un vrai parseur CSV,
+   pour le RNCP (section C.2) comme pour les 4 fichiers IDÉO (section C.1),
+   même si ces derniers ne présentaient pas l'écart aujourd'hui.
+2. **Un encodage annoncé à tort.** La documentation du 26/08 annonçait le
+   RNCP en Latin-1. Le fichier réellement téléchargé décode intégralement en
+   **UTF-8** (`\xc3\xa9` = « é » en UTF-8, pas en Latin-1). Nuance
+   méthodologique retenue : Latin-1 ne lève jamais d'erreur de décodage —
+   « ça se décode sans erreur en Latin-1 » ne prouve rien, puisqu'un fichier
+   UTF-8 relu en Latin-1 se décode aussi sans erreur, silencieusement corrompu.
+   Le contrôle d'encodage du connecteur (`verifier_encodage`) est pour cette
+   raison **asymétrique**, assumé et testé comme tel : il détecte un vrai
+   Latin-1 déclaré UTF-8, jamais l'inverse.
+
+**E07 — décision prise** : ADR 0007 — un fichier par date de publication pour
+l'export RNCP (`rncp_AAAA-MM-JJ.csv`), jamais un fichier unique écrasé comme
+pour Sirene : une table dérivée du RNCP (E18) doit rester vérifiable après
+coup sur l'export qui l'a produite. Alternatives écartées : fichier unique
+écrasé (perd la traçabilité d'un export passé), retéléchargement systématique
+sans persistance (non idempotent). Seuil de bascule : l'accumulation
+(~9 Mo/jour) exigerait une politique de rétention si la tâche est un jour
+programmée à cadence quotidienne dans le DAG (E33) — non traitée à cette
+étape.
+
+**E07 — implication licence pour E18**, actée dans `03-pipeline/ingestion.md`
+et à reprendre dans le registre des sources (E40) : ONISEP est sous **ODbL**
+(partage à l'identique obligatoire sur toute base dérivée redistribuée), le
+RNCP sous **Licence Ouverte v2.0**. Si `naf_rome_formation.csv` (E18) intègre
+des données IDÉO et est publié tel quel, il devra l'être sous ODbL.
 
 ## Phase 2 — Analyse exploratoire
 

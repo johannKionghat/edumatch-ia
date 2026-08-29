@@ -7,7 +7,8 @@ fichier public et doit garantir l'idempotence et l'écriture atomique :
 
 - ouverture et fermeture d'une session HTTP, fournie ou créée localement
 - téléchargement en flux, bloc par bloc, sans jamais charger le fichier
-  entier en mémoire
+  entier en mémoire, et rejet d'une réponse à corps vide (`ErreurFluxVide`) :
+  un statut HTTP 200 ne garantit pas un contenu, seulement une requête reçue
 - calcul d'empreinte SHA-256, pour distinguer un fichier intact d'un fichier
   corrompu ou tronqué
 - écriture atomique générique (fichier `.part` renommé une fois complet),
@@ -85,6 +86,24 @@ class ErreurDefinitive(Exception):
     Typiquement un catalogue mal formé, une ressource introuvable ou
     ambiguë, un champ obligatoire absent : retenter reproduirait exactement
     le même échec. Un humain doit être alerté, pas un compteur de tentatives.
+    """
+
+
+class ErreurFluxVide(ErreurDefinitive):
+    """Une réponse HTTP 200 n'a livré aucun octet.
+
+    Posée ici, dans les primitives communes, et non dans une classe propre à
+    chaque connecteur : la faute constatée (un fichier de 0 octet accepté
+    comme un téléchargement réussi) était identique pour Parcoursup, Sirene
+    et IDÉO, les trois appelants de `telecharger_en_flux`. La corriger une
+    seule fois ici les corrige tous les trois à la fois.
+
+    Rangée du côté définitif, pas transitoire : un serveur qui répond 200
+    avec un corps vide n'a pas subi un incident de réseau — la requête a
+    réussi de bout en bout — il a changé de contrat (export non encore
+    généré, ressource déplacée sans mise à jour du lien...). Retenter
+    immédiatement reproduirait la même réponse ; seul un humain, ou une
+    nouvelle tentative très différée dans le temps, peut trancher.
     """
 
 # Délai maximal d'attente réseau, en secondes, avant d'abandonner une requête.
@@ -179,6 +198,12 @@ def telecharger_en_flux(
     seulement de la cadence à laquelle l'appelant est notifié : c'est le seul
     élément réellement répété entre connecteurs, le contenu du message reste
     propre à chacun (le nom du fichier Sirene n'a pas de sens ici).
+
+    Raises:
+        ErreurFluxVide: la réponse a un statut de succès mais ne contient
+            aucun octet. Aucun fichier n'est laissé sur le disque dans ce
+            cas : l'exception est levée à l'intérieur de l'écriture atomique,
+            qui supprime le `.part` avant de la propager.
     """
     with session.get(url, stream=True, timeout=timeout) as reponse:
         reponse.raise_for_status()
@@ -189,13 +214,18 @@ def telecharger_en_flux(
                 if not bloc:
                     continue
                 flux_sortie.write(bloc)
+                octets_recus += len(bloc)
                 if sur_progression is None:
                     continue
-                octets_recus += len(bloc)
                 maintenant = time.monotonic()
                 if maintenant - dernier_appel >= intervalle_progression_secondes:
                     sur_progression(octets_recus)
                     dernier_appel = maintenant
+            if octets_recus == 0:
+                raise ErreurFluxVide(
+                    f"Réponse vide (0 octet) reçue depuis {url} : le serveur a répondu "
+                    "avec succès mais sans contenu."
+                )
 
 
 # ─── Empreinte et contrôle d'intégrité ─────────────────────────────────────────

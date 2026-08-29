@@ -34,6 +34,23 @@ donnees:
       etat_administratif: A
       caractere_employeur: true
       diffusible: true
+  referentiels:
+    ideo:
+      jeux:
+        formations:
+          url: "https://exemple.test/ideo/formations.csv"
+          encodage: utf-8
+          delimiteur: ";"
+          licence: "ODbL (odc-odbl)"
+    rncp:
+      jeu_de_donnees: repertoire-national-des-certifications-professionnelles-et-repertoire-specifique
+      url_catalogue_gabarit: "https://exemple.test/api/1/datasets/{jeu_de_donnees}/"
+      prefixe_ressource: "export-fiches-csv-"
+      format_ressource: zip
+      nom_fichier_gabarit: "export_fiches_CSV_Standard_*.csv"
+      encodage: utf-8
+      delimiteur: ";"
+      licence: "Licence Ouverte v2.0"
 
 modele:
   type: lightgbm

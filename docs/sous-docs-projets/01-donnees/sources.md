@@ -11,6 +11,16 @@ par l'API de métadonnées le 26/08, est mesuré ici pour la première fois par
 métadonnée Parquet — voir la section B, sous-section « Nombre d'établissements
 et d'unités légales — corrigé en E06 ».
 
+**Mise à jour du 2026-08-29 (E07)** : le connecteur des référentiels
+(`ingestion/referentiels.py`, `_referentiels_rncp.py`) a réellement téléchargé
+les 4 jeux ONISEP et l'export RNCP du jour dans `data/external/referentiels/`
+(22 Mo au total, `du -sh data/external/referentiels/`). Deux corrections
+importantes en découlent, détaillées dans la section C.2 : le nombre de fiches
+RNCP annoncé le 26/08 (« 36 000 fiches, dont 6 995 actives ») était **faussé
+par l'outil de vérification lui-même**, pas par une évolution de la source —
+et l'encodage annoncé pour le RNCP (Latin-1) était faux, le fichier réel est en
+UTF-8.
+
 ## Méthode
 
 Les gros fichiers (8 CSV Parcoursup, 11 fichiers Sirene) ne sont **jamais**
@@ -379,15 +389,93 @@ wc -l export_fiches_CSV_Standard_2026_08_25.csv
 grep -c '"ACTIVE"' export_fiches_CSV_Standard_2026_08_25.csv
 ```
 
-Sortie réelle : **36 000 fiches** au total dans le fichier « Standard » (RNCP
-et Répertoire Spécifique confondus, tous statuts), dont **6 995 fiches actives**
-(`"Actif"="ACTIVE"`) à la date d'export. 16 colonnes
-(`Id_Fiche`, `Numero_Fiche`, `Intitule`, `Nomenclature_Europe_Niveau`,
-`Date_Fin_Enregistrement`, `Actif`, etc.), délimiteur `;`, encodage Latin-1
-(à traiter explicitement dans le connecteur E07, sous peine d'erreurs
-d'encodage sur les intitulés accentués).
+Sortie obtenue le 26/08, **annoncée à tort ici** : **36 000 fiches** au total
+dans le fichier « Standard », dont **6 995 fiches actives**. Cette valeur est
+**corrigée ci-dessous (⚠️ correction du 2026-08-29)** : elle est fausse, mais
+pas pour la raison qu'on croirait — voir le détail.
 
-Commande figée telle qu'exécutée aujourd'hui — l'URL contient la date de l'export et change chaque jour ; la version rejouable qui résout cette URL depuis l'API sans date en dur est dans `scripts/verifier_sources.sh`, section « C. RNCP/RS ».
+⚠️ **Correction du 2026-08-29 — un chiffre faussé par l'outil de mesure, pas
+par la source.** En construisant le connecteur E07, le nombre de fiches
+réellement écrit dans `data/external/referentiels/rncp/manifeste.json` ne
+correspondait pas au chiffre ci-dessus. Cause : `wc -l` compte des retours à la
+ligne **physiques**. Le CSV RNCP contient des champs de texte entre guillemets
+qui s'étendent sur plusieurs lignes (des intitulés de certification avec des
+sauts de ligne internes) : chaque saut de ligne interne à un champ est compté
+par `wc -l` comme si c'était une fiche supplémentaire. Un parseur CSV qui
+respecte les guillemets (module `csv` de Python, ou tout outil équivalent) ne
+s'y trompe pas :
+
+```bash
+python -c "
+import csv
+with open('data/external/referentiels/rncp/rncp_2026-08-29.csv', encoding='utf-8') as f:
+    r = csv.reader(f, delimiter=';')
+    header = next(r)
+    idx = header.index('Actif')
+    rows = list(r)
+    print('total', len(rows), 'actives', sum(1 for row in rows if row[idx] == 'ACTIVE'))
+"
+```
+
+Sortie réelle, export du **2026-08-29** : **total 30 484, actives 7 000**.
+La somme confirme le compte : 7 000 + 23 484 (inactives) = 30 484. Le chiffre
+« 36 000 » ne se reproduit avec aucun parseur CSV correct — l'écart (5 522
+lignes en trop) est entièrement absorbé par les retours à la ligne internes
+aux champs multi-lignes, pas par des fiches en plus ou en moins.
+
+Le compte des actives, lui, **survivait par coïncidence** : la chaîne
+`"ACTIVE"` n'apparaît jamais à l'intérieur d'un champ multi-ligne dans cet
+export, donc `grep -c '"ACTIVE"'` retombait juste sur le nombre de fiches
+actives sans que ce soit garanti par construction — un futur export où cette
+chaîne apparaîtrait dans un intitulé de certification romprait ce hasard
+favorable sans qu'aucun signal ne le révèle.
+
+**`scripts/verifier_sources.sh` comptait avec `wc -l` et `grep -c`, donc
+l'outil de vérification produisait lui-même un chiffre faux** — c'est
+distinct d'un chiffre mal recopié depuis une source correcte : ici l'outil
+censé garantir l'exactitude était la cause de l'erreur. Le script est corrigé
+pour compter avec un vrai parseur CSV (voir le commentaire qui l'explique dans
+le fichier). Le comptage des colonnes IDÉO par `head -1 | tr ';' '\n' | wc -l`
+a été revu par la même occasion et remplacé par le même parseur, par cohérence
+— vérifié : il ne produisait pas de chiffre faux sur les 4 fichiers IDÉO
+d'aujourd'hui (aucun champ multi-ligne dans ces fichiers), mais rien ne
+garantissait que ce resterait vrai.
+
+**16 colonnes** (`Id_Fiche`, `Numero_Fiche`, `Intitule`,
+`Nomenclature_Europe_Niveau`, `Date_Fin_Enregistrement`, `Actif`, etc.),
+délimiteur `;`.
+
+⚠️ **Correction du 2026-08-29 — encodage annoncé à tort.** La documentation du
+26/08 annonçait l'export RNCP en **Latin-1**. Vérification sur le fichier
+réellement téléchargé pour E07 : les octets `\xc3\xa9` codent la lettre « é »,
+ce qui est la séquence UTF-8, pas Latin-1 — et le fichier entier décode sans
+erreur en UTF-8. L'export est donc en **UTF-8**, pas en Latin-1.
+
+La nuance qui compte plus que la correction : **Latin-1 ne lève jamais
+d'erreur de décodage**, quel que soit le fichier — il associe un caractère à
+chacun des 256 octets possibles. Constater que « le fichier se décode en
+Latin-1 sans exception » ne prouve donc rien : un fichier réellement en UTF-8
+lu en Latin-1 se décode aussi sans erreur, silencieusement, et donne un texte
+corrompu (`comptabilitÃ©` au lieu de `comptabilité`), pas une exception qui
+alerterait. C'est pour cette raison que le contrôle d'encodage du connecteur
+(`verifier_encodage`, dans `_referentiels_communs.py`) est **asymétrique** : il
+détecte un fichier réellement en Latin-1 déclaré UTF-8 (UTF-8 rejette
+certaines suites d'octets, l'erreur remonte), mais ne peut pas détecter
+l'inverse — un fichier réellement en UTF-8 déclaré Latin-1 ne fait jamais
+échouer le décodage. Cette limite est assumée dans le code, pas corrigée :
+aucune des deux sources configurées aujourd'hui ne déclare `latin-1`, le
+risque n'est donc pas actif, mais il existerait dès qu'une configuration le
+ferait.
+
+**Nom de fichier du connecteur** : `rncp_{date_publication_jour}.csv`
+(`rncp_2026-08-29.csv` pour l'export d'aujourd'hui), pas un nom fixe écrasé à
+chaque exécution — voir `03-pipeline/ingestion.md` et l'ADR 0007 pour la
+raison.
+
+Commande figée telle qu'exécutée le 26/08 — l'URL contient la date de l'export
+et change chaque jour ; la version rejouable qui résout cette URL depuis
+l'API sans date en dur est dans `scripts/verifier_sources.sh`, section
+« C. RNCP/RS ».
 
 ⚠️ Décalage de date à noter : l'archive zip est datée du jour de la vérification (26/08), mais le fichier CSV qu'elle contient porte la date de la veille (25/08) — l'export est généré peu après minuit et référence le travail de la journée précédente. Ce n'est pas une incohérence, c'est le fonctionnement normal de la publication quotidienne de France Compétences ; un connecteur (E07) doit résoudre le nom du fichier par motif (`export_fiches_CSV_Standard_*.csv`) plutôt que par date fixe, exactement comme le fait le script.
 
@@ -437,6 +525,17 @@ exécution du pipeline, pas de latence critique).
   (E06) : **43 896 818 établissements, 29 922 486 unités légales**, stock du
   01/08/2026. Voir la section B ci-dessus pour la commande et le détail des 4
   fichiers. Corrigé partout où l'ancien ordre de grandeur figurait.
+- **« 36 000 fiches RNCP, dont 6 995 actives »** (2026-08-29) : chiffre faussé
+  non par la source, mais par l'outil de mesure — `wc -l` sur un CSV à champs
+  multi-lignes. Le vrai total, obtenu par un parseur CSV respectant les
+  guillemets, est **30 484 fiches (7 000 actives, 23 484 inactives)**, export
+  du 2026-08-29. `scripts/verifier_sources.sh` est corrigé pour compter avec
+  ce parseur. Voir la section C.2 pour le détail complet et la commande.
+- **« Encodage Latin-1 » pour le RNCP** (2026-08-29) : faux — le fichier
+  réellement téléchargé décode intégralement en **UTF-8** (`\xc3\xa9` = « é »
+  en UTF-8). Voir la section C.2 pour la nuance méthodologique : un fichier se
+  décodant sans erreur en Latin-1 ne prouve rien, Latin-1 acceptant n'importe
+  quelle suite d'octets.
 
 ### Chiffres non vérifiables aujourd'hui par cette méthode
 
@@ -452,8 +551,10 @@ exécution du pipeline, pas de latence critique).
 - IDÉO-Métiers : 1 534 métiers, 13 colonnes, 0,6 Mo.
 - IDÉO-Structures secondaire : 15 293 structures, 30 colonnes, 7,7 Mo.
 - IDÉO-Structures supérieur : 8 985 structures, 29 colonnes, 5,1 Mo.
-- RNCP/RS : 36 000 fiches (dont 6 995 actives), export quotidien, 16 colonnes,
-  9,2 Mo (export CSV du jour).
+- RNCP/RS : **30 484 fiches (7 000 actives, 23 484 inactives)**, export
+  quotidien du **2026-08-29**, 16 colonnes, 9,2 Mo (export CSV du jour) —
+  chiffre corrigé le 2026-08-29, voir « Chiffre corrigé » ci-dessus et la
+  section C.2.
 - Licence des jeux ONISEP : ODbL (`odc-odbl`), distincte de la Licence Ouverte
   utilisée par Parcoursup, Sirene et RNCP — implication de partage à
   l'identique à documenter avant toute redistribution d'un dérivé.

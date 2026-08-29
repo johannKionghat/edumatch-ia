@@ -40,6 +40,50 @@ donnees:
       etat_administratif: A          # actifs uniquement
       caractere_employeur: true      # un non-employeur n'est pas un débouché
       diffusible: true
+  referentiels:
+    # ONISEP (IDÉO) : quatre jeux, URL de téléchargement fixes, vérifiées le
+    # 2026-08-29. Licence ODbL (odc-odbl) — partage à l'identique obligatoire
+    # sur toute base dérivée redistribuée, distincte de la Licence Ouverte.
+    ideo:
+      jeux:
+        formations:
+          url: https://api.opendata.onisep.fr/downloads/5fa591127f501/5fa591127f501.csv
+          encodage: utf-8
+          delimiteur: ";"
+          licence: "ODbL (odc-odbl)"
+        metiers:
+          url: https://api.opendata.onisep.fr/downloads/5fa5949243f97/5fa5949243f97.csv
+          encodage: utf-8
+          delimiteur: ";"
+          licence: "ODbL (odc-odbl)"
+        structures_secondaire:
+          url: https://api.opendata.onisep.fr/downloads/5fa5816ac6a6e/5fa5816ac6a6e.csv
+          encodage: utf-8
+          delimiteur: ";"
+          licence: "ODbL (odc-odbl)"
+        structures_superieur:
+          url: https://api.opendata.onisep.fr/downloads/5fa586da5c4b6/5fa586da5c4b6.csv
+          encodage: utf-8
+          delimiteur: ";"
+          licence: "ODbL (odc-odbl)"
+    # RNCP/RS : aucune URL de fichier ici, l'export est republié chaque jour
+    # (voir ingestion/referentiels.py pour la résolution et le choix
+    # d'idempotence par date de publication). Licence Ouverte v2.0, distincte
+    # de l'ODbL d'ONISEP.
+    rncp:
+      jeu_de_donnees: repertoire-national-des-certifications-professionnelles-et-repertoire-specifique
+      url_catalogue_gabarit: >-
+        https://www.data.gouv.fr/api/1/datasets/{jeu_de_donnees}/
+      prefixe_ressource: "export-fiches-csv-"
+      format_ressource: zip
+      nom_fichier_gabarit: "export_fiches_CSV_Standard_*.csv"
+      # Vérifié le 2026-08-29 par décodage effectif du fichier téléchargé :
+      # l'export est en UTF-8. À surveiller à chaque exécution (voir
+      # ingestion/referentiels.py, qui rejette explicitement un fichier qui
+      # ne décoderait pas selon cette valeur plutôt que de la supposer figée.
+      encodage: utf-8
+      delimiteur: ";"
+      licence: "Licence Ouverte v2.0"
 
 modele:
   type: lightgbm

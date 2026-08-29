@@ -1,13 +1,16 @@
 # Ingestion — les connecteurs
 
-**Dernière mise à jour** : 2026-08-28 (E06).
+**Dernière mise à jour** : 2026-08-29 (E07).
 
-Cette page couvre les deux connecteurs opérationnels à ce jour — Parcoursup et
-Sirene — et les primitives qu'ils partagent avec le connecteur à venir
-(référentiels). Elle sert de preuve aux critères 3.2 (ELT entre sources
-hétérogènes) et 3.6 (idempotence des tâches) du Bloc 3 : deux sources, deux
-stratégies de résolution d'URL, chacune justifiée par la façon dont la source
-publie ses fichiers.
+Cette page couvre les trois connecteurs opérationnels à ce jour — Parcoursup,
+Sirene et référentiels — et les primitives qu'ils partagent. Elle sert de
+preuve au critère 3.2 (ELT entre sources hétérogènes) du Bloc 3 : trois
+sources, **trois** stratégies de résolution d'URL, chacune justifiée par la
+façon dont la source publie ses fichiers — voir « Trois sources, trois
+stratégies de résolution d'URL » plus bas. Elle sert aussi au critère 3.6
+(idempotence des tâches) : trois grains d'idempotence différents, du fichier
+qui ne change jamais une fois publié (Parcoursup) au fichier réexporté chaque
+jour (RNCP).
 
 ## Ce qui existe
 
@@ -16,6 +19,9 @@ publie ses fichiers.
 | `src/edumatch/ingestion/_flux.py` | Primitives communes à tout connecteur : session HTTP, téléchargement en flux, empreinte, écriture atomique, manifeste |
 | `src/edumatch/ingestion/parcoursup.py` | Connecteur Parcoursup : résolution d'URL par gabarit, orchestration des 8 millésimes |
 | `src/edumatch/ingestion/sirene.py` | Connecteur Sirene : résolution d'URL par interrogation du catalogue data.gouv, orchestration des 4 fichiers stock |
+| `src/edumatch/ingestion/referentiels.py` | Connecteur référentiels : point d'entrée public, volet IDÉO (URL fixe) |
+| `src/edumatch/ingestion/_referentiels_rncp.py` | Volet RNCP : résolution de l'export quotidien, extraction du CSV depuis l'archive ZIP |
+| `src/edumatch/ingestion/_referentiels_communs.py` | Vocabulaire d'erreur et primitives propres aux deux volets du connecteur référentiels |
 
 ## Le connecteur Parcoursup
 
@@ -89,14 +95,15 @@ ensuite le relais avec les mêmes garanties que Parcoursup — idempotence par
 empreinte, écriture atomique, manifeste. `telecharger_tous()` enchaîne les deux
 sur une session HTTP unique.
 
-### Deux sources, deux stratégies de résolution d'URL — pourquoi
+### Trois sources, trois stratégies de résolution d'URL — pourquoi
 
-| | Parcoursup | Sirene |
-|---|---|---|
-| Forme de l'URL | Gabarit fixe + identifiant du millésime | Résolue à l'exécution par requête au catalogue |
-| Ce qui varie | Un identifiant par millésime, stable une fois publié | L'URL entière, republiée chaque mois |
-| Stockage en configuration | Le gabarit et les 8 identifiants (`configs/base.yaml`) | Le nom du jeu de données et le gabarit de **l'API du catalogue**, jamais une URL de fichier |
-| Coût de la stratégie | Aucun appel réseau supplémentaire avant le téléchargement | Un appel de résolution avant chaque exécution ; échoue si le catalogue est indisponible ou a renommé une ressource |
+| | Parcoursup | Sirene | Référentiels — IDÉO | Référentiels — RNCP |
+|---|---|---|---|---|
+| Forme de l'URL | Gabarit fixe + identifiant du millésime | Résolue à l'exécution par requête au catalogue | URL fixe, un fichier par jeu | Résolue à l'exécution par requête au catalogue, **puis** extraction d'un membre depuis une archive ZIP |
+| Ce qui varie | Un identifiant par millésime, stable une fois publié | L'URL entière, republiée chaque mois | Rien : les 4 URL ne changent jamais | L'URL de l'archive, republiée **chaque jour** |
+| Stockage en configuration | Le gabarit et les 8 identifiants (`configs/base.yaml`) | Le nom du jeu de données et le gabarit de **l'API du catalogue**, jamais une URL de fichier | Les 4 URL, écrites telles quelles | Le nom du jeu de données, le gabarit du catalogue, le préfixe de ressource attendu (`export-fiches-csv-`) et le motif du fichier à extraire dans l'archive |
+| Grain de l'idempotence | Un fichier par millésime, jamais réécrit une fois publié | Un fichier par stock mensuel, écrasé si republié dans le même mois | Un fichier par jeu, écrasé seulement si le contenu a changé (empreinte) | **Un fichier par date de publication** (`rncp_AAAA-MM-JJ.csv`), jamais écrasé — voir plus bas |
+| Coût de la stratégie | Aucun appel réseau supplémentaire avant le téléchargement | Un appel de résolution avant chaque exécution ; échoue si le catalogue est indisponible ou a renommé une ressource | Aucun appel supplémentaire, mais aucune protection si l'ONISEP change une URL sans préavis | Un appel de résolution, plus un décodage de ZIP en mémoire (~9 Mo, sous le seuil qui justifierait un flux) |
 
 Parcoursup republie un export par session sous un identifiant qui, une fois
 connu, ne change plus — un gabarit d'URL en configuration reste vrai d'une
@@ -104,10 +111,45 @@ exécution à l'autre. Sirene republie un stock complet chaque mois, sous un
 chemin qui contient l'horodatage de publication
 (`.../20260801-074451/stock-stocketablissement-parquet.parquet` pour le stock
 du jour) : coder ce chemin en dur casserait le connecteur dès le mois suivant.
-La résolution dynamique n'est donc pas une préférence de conception, elle est
-la seule stratégie qui survit à la façon dont l'INSEE publie ses données.
-L'arbitrage entre les deux approches, avec son coût et son seuil de bascule,
-est documenté dans l'ADR 0005.
+IDÉO ne republie (à ce jour) sous aucun horodatage : 4 URL fixes suffisent, la
+même logique qu'un gabarit Parcoursup réduit à un seul identifiant par jeu, et
+donc au cas le plus simple des quatre. Le RNCP cumule les deux difficultés :
+comme Sirene, l'URL change à chaque republication (ici quotidienne, pas
+mensuelle) et se résout par requête au catalogue ; en plus, le fichier utile
+n'est pas téléchargé directement mais extrait d'une archive ZIP, ce qu'aucune
+des trois autres sources n'exige. La résolution dynamique n'est donc pas une
+préférence de conception uniforme, c'est la stratégie qui survit à la façon
+dont **chaque** source publie ses fichiers — parfois un gabarit stable
+suffit, parfois non. L'arbitrage Parcoursup/Sirene, avec son coût et son
+seuil de bascule, est documenté dans l'ADR 0005 ; celui du grain
+d'idempotence du RNCP dans l'ADR 0007.
+
+### RNCP — pourquoi un fichier daté, pas un fichier unique écrasé
+
+Le RNCP est un **export quotidien** : une nouvelle archive est publiée chaque
+jour par France Compétences, avec un contenu qui évolue (nouvelles fiches,
+fiches retirées, statuts qui changent). Appliquer au RNCP la même mécanique
+que Sirene — un seul fichier, écrasé à chaque republication, la date conservée
+uniquement dans le manifeste — poserait un problème que Sirene ne pose pas :
+une table dérivée construite un jour donné à partir de l'export RNCP (la table
+de réconciliation NAF↔ROME↔formation, E18) doit rester **rejouable** sans
+reprocher la source. Si le fichier RNCP est écrasé à la publication suivante,
+l'export qui a servi à construire cette table n'existe plus le lendemain :
+impossible de vérifier après coup sur quelle version du référentiel une
+exécution s'est appuyée.
+
+Le connecteur conserve donc un fichier par date de publication
+(`rncp_AAAA-MM-JJ.csv`), avec une entrée de manifeste par date. L'idempotence
+ne porte pas sur « le contenu a-t-il changé », mais sur « ai-je déjà l'export
+de ce jour » : une réexécution le même jour ne retélécharge rien (la ressource
+résolue porte la même date de publication), une réexécution un autre jour crée
+un nouveau fichier sans toucher aux précédents. Assumé et non traité à cette
+étape : l'accumulation dans le temps (~9 Mo par jour selon la taille observée
+aujourd'hui) suppose une politique de rétention si cette tâche est un jour
+programmée à cadence quotidienne dans un DAG sur une longue durée — hors du
+périmètre de l'ingestion, qui garantit la disponibilité de l'instantané, pas
+sa purge. Détail complet, alternatives écartées et seuil de bascule : ADR
+0007.
 
 `_correspond_au_fichier` sélectionne, parmi les ressources du catalogue,
 celle dont le titre porte exactement `Fichier {nom} -` : une correspondance
@@ -235,6 +277,44 @@ inchangé — aucun décompte n'est effectué. Sans ce rappel, un téléchargeme
 plusieurs minutes ne laisse aucune trace dans les journaux avant la fin, ce
 qu'un opérateur ne peut pas distinguer d'un blocage.
 
+### Le contrat d'encodage, vérifié à l'écriture
+
+`verifier_encodage` (`_referentiels_communs.py`) contrôle, une fois le fichier
+écrit, qu'il décode intégralement selon l'encodage déclaré en configuration
+(`donnees.referentiels.*.encodage`, `utf-8` pour les deux volets aujourd'hui).
+Le cas réel qui a motivé ce contrôle : la documentation du 26/08 annonçait le
+RNCP en Latin-1 ; l'export réellement téléchargé pour ce connecteur décode
+sans erreur en UTF-8 (`\xc3\xa9` = « é » en UTF-8). La configuration a été
+corrigée en conséquence (voir `01-donnees/sources.md`).
+
+Cette garantie est **asymétrique**, et le code le documente explicitement :
+elle détecte un fichier réellement en Latin-1 déclaré UTF-8 (UTF-8 rejette
+certaines suites d'octets), mais pas l'inverse — un fichier réellement en
+UTF-8 déclaré Latin-1 ne fait jamais échouer un décodage, puisque Latin-1
+associe un caractère à chacun des 256 octets possibles. Un fichier lu avec le
+mauvais encodage dans ce sens se relit tel quel, silencieusement corrompu
+(mojibake), sans qu'aucune exception ne le signale. Aucune des deux sources
+configurées aujourd'hui ne déclare `latin-1` : le risque n'est pas actif, mais
+il existerait dès qu'une configuration le ferait — c'est pourquoi la limite
+est assumée et testée
+(`test_verifier_encodage_ne_detecte_pas_un_fichier_utf8_declare_a_tort_en_latin1`),
+pas seulement documentée en commentaire.
+
+### Licences par source — pourquoi ça compte pour E18
+
+Le manifeste (`data/external/referentiels/manifeste.json`) enregistre la
+licence de chaque jeu, comme le fait la configuration (`configs/base.yaml`,
+`donnees.referentiels.*.licence`) : ONISEP (IDÉO) est sous **ODbL**
+(`odc-odbl`), le RNCP sous **Licence Ouverte v2.0** — la même que Parcoursup et
+Sirene. Ce ne sont pas des variantes équivalentes : l'ODbL impose
+l'attribution **et** le partage à l'identique de toute base de données dérivée
+qui serait elle-même redistribuée, une obligation que la Licence Ouverte
+n'impose pas. Conséquence directe pour E18 : si `naf_rome_formation.csv`
+intègre des données IDÉO (par exemple les intitulés de formation ou de métier)
+et qu'il est publié tel quel, il doit l'être sous ODbL, pas sous la licence par
+défaut du reste du dépôt. Ce point sera repris dans le registre des sources
+(`05-gouvernance/registre-sources.md`, à construire en E40).
+
 ## Les deux garanties du connecteur
 
 ### Idempotence, par empreinte
@@ -280,10 +360,15 @@ stock, avec un champ supplémentaire propre à Sirene :
 `date_publication_stock`, la date de publication du stock rendue par le
 catalogue (`last_modified`) — nécessaire parce qu'un stock Sirene grossit
 chaque mois, contrairement à un millésime Parcoursup qui, une fois publié, ne
-change plus. Ni l'un ni l'autre n'est la source de l'intégrité — c'est
-l'empreinte recalculée à chaque passage qui la garantit — mais ils évitent de
-recalculer une empreinte sur un fichier déjà connu intact, et donnent la
-traçabilité exigée par le critère 3.8.
+change plus. `data/external/referentiels/manifeste.json` fait de même pour
+les référentiels : une entrée par jeu IDÉO (`ideo:{jeu}`), plus une entrée par
+date de publication pour le RNCP (`rncp:{date}`) — la licence et le
+délimiteur de chaque source y figurent aussi, en plus de l'encodage et de
+l'empreinte, pour que le manifeste porte à lui seul le contrat de la source
+sans retourner à `configs/base.yaml`. Ni l'un ni l'autre n'est la source de
+l'intégrité — c'est l'empreinte recalculée à chaque passage qui la garantit —
+mais ils évitent de recalculer une empreinte sur un fichier déjà connu intact,
+et donnent la traçabilité exigée par le critère 3.8.
 
 **Manifeste corrompu** : un JSON illisible n'est jamais silencieusement écrasé
 par la prochaine écriture. Il est déplacé vers un nom horodaté
@@ -330,6 +415,22 @@ silencieuse). `test_ingestion_flux.py` et `test_ingestion_parcoursup.py`
 couvrent la même distinction transitoire/définitif côté Parcoursup et côté
 primitives communes.
 
+`tests/unit/test_ingestion_referentiels.py` couvre le volet IDÉO : idempotence
+par empreinte, écriture atomique, jeu non configuré (`ErreurConfigurationReferentiels`),
+échec réseau (`ErreurReseauReferentiels`), et le contrôle d'encodage
+(`verifier_encodage`) — y compris le test qui met en évidence son asymétrie
+(`test_verifier_encodage_ne_detecte_pas_un_fichier_utf8_declare_a_tort_en_latin1`) :
+un fichier réellement UTF-8 déclaré `latin-1` ne lève aucune erreur, ce que le
+test constate explicitement plutôt que de le laisser passer inaperçu.
+`tests/unit/test_ingestion_referentiels_rncp.py` couvre le volet RNCP, sans
+aucun accès réseau : résolution de la ressource la plus récente parmi
+plusieurs candidates, rejet d'un catalogue mal formé ou sans ressource
+d'export exploitable, extraction du CSV standard depuis l'archive ZIP (membre
+absent, membre ambigu, archive corrompue), et l'idempotence par date de
+publication — une réexécution le même jour ne retélécharge rien, une
+réexécution un autre jour crée un nouveau fichier daté sans toucher au
+précédent.
+
 Suite complète du dépôt, paquet non installé, sans variable d'environnement
 positionnée à la main :
 
@@ -337,10 +438,12 @@ positionnée à la main :
 python -m pytest -q
 ```
 
-→ **80 passed**.
+→ **120 passed**.
 
 ## Ce qui reste à faire
 
-- Connecteur référentiels (E07) : ONISEP, RNCP, IDÉO
 - Contrôles qualité bloquants sur les fichiers ingérés (E14) — le connecteur
   garantit l'intégrité du transfert, pas la conformité du contenu
+- Politique de rétention pour les exports RNCP quotidiens accumulés
+  (~9 Mo/jour) — assumée comme non traitée à l'étape E07, à reprendre si la
+  tâche est programmée à cadence quotidienne dans le DAG (E33)

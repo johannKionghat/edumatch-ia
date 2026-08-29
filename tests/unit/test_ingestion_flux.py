@@ -15,6 +15,7 @@ import pytest
 import requests
 
 from edumatch.ingestion._flux import (
+    ErreurFluxVide,
     ecriture_atomique,
     empreinte_sha256,
     fichier_intact,
@@ -186,6 +187,51 @@ def test_telecharger_en_flux_ne_notifie_jamais_sans_intervalle_ecoule(tmp_path: 
     )
 
     assert octets_notifies == []
+
+
+# ─── Corps vide — un HTTP 200 sans octet n'est pas un téléchargement réussi ──
+
+
+def test_telecharger_en_flux_leve_erreur_flux_vide_sur_corps_vide(tmp_path: Path) -> None:
+    """Un corps de réponse entièrement vide ne doit jamais produire un fichier de 0 octet accepté.
+
+    Avant ce contrôle, un tel corps produisait un fichier de 0 octet marqué
+    `telecharge=True` : la chaîne aval croyait disposer d'une source, alors
+    qu'elle n'avait rien reçu.
+    """
+    session = _SessionTelechargementFactice([])
+    destination = tmp_path / "fichier.bin"
+
+    with pytest.raises(ErreurFluxVide, match="exemple.test"):
+        telecharger_en_flux(session, "https://exemple.test/fichier", destination)  # type: ignore[arg-type]
+
+
+def test_telecharger_en_flux_leve_erreur_flux_vide_sur_blocs_vides(tmp_path: Path) -> None:
+    """Le flux peut renvoyer des blocs vides avant de se terminer sans rien écrire : même diagnostic."""
+    session = _SessionTelechargementFactice([b"", b""])
+    destination = tmp_path / "fichier.bin"
+
+    with pytest.raises(ErreurFluxVide):
+        telecharger_en_flux(session, "https://exemple.test/fichier", destination)  # type: ignore[arg-type]
+
+
+def test_telecharger_en_flux_ne_laisse_aucun_fichier_apres_un_corps_vide(tmp_path: Path) -> None:
+    """Ni fichier final, ni `.part` résiduel : la même garantie que pour une coupure réseau."""
+    session = _SessionTelechargementFactice([])
+    destination = tmp_path / "fichier.bin"
+
+    with pytest.raises(ErreurFluxVide):
+        telecharger_en_flux(session, "https://exemple.test/fichier", destination)  # type: ignore[arg-type]
+
+    assert not destination.exists()
+    assert not destination.with_suffix(destination.suffix + ".part").exists()
+
+
+def test_erreur_flux_vide_est_definitive_pas_transitoire() -> None:
+    from edumatch.ingestion._flux import ErreurDefinitive, ErreurTransitoire
+
+    assert issubclass(ErreurFluxVide, ErreurDefinitive)
+    assert not issubclass(ErreurFluxVide, ErreurTransitoire)
 
 
 # ─── Vocabulaire commun d'erreurs — transitoire contre définitif ─────────────

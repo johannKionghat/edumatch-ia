@@ -174,6 +174,10 @@ def telecharger_millesime(
         ErreurReseauParcoursup: échec réseau ou HTTP lors du téléchargement —
             transitoire, une nouvelle tentative après temporisation peut
             suffire.
+        ErreurFluxVide: réponse HTTP réussie mais au corps vide (0 octet) —
+            levée telle quelle par `_flux.telecharger_en_flux`, pas traduite
+            dans le vocabulaire de ce connecteur : ce n'est pas un incident
+            réseau, donc pas `ErreurReseauParcoursup`.
     """
     settings = settings or get_settings()
     identifiant = _identifiant_valide(millesime, settings)

@@ -15,6 +15,47 @@ Format :
 
 ---
 
+## 2026-08-29 — E07, connecteur référentiels et deux corrections
+
+**Fait** : E07 validée — `ingestion/referentiels.py`, `_referentiels_rncp.py`
+et `_referentiels_communs.py` téléchargent les 4 jeux ONISEP (IDÉO, URL fixe)
+et l'export RNCP du jour (résolu par interrogation du catalogue data.gouv,
+puis extraction du CSV standard depuis l'archive ZIP), avec les mêmes
+garanties que Parcoursup et Sirene. Suite complète du dépôt à 120 tests
+passants. Téléchargement réel effectué aujourd'hui vers
+`data/external/referentiels/` : 22 Mo au total. Volumétrie IDÉO conforme aux
+chiffres du 26/08, à la ligne près. Export RNCP du jour : **30 484 fiches**
+(7 000 actives, 23 484 inactives), 16 colonnes.
+
+Deux corrections importantes, propagées dans `01-donnees/sources.md` et
+`03-pipeline/ingestion.md` :
+
+1. **Un chiffre faussé par l'outil de vérification lui-même.** « 36 000
+   fiches RNCP, dont 6 995 actives » ne venait pas d'une évolution de la
+   source, mais d'un comptage par `wc -l` — qui compte des retours à la ligne
+   physiques — sur un CSV contenant des champs de texte multi-lignes entre
+   guillemets. Un parseur CSV correct donne 30 484, confirmé par la somme
+   7 000 + 23 484. Le compte des actives survivait par coïncidence, la
+   chaîne « ACTIVE » n'apparaissant jamais dans un champ multi-ligne de cet
+   export. Corrigé : `scripts/verifier_sources.sh` compte désormais avec un
+   vrai parseur CSV, pour le RNCP et pour les 4 fichiers IDÉO par cohérence.
+2. **Un encodage annoncé à tort.** Le RNCP était donné pour Latin-1 ; le
+   fichier réel décode intégralement en UTF-8. Nuance retenue : un décodage
+   Latin-1 sans erreur ne prouve rien, Latin-1 acceptant n'importe quelle
+   suite d'octets — c'est pourquoi le contrôle d'encodage du connecteur est
+   volontairement asymétrique, et documenté comme tel.
+
+**Décisions** : ADR 0007 — un fichier par date de publication pour l'export
+RNCP (`rncp_AAAA-MM-JJ.csv`), jamais un fichier unique écrasé : une table
+dérivée du RNCP (E18) doit rester vérifiable sur l'export qui l'a produite.
+Alternatives écartées : fichier unique écrasé, retéléchargement systématique
+sans persistance. Seuil de bascule : une politique de rétention à écrire si
+la tâche est un jour programmée à cadence quotidienne sur une longue durée.
+
+**Bloqué sur** : rien. Prochaine étape : E08, échantillons versionnés.
+
+**Jury** : aucune évaluation ce jour.
+
 ## 2026-08-28 — E06, connecteur Sirene et correction du chiffre d'établissements
 
 **Fait** : E06 validée — `ingestion/sirene.py` résout les 4 fichiers stock

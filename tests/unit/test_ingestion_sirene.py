@@ -17,6 +17,7 @@ import pytest
 import requests
 
 from edumatch.config import load_settings
+from edumatch.ingestion._flux import ErreurFluxVide
 from edumatch.ingestion.sirene import (
     ErreurTelechargementSirene,
     RessourceCatalogue,
@@ -245,6 +246,19 @@ def test_forcer_retelecharge_meme_si_le_fichier_est_intact(settings_test) -> Non
     telecharger_fichier(ressources[0], settings=settings_test, session=session, forcer=True)
 
     assert session.appels_fichier == 2
+
+
+def test_corps_vide_leve_erreur_flux_vide_sans_fichier_residuel(settings_test) -> None:
+    """Bénéficie du correctif posé une seule fois dans `_flux.telecharger_en_flux`."""
+    session = SessionFactice(contenu_fichier=b"")
+    ressources = resoudre_ressources(settings=settings_test, session=session)
+
+    with pytest.raises(ErreurFluxVide):
+        telecharger_fichier(ressources[0], settings=settings_test, session=session)
+
+    dossier = settings_test.raw_dir / "sirene"
+    fichiers_presents = list(dossier.glob("*.parquet")) if dossier.exists() else []
+    assert fichiers_presents == [], f"fichier(s) résiduel(s) après corps vide : {fichiers_presents}"
 
 
 def test_telechargement_journalise_la_progression(settings_test, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:

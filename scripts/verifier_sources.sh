@@ -88,9 +88,22 @@ for pair in \
   name="${pair%%|*}"; url="${pair##*|}"
   out="$TMP/$name.csv"
   curl -sS "$url" -o "$out"
-  lignes=$(($(wc -l < "$out") - 1))
-  colonnes=$(head -1 "$out" | tr ';' '\n' | wc -l)
-  echo "  $name : $lignes lignes de données, $colonnes colonnes"
+  # Compte avec un vrai parseur CSV (module csv, respecte les guillemets),
+  # jamais avec `wc -l` : `wc -l` compte des retours à la ligne physiques, et
+  # un champ texte entre guillemets peut en contenir sans que ce soit une
+  # nouvelle ligne de données (voir la correction sur le RNCP plus bas, section
+  # C.2, qui a révélé le problème sur un fichier bien plus impacté que
+  # celui-ci). Aucun de ces 4 fichiers IDÉO ne contient aujourd'hui de champ
+  # multi-ligne — vérifié : `wc -l` et ce comptage donnent le même résultat —
+  # mais le comptage correct ne doit pas dépendre de cette absence.
+  python - "$out" "$name" <<'PY'
+import csv, sys
+with open(sys.argv[1], encoding="utf-8-sig") as f:
+    r = csv.reader(f, delimiter=";")
+    header = next(r)
+    n = sum(1 for _ in r)
+print(f"  {sys.argv[2]} : {n} lignes de données, {len(header)} colonnes")
+PY
 done
 
 echo
@@ -128,11 +141,31 @@ else
   if [ -z "$STANDARD" ]; then
     echo "  Fichier export_fiches_CSV_Standard_*.csv introuvable dans l'archive du jour."
   else
-    total=$(($(wc -l < "$STANDARD") - 1))
-    actives=$(grep -c '"ACTIVE"' "$STANDARD")
-    colonnes=$(head -1 "$STANDARD" | tr ';' '\n' | wc -l)
     echo "  Fichier : $(basename "$STANDARD")"
-    echo "  $total fiches au total, $actives actives, $colonnes colonnes"
+    # ⚠️ Comptage par un vrai parseur CSV (module `csv`, respecte les champs
+    # texte entre guillemets), jamais par `wc -l` : le CSV RNCP contient des
+    # intitulés de certification multi-lignes entre guillemets, chacun ajoutant
+    # des retours à la ligne physiques que `wc -l` compte à tort comme des
+    # fiches. Constaté sur cette source : `wc -l` annonçait 36 000 fiches,
+    # le parseur CSV en compte 30 484 — l'écart est entièrement absorbé par
+    # les retours à la ligne internes aux champs, pas par des fiches en trop
+    # ou en moins. Le compte des actives, lui, survivait par coïncidence :
+    # `grep -c '"ACTIVE"'` tombait juste tant que cette valeur n'apparaissait
+    # jamais dans un champ multi-ligne, ce qui n'a rien d'une garantie.
+    python - "$STANDARD" <<'PY'
+import csv, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    r = csv.reader(f, delimiter=";")
+    header = next(r)
+    idx_actif = header.index("Actif")
+    total = 0
+    actives = 0
+    for row in r:
+        total += 1
+        if row[idx_actif] == "ACTIVE":
+            actives += 1
+print(f"  {total} fiches au total, {actives} actives, {len(header)} colonnes")
+PY
     echo "  ⚠️ Ce chiffre est daté du jour d'exécution — l'export RNCP/RS est republié"
     echo "     chaque jour, le nombre de fiches variera d'une exécution à l'autre."
   fi

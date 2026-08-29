@@ -16,7 +16,7 @@ import pytest
 import requests
 
 from edumatch.config import load_settings
-from edumatch.ingestion._flux import ErreurDefinitive, ErreurTransitoire
+from edumatch.ingestion._flux import ErreurDefinitive, ErreurFluxVide, ErreurTransitoire
 from edumatch.ingestion.parcoursup import (
     ErreurConfigurationParcoursup,
     ErreurReseauParcoursup,
@@ -207,6 +207,21 @@ def test_erreur_http_leve_une_erreur_explicite_et_ne_laisse_aucun_fichier(settin
     dossier = settings_test.raw_dir / "parcoursup"
     fichiers_presents = list(dossier.glob("parcoursup_2020*")) if dossier.exists() else []
     assert fichiers_presents == [], f"fichier(s) résiduel(s) après erreur HTTP : {fichiers_presents}"
+
+
+# ─── Corps vide — un HTTP 200 sans octet n'est pas un téléchargement réussi ──
+
+
+def test_corps_vide_leve_erreur_flux_vide_sans_fichier_residuel(settings_test) -> None:
+    """Bénéficie du correctif posé une seule fois dans `_flux.telecharger_en_flux`."""
+    session = SessionFactice(contenu=b"")
+
+    with pytest.raises(ErreurFluxVide):
+        telecharger_millesime(2020, settings=settings_test, session=session)
+
+    dossier = settings_test.raw_dir / "parcoursup"
+    fichiers_presents = list(dossier.glob("parcoursup_2020*")) if dossier.exists() else []
+    assert fichiers_presents == [], f"fichier(s) résiduel(s) après corps vide : {fichiers_presents}"
 
 
 # ─── Manifeste corrompu ────────────────────────────────────────────────────────

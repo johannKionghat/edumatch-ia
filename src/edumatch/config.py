@@ -138,9 +138,64 @@ class SireneConfig(_Strict):
         return valeur
 
 
+class IdeoJeuConfig(_Strict):
+    """Un jeu ONISEP (IDÉO) : une URL de téléchargement fixe, ses conventions et sa licence.
+
+    Chaque jeu porte sa propre licence par prudence, même si les quatre valent
+    aujourd'hui ODbL : c'est le manifeste, alimenté depuis ce champ, qui
+    permettra en E18 de savoir si une table dérivée est contaminée par le
+    partage à l'identique obligatoire de l'ODbL, sans relire la documentation.
+    """
+
+    url: str
+    encodage: str
+    delimiteur: str
+    licence: str
+
+
+class IdeoConfig(_Strict):
+    # Clé = nom du jeu (formations, metiers, structures_secondaire,
+    # structures_superieur) : la même clé sert de nom de fichier en sortie.
+    jeux: dict[str, IdeoJeuConfig] = Field(min_length=1)
+
+
+class RncpConfig(_Strict):
+    """Résolution de l'export RNCP/RS du jour, republié chaque jour par France Compétences.
+
+    Comme Sirene, aucune URL de fichier n'est codée en dur : seuls
+    l'identifiant du jeu de données et le gabarit de l'API du catalogue le
+    sont, l'URL de l'archive du jour est résolue à l'exécution.
+    """
+
+    jeu_de_donnees: str
+    url_catalogue_gabarit: str  # gabarit vers l'API data.gouv, {jeu_de_donnees} à substituer
+    prefixe_ressource: str  # préfixe du titre des ressources d'export quotidien
+    format_ressource: str  # "zip" : l'export est distribué sous forme d'archive
+    nom_fichier_gabarit: str  # motif (glob) du CSV standard à l'intérieur de l'archive
+    encodage: str
+    delimiteur: str
+    licence: str
+
+    @field_validator("url_catalogue_gabarit")
+    @classmethod
+    def _gabarit_contient_le_parametre_jeu_de_donnees(cls, valeur: str) -> str:
+        if "{jeu_de_donnees}" not in valeur:
+            raise ValueError(
+                "donnees.referentiels.rncp.url_catalogue_gabarit doit contenir "
+                "le paramètre '{jeu_de_donnees}' à substituer."
+            )
+        return valeur
+
+
+class ReferentielsConfig(_Strict):
+    ideo: IdeoConfig
+    rncp: RncpConfig
+
+
 class DonneesConfig(_Strict):
     parcoursup: ParcoursupConfig
     sirene: SireneConfig
+    referentiels: ReferentielsConfig
     # Uniquement présent en dev, pour itérer sur un échantillon.
     echantillonnage: float | None = Field(default=None, gt=0, le=1)
 

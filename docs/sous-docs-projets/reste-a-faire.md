@@ -25,6 +25,8 @@ Feuille de route vivante. Je la tiens à jour au fil du projet et des
 | `config.py` — configuration centralisée typée, validée au démarrage | ✅ |
 | `ingestion/parcoursup.py` — connecteur des 8 millésimes, idempotent | ✅ |
 | `ingestion/_flux.py` — primitives partagées (flux, empreinte, écriture atomique, manifeste) | ✅ |
+| `ingestion/sirene.py` — connecteur des 4 fichiers stock, résolution dynamique du catalogue mensuel | ✅ |
+| `ingestion/referentiels.py`, `_referentiels_rncp.py`, `_referentiels_communs.py` — connecteur ONISEP + RNCP, idempotence par date de publication pour le RNCP | ✅ |
 
 **Reste sur l'infrastructure** : protection de branche `main` — indisponible
 sur dépôt privé en offre gratuite, compensée par le gate de vérification.
@@ -42,7 +44,13 @@ posées.*
 
 - [ ] Plan de gouvernance : classification, rôles, règles d'usage
 - [ ] Registre des traitements
-- [ ] Registre des sources et de leurs licences
+- [ ] Registre des sources et de leurs licences — les 4 licences sont déjà
+      identifiées et enregistrées dans les manifestes de chaque connecteur
+      (Parcoursup, Sirene, RNCP : Licence Ouverte v2.0 ; ONISEP/IDÉO : ODbL,
+      partage à l'identique obligatoire sur toute base dérivée redistribuée).
+      Le registre lui-même reste à écrire en E40 : pas anticipé maintenant,
+      pour respecter l'ordre du plan d'exécution du projet — la matière est
+      prête dans `01-donnees/sources.md` et `03-pipeline/ingestion.md`
 - [ ] AIPD — obligatoire, profilage de mineurs
 - [ ] Model Card
 - [ ] Matrice de risques
@@ -65,11 +73,10 @@ posées.*
 ## Bloc 3 — Pipelines
 
 - [x] `ingestion/parcoursup.py` — 8 millésimes, idempotent, écriture atomique
-- [ ] Détail mineur : le docstring de `parcoursup.py` cite encore « 100 Mo » à
-      titre d'exemple (pas un chiffre affirmé comme mesuré) ; à aligner sur les
-      82 Mo mesurés en E05 à la prochaine modification de ce fichier
-- [ ] `ingestion/sirene.py` — catalogue mensuel, Parquet
-- [ ] `ingestion/referentiels.py` — ONISEP, RNCP, IDEO
+      (docstring aligné sur les 82 Mo mesurés en E05, vérifié le 2026-08-29)
+- [x] `ingestion/sirene.py` — catalogue mensuel, Parquet
+- [x] `ingestion/referentiels.py` — ONISEP, RNCP, IDÉO — connecteur écrit,
+      120 tests passants, 22 Mo réellement téléchargés le 2026-08-29
 - [ ] `quality/expectations/` — schéma, complétude, cohérence, fraîcheur, **bloquantes**
 - [ ] `transform/` — projet dbt, bronze → silver → gold, tests et lignage
 - [ ] `spark/sirene_agregats.py` — 9 colonnes, filtres, agrégats commune × NAF, bassin

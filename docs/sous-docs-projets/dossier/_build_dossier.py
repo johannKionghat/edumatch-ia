@@ -271,7 +271,7 @@ table([
     ["Référentiels ONISEP, IDEO et RNCP",
      "Description des formations, des métiers et des certifications ; support de la mise en "
      "correspondance entre activité économique et formation.",
-     "IDÉO : 5 869 formations, 1 534 métiers, 24 278 structures (15,9 Mo). RNCP et Répertoire spécifique : 36 000 fiches dont 6 995 actives, export quotidien",
+     "IDÉO : 5 869 formations, 1 534 métiers, 24 278 structures (15,9 Mo). RNCP et Répertoire spécifique : 30 484 fiches dont 7 000 actives (export du 29 août 2026, republié chaque jour)",
      "ONISEP et IDÉO : ODbL — partage à l'identique obligatoire sur tout dérivé redistribué. "
      "RNCP (France Compétences) : Licence Ouverte v2.0"],
 ], header=True)

@@ -424,6 +424,9 @@ def telecharger_fichier(
     Raises:
         ErreurReseauSirene: échec réseau ou HTTP lors du téléchargement —
             transitoire, à retenter.
+        ErreurFluxVide: réponse HTTP réussie mais au corps vide (0 octet) —
+            levée telle quelle par `_flux.telecharger_en_flux`, pas traduite
+            en `ErreurReseauSirene` : ce n'est pas un incident réseau.
     """
     settings = settings or get_settings()
     chemin_final = _chemin_destination(settings, ressource.fichier)
