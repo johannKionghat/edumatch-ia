@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 7 / 46 étapes validées.**
+**État : 8 / 46 étapes validées.**
 
 ---
 
@@ -52,7 +52,7 @@ de tests **et** de contenu.
 | E05 | Connecteur Parcoursup | ✅ validée | 2026-08-28 | `144ee20` |
 | E06 | Connecteur Sirene | ✅ validée | 2026-08-28 | `04efa8e` |
 | E07 | Connecteur référentiels | ✅ validée | 2026-08-29 | `22bf61d` |
-| E08 | Échantillons versionnés | ⬜ | | |
+| E08 | Échantillons versionnés | ✅ validée | 2026-08-29 | `f6ecd6c` |
 
 **E03 — ce qui a été vérifié**
 - 4 sources interrogées par API de métadonnées (pas de téléchargement des gros
@@ -290,6 +290,73 @@ et à reprendre dans le registre des sources (E40) : ONISEP est sous **ODbL**
 (partage à l'identique obligatoire sur toute base dérivée redistribuée), le
 RNCP sous **Licence Ouverte v2.0**. Si `naf_rome_formation.csv` (E18) intègre
 des données IDÉO et est publié tel quel, il devra l'être sous ODbL.
+
+**E08 — ce qui a été vérifié**
+- `data/samples/` : 1,2 Mo, 17 échantillons versionnés (8 CSV Parcoursup, 4
+  Parquet Sirene, 4 CSV IDÉO, 1 CSV RNCP), générés par
+  `src/edumatch/ingestion/echantillons.py` (`python -m
+  edumatch.ingestion.echantillons`, cible `make samples`)
+- **Critère central de l'étape, vérifié en le provoquant** : `data/raw/` et
+  `data/external/` rendus absents (dossiers renommés) → la suite complète
+  tourne quand même, `python -m pytest -q` → **145 passed**. C'est ce qui rend
+  la CI possible sans les 4,6 Go de sources
+- Échantillonnage systématique à pas fixe, sans graine aléatoire : deux
+  générations successives produisent une empreinte SHA-256 strictement
+  identique sur chaque fichier — vérifié, pas supposé
+- Les 8 millésimes Parcoursup sont représentés, dérive de schéma 85 → 118
+  colonnes visible sur l'échantillon (`test_parcoursup_couvre_les_huit_millesimes_et_la_derive_de_schema`)
+- Manifeste (`data/samples/manifeste.json`) : 17 entrées, chacune porte `url`,
+  `date_source`, `empreinte_sha256_source`, `licence` en plus des champs déjà
+  existants
+
+**E08 — le point de gouvernance, pas seulement technique**
+Les 9 colonnes d'identité directe de personnes physiques (`nomUniteLegale`,
+`prenom1UniteLegale`, etc.) sont exclues de l'échantillon `StockUniteLegale`.
+Retirer ces colonnes **ne rend pas l'échantillon anonyme**. Vérifié sur
+l'échantillon lui-même : 282 des 500 lignes de `StockUniteLegale`
+(catégorie juridique 1000, entrepreneur individuel — sans personnalité
+juridique distincte de la personne physique qui le crée) sont retrouvables
+par jointure sur le SIREN avec `denominationUsuelleEtablissement` /
+`enseigne1Etablissement`, conservées sans restriction dans
+`StockEtablissementHistorique` :
+
+```
+python -c "
+import pyarrow.parquet as pq, collections
+t = pq.read_table('data/samples/sirene/StockUniteLegale.parquet')
+cat = t.column('categorieJuridiqueUniteLegale').to_pylist()
+statut = t.column('statutDiffusionUniteLegale').to_pylist()
+print(collections.Counter(s for c, s in zip(cat, statut) if c == 1000))
+"
+# → Counter({'O': 239, 'P': 43})
+```
+
+239 des 282 sont en statut diffusible (« O ») : sur le fichier source complet,
+la jointure nom retiré ↔ dénomination conservée restitue l'identité des 239
+sur 239 diffusibles (les 43 « P » restent masqués `[ND]` par l'INSEE à la
+source — art. A123-96 du code de commerce, respecté sans reconstruction).
+C'est une **pseudonymisation** (RGPD art. 4.5), pas une anonymisation : la
+donnée reste dans le champ du RGPD. Base légale retenue : **intérêt légitime**
+(art. 6.1.f), mise en balance écrite dans `data/samples/README.md`. Rappel
+explicite : la Licence Ouverte v2.0 ne vaut jamais base légale RGPD, les deux
+régimes se cumulent. Alternatives écartées : exclure les lignes d'entrepreneur
+individuel (détruit la représentativité — 56,4 % des lignes du fichier source
+complet), hacher le SIREN (9 chiffres, espace forçable en secondes), fabriquer
+une valeur de substitution (donnée simulée, interdite par ailleurs dans ce
+projet). Détail complet et seuil de bascule : ADR 0008.
+
+**E08 — un test corrigé sur le même défaut qu'un test déjà revu sur ce
+projet** : `tests/data/test_echantillons_conformite.py` importait sa liste de
+colonnes interdites depuis le module qu'il contrôlait
+(`edumatch.ingestion.echantillons`) — vider cette liste dans le module aurait
+laissé le test vert. Devenu une liste blanche écrite en dur dans le test,
+propre à chaque fichier Sirene, qui refuse par défaut toute colonne non
+examinée — y compris une colonne ajoutée sans préavis par l'INSEE (précédent
+réel : `activitePrincipaleNAF25Etablissement`, apparue le 16/12/2025).
+
+**E08 — décision prise** : ADR 0008 — conserver les lignes d'entrepreneur
+individuel sous régime d'intérêt légitime plutôt que de les exclure de
+l'échantillon.
 
 ## Phase 2 — Analyse exploratoire
 

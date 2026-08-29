@@ -27,6 +27,7 @@ Feuille de route vivante. Je la tiens à jour au fil du projet et des
 | `ingestion/_flux.py` — primitives partagées (flux, empreinte, écriture atomique, manifeste) | ✅ |
 | `ingestion/sirene.py` — connecteur des 4 fichiers stock, résolution dynamique du catalogue mensuel | ✅ |
 | `ingestion/referentiels.py`, `_referentiels_rncp.py`, `_referentiels_communs.py` — connecteur ONISEP + RNCP, idempotence par date de publication pour le RNCP | ✅ |
+| `data/samples/` — 17 échantillons versionnés, générés par `ingestion/echantillons.py`, régime juridique documenté (pseudonymisation, intérêt légitime) | ✅ |
 
 **Reste sur l'infrastructure** : protection de branche `main` — indisponible
 sur dépôt privé en offre gratuite, compensée par le gate de vérification.
@@ -48,9 +49,13 @@ posées.*
       identifiées et enregistrées dans les manifestes de chaque connecteur
       (Parcoursup, Sirene, RNCP : Licence Ouverte v2.0 ; ONISEP/IDÉO : ODbL,
       partage à l'identique obligatoire sur toute base dérivée redistribuée).
-      Le registre lui-même reste à écrire en E40 : pas anticipé maintenant,
-      pour respecter l'ordre du plan d'exécution du projet — la matière est
-      prête dans `01-donnees/sources.md` et `03-pipeline/ingestion.md`
+      La base légale du traitement « échantillons de test » (intérêt
+      légitime, art. 6.1.f) et l'attribution des 4 producteurs sont
+      également établies (E08). Le registre lui-même reste à écrire en E40 :
+      pas anticipé maintenant, pour respecter l'ordre du plan d'exécution du
+      projet — la matière est prête dans `01-donnees/sources.md`,
+      `01-donnees/echantillons.md`, `03-pipeline/ingestion.md` et l'ADR 0008,
+      et amorcée dans `05-gouvernance/`
 - [ ] AIPD — obligatoire, profilage de mineurs
 - [ ] Model Card
 - [ ] Matrice de risques
@@ -77,6 +82,11 @@ posées.*
 - [x] `ingestion/sirene.py` — catalogue mensuel, Parquet
 - [x] `ingestion/referentiels.py` — ONISEP, RNCP, IDÉO — connecteur écrit,
       120 tests passants, 22 Mo réellement téléchargés le 2026-08-29
+- [x] `data/samples/` — échantillons versionnés des 3 sources, 145 tests
+      passants sans `data/raw/` ni `data/external/` (E08, 2026-08-29). Régime
+      juridique des échantillons Sirene (pseudonymisation, entrepreneurs
+      individuels) documenté et à reprendre dans le registre des sources
+      (E40) — voir `01-donnees/echantillons.md`
 - [ ] `quality/expectations/` — schéma, complétude, cohérence, fraîcheur, **bloquantes**
 - [ ] `transform/` — projet dbt, bronze → silver → gold, tests et lignage
 - [ ] `spark/sirene_agregats.py` — 9 colonnes, filtres, agrégats commune × NAF, bassin

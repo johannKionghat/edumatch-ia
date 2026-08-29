@@ -22,15 +22,17 @@ Multiplicatif : si un terme s'annule, la recommandation disparaît.
 
 ## État d'avancement
 
-**L'architecture est en place, la configuration est centralisée et le premier
-connecteur d'ingestion (Parcoursup) fonctionne.** Le dépôt part d'une base
-propre, sans reprise de l'ancien MVP.
+**L'architecture est en place, la configuration est centralisée, les trois
+connecteurs d'ingestion (Parcoursup, Sirene, référentiels) fonctionnent, et
+la suite de tests tourne sur des échantillons versionnés sans dépendre des
+sources brutes.** Le dépôt part d'une base propre, sans reprise de l'ancien
+MVP.
 
 | Bloc | Avancement |
 |---|---|
 | 1 — Gouvernance | à démarrer |
 | 2 — Architecture | structure, outillage et configuration posés, infrastructure à construire |
-| 3 — Pipeline | connecteur Parcoursup opérationnel (8 millésimes, idempotent) |
+| 3 — Pipeline | connecteurs Parcoursup, Sirene et référentiels opérationnels ; échantillons de test versionnés, suite complète indépendante des sources brutes |
 | 4 — Déploiement | à démarrer |
 
 Le détail de ce qui reste est dans [`reste-a-faire.md`](reste-a-faire.md).

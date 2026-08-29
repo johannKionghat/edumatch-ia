@@ -1,6 +1,6 @@
 # Ingestion — les connecteurs
 
-**Dernière mise à jour** : 2026-08-29 (E07).
+**Dernière mise à jour** : 2026-08-29 (E08).
 
 Cette page couvre les trois connecteurs opérationnels à ce jour — Parcoursup,
 Sirene et référentiels — et les primitives qu'ils partagent. Elle sert de
@@ -22,6 +22,7 @@ jour (RNCP).
 | `src/edumatch/ingestion/referentiels.py` | Connecteur référentiels : point d'entrée public, volet IDÉO (URL fixe) |
 | `src/edumatch/ingestion/_referentiels_rncp.py` | Volet RNCP : résolution de l'export quotidien, extraction du CSV depuis l'archive ZIP |
 | `src/edumatch/ingestion/_referentiels_communs.py` | Vocabulaire d'erreur et primitives propres aux deux volets du connecteur référentiels |
+| `src/edumatch/ingestion/echantillons.py` | Génération de `data/samples/`, l'échantillon versionné des trois sources |
 
 ## Le connecteur Parcoursup
 
@@ -390,6 +391,34 @@ catalogue data.gouv pour Sirene (les liens changent chaque mois). Le choix
 d'extraire ces primitives avant l'écriture du deuxième connecteur, plutôt
 qu'après une première duplication, est documenté dans l'ADR 0004.
 
+## La génération des échantillons de test — son rôle pour la CI
+
+`echantillons.py` lit `data/raw/` et `data/external/`, déjà peuplés par les
+trois connecteurs ci-dessus, et écrit `data/samples/` : 17 fichiers, 1,2 Mo,
+sans jamais modifier ni supprimer une ligne des dossiers qu'il lit.
+Contrairement aux trois connecteurs, il ne fait aucun accès réseau — sa seule
+tâche est de réduire des fichiers déjà présents localement à un extrait
+représentatif et versionnable.
+
+**Ce que ce module rend possible, et qu'aucun connecteur ne peut rendre
+possible seul** : faire tourner la suite de tests sur un poste, ou une
+exécution de CI, qui n'a jamais téléchargé les 4,6 Go de Sirene ni les 82 Mo
+de Parcoursup. Vérifié en le provoquant — `data/raw/` et `data/external/`
+rendus absents, la suite tourne quand même (voir « Suite complète » plus
+bas). Sans cette étape, chaque exécution de CI aurait dû télécharger les
+sources complètes, ou le pipeline de tests aurait dû se contenter de données
+fabriquées — exclu par ailleurs dans ce projet (aucune donnée simulée).
+
+L'échantillonnage est systématique à pas fixe, sans graine aléatoire : un
+fichier source inchangé produit toujours le même extrait, empreinte SHA-256
+identique sur deux générations. Les 9 colonnes d'identité directe de
+personne physique sont exclues des deux fichiers `StockUniteLegale*`, mais
+cela ne suffit pas à rendre l'extrait anonyme — le régime juridique complet
+(pseudonymisation, base légale d'intérêt légitime, licences par source) est
+documenté dans `01-donnees/echantillons.md` et l'ADR 0008, pas repris ici :
+cette page couvre la mécanique d'ingestion, pas la conformité RGPD du
+résultat.
+
 ## Tests
 
 `tests/unit/test_ingestion_flux.py` et `tests/unit/test_ingestion_parcoursup.py`
@@ -431,6 +460,16 @@ publication — une réexécution le même jour ne retélécharge rien, une
 réexécution un autre jour crée un nouveau fichier daté sans toucher au
 précédent.
 
+`tests/data/test_echantillons_conformite.py` couvre `data/samples/` : liste
+blanche de colonnes par fichier Sirene (voir plus haut, et la correction
+détaillée dans `01-donnees/echantillons.md`), présence et non-vacuité de
+chaque échantillon, couverture des 8 millésimes Parcoursup et de leur dérive
+de schéma, poids total sous 10 Mo, mentions obligatoires du README de
+`data/samples/`. `tests/unit/test_ingestion_echantillons.py` couvre le
+module de génération lui-même : déterminisme de l'échantillonnage
+systématique (empreinte identique sur deux générations), exclusion effective
+des 9 colonnes d'identité directe, complétude du manifeste écrit.
+
 Suite complète du dépôt, paquet non installé, sans variable d'environnement
 positionnée à la main :
 
@@ -438,7 +477,9 @@ positionnée à la main :
 python -m pytest -q
 ```
 
-→ **120 passed**.
+→ **145 passed**. Rejoué avec `data/raw/` et `data/external/` rendus absents
+(dossiers renommés) : même résultat, **145 passed** — c'est précisément ce
+que E08 devait prouver.
 
 ## Ce qui reste à faire
 

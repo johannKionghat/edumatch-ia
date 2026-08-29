@@ -15,6 +15,43 @@ Format :
 
 ---
 
+## 2026-08-29 — E08, échantillons de test versionnés
+
+**Fait** : E08 validée — `data/samples/` (1,2 Mo, 17 échantillons couvrant
+Parcoursup, Sirene et les référentiels), généré par
+`src/edumatch/ingestion/echantillons.py` (`make samples`). Critère de
+validation vérifié en le provoquant : `data/raw/` et `data/external/` rendus
+absents, la suite complète tourne quand même — 145 passed. Échantillonnage
+systématique déterministe (empreinte identique sur deux générations). Les 8
+millésimes Parcoursup couvrent la dérive de schéma 85 → 118 colonnes.
+
+Sujet central de l'étape, plus juridique que technique : les 9 colonnes
+d'identité directe sont exclues de `StockUniteLegale`, mais 282 des 500
+lignes de l'échantillon sont des entrepreneurs individuels (catégorie
+juridique 1000), dont 239 diffusibles ; une jointure sur le SIREN avec la
+dénomination d'établissement, conservée ailleurs dans l'échantillon,
+restitue leur identité à 239 sur 239. Ces échantillons sont donc
+**pseudonymisés, pas anonymisés** : ils restent dans le champ du RGPD. Base
+légale retenue : intérêt légitime (art. 6.1.f), mise en balance écrite. La
+Licence Ouverte ne vaut jamais base légale — les deux régimes se cumulent.
+Détail complet : `01-donnees/echantillons.md`, ADR 0008.
+
+**Corrigé** : `test_echantillons_conformite.py` importait sa liste de
+colonnes interdites depuis le module de génération qu'il était censé
+contrôler — vider la liste dans le module aurait laissé le test vert. Devenu
+une liste blanche écrite en dur dans le test, propre à chaque fichier
+Sirene, qui refuse par défaut toute colonne non examinée.
+
+**Décisions** : ADR 0008 — conserver les lignes d'entrepreneur individuel
+sous intérêt légitime plutôt que de les exclure de l'échantillon.
+Alternatives écartées : exclusion (détruirait la représentativité, 56,4 %
+des lignes du fichier source complet), hachage du SIREN (espace forçable en
+secondes), valeur de substitution fabriquée (donnée simulée, interdite).
+
+**Bloqué sur** : rien. Prochaine étape : E09, EDA — label et distributions.
+
+**Jury** : aucune évaluation ce jour.
+
 ## 2026-08-29 — E07, connecteur référentiels et deux corrections
 
 **Fait** : E07 validée — `ingestion/referentiels.py`, `_referentiels_rncp.py`

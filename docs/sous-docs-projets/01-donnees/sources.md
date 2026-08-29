@@ -5,6 +5,12 @@ par une commande, exécutée le jour même contre le catalogue de la source — 
 contre un téléchargement complet. Le script qui rejoue l'ensemble est
 `scripts/verifier_sources.sh`.
 
+**Mise à jour du 2026-08-29 (E08)** : un échantillon versionné de chacune de
+ces sources est désormais disponible dans `data/samples/`, avec son régime
+juridique propre (pseudonymisation des lignes Sirene de personnes physiques,
+base légale, licences ODbL et Licence Ouverte) — détail dans
+`01-donnees/echantillons.md`.
+
 **Mise à jour du 2026-08-28 (E06)** : les 4 fichiers Sirene retenus ont été
 réellement téléchargés (`data/raw/sirene/`). Le nombre de lignes, invérifiable
 par l'API de métadonnées le 26/08, est mesuré ici pour la première fois par
