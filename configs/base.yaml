@@ -98,8 +98,177 @@ modele:
   type: lightgbm
   objectif: regression_proportion
   ponderation: effectif_cellule      # une cellule de 3 ne vaut pas une de 500
+  # Décision de variables (adr/0013). Cette section est la référence unique
+  # de la construction des variables : elle classe les 128 colonnes vues au
+  # moins une fois dans les huit millésimes Parcoursup, sans exception.
+  #
+  # Protection anti-fuite par LISTE BLANCHE, et non par liste d'exclusion :
+  # seules les colonnes de `session_courante` sont lues sur la session
+  # prédite. Toutes les autres — compteurs de vœux, propositions, admis,
+  # rangs, taux d'accès — ne sont lisibles que sur la session précédente
+  # (`decalees`), car aucune d'elles n'existe au moment où un lycéen
+  # formule ses vœux. Une colonne oubliée est exclue par défaut, jamais admise
+  # par défaut.
+  variables:
+    # Colonnes de jointure et de partition, jamais données au modèle comme
+    # variables. `lien_form_psup` ne sert qu'à reconstruire `cod_aff_form`
+    # sur les millésimes 2018 et 2019, où la colonne est absente (adr/0010).
+    cles:
+      - session
+      - cod_aff_form
+      - lien_form_psup
+    # Dimensions de la cellule prédite. Elles ne viennent pas d'une colonne :
+    # elles sont portées par la structure du label (adr/0009), qui décline
+    # chaque formation en type de baccalauréat et statut de boursier.
+    dimensions_cellule:
+      - type_bac
+      - boursier
+    # Attributs de catalogue, publiés et consultables au moment où le lycéen
+    # formule ses vœux : ce sont les SEULES colonnes lues sur la session
+    # prédite.
+    session_courante:
+      - fili
+      - fil_lib_voe_acc
+      - form_lib_voe_acc
+      - select_form
+      - contrat_etab
+      - tri
+      - dep
+      - acad_mies
+      - region_etab_aff
+    # Résultats de la session précédente. Le fichier du millésime N-1 est en
+    # ligne quand s'ouvre la campagne N (millésime 2024 publié le 16/01/2025).
+    # Conséquence à assumer : `prop_tot_*` n'existant pas avant 2020, ces
+    # variables sont vides pour la session d'entraînement 2020.
+    decalees:
+      - capa_fin
+      - voe_tot
+      - nb_voe_pp
+      - nb_voe_pp_bg
+      - nb_voe_pp_bg_brs
+      - nb_voe_pp_bt
+      - nb_voe_pp_bt_brs
+      - nb_voe_pp_bp
+      - nb_voe_pp_bp_brs
+      - nb_cla_pp
+      - nb_cla_pp_bg
+      - nb_cla_pp_bg_brs
+      - nb_cla_pp_bt
+      - nb_cla_pp_bt_brs
+      - nb_cla_pp_bp
+      - nb_cla_pp_bp_brs
+      - prop_tot
+      - prop_tot_bg
+      - prop_tot_bg_brs
+      - prop_tot_bt
+      - prop_tot_bt_brs
+      - prop_tot_bp
+      - prop_tot_bp_brs
+      - acc_tot
+      - acc_bg
+      - acc_bt
+      - acc_bp
+      - acc_brs
+      - acc_neobac
+      - acc_aca_orig
+      - acc_aca_orig_idf
+      - acc_debutpp
+      - acc_datebac
+      - acc_finpp
+      - ran_grp1
+    # Variables de mention, décalées elles aussi, mais contaminées par le
+    # baccalauréat en contrôle continu de 2020 : lues sur N-1, elles altèrent
+    # les sessions cibles 2021 et 2022, soit la moitié de l'entraînement.
+    # Écartées par défaut, réintroduites seulement si l'ablation le justifie.
+    decalees_sous_reserve:
+      - acc_mention_nonrenseignee
+      - acc_sansmention
+      - acc_ab
+      - acc_b
+      - acc_tb
+      - acc_bg_mention
+      - acc_bt_mention
+      - acc_bp_mention
+    exclues:
+      voe_tot_f: interdite
+      acc_tot_f: interdite
+      acc_term_f: interdite
+      pct_f: interdite
+      cod_uai: substitut
+      g_olocalisation_des_formations: substitut
+      ville_etab: substitut
+      regr_forma: instabilite
+      rang_der_max: instabilite
+      pct_etab_orig: instabilite
+      lib_grp4: instabilite
+      ran_grp4: instabilite
+      lib_grp5: instabilite
+      ran_grp5: instabilite
+      taux_adm_psup: instabilite
+      taux_adm_psup_pro: instabilite
+      taux_adm_psup_gen: instabilite
+      taux_adm_psup_techno: instabilite
+      lib_for_voe_ins: instabilite
+      detail_forma2: instabilite
+      acc_tbf: instabilite
+      pct_tbf: instabilite
+      list_com: instabilite
+      etablissement_id_paysage: instabilite
+      composante_id_paysage: instabilite
+      taux_acces_ens: instabilite
+      part_acces_gen: instabilite
+      part_acces_tec: instabilite
+      part_acces_pro: instabilite
+      lib_comp_voe_ins: cardinalite
+      detail_forma: completude
+      nb_voe_pp_internat: completude
+      nb_cla_pp_internat: completude
+      nb_cla_pp_pasinternat: completude
+      acc_internat: completude
+      acc_term: completude
+      lib_grp2: completude
+      ran_grp2: completude
+      lib_grp3: completude
+      ran_grp3: completude
+      nb_voe_pp_at: hors_perimetre
+      nb_voe_pc: hors_perimetre
+      nb_voe_pc_bg: hors_perimetre
+      nb_voe_pc_bt: hors_perimetre
+      nb_voe_pc_bp: hors_perimetre
+      nb_voe_pc_at: hors_perimetre
+      nb_cla_pc: hors_perimetre
+      nb_cla_pp_at: hors_perimetre
+      acc_at: hors_perimetre
+      prop_tot_at: hors_perimetre
+      g_ea_lib_vx: redondance
+      dep_lib: redondance
+      acc_pp: redondance
+      acc_pc: redondance
+      pct_aca_orig: redondance
+      pct_aca_orig_idf: redondance
+      pct_bours: redondance
+      pct_neobac: redondance
+      pct_mention_nonrenseignee: redondance
+      pct_sansmention: redondance
+      pct_ab: redondance
+      pct_b: redondance
+      pct_tb: redondance
+      pct_bg: redondance
+      pct_bg_mention: redondance
+      pct_bt: redondance
+      pct_bt_mention: redondance
+      pct_bp: redondance
+      pct_bp_mention: redondance
+      pct_acc_debutpp: redondance
+      pct_acc_datebac: redondance
+      pct_acc_finpp: redondance
+      lib_grp1: redondance
   split:
-    entrainement: [2018, 2019, 2020, 2021, 2022, 2023]
+    # Le numérateur du label ventilé par type de baccalauréat
+    # (prop_tot_{bg|bt|bp}) n'existe qu'à partir de la session 2020 : les
+    # sessions 2018 et 2019 n'ont pas de cible et ne peuvent donc pas servir
+    # à l'entraînement. Voir adr/0012.
+    entrainement: [2020, 2021, 2022, 2023]
     validation: [2024]
     test: [2025]                     # touché UNE SEULE FOIS, à la fin
   hyperparametres:

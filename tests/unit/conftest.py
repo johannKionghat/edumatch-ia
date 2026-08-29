@@ -62,6 +62,15 @@ modele:
   type: lightgbm
   objectif: regression_proportion
   ponderation: effectif_cellule
+  variables:
+    cles: [session, cod_aff_form]
+    dimensions_cellule: [type_bac, boursier]
+    session_courante: [fili, dep]
+    decalees: [voe_tot, capa_fin]
+    decalees_sous_reserve: [acc_tb]
+    exclues:
+      pct_f: interdite
+      cod_uai: substitut
   split:
     entrainement: [2020, 2021]
     validation: [2022]

@@ -273,10 +273,93 @@ class HyperparametresConfig(_Strict):
     early_stopping_rounds: int = Field(ge=1)
 
 
+MotifExclusion = Literal[
+    "interdite",
+    "substitut",
+    "instabilite",
+    "cardinalite",
+    "completude",
+    "hors_perimetre",
+    "redondance",
+]
+
+
+class VariablesConfig(_Strict):
+    """Classement de chaque colonne source Parcoursup, décidé une fois et pour toutes.
+
+    La protection contre la fuite repose sur une **liste blanche** :
+    `session_courante` énumère les seules colonnes lues sur la session que le
+    modèle prédit. Toute autre colonne n'est lisible que décalée d'une
+    session. Une colonne nouvelle, non classée, est donc exclue par défaut —
+    l'inverse d'une liste noire, qui l'admettrait en silence.
+
+    Les arbitrages, colonne par colonne, sont dans
+    `docs/sous-docs-projets/adr/0013-decision-des-variables.md`.
+    """
+
+    cles: list[str] = Field(min_length=1)
+    dimensions_cellule: list[str] = Field(min_length=1)
+    session_courante: list[str] = Field(min_length=1)
+    decalees: list[str] = Field(min_length=1)
+    decalees_sous_reserve: list[str]
+    exclues: dict[str, MotifExclusion] = Field(min_length=1)
+
+    @property
+    def colonnes_sources(self) -> set[str]:
+        """Toutes les colonnes du fichier Parcoursup citées, quel que soit leur sort.
+
+        `dimensions_cellule` en est exclu : ces deux entrées décrivent la
+        structure du label, pas des colonnes du fichier.
+        """
+        return (
+            set(self.cles)
+            | set(self.session_courante)
+            | set(self.decalees)
+            | set(self.decalees_sous_reserve)
+            | set(self.exclues)
+        )
+
+    @model_validator(mode="after")
+    def _aucune_colonne_dans_deux_categories(self) -> "VariablesConfig":
+        """Une colonne a un sort et un seul : retenue, décalée, sous réserve, ou exclue.
+
+        Sans cette vérification, une colonne pourrait figurer à la fois dans
+        `session_courante` et dans `exclues` — la construction des variables
+        lirait alors sur la session prédite une colonne annoncée comme
+        écartée, exactement la fuite que ce classement doit empêcher.
+        """
+        categories = {
+            "cles": list(self.cles),
+            "dimensions_cellule": list(self.dimensions_cellule),
+            "session_courante": list(self.session_courante),
+            "decalees": list(self.decalees),
+            "decalees_sous_reserve": list(self.decalees_sous_reserve),
+            "exclues": list(self.exclues),
+        }
+        for nom, valeurs in categories.items():
+            doublons = {v for v in valeurs if valeurs.count(v) > 1}
+            if doublons:
+                raise ValueError(
+                    f"modele.variables.{nom} contient des doublons : {sorted(doublons)}."
+                )
+        noms = list(categories)
+        for i, nom_a in enumerate(noms):
+            for nom_b in noms[i + 1 :]:
+                commun = set(categories[nom_a]) & set(categories[nom_b])
+                if commun:
+                    raise ValueError(
+                        f"modele.variables.{nom_a} et modele.variables.{nom_b} "
+                        f"partagent la ou les colonnes {sorted(commun)} : une "
+                        "colonne doit relever d'une seule catégorie."
+                    )
+        return self
+
+
 class ModeleConfig(_Strict):
     type: str
     objectif: str
     ponderation: str
+    variables: VariablesConfig
     split: SplitConfig
     hyperparametres: HyperparametresConfig
 

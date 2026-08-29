@@ -139,3 +139,59 @@ def test_samples_dir_reste_dans_le_depot_quelle_que_soit_data_root(
     settings = load_settings("dev")
     assert settings.samples_dir == PROJECT_ROOT / "data" / "samples"
     assert tmp_path not in settings.samples_dir.parents
+
+
+def test_colonne_dans_deux_categories_leve_validationerror(configs_dir_isole: Path) -> None:
+    """Une colonne à la fois retenue sur la session courante et exclue doit être rejetée.
+
+    C'est la faute qui rouvrirait la fuite : la construction des variables
+    lirait sur la session prédite une colonne que la documentation annonce
+    écartée.
+    """
+    contenu = yaml.safe_load(BASE_YAML)
+    contenu["modele"]["variables"]["exclues"]["fili"] = "substitut"  # déjà retenue
+    (configs_dir_isole / "base.yaml").write_text(yaml.dump(contenu), encoding="utf-8")
+    with pytest.raises(ValidationError, match="une seule catégorie"):
+        load_settings("dev", configs_dir=configs_dir_isole)
+
+
+def test_colonne_en_double_dans_une_categorie_leve_validationerror(
+    configs_dir_isole: Path,
+) -> None:
+    """Un doublon dans une liste est une erreur de fusion, pas une redite anodine."""
+    contenu = yaml.safe_load(BASE_YAML)
+    contenu["modele"]["variables"]["decalees"].append("voe_tot")
+    (configs_dir_isole / "base.yaml").write_text(yaml.dump(contenu), encoding="utf-8")
+    with pytest.raises(ValidationError, match="doublons"):
+        load_settings("dev", configs_dir=configs_dir_isole)
+
+
+def test_motif_d_exclusion_inconnu_leve_validationerror(configs_dir_isole: Path) -> None:
+    """Le motif d'exclusion est contraint : « on verra plus tard » n'est pas un motif."""
+    contenu = yaml.safe_load(BASE_YAML)
+    contenu["modele"]["variables"]["exclues"]["cod_uai"] = "pas_utile"
+    (configs_dir_isole / "base.yaml").write_text(yaml.dump(contenu), encoding="utf-8")
+    with pytest.raises(ValidationError, match="cod_uai"):
+        load_settings("dev", configs_dir=configs_dir_isole)
+
+
+def test_le_split_ne_contient_aucune_session_sans_cible(configs_dir_isole: Path) -> None:
+    """Le label n'existe qu'à partir de 2020 : 2018 et 2019 ne peuvent pas entraîner.
+
+    Ce test porte sur le vrai `configs/base.yaml`, pas sur le YAML de test :
+    c'est la valeur réellement utilisée qui doit être juste. Le millésime
+    plancher est écrit en dur ici, et c'est délibéré — un test qui lirait sa
+    référence dans le fichier qu'il contrôle ne prouverait rien.
+    """
+    settings = load_settings("prod")
+    millesimes_utilises = (
+        settings.modele.split.entrainement
+        + settings.modele.split.validation
+        + settings.modele.split.test
+    )
+    sans_cible = sorted(m for m in millesimes_utilises if m < 2020)
+    assert not sans_cible, (
+        f"Le split déclare la ou les session(s) {sans_cible}, dont le numérateur "
+        "du label (prop_tot ventilé par type de baccalauréat) n'existe pas. "
+        "Voir adr/0012."
+    )
