@@ -39,6 +39,9 @@ data:  ## Régénère TOUTES les données dérivées depuis data/raw
 quality:  ## Exécute les contrôles qualité (bloquants)
 	python -m edumatch.quality.run
 
+samples:  ## Régénère data/samples/ depuis data/raw et data/external (config prod)
+	python -m edumatch.ingestion.echantillons
+
 features:  ## Construit la table de variables
 	python -m edumatch.features.build
 

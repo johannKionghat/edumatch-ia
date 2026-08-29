@@ -84,6 +84,15 @@ donnees:
       encodage: utf-8
       delimiteur: ";"
       licence: "Licence Ouverte v2.0"
+  # Tailles cibles des échantillons versionnés de data/samples/ (E08) — un
+  # jeu figé, distinct de `echantillonnage` ci-dessus, qui ne sert qu'à
+  # faire tourner les tests sans télécharger les sources complètes.
+  echantillons_test:
+    lignes_par_millesime_parcoursup: 40
+    lignes_par_fichier_sirene: 500
+    lignes_par_jeu_ideo: 300
+    lignes_rncp: 300
+    taille_lot_sirene: 200000
 
 modele:
   type: lightgbm

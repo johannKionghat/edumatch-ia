@@ -1,0 +1,28 @@
+Open Database License (ODbL) v1.0
+
+Ce dossier (`data/samples/referentiels/ideo/`) contient un extrait — quelques
+centaines de lignes par jeu, pour faire tourner la suite de tests — de quatre
+bases publiées par l'ONISEP dans le cadre de la base IDÉO :
+`formations.csv`, `metiers.csv`, `structures_secondaire.csv`,
+`structures_superieur.csv`.
+
+Producteur : ONISEP — base IDÉO
+Source : https://api.opendata.onisep.fr
+Licence de la base d'origine : Open Database License (ODbL) v1.0
+Texte intégral de la licence : https://opendatacommons.org/licenses/odbl/1-0/
+
+Ce dossier, en tant que base dérivée redistribuée, reste lui-même sous ODbL,
+quelle que soit la licence du reste du dépôt (MIT pour le code — voir le
+`LICENSE` à la racine du dépôt). L'ODbL impose, et ce dossier respecte :
+
+1. Attribution — producteur, source et date de collecte de chaque jeu
+   consignés dans `data/samples/manifeste.json` (champs `url`,
+   `date_source`) et rappelés dans `data/samples/README.md`.
+2. Partage à l'identique — un tiers qui réutilise ou redistribue ces fichiers,
+   même en extrait, doit le faire sous cette même licence ODbL.
+3. Absence de mesure technique restrictive — aucun verrou n'est appliqué à
+   ces fichiers ; un tiers peut les rouvrir et les redistribuer librement.
+
+Cette licence accompagne les fichiers CSV : un tiers qui ne récupère que ce
+dossier, sans le reste du dépôt, dispose donc du texte de la licence qui
+s'applique à leur contenu.

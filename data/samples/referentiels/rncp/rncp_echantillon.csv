@@ -1,0 +1,370 @@
+Id_Fiche;Numero_Fiche;Intitule;Abrege_Libelle;Abrege_Intitule;Nomenclature_Europe_Niveau;Nomenclature_Europe_Intitule;Accessible_Nouvelle_Caledonie;Accessible_Polynesie_Francaise;Date_dernier_jo;Date_Decision;Date_Fin_Enregistrement;Date_Effet;Type_Enregistrement;Validation_Partielle;Actif
+9523;RNCP181;Assistant(e) en comptabilité et gestion;TP;Titre professionnel;NIV4;Niveau 4;Non;Non;19/07/2003;;;;Enregistrement de droit;;INACTIVE
+14922;RNCP317;Solier moquettiste;TP;Titre professionnel;NIV3;Niveau 3;Non;Non;11/05/2017;;18/08/2022;18/08/2017;Enregistrement de droit;;INACTIVE
+5429;RNCP436;Constructeur (trice) en béton armé;TP;Titre professionnel;NIV3;Niveau 3;Non;Non;08/11/2003;;;;Enregistrement de droit;;INACTIVE
+5625;RNCP619;Métiers du football;CAP;Certificat d'aptitude professionnelle;NIV3;Niveau 3;Non;Non;;;31/08/2024;;Enregistrement de droit;;INACTIVE
+5581;RNCP785;Mise oeuvre des matériaux option Matériaux métalliques moulés;BAC PRO;Baccalauréat professionnel;NIV4;Niveau 4;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+5514;RNCP913;Technicien en facture instrumentale option pianos;BMA;Brevet des métiers d'art;NIV4;Niveau 4;Non;Non;;;31/08/2022;;Enregistrement de droit;;INACTIVE
+5456;RNCP1063;Hôtellerie restauration option B : art culinaire, art de la table et du service;BTS;Brevet de technicien supérieur;NIV5;Niveau 5;Non;Non;;;31/08/2019;;Enregistrement de droit;;INACTIVE
+265;RNCP1205;Designer industriel;;;NIV6;Niveau 6;Non;Non;31/01/2006;;31/01/2008;;Enregistrement sur demande;;INACTIVE
+448;RNCP1322;Certificat de gestion et management stratégique (Fiche incomplète);;;NIV7;Niveau 7;Non;Non;12/10/2002;;31/12/2005;;Enregistrement sur demande;;INACTIVE
+44;RNCP1427;Formateur;;;NIV5;Niveau 5;Non;Non;05/03/2006;;05/03/2011;;Enregistrement sur demande;;INACTIVE
+750;RNCP1535;Concepteur et réalisateur multimédia et internet (projet offline/online);;;NIV6;Niveau 6;Non;Non;27/03/2003;;31/12/2006;;Enregistrement sur demande;;INACTIVE
+1449;RNCP1648;Concepteur en électronique des systèmes;;;NIV6;Niveau 6;Non;Non;27/03/2004;;31/12/2006;;Enregistrement sur demande;;INACTIVE
+269;RNCP1757;Employé(e) familial(e) polyvalent(e);;;NIV3;Niveau 3;Non;Non;15/03/2005;;15/03/2010;;Enregistrement sur demande;;INACTIVE
+5850;RNCP1864;Soudeur (se) à l’arc semi-automatique;TP;Titre professionnel;NIV3;Niveau 3;Non;Non;11/07/2009;;18/05/2010;;Enregistrement de droit;;INACTIVE
+10216;RNCP1979;Ingénieur diplômé de l’Institut supérieur d’agriculture de Lille (ISA);Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+1918;RNCP2099;Technicien en entretien de cours d'eau;;;NIV4;Niveau 4;Non;Non;12/05/2011;;12/05/2013;;Enregistrement sur demande;;INACTIVE
+1538;RNCP2209;MBA de management du développement local (fiche incomplète);;;NIV7;Niveau 7;Non;Non;12/10/2002;;31/12/2005;;Enregistrement sur demande;;INACTIVE
+310;RNCP2316;Technicien supérieur de maintenance armement;;;NIV5;Niveau 5;Non;Non;10/10/2004;;10/10/2009;;Enregistrement sur demande;;INACTIVE
+5937;RNCP2443;Maintenance des véhicules et des matériels;BEP;Brevet d'études professionnelles;NIV3;Niveau 3;Oui;Non;;;;;Enregistrement de droit;;INACTIVE
+13233;RNCP2561;Gouvernant(e) en hôtellerie;TP;Titre professionnel;NIV4;Niveau 4;Oui;Non;02/04/2014;;18/12/2019;18/12/2014;Enregistrement de droit;;INACTIVE
+616;RNCP2709;Chargé d'affaires en immobilier;;;NIV5;Niveau 5;Non;Non;03/03/2007;;03/03/2012;;Enregistrement sur demande;;INACTIVE
+9844;RNCP2824;Mécanicien(ne) réparateur(trice) d’engins de chantier;TP;Titre professionnel;NIV3;Niveau 3;Oui;Non;09/03/2010;;;;Enregistrement de droit;;INACTIVE
+839;RNCP2931;Commandant de bord sur hélicoptère;;;NIV5;Niveau 5;Non;Non;05/03/2006;;05/03/2011;;Enregistrement sur demande;;INACTIVE
+1652;RNCP3040;Technicien en mouvements opérationnels (fiche incomplète);;;NIV4;Niveau 4;Non;Non;06/04/2002;;31/12/2006;;Enregistrement sur demande;;INACTIVE
+5936;RNCP3145;Maintenance des systèmes pluritechniques spécialité Aéronautique;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+6120;RNCP3249;Management des organisations option informatique de gestion;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+6199;RNCP3353;Plasturgie et matériaux composites option élaboration transformation des polymères organiques;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+6292;RNCP3457;Protection de l’environnement option eau : mesure et procédés;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+9412;RNCP3562;Electricité et électronique option systèmes électroniques de sécurité et télésurveillance;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+6446;RNCP3668;Gestion de la production industrielle option  gestion de projet d'innovation;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+6545;RNCP3771;Gestion de la production industrielle option management et ingénierie des systèmes multitechniques;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+6625;RNCP3874;Logistique option logistique de distribution et transports internationaux;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+6706;RNCP3980;Maintenance aéronautique;DEUST;Diplôme d'études universitaires scientifiques et techniques;NIV5;Niveau 5;Non;Non;;;01/01/2025;;Enregistrement de droit;;INACTIVE
+6723;RNCP4085;Activités et techniques de communication spécialité Assistant et chargé de communication;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+200;RNCP4232;Technicien de maintenance des véhicules automobiles;;;NIV4;Niveau 4;Non;Non;31/01/2006;;31/01/2008;;Enregistrement sur demande;;INACTIVE
+6806;RNCP4375;"Ingénieur diplômé du Centre universitaire des Sciences et Techniques de l'Université Clermont-Ferrand II (Polytech' Clermont-Ferrand), spécialité Génie physique 
+";Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;28/05/2005;;31/08/2015;;Enregistrement de droit;;INACTIVE
+625;RNCP4491;Responsable management des systèmes intégrés : qualité, environnement, hygiène et sécurité;;;NIV6;Niveau 6;Non;Non;05/03/2006;;05/03/2011;;Enregistrement sur demande;;INACTIVE
+6855;RNCP4596;Restaurateur du patrimoine, spécialités : Arts du feu, Arts graphiques et livre, Arts textiles, Mobilier, Peinture, Photographie, Sculpture;Grade_Master;Diplôme conférant le grade de Master;NIV7;Niveau 7;Non;Non;31/12/2005;;31/08/2024;;Enregistrement de droit;;INACTIVE
+6903;RNCP4716;Ingénieur diplômé de l'Ecole nationale supérieure du pétrole et des moteurs (ENSPM), spécialité produits pétroliers et moteurs;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;28/05/2005;;;;Enregistrement de droit;;INACTIVE
+954;RNCP4824;Manager en ingénierie des systèmes d'information répartis;;;NIV7;Niveau 7;Non;Non;14/01/2007;;14/01/2012;;Enregistrement sur demande;;INACTIVE
+6996;RNCP4934;Commerce international à référentiel commun européen;BTS;Brevet de technicien supérieur;NIV5;Niveau 5;Non;Non;;;31/08/2022;;Enregistrement de droit;;INACTIVE
+7033;RNCP5049;"Un des meilleurs ouvriers de France (diplôme d'Etat)  Groupe métiers de l'habitation, travail des textiles et du cuir      Spécialité : dessinateur pour textiles et papiers peints option peinture sur soie    
+";Autre;Autre certification professionnelle de droit;NIV5;Niveau 5;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+7129;RNCP5154;"Un des meilleurs ouvriers de France (diplôme d'Etat)  Groupe métiers des techniques de précision      Spécialité instruments de chirurgie    
+";Autre;Autre certification professionnelle de droit;NIV5;Niveau 5;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+292;RNCP5256;Responsable en gestion;;;NIV6;Niveau 6;Non;Non;03/03/2007;;03/03/2012;;Enregistrement sur demande;;INACTIVE
+7244;RNCP5360;Production industrielle spécialité Qualité et processus industriels dans les industries du bois;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+1110;RNCP5467;Responsable en ingénierie de formation;;;NIV6;Niveau 6;Non;Non;21/04/2007;;21/04/2012;;Enregistrement sur demande;;INACTIVE
+574;RNCP5586;Manager du développement commercial;;;NIV7;Niveau 7;Non;Non;24/01/2008;;24/01/2010;;Enregistrement sur demande;;INACTIVE
+7369;RNCP5811;"Domaine Sciences, technologies, santé Mention ""Métiers du décisionnel et de la statistique"" 
+";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+14226;RNCP5916;"Hôtellerie et tourisme
+Spécialité Tourisme d’affaires, festivalier et environnement urbain";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+1222;RNCP6066;Rédacteur en marketing oprérationnel option Web;;;NIV5;Niveau 5;Non;Non;27/08/2008;;27/08/2011;;Enregistrement sur demande;;INACTIVE
+1244;RNCP6243;Agent de sécurité et de prévention incendie;;;NIV3;Niveau 3;Non;Non;21/11/2008;;21/11/2013;;Enregistrement sur demande;;INACTIVE
+7570;RNCP6417;"Domaine :Droit, Economie, Gestion-- Mention  : Droit International, Droit Européen et Droits Etrangers--     Spécialité : Systèmes de Droit Comparés - Programmes Internationaux      
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+3177;RNCP6579;Consultant(e) qualification logicielle;;;NIV6;Niveau 6;Non;Non;03/12/2015;;03/12/2017;;Enregistrement sur demande;;INACTIVE
+7663;RNCP6811;DROIT DE L'ENTREPRISE spécialité Droit des Affaires et Fiscalité (finalité professionnelle);MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+7496;RNCP6984;Employé barman;MC5;Mention complémentaire;NIV3;Niveau 3;Non;Non;;;01/09/2023;;Enregistrement de droit;;INACTIVE
+7766;RNCP7128;"Master Domaine : Sciences, Technologie, Santé  Mention : Electronique      Spécialité : Télécommunication et Systèmes Microélectroniques      
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+7834;RNCP7340;"Droit, Economie, Gestion Mention : Droit Public     Spécialité : Administration territoriale    
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+1700;RNCP7462;Animateur généraliste loisirs tourisme;;;NIV4;Niveau 4;Non;Non;23/06/2006;;23/06/2011;;Enregistrement sur demande;;INACTIVE
+5696;RNCP7602;Responsable du Développement à l'International;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+8013;RNCP8855;"Sciences, Technologies, Santé mention MIAGE, spécialité Systèmes d’Information Distribués
+
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+8059;RNCP9245;"Master Domaine : “ Sciences Humaines et Sociales ” -  
+Mention : “ Ethnologie”                                                     (Master à finalité Recherche et Professionnelle)
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;01/01/2025;;Enregistrement de droit;;INACTIVE
+8129;RNCP9444;"MASTER Sciences Humaines et Sociales à finalité Recherche 
+Mention Territoires et Sociétés, Aménagement et Développement
+Spécialité Innovation et développement des territoires ruraux";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+13570;RNCP9732;Sciences humaines et sociales Mention : Histoire et géographie Parcours : Professorat des Écoles Domaine : Sciences humaines et sociales ;LICENCE;Licence;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+1820;RNCP9905;CQP Adjoint au chef des ventes;;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;22/07/2010;;22/07/2013;;Enregistrement sur demande;;INACTIVE
+8302;RNCP10082;Master Professionnel – Domaine : Droit Economie Gestion – Mention : Carrières judiciaires et sciences criminelles – Spécialité : Carrières judiciaires;MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+8371;RNCP10270;Sciences, technologies, santé Mention : Santé publique Spécialité : Éducation et santé Domaine : Sciences, technologies, santé;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+8427;RNCP10407;"Master Sciences, Technologies, Santé, Mention Informatique, Mathématiques, Multimédia, Télécommunications, Spécialité Informatique
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+8492;RNCP10598;Sciences, Technologies, Santé - Mention : Sciences de la Terre - Spécialité : Géologie de l'Aménagement;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+8571;RNCP10849;Ingénieur diplômé de Télécom SudParis de l'Institut Mines-Télécom;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;;01/01/2025;;Enregistrement de droit;;INACTIVE
+8632;RNCP11104;"Spécialité Recherche « Histoire – Géographie » Mention Métiers de l’enseignement secondaire
+Master Sciences Humaines et Sociales
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+8696;RNCP11334;"Sciences, technologie, santé
+mention mathématiques et applications 
+spécialité mathématiques de l’information et cryptographie
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+8749;RNCP11527;"
+Spécialité Finance d’Entreprise (à finalité Professionnelle) du Master Droit, Economie, Gestion  - mention Sciences du Management
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+16978;RNCP11708;"Domaine Droit, Économie, Gestion,
+Mention Gestion de production, logistique, achats  ";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+1874;RNCP11891;Solier ouvrier qualifié;;;NIV4;Niveau 4;Non;Non;02/02/2011;;;;Enregistrement sur demande;;INACTIVE
+1900;RNCP12063;Expert en génie industriel, produits et services;;;NIV7;Niveau 7;Non;Non;02/02/2011;;;;Enregistrement sur demande;;INACTIVE
+1942;RNCP12361;CQP Rénovateur véhicules d'occasion;;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;12/05/2011;;12/05/2014;;Enregistrement sur demande;;INACTIVE
+14846;RNCP12597;SCIENCES, TECHNOLOGIES, SANTE Mention Santé publique Spécialité Biostatistique;MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+1987;RNCP12836;CQP Agent d'exploitation d'équipements de génie climatique;;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;10/08/2011;;10/08/2016;;Enregistrement sur demande;;INACTIVE
+3623;RNCP13080;Adjoint(e) à la production d'oeuvres cinématographiques et audiovisuelles;;;NIV6;Niveau 6;Non;Non;04/10/2016;;04/10/2019;;Enregistrement sur demande;;INACTIVE
+9307;RNCP13298;"Sciences, Technologies, Santé à finalité professionnelle 
+Mention : Informatique
+Spécialité : Systèmes Informatiques pour le Génie de la Logistique Industrielle et des Services (SIGLIS). 
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+9365;RNCP13505;"Droit, Economie, Gestion Mention : Droit Privé, sciences criminelles et carrières judiciaires     Spécialité : Droit immobilier, construction, urbanisme    
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+2065;RNCP13662;"Responsable de projets ""eau,hygiène et assainissement"" de la solidarité internationale";;;NIV6;Niveau 6;Non;Non;19/01/2012;;19/01/2017;;Enregistrement sur demande;;INACTIVE
+9475;RNCP13895;"Droit, Economie, Gestion à finalité recherche et professionnelle
+Mention : Economie appliquée
+Spécialité : Economie Internationale, Europe et Développement 
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+9586;RNCP14192;"Domaine Droit, Economie, Gestion
+Mention Economie
+Spécialité Marchés et intermédiaires financiers (« Financial markets and intermediaries  »)
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+9636;RNCP14395;"Domaine : Droit, Economie, Gestion
+Mention Marketing
+Spécialité  Conseil et Marketing stratégique
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+4136;RNCP14593;Infographiste-multimédia;;;NIV5;Niveau 5;Non;Non;05/08/2017;;05/08/2019;;Enregistrement sur demande;;INACTIVE
+9746;RNCP14832;Sciences, Technologies, Santé - Mention : Sciences de la Matière - Spécialité : Enseignement de la Physique et de la Chimie;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+9801;RNCP15062;"Domaine Droit, Economie, gestion
+Mention Finance
+Spécialité Finance de marché
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+9898;RNCP15189;Droit, Économie, Gestion, mention Management, spécialité développement durable et qualité globale;MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+4375;RNCP15357;Manager des ressources humaines;;;NIV7;Niveau 7;Non;Non;30/12/2017;;30/12/2019;;Enregistrement sur demande;;INACTIVE
+10013;RNCP15674;Gestion et protection de la nature;BTSA;Brevet de technicien supérieur agricole;NIV5;Niveau 5;Oui;Oui;;;31/08/2024;;Enregistrement de droit;;INACTIVE
+10056;RNCP15912;Arts, Lettres et Langues, spécialité Français Langue étrangère / Français langue seconde en milieux scolaire et entrepreneurial;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+15683;RNCP16193;"Sciences Humaines et Sociales
+Mention : Histoire, Histoire de l’art et Archéologie
+Spécialité Patrimoine";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+10225;RNCP16403;"Marketing et Vente,
+Spécialité Direction Commerciale";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+2378;RNCP16595;Enquêteur judiciaire de sécurité intérieure;;;NIV5;Niveau 5;Non;Non;28/04/2013;;28/04/2018;;Enregistrement sur demande;;INACTIVE
+2420;RNCP16879;Gestionnaire en maintenance informatique;;;NIV5;Niveau 5;Non;Non;16/06/2013;;16/06/2016;;Enregistrement sur demande;;INACTIVE
+10407;RNCP17058;Management spécialité Management des opérations;MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+10467;RNCP17242;Ingénieur diplômé de l’Université de technologie de Troyes, spécialité automatique et informatique industrielle, en convention avec l'Université de Reims;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;31/08/2019;;31/08/2023;;Enregistrement de droit;;INACTIVE
+10533;RNCP17421;Diplôme INSEEC Bordeaux / Paris / Alpes-Savoie visé par le Ministère de l'Enseignement Supérieur et de la Recherche et conférant le grade MASTER.(Programme grande école de l'Institut des Hautes Etudes Economiques et Commerciales(INSEEC)).;DipViGrM;Diplôme visé grade de master;NIV7;Niveau 7;Non;Non;;;31/08/2015;;Enregistrement de droit;;INACTIVE
+14064;RNCP17644;"Ingénieur diplômé de l’École nationale supérieure d’ingénieurs de Poitiers de l’université de Poitiers, spécialité eau et génie civil
+";Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;31/08/2017;;26/07/2024;;Enregistrement de droit;;INACTIVE
+2539;RNCP17831;Contrôleur de gestion;;;NIV6;Niveau 6;Non;Non;29/11/2013;;29/11/2018;;Enregistrement sur demande;;INACTIVE
+10862;RNCP18050;Mention Science du management spécialité Gestion financière et fiscalité;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+5308;RNCP18229;CQP Vendeur(se) conseil en magasin (CQPI);;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;04/01/2019;;04/01/2020;;Enregistrement sur demande;;INACTIVE
+10889;RNCP18392;"Arts Lettres Langues 
+Mention Sciences du Langage
+Spécialité Langage et Enjeux de Société 
+Finalité Recherche et Professionnelle
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+10976;RNCP18705;Ingénieur diplômé de l’Institut des sciences et techniques de l’ingénieur d’Angers spécialité génie des systèmes industriels;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;;31/08/2020;;Enregistrement de droit;;INACTIVE
+11090;RNCP18999;Sciences, Technologies, Santé Mention Géologie appliquée Spécialité Géologie appliquée;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+11169;RNCP19212;MASTER – Domaine : DROIT ECONOMIE GESTION – Mention : SCIENCES DU MANAGEMENT – Spécialité : AUDIT INTERNE DES ORGANISATIONS;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+2693;RNCP19376;Responsable qualité, sécurité/sûreté, environnement;;;NIV6;Niveau 6;Non;Non;09/08/2014;;09/08/2019;;Enregistrement sur demande;;INACTIVE
+11261;RNCP19590;"Assurance, banque, finance; conseiller gestionnaire de clientèle ";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;08/07/2013;;;;Enregistrement de droit;;INACTIVE
+11380;RNCP19764;Master Mathématiques spécialité Ingénierie mathématique et outils de l'informatique;MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+11473;RNCP20015;Sciences technologie santé, mention Sciences chimiques pour le développement durable, spécialité Qualité Environnement et Sécurité dans l'Industrie et les Services (QESIS);MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+11565;RNCP20235;"Licence Professionnelle Gestion des Ressources Humaines
+Option : Développement des compétences et formation professionnelle";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+4506;RNCP20436;Moniteur en sécurité et sécurité incendie;;;NIV5;Niveau 5;Non;Non;17/04/2018;;17/04/2023;;Enregistrement sur demande;;INACTIVE
+2815;RNCP20621;CQP Maître d’hôtel ;;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;29/11/2014;;29/11/2017;;Enregistrement sur demande;;INACTIVE
+11788;RNCP20899;"métiers du décisionnel et de la statisitique 
+";LICENCE;Licence;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+11881;RNCP21122;Sciences, Technologies, Santé, mention Sciences des aliments, spécialité Procédés Fermentaires pour l’Agro-Alimentaire (PFAA) ;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+11978;RNCP21303;"de Psychologie
+Spécialité professionnelle et Recherche - « Psychologie du Travail, des Organisations et du Personnel »
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+12070;RNCP21531;"Sciences humaines et sociales - Mention : Culture, Territoires, Patrimoine - Spécialité recherche : Histoire et Archéologie
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+12155;RNCP21698;Master Economie de la firme et des marchés spécialité Conseil économique et contrôle organisationnel;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+12229;RNCP21976;Droit Économie Gestion Mention Commerce, décision, gestion spécialité Management du Commerce International (MCI);MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+2931;RNCP22232;Infographiste 3D;;;NIV5;Niveau 5;Non;Non;30/01/2015;;25/11/2016;;Enregistrement sur demande;;INACTIVE
+12393;RNCP22457;Titre ingénieur de l’École nationale supérieure d'agronomie et des industries alimentaires de l'université de Lorraine, spécialité agronomie;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;;31/08/2023;;Enregistrement de droit;;INACTIVE
+12504;RNCP22738;Diplôme de Sciences Po Rennes -Management Stratégique et Organisationnel Spécialisation Communication des Organisations;Grade_Master;Diplôme conférant le grade de Master;NIV7;Niveau 7;Non;Non;08/09/2005;;01/01/2025;;Enregistrement de droit;;INACTIVE
+12581;RNCP22989;Management des organisations, Spécialité Management des petites entreprises et des entreprises artisanales;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+14875;RNCP23261;commercialisation de solutions informatiques;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+12739;RNCP23530;Licence Professionnelle Métiers de l’instrumentation de la mesure et du contrôle qualité;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+3058;RNCP23705;CQP Restaurateur/trice numérique option image et option son;;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;25/07/2015;;25/07/2018;;Enregistrement sur demande;;INACTIVE
+12848;RNCP23901;"Mention : Management des transports et de la distribution
+
+";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+12962;RNCP24216;"Entrepreneuriat et management de projets 
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+16260;RNCP24531;Sciences de la Terre (fiche nationale);LICENCE;Licence;NIV6;Niveau 6;Non;Non;;;01/01/2025;;Enregistrement de droit;;INACTIVE
+13190;RNCP24758;"Marketing Vente
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+3158;RNCP24884;CQP Intégrateur câbleur aéronautique (CQPM);;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;03/12/2015;;03/12/2020;;Enregistrement sur demande;;INACTIVE
+13432;RNCP25058;"Domaine: Sciences,Technologies,Santé
+Mention:génie des procédés pour l’environnement 
+";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+13576;RNCP25295;Mention : Langues, Littératures et Civilisations Etrangères et Régionales (LLCER), Domaine : Arts, Lettres et langues (ALL);MASTER;Master;NIV7;Niveau 7;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+13651;RNCP25524;"Métiers de la gestion et de la comptabilité :
+Comptabilité et paye 
+
+
+";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+5109;RNCP25653;Enseignant-formateur de langue des signes française (DU);;;NIV5;Niveau 5;Non;Non;04/01/2019;;04/01/2020;;Enregistrement sur demande;;INACTIVE
+13818;RNCP25872;Mention « Métiers de l’Instrumentation, de la Mesure et du Contrôle Qualité »;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+13897;RNCP26101;Mention « Qualité, hygiène, sécurité, santé, environnement »;Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+13939;RNCP26220;"Mention ""Sciences de l’océan, de l’atmosphère et du climat""";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+13990;RNCP26420;Droit, économie, gestion Mention: Gestion de production, logistique, achats;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+3406;RNCP26596;CQP Responsable de magasin en boulangerie, viennoiserie, pâtisserie;;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;03/12/2015;;03/12/2020;;Enregistrement sur demande;;INACTIVE
+3445;RNCP26790;Coach professionnel(le);;;NIV6;Niveau 6;Non;Non;07/09/2016;;07/09/2019;;Enregistrement sur demande;;INACTIVE
+3541;RNCP26951;Gestionnaire santé sécurité et environnement et risques industriels (MS);;;NIV7;Niveau 7;Non;Non;04/10/2016;;04/10/2021;;Enregistrement sur demande;;INACTIVE
+14273;RNCP27111;Automatique et informatique industrielle, spécialité Automatique signal et image, spécialité Systèmes embarqués et communicants;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+3676;RNCP27347;Développeur(euse) intégrateur(trice) de médias interactifs;;;NIV5;Niveau 5;Non;Non;18/12/2016;;18/12/2021;;Enregistrement sur demande;;INACTIVE
+14425;RNCP27614;"Mention Biologie Cellulaire, Physiologie, Pathologies (BCPP), Spécialité Epithéliums : Structures d’Interface (ESI)
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+3784;RNCP27812;Chargé(e) de projets en systèmes informatiques appliqués  ;;;NIV6;Niveau 6;Non;Non;03/03/2017;;03/03/2022;;Enregistrement sur demande;;INACTIVE
+3845;RNCP28097;Coordinateur des activités d'aidants;;;NIV4;Niveau 4;Non;Non;21/04/2017;;23/08/2020;;Enregistrement sur demande;;INACTIVE
+3977;RNCP28232;CQP Tourneur(euse) industriel (CQPM);;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;21/04/2017;;21/04/2022;;Enregistrement sur demande;;INACTIVE
+14774;RNCP28481;Droit, Économie, Gestion Mention Administration publique;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+14907;RNCP28692;"Communication éditoriale et digital, 
+Domaine sciences humaines et sociales, 
+Mention Métiers de la communication : chef de projet communication";Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;;;Enregistrement de droit;;INACTIVE
+14933;RNCP28810;"Diplôme ""Marketing Management et Digital""";DipViGrM;Diplôme visé grade de master;NIV7;Niveau 7;Non;Non;;;31/08/2020;;Enregistrement de droit;;INACTIVE
+16843;RNCP29130;Monnaie Banque Finance Assurance;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+4281;RNCP29425;Manager de la responsabilité sociétale en entreprise;;;NIV6;Niveau 6;Non;Non;21/12/2017;;21/12/2022;;Enregistrement sur demande;;INACTIVE
+15194;RNCP29650;"Sciences du sport 
+spécialité : Entrainement, Biologie, nutrition, santé";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+15264;RNCP29910;Master Domaine : Sciences, Technologies, Santé - Mention Mathématiques et Applications ;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+16317;RNCP30090;Maintenance et technologie : électronique, instrumentation (fiche nationale);Licence Professionnelle;Licence professionnelle;NIV6;Niveau 6;Non;Non;;;01/01/2025;;Enregistrement de droit;;INACTIVE
+15364;RNCP30248;Domaine Droit, Economie, Gestion, Mention Droit Public;MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+15420;RNCP30420;"Domaine : Droit-Economie-Gestion
+Mention : Droit notarial
+
+";MASTER;Master;NIV7;Niveau 7;Non;Non;;;31/10/2019;;Enregistrement de droit;;INACTIVE
+4581;RNCP30694;Technicien réseaux informatiques et sécurité des systèmes d’information et de communication;;;NIV4;Niveau 4;Non;Non;24/05/2018;;24/05/2023;;Enregistrement sur demande;;INACTIVE
+15696;RNCP30920;mention Administration et liquidation d’entreprises en difficulté;MASTER;Master;NIV7;Niveau 7;Non;Non;;;01/01/2024;;Enregistrement de droit;;INACTIVE
+15888;RNCP31114;Développeur web et web mobile;TP;Titre professionnel;NIV5;Niveau 5;Non;Non;17/04/2018;;01/09/2023;01/09/2018;Enregistrement de droit;;INACTIVE
+15986;RNCP31353;Master Monnaie, Banque, Finance, Assurance;Autre;Autre certification professionnelle de droit;NIV7;Niveau 7;Non;Non;;;31/08/2020;;Enregistrement de droit;;INACTIVE
+4863;RNCP31510;Responsable de la communication et de l’image de mode;;;NIV6;Niveau 6;Non;Non;30/12/2017;;30/12/2020;;Enregistrement sur demande;;INACTIVE
+4952;RNCP31908;Maçon en terre crue;;;NIV3;Niveau 3;Non;Non;18/12/2018;;18/12/2021;;Enregistrement sur demande;;INACTIVE
+5090;RNCP32012;Manager opérationnel en QHSE et Développement durable;;;NIV7;Niveau 7;Non;Non;04/01/2019;;04/01/2022;;Enregistrement sur demande;;INACTIVE
+5224;RNCP32115;CQP Vendeur conseil en produits biologiques;;;REPRISE;Sans niveau – le positionnement dans le cadre de national des certifications professionnelles est non déterminé;Non;Non;04/01/2019;;04/01/2023;;Enregistrement sur demande;;INACTIVE
+16543;RNCP32241;Monteur en installations de génie climatique et sanitaire;BP;Brevet professionnel;NIV4;Niveau 4;Oui;Oui;;;01/01/2024;;Enregistrement de droit;;INACTIVE
+16999;RNCP32414;Un des meilleurs ouvriers de France (diplôme national) Groupe XIII Métiers de la gravure, Classe 3 Gravure sur cuivre / acier pour impression;Autre;Autre certification professionnelle de droit;NIV5;Niveau 5;Non;Non;;;01/01/2024;;Enregistrement de droit;;INACTIVE
+19236;RNCP34078;Anthropologie (fiche nationale);MASTER;Master;NIV7;Niveau 7;Non;Non;;15/07/2019;30/06/2024;01/09/2019;Enregistrement de droit;;INACTIVE
+19348;RNCP34190;Responsable de Production Transport Logistique;;;NIV6;Niveau 6;Non;Non;03/07/2014;12/09/2019;10/09/2024;;Enregistrement sur demande;;INACTIVE
+19486;RNCP34304;Manager de la communication numérique;;;NIV7;Niveau 7;Non;Non;;19/11/2019;18/11/2024;;Enregistrement sur demande;;INACTIVE
+19632;RNCP34412;Concepteur de systèmes d'information;;;NIV6;Niveau 6;Non;Non;;27/01/2020;27/01/2025;;Enregistrement sur demande;;INACTIVE
+19849;RNCP34520;Chef d'équipe travaux publics route;;;NIV4;Niveau 4;Non;Non;;30/03/2020;30/03/2025;;Enregistrement sur demande;;INACTIVE
+19988;RNCP34624;Responsable d'activités ou d'entreprises touristiques;;;NIV6;Niveau 6;Non;Non;;29/05/2020;29/05/2021;;Enregistrement sur demande;;INACTIVE
+20121;RNCP34725;Opérateur son;;;NIV5;Niveau 5;Non;Non;;30/06/2020;29/06/2023;;Enregistrement sur demande;;INACTIVE
+20269;RNCP34837;Création numérique (fiche nationale);MASTER;Master;NIV7;Niveau 7;Non;Non;;07/08/2020;30/06/2025;01/07/2020;Enregistrement de droit;;INACTIVE
+20401;RNCP34945;Hygiéniste du travail et de l'environnement;;;NIV7;Niveau 7;Non;Non;;14/09/2020;14/09/2023;;Enregistrement sur demande;;INACTIVE
+20531;RNCP35047;Relations internationales (fiche nationale);MASTER;Master;NIV7;Niveau 7;Non;Non;;13/11/2020;01/01/2024;01/09/2020;Enregistrement de droit;;INACTIVE
+20659;RNCP35159;Technicien d'intervention après sinistres;;;NIV4;Niveau 4;Non;Non;;16/12/2020;16/12/2023;;Enregistrement sur demande;;INACTIVE
+20795;RNCP35263;Directeur des ressources humaines;;;NIV7;Niveau 7;Non;Non;;10/02/2021;10/02/2024;;Enregistrement sur demande;;INACTIVE
+20922;RNCP35370;Génie Biologique : Sciences de l'environnement et écotechnologies;BUT;Bachelor universitaire de technologie;NIV6;Niveau 6;Oui;Oui;;12/03/2021;31/08/2026;01/09/2021;Enregistrement de droit;;ACTIVE
+21059;RNCP35477;Informatique : Administration, gestion et exploitation des données;BUT;Bachelor universitaire de technologie;NIV6;Niveau 6;Oui;Oui;;17/03/2021;31/08/2026;01/09/2021;Enregistrement de droit;;ACTIVE
+21205;RNCP35578;Educateur sportif opérationnel;Autre;Autre certification professionnelle de droit;NIV4;Niveau 4;Non;Non;;17/05/2021;16/06/2025;16/06/2020;Enregistrement de droit;;INACTIVE
+21353;RNCP35679;Styliste de mode;;;NIV5;Niveau 5;Non;Non;;17/06/2021;17/06/2023;;Enregistrement sur demande;;INACTIVE
+21462;RNCP35781;Ingénieur de l'école nationale supérieure des sciences appliquées et de technologie, spécialité informatique et technologies de l'information;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;12/07/2021;31/08/2026;01/09/2021;Enregistrement de droit;;ACTIVE
+21581;RNCP35882;Mécanicien de matériels agricoles (BTM);;;NIV4;Niveau 4;Non;Non;;14/09/2021;15/09/2024;;Enregistrement sur demande;;INACTIVE
+21715;RNCP35983;Designer en architecture d'intérieur;;;NIV6;Niveau 6;Non;Non;;15/10/2021;15/10/2023;;Enregistrement sur demande;;INACTIVE
+21968;RNCP36084;Peintre en finitions;;;NIV3;Niveau 3;Non;Non;17/03/2016;15/12/2021;15/12/2024;;Enregistrement sur demande;;INACTIVE
+22231;RNCP36185;Responsable de production et de transformation d’énergie de propulsion nucléaire;Autre;Autre certification professionnelle de droit;NIV7;Niveau 7;Non;Non;;16/02/2022;31/07/2026;31/07/2021;Enregistrement de droit;;INACTIVE
+22413;RNCP36288;Responsable en management d'unité et de projet;;;NIV6;Niveau 6;Non;Non;;25/03/2022;25/03/2027;;Enregistrement sur demande;;ACTIVE
+22570;RNCP36390;Assistant de gestion et d'administration d'entreprise;;;NIV5;Niveau 5;Non;Non;21/12/2017;25/04/2022;25/04/2027;;Enregistrement sur demande;;ACTIVE
+22687;RNCP36491;Secrétaire médical;;;NIV4;Niveau 4;Non;Non;21/04/2017;01/06/2022;01/06/2027;;Enregistrement sur demande;;ACTIVE
+22828;RNCP36592;Diplôme d'université de Responsable en ingénierie de la formation (DU);;;NIV6;Niveau 6;Non;Non;29/06/2020;01/07/2022;01/07/2023;;Enregistrement sur demande;;INACTIVE
+22946;RNCP36693;Ingénieur diplômé de l’ENSIL-ENSCI de l'Université de Limoges, Spécialité Céramique Industrielle;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;19/07/2022;04/09/2025;01/09/2021;Enregistrement de droit;;INACTIVE
+23068;RNCP36794;Ingénieur diplômé du Conservatoire national des arts et métiers, spécialité mécanique;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;04/08/2022;31/08/2022;01/09/2018;Enregistrement de droit;;INACTIVE
+23183;RNCP36895;Manager international des ressources humaines ;;;NIV7;Niveau 7;Non;Non;;29/09/2022;29/09/2025;;Enregistrement sur demande;;INACTIVE
+23341;RNCP36996;CQP Agent logistique du secteur alimentaire;;;NIV3;Niveau 3;Non;Non;05/08/2017;24/10/2022;24/10/2025;;Enregistrement sur demande;;INACTIVE
+23478;RNCP37097;Interprète analyste images;Autre;Autre certification professionnelle de droit;NIV5;Niveau 5;Non;Non;;25/11/2022;27/01/2027;27/01/2022;Enregistrement de droit;;ACTIVE
+23630;RNCP37210;Assistant designer web;DSP;Diplôme de spécialisation professionnelle;NIV4;Niveau 4;Non;Non;;09/01/2023;31/08/2028;01/09/2023;Enregistrement de droit;;ACTIVE
+23763;RNCP37312;Préparateur en pharmacie;BP;Brevet professionnel;NIV4;Niveau 4;Oui;Non;;06/02/2023;31/12/2024;01/09/2022;Enregistrement de droit;;INACTIVE
+23904;RNCP37416;Réparateur de produits nomades;;;NIV4;Niveau 4;Non;Non;;28/03/2023;27/03/2026;;Enregistrement sur demande;;INACTIVE
+24032;RNCP37517;CQP Moniteur de roller;;;NIV3;Niveau 3;Non;Non;;24/04/2023;24/04/2026;;Enregistrement sur demande;;INACTIVE
+24142;RNCP37618;Manager logistique et achats Industrie;;;NIV7;Niveau 7;Non;Non;;05/06/2023;31/05/2026;;Enregistrement sur demande;;INACTIVE
+24253;RNCP37719;Diplôme en management international de l'hôtellerie et de la restauration;DIPLOVIS;Diplôme visé;NIV6;Niveau 6;Non;Non;;11/07/2023;31/08/2026;01/09/2023;Enregistrement de droit;;ACTIVE
+24360;RNCP37820;CQP Concepteur 3D en bijouterie-joaillerie;;;NIV4;Niveau 4;Non;Non;;19/07/2023;19/07/2028;;Enregistrement sur demande;;ACTIVE
+24498;RNCP37921;Accueil-  réception;CS;Certificat de spécialisation;NIV4;Niveau 4;Oui;Oui;;28/07/2023;31/08/2028;01/09/2023;Enregistrement de droit;;ACTIVE
+24618;RNCP38022;Designer en architecture d'intérieur;;;NIV6;Niveau 6;Non;Non;07/08/2021;20/09/2023;20/09/2026;;Enregistrement sur demande;;ACTIVE
+24743;RNCP38123;Responsable du développement commercial;;;NIV6;Niveau 6;Non;Non;;18/10/2023;18/10/2026;;Enregistrement sur demande;;ACTIVE
+24855;RNCP38228;Agent vérificateur d'appareils extincteurs ;CAP;Certificat d'aptitude professionnelle;NIV3;Niveau 3;Oui;Oui;;08/11/2023;31/08/2028;01/09/2023;Enregistrement de droit;;ACTIVE
+24975;RNCP38329;Apiculture;CS;Certificat de spécialisation;NIV4;Niveau 4;Oui;Oui;;29/11/2023;01/01/2029;01/01/2024;Enregistrement de droit;;ACTIVE
+25078;RNCP38430;Cuisine;CAP;Certificat d'aptitude professionnelle;NIV3;Niveau 3;Oui;Oui;;21/12/2023;31/08/2029;01/09/2024;Enregistrement de droit;;ACTIVE
+25239;RNCP38531;Pilote de ligne (Air transport pilot licence - ATPL - avion et hélicoptère);TP;Titre professionnel;NIV6;Niveau 6;Non;Non;;05/01/2024;14/11/2028;15/11/2023;Enregistrement de droit;;ACTIVE
+25369;RNCP38632;Chocolaterie-confiserie;CAP;Certificat d'aptitude professionnelle;NIV3;Niveau 3;Oui;Oui;;14/02/2024;31/08/2029;01/09/2024;Enregistrement de droit;;ACTIVE
+25471;RNCP38733;Sciences et Ingénierie - Systèmes Embarqués pour l’Agronomie ;Grade_Licence;Diplôme conférant le grade de Licence ;NIV6;Niveau 6;Non;Non;;08/03/2024;31/08/2027;01/09/2024;Enregistrement de droit;;ACTIVE
+25604;RNCP38834;Animateur d'équipe en vente directe ;;;NIV5;Niveau 5;Non;Non;;27/03/2024;27/03/2027;;Enregistrement sur demande;;ACTIVE
+25742;RNCP38935;Journaliste web;;;NIV6;Niveau 6;Non;Non;;26/04/2024;26/04/2027;;Enregistrement sur demande;;ACTIVE
+25847;RNCP39036;Peintre applicateur de revêtements;CAP;Certificat d'aptitude professionnelle;NIV3;Niveau 3;Non;Non;;23/05/2024;31/08/2029;01/09/2024;Enregistrement de droit;;ACTIVE
+25991;RNCP39137;Titre ingénieur – Ingénieur diplômé de l’Ecole Supérieure d’Electronique de l’Ouest;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;08/06/2024;31/08/2027;01/09/2024;Enregistrement de droit;;ACTIVE
+26121;RNCP39238;Manager de la performance achats;;;NIV7;Niveau 7;Non;Non;;27/06/2024;27/06/2029;;Enregistrement sur demande;;ACTIVE
+26234;RNCP39339;Ingénieur diplômé de l’Institut Polytechnique UniLaSalle, spécialité Agronomie et Agro-Industries;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;18/07/2024;31/08/2025;01/09/2024;Enregistrement de droit;;INACTIVE
+26381;RNCP39440;Diplôme d'études supérieures en management des industries créatives;DIPLOVIS;Diplôme visé;NIV6;Niveau 6;Non;Non;;25/07/2024;31/08/2028;01/09/2024;Enregistrement de droit;;ACTIVE
+26482;RNCP39541;Ingénieur diplômé du Conservatoire national des arts et métiers, spécialité Science de la donnée et intelligence artificielle;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;05/09/2024;31/08/2026;01/09/2024;Enregistrement de droit;;ACTIVE
+26583;RNCP39642;CQP Scieur carotteur de béton;;;NIV3;Niveau 3;Non;Non;;01/10/2024;01/10/2029;;Enregistrement sur demande;;ACTIVE
+26807;RNCP39743;Attaché commercial;;;NIV5;Niveau 5;Non;Non;10/11/2021;31/10/2024;31/10/2029;;Enregistrement sur demande;;ACTIVE
+26944;RNCP39844;Manager de la performance achat;;;NIV7;Niveau 7;Non;Non;08/02/2018;28/11/2024;28/11/2029;;Enregistrement sur demande;;ACTIVE
+27088;RNCP39945;Génie urbain (fiche nationale);LICENCE;Licence;NIV6;Niveau 6;Non;Non;;18/12/2024;31/12/2029;01/01/2025;Enregistrement de droit;;ACTIVE
+27253;RNCP40046;Intelligence Artificielle appliquée aux enjeux sociétaux;Grade_Master;Diplôme conférant le grade de Master;NIV7;Niveau 7;Non;Non;;20/12/2024;31/08/2029;01/09/2024;Enregistrement de droit;;ACTIVE
+27358;RNCP40148;Agent privé de protection de personnes;;;NIV4;Niveau 4;Non;Non;25/03/2022;31/01/2025;31/01/2028;;Enregistrement sur demande;;ACTIVE
+27518;RNCP40249;Assistant juridique;;;NIV5;Niveau 5;Non;Non;25/04/2022;28/02/2025;28/02/2030;;Enregistrement sur demande;;ACTIVE
+27653;RNCP40350;Expert en ingénierie et développement de logiciels pour l'industrie;;;NIV7;Niveau 7;Non;Non;;28/03/2025;28/03/2028;;Enregistrement sur demande;;ACTIVE
+27786;RNCP40455;Ingénieur diplômé de l'ECAM Rennes - Louis de Broglie;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;04/04/2025;31/08/2027;01/09/2022;Enregistrement de droit;;ACTIVE
+27897;RNCP40557;CQP Technicien en industrialisation et en amélioration de procédés;;;NIV5;Niveau 5;Non;Non;24/04/2020;29/04/2025;30/04/2030;;Enregistrement sur demande;;ACTIVE
+28031;RNCP40658;Architecte des systèmes d'information dans les processus industriels;;;NIV7;Niveau 7;Non;Non;;23/05/2025;23/05/2028;;Enregistrement sur demande;;ACTIVE
+28145;RNCP40759;Ingénieur diplômé de l'Ecole Polytechnique Universitaire de l'Université de Montpellier, Spécialité Génie Biologique et Agroalimentaire;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;12/06/2025;31/08/2026;01/09/2025;Enregistrement de droit;;ACTIVE
+28252;RNCP40861;Documentaliste multimédia ;;;NIV6;Niveau 6;Non;Non;19/07/2023;25/06/2025;25/06/2030;;Enregistrement sur demande;;ACTIVE
+28375;RNCP40962;Ingénieur diplômé de l’Ecole Polytechnique Universitaire de l’Institut polytechnique de Grenoble, Spécialité Informatique et Electronique;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;26/06/2025;31/08/2026;01/09/2025;Enregistrement de droit;;ACTIVE
+28476;RNCP41063;Technicien en prothèse dentaire;BAC PRO;Baccalauréat professionnel;NIV4;Niveau 4;Oui;Oui;;16/07/2025;31/08/2030;01/09/2025;Enregistrement de droit;;ACTIVE
+28608;RNCP41164;Ingénieur diplômé de CentraleSupélec, spécialité Systèmes numériques;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;22/07/2025;31/08/2028;01/09/2025;Enregistrement de droit;;ACTIVE
+28710;RNCP41265;Ingénieur diplômé de l'institut national des sciences appliquées de Rennes, spécialité informatique;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;04/09/2025;31/08/2027;01/09/2024;Enregistrement de droit;;ACTIVE
+28891;RNCP41366;Assistant ressources humaines;TP;Titre professionnel;NIV5;Niveau 5;Non;Non;;30/09/2025;04/11/2027;05/11/2025;Enregistrement de droit;;ACTIVE
+29006;RNCP41467;Chargé de projet et de production événementielle;;;NIV6;Niveau 6;Non;Non;;27/10/2025;27/10/2027;;Enregistrement sur demande;;ACTIVE
+29142;RNCP41568;Génie biologique : Sciences de l'environnement et écotechnologies;BUT;Bachelor universitaire de technologie;NIV6;Niveau 6;Non;Non;;10/11/2025;31/08/2027;01/09/2026;Enregistrement de droit;;ACTIVE
+29243;RNCP41669;Manager de la stratégie QSE/RSE (MS);;;NIV7;Niveau 7;Non;Non;23/11/2022;28/11/2025;27/11/2030;;Enregistrement sur demande;;ACTIVE
+29403;RNCP41770;Responsable en gestion des ressources humaines;;;NIV6;Niveau 6;Non;Non;25/01/2023;17/12/2025;18/12/2028;;Enregistrement sur demande;;ACTIVE
+29565;RNCP41871;Installateur en pompe à chaleur et climatisation;TP;Titre professionnel;NIV3;Niveau 3;Non;Non;;23/01/2026;25/02/2031;26/02/2026;Enregistrement de droit;;ACTIVE
+29698;RNCP41972;Technicien de production des systèmes industriels;;;NIV5;Niveau 5;Non;Non;15/09/2021;02/03/2026;27/02/2031;;Enregistrement sur demande;;ACTIVE
+29831;RNCP42073;Product builder no code;;;NIV6;Niveau 6;Non;Non;;02/04/2026;01/04/2029;;Enregistrement sur demande;;ACTIVE
+29943;RNCP42174;Architecte d’intérieur designer scénographe;;;NIV7;Niveau 7;Non;Non;;30/04/2026;30/04/2029;;Enregistrement sur demande;;ACTIVE
+30061;RNCP42275; Ingénieur diplômé de l’école polytechnique universitaire de l'université d'Angers, spécialité génie biologique et santé;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;13/05/2026;31/08/2027;01/09/2022;Enregistrement de droit;;ACTIVE
+30189;RNCP42376;Ingénieur diplômé de l’école polytechnique universitaire de l’institut national polytechnique Clermont Auvergne, spécialité mathématiques appliquées et intelligence artificielle;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Non;Non;;02/06/2026;31/08/2031;01/09/2026;Enregistrement de droit;;ACTIVE
+30311;RNCP42480;Agent de sûreté et prévention en sécurité privée;;;NIV3;Niveau 3;Non;Non;19/07/2023;26/06/2026;26/06/2031;;Enregistrement sur demande;;ACTIVE
+30462;RNCP42587;Mécatronique navale;BTS;Brevet de technicien supérieur;NIV5;Niveau 5;Oui;Oui;;09/07/2026;31/08/2032;01/09/2027;Enregistrement de droit;;ACTIVE
+30591;RNCP42688;Ingénieur diplômé de l'École nationale d'ingénieurs de Tarbes de l'Université de technologie de Tarbes;Titre ingénieur;Titre ingénieur;NIV7;Niveau 7;Oui;Oui;;22/07/2026;31/08/2031;01/09/2026;Enregistrement de droit;;ACTIVE
+17103;RS27;Certificat Voltaire;;;;;Non;Non;;;05/06/2020;;Enregistrement sur demande;Non;INACTIVE
+17364;RS388;COFREND Courants de Foucault (ET) niveau 1 - secteur Produits Métalliques (CCPM);;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+18147;RS532;C_TERP10 - SAP Certified - Associate Business Foundation  and  Integration with SAP ERP;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17142;RS720;Certificat de formateur en sauvetage secourisme du travail;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17486;RS971;Certification de spécialistes IPC-A-600 (CIS) Acceptabilité des circuits imprimés nus;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17051;RS1146;Module 11C aérodynamique des avions à pistons, structures et systèmes (connaissances de base mécanicien aéronautique);;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17630;RS1362;Certificat de compétence EEA;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17815;RS1557;Attestation de compétence - formation du personnel opérateur de chantier à la prévention des risques liés à l'amiante - travaux de sous-section 3;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17954;RS1760;Le contrôle de gestion en entreprise;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+18461;RS1985;Assurance qualité libération en industrie de santé;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Oui;INACTIVE
+19057;RS2173;Assister efficacement le chef d'entreprise BTP dans ses missions financières, juridiques et humaines;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Oui;INACTIVE
+17779;RS2356;Management d’une offre de services et de l’expérience client (BADGE);;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+18332;RS2506;C_S4IMP - SAP Certified Technology Associate - SAP S/4HANA Implémentation;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+18362;RS2651;Certification Microsoft - Mise en réseau avec Windows Server 2016 (70-741);;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+18625;RS2871;Certified Stormshield Network Expert (CSNE);;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+18739;RS3015;Certification sur les enjeux économiques, technologiques et humains du secteur Fintech;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+18634;RS3196;Implémenter un progiciel de gestion intégré;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17167;RS3377;Réaliser des interventions de médiation sociale;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+19097;RS3533;Fondamentaux des achats;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Oui;INACTIVE
+18951;RS3713;Certificat de capacité à la gestion du stress des enseignants et du personnel éducatif;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17740;RS3881;Certification d’italien général et professionnel;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+17073;RS4201;Maquillage et coiffure mariée;;;;;Non;Non;;;31/12/2021;;Enregistrement sur demande;Non;INACTIVE
+19596;RS5055;Certificat d'aptitude à conduire en sécurité (CACES) - Recommandation 489 catégorie 1A : Transpalettes à conducteur porté sans élévation du poste de conduite;;;;;Non;Non;;27/01/2020;27/11/2024;;Enregistrement sur demande;Non;INACTIVE
+20024;RS5180;Auditer la Supply Chain physique, fonctionnelle et digitale;;;;;Non;Non;;29/05/2020;29/05/2025;;Enregistrement sur demande;Non;INACTIVE
+20495;RS5290;Anticiper et accompagner en situation de conflits et communication non violente (CP-FFP);;;;;Non;Non;;14/10/2020;14/10/2023;;Enregistrement sur demande;Non;INACTIVE
+21139;RS5395;Porter une tenue étanche ventilée MAR 95.3 ou PK 17 en milieu nucléaire;;;;;Non;Non;;16/04/2021;19/04/2026;;Enregistrement sur demande;Non;INACTIVE
+21566;RS5496;Conduire une machine d'impression offset;;;;;Non;Non;;14/09/2021;15/09/2023;;Enregistrement sur demande;Non;INACTIVE
+21836;RS5597;Utilisation des outils collaboratifs (ICDL-PCIE);;;;;Non;Non;;24/11/2021;24/11/2022;;Enregistrement sur demande;Non;INACTIVE
+21978;RS5698;Reprise entreprise – Bâtir un projet entrepreneurial durable;;;;;Non;Non;;15/12/2021;14/12/2023;;Enregistrement sur demande;Non;INACTIVE
+22127;RS5799;Spécialiste international en soudage (IWS);;;;;Non;Non;;26/01/2022;26/01/2023;;Enregistrement sur demande;Non;INACTIVE
+22322;RS5900;Plateforme collaborative 3DEXPERIENCE;;;;;Non;Non;;25/02/2022;25/02/2024;;Enregistrement sur demande;Non;INACTIVE
+22600;RS6001;Manager la performance individuelle et collective par la motivation;;;;;Non;Non;;25/04/2022;25/04/2025;;Enregistrement sur demande;Non;INACTIVE
+23185;RS6102;Réaliser des maquillages enfant classiques ou élaborés;;;;;Non;Non;;29/09/2022;29/09/2024;;Enregistrement sur demande;Non;INACTIVE
+23583;RS6203;Tosa Outlook;;;;;Non;Non;;14/12/2022;14/12/2024;;Enregistrement sur demande;;INACTIVE
+24019;RS6304;Réalisation de Cascades Motos;;;;;Non;Non;;24/04/2023;24/04/2026;;Enregistrement sur demande;;INACTIVE
+24711;RS6405;Réaliser une pose d'extension de cils;;;;;Non;Non;;18/10/2023;18/10/2025;;Enregistrement sur demande;;INACTIVE
+25340;RS6506;Réaliser tout type de plat végétal et cru dans un restaurant ou une cuisine de restauration commerciale;;;;;Non;Non;;09/02/2024;09/02/2027;;Enregistrement sur demande;;ACTIVE
+25764;RS6607;Gérer la paie et les déclarations sociales;;;;;Non;Non;;26/04/2024;26/04/2026;;Enregistrement sur demande;;INACTIVE
+26272;RS6708; Facilitation d'ateliers mobilisant l'intelligence collective;;;;;Non;Non;;19/07/2024;19/07/2026;;Enregistrement sur demande;;INACTIVE
+26655;RS6809;Créer un serious game digital;;;;;Non;Non;;01/10/2024;01/10/2027;;Enregistrement sur demande;;ACTIVE
+26972;RS6910;Management de la Performance d'une équipe;;;;;Non;Non;;28/11/2024;28/11/2026;;Enregistrement sur demande;;ACTIVE
+27364;RS7011;CCP Gérer les Combustibles et Matériaux de substitution dans l'industrie cimentière;;;;;Non;Non;;31/01/2025;31/01/2030;;Enregistrement sur demande;;ACTIVE
+27697;RS7112;Responsable d'équipe;;;;;Non;Non;;28/03/2025;28/03/2028;;Enregistrement sur demande;Non;ACTIVE
+28502;RS7213;Piloter un projet de design soutenable;;;;;Non;Non;;18/07/2025;18/07/2028;;Enregistrement sur demande;;ACTIVE
+28881;RS7314;Test d’aptitude à travailler en anglais - LILATE;;;;;Non;Non;24/10/2022;24/09/2025;24/09/2030;;Enregistrement sur demande;Oui;ACTIVE
+29362;RS7415;Intégrer le design fiction dans les organisations;;;;;Non;Non;;28/11/2025;27/11/2027;;Enregistrement sur demande;;ACTIVE

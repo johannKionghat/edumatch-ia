@@ -51,6 +51,12 @@ donnees:
       encodage: utf-8
       delimiteur: ";"
       licence: "Licence Ouverte v2.0"
+  echantillons_test:
+    lignes_par_millesime_parcoursup: 5
+    lignes_par_fichier_sirene: 5
+    lignes_par_jeu_ideo: 5
+    lignes_rncp: 5
+    taille_lot_sirene: 100
 
 modele:
   type: lightgbm

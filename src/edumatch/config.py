@@ -192,10 +192,31 @@ class ReferentielsConfig(_Strict):
     rncp: RncpConfig
 
 
+class EchantillonsTestConfig(_Strict):
+    """Tailles cibles des échantillons versionnés de `data/samples/` (E08).
+
+    Distinct de `DonneesConfig.echantillonnage` : celui-ci réduit le volume
+    réellement traité en dev (une fraction du flux de production), alors que
+    `data/samples/` est un jeu figé, versionné dans le dépôt, qui ne sert
+    qu'à faire tourner les tests sans les 4,6 Go de sources complètes. Les
+    deux mécanismes ne partagent ni le code ni le cycle de vie.
+    """
+
+    lignes_par_millesime_parcoursup: int = Field(ge=1)
+    lignes_par_fichier_sirene: int = Field(ge=1)
+    lignes_par_jeu_ideo: int = Field(ge=1)
+    lignes_rncp: int = Field(ge=1)
+    # Taille des lots lus par pyarrow.iter_batches sur les fichiers Sirene :
+    # borne la mémoire du script de génération, indépendamment de la taille
+    # du fichier source (2,2 Go pour le plus gros).
+    taille_lot_sirene: int = Field(ge=1)
+
+
 class DonneesConfig(_Strict):
     parcoursup: ParcoursupConfig
     sirene: SireneConfig
     referentiels: ReferentielsConfig
+    echantillons_test: EchantillonsTestConfig
     # Uniquement présent en dev, pour itérer sur un échantillon.
     echantillonnage: float | None = Field(default=None, gt=0, le=1)
 
