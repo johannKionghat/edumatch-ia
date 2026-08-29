@@ -72,7 +72,7 @@ Parcoursup 82 Mo (mesuré, E05) · référentiels           Sirene 4,6 Go Parque
    ▼                                                     ▼
 BRONZE  fichiers bruts, immuables           Lecture Spark : 9 colonnes / 54
    │    1 table / source / millésime        + predicate pushdown
-   ▼    (Great Expectations : GATE)         (actif · employeur · diffusible)
+   ▼    (contrôles qualité : GATE)         (actif · employeur · diffusible)
 SILVER  8 millésimes réconciliés,                        │
    │    typés, harmonisés (Polars + dbt)                 ▼
    ▼                                        Agrégats (commune × NAF) :
@@ -157,7 +157,7 @@ edumatch-ia/
 │   │   ├── parcoursup.py          API opendatasoft, 8 millésimes, idempotent
 │   │   ├── sirene.py              catalogue data.gouv (URLs mensuelles), .part → rename
 │   │   └── referentiels.py        ONISEP, RNCP, IDEO — téléchargement versionné
-│   ├── quality/expectations/      suites GE : schéma, complétude, cohérence, fraîcheur
+│   ├── quality/                   contrôles : schéma, complétude, cohérence, fraîcheur
 │   ├── transform/                 projet dbt : bronze → silver → gold
 │   │   ├── models/{bronze,silver,gold}/
 │   │   └── schema.yml             tests not_null / unique / relationships → lignage
@@ -271,7 +271,7 @@ Traçabilité totale exigible en soutenance : **commit → image (tag = hash) �
         au-delà du seuil documenté → déclenchement du réentraînement
 ```
 
-Trois propriétés non négociables du DAG, toutes testées et filmées : **idempotence** (relance = même résultat), **reprise sur erreur** (retries à temporisation croissante), **blocage qualité** (un échec Great Expectations arrête tout — une donnée corrompue n'atteint jamais le modèle).
+Trois propriétés non négociables du DAG, toutes testées et filmées : **idempotence** (relance = même résultat), **reprise sur erreur** (retries à temporisation croissante), **blocage qualité** (un échec de contrôle qualité arrête tout — une donnée corrompue n'atteint jamais le modèle).
 
 ---
 

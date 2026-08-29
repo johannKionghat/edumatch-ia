@@ -91,7 +91,7 @@ posées.*
       juridique des échantillons Sirene (pseudonymisation, entrepreneurs
       individuels) documenté et à reprendre dans le registre des sources
       (E40) — voir `01-donnees/echantillons.md`
-- [ ] `quality/expectations/` — schéma, complétude, cohérence, fraîcheur, **bloquantes**
+- [x] `quality/` — schéma, complétude, cohérence, fraîcheur, **bloquantes** (E14)
 - [ ] `transform/` — projet dbt, bronze → silver → gold, tests et lignage
 - [ ] `spark/sirene_agregats.py` — 9 colonnes, filtres, agrégats commune × NAF, bassin
 - [ ] `referentiel/naf_rome_formation.csv` — actif versionné, **taux de couverture mesuré**

@@ -287,6 +287,24 @@ evaluation:
   courbe_apprentissage: [0.10, 0.25, 0.50, 1.00]
   baseline: taux_session_precedente
 
+# Seuils des contrôles qualité (E14, src/edumatch/quality/). Un contrôle qui
+# journalise sans bloquer laisse une donnée corrompue atteindre le modèle
+# (structure-projet.md, principe 5) : la distinction entre ce qui bloque et
+# ce qui avertit est dans le code des contrôles, pas ici — cette section ne
+# porte que les seuils numériques, mesurés sur les fichiers sources réels.
+qualite:
+  parcoursup:
+    seuil_completude: 0.99
+    tolerance_reconstruction_pourcentage: 0.5
+    age_max_jours_avertissement: 400
+  sirene:
+    seuil_completude: 0.99
+    age_max_jours_avertissement: 60
+  referentiels:
+    seuil_completude: 0.99
+    age_max_jours_avertissement_ideo: 200
+    age_max_jours_avertissement_rncp: 3
+
 equite:
   dimensions: [type_bac, boursier, genre, territoire]
   variables_interdites: [genre]      # audit a posteriori uniquement

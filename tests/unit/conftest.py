@@ -97,6 +97,19 @@ equite:
   substituts_a_tester: []
   seuil_impact_disparate: 0.80
 
+qualite:
+  parcoursup:
+    seuil_completude: 0.99
+    tolerance_reconstruction_pourcentage: 0.5
+    age_max_jours_avertissement: 400
+  sirene:
+    seuil_completude: 0.99
+    age_max_jours_avertissement: 60
+  referentiels:
+    seuil_completude: 0.99
+    age_max_jours_avertissement_ideo: 200
+    age_max_jours_avertissement_rncp: 3
+
 derive:
   reference: distribution_entrainement
   tests: [psi]

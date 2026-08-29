@@ -378,6 +378,81 @@ class EquiteConfig(_Strict):
     seuil_impact_disparate: float = Field(gt=0, le=1)
 
 
+class QualiteParcoursupConfig(_Strict):
+    """Seuils du contrôle qualité Parcoursup (E14), tous mesurés sur le fichier source.
+
+    `seuil_completude` : le taux en dessous duquel une colonne de la liste
+    blanche (`modele.variables.session_courante`) est jugée incomplète.
+    Mesuré sur la session 2025 : 8 des 9 colonnes sont remplies à 100 %,
+    `region_etab_aff` à 99,32 % (97 lignes vides sur 14 252) — 0,99 couvre ce
+    cas réel sans le signaler à tort.
+
+    `tolerance_reconstruction_pourcentage` : écart maximal, en points,
+    toléré entre une colonne `pct_*` et sa reconstruction depuis `acc_neobac`
+    ou `acc_tot` (ADR 0013). Mesuré à 0,500 point exactement sur les 19
+    colonnes et 13 954 lignes comparables de la session 2025 — c'est
+    l'arrondi au point entier, rien de plus.
+
+    `age_max_jours_avertissement` : Parcoursup publie un fichier par an, par
+    campagne. Le contrôle ne porte donc que sur le millésime le plus récent
+    déclaré (les archives plus anciennes restent volontairement anciennes) ;
+    au-delà de ce nombre de jours sans nouveau téléchargement du dernier
+    millésime configuré, un avertissement est levé — jamais un blocage, une
+    campagne n'ayant pas de date de publication garantie à l'avance.
+    """
+
+    seuil_completude: float = Field(gt=0, le=1)
+    tolerance_reconstruction_pourcentage: float = Field(ge=0)
+    age_max_jours_avertissement: int = Field(ge=1)
+
+
+class QualiteSireneConfig(_Strict):
+    """Seuils du contrôle qualité Sirene (E14).
+
+    `seuil_completude` : appliqué aux seules colonnes structurellement
+    complètes par construction (`siret`, `etatAdministratifEtablissement`) —
+    pas à `trancheEffectifsEtablissement` (code `NN` fréquent, pas une
+    valeur manquante) ni à `activitePrincipaleNAF25Etablissement` (bascule de
+    nomenclature en cours, ajoutée le 16/12/2025, 296 valeurs vides sur 500
+    dans l'échantillon par construction du calendrier, pas par défaut de
+    collecte).
+
+    `age_max_jours_avertissement` : le stock Sirene est republié chaque
+    mois. 60 jours laisse une marge de deux cycles de publication avant
+    d'alerter, sans bloquer un job qui téléchargerait 4,6 Go pour rien à
+    chaque exécution.
+    """
+
+    seuil_completude: float = Field(gt=0, le=1)
+    age_max_jours_avertissement: int = Field(ge=1)
+
+
+class QualiteReferentielsConfig(_Strict):
+    """Seuils du contrôle qualité des référentiels ONISEP (IDÉO) et RNCP (E14).
+
+    `age_max_jours_avertissement_ideo` : IDÉO n'expose aucune date de
+    publication par l'API — seule `date_telechargement` (dernière
+    vérification locale) est disponible. Le seuil, généreux, est une
+    politique d'hygiène (« revérifier de temps en temps »), pas une mesure
+    de péremption du contenu : à revoir si ONISEP publie un jour une date de
+    mise à jour exploitable.
+
+    `age_max_jours_avertissement_rncp` : l'export RNCP est republié chaque
+    jour (ADR 0007). Le contrôle ne porte que sur l'export le plus récent
+    présent dans le manifeste.
+    """
+
+    seuil_completude: float = Field(gt=0, le=1)
+    age_max_jours_avertissement_ideo: int = Field(ge=1)
+    age_max_jours_avertissement_rncp: int = Field(ge=1)
+
+
+class QualiteConfig(_Strict):
+    parcoursup: QualiteParcoursupConfig
+    sirene: QualiteSireneConfig
+    referentiels: QualiteReferentielsConfig
+
+
 class DeriveConfig(_Strict):
     reference: str
     tests: list[str] = Field(min_length=1)
@@ -549,6 +624,7 @@ class Settings(BaseSettings):
     modele: ModeleConfig
     evaluation: EvaluationConfig
     equite: EquiteConfig
+    qualite: QualiteConfig
     derive: DeriveConfig
     api: ApiConfig
     execution: ExecutionConfig
