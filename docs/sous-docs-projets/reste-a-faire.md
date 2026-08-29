@@ -28,6 +28,7 @@ Feuille de route vivante. Je la tiens à jour au fil du projet et des
 | `ingestion/sirene.py` — connecteur des 4 fichiers stock, résolution dynamique du catalogue mensuel | ✅ |
 | `ingestion/referentiels.py`, `_referentiels_rncp.py`, `_referentiels_communs.py` — connecteur ONISEP + RNCP, idempotence par date de publication pour le RNCP | ✅ |
 | `data/samples/` — 17 échantillons versionnés, générés par `ingestion/echantillons.py`, régime juridique documenté (pseudonymisation, intérêt légitime) | ✅ |
+| `notebooks/01-jgk-eda-label.ipynb` — grain, schéma inter-millésimes, définition et bornage du label (ADR 0009) | ✅ |
 
 **Reste sur l'infrastructure** : protection de branche `main` — indisponible
 sur dépôt privé en offre gratuite, compensée par le gate de vérification.
@@ -118,7 +119,10 @@ posées.*
 
 ## EDA — préalable au Bloc 4
 
-- [ ] `notebooks/01-jgk-eda-label.ipynb` — distribution du label par cellule
+- [x] `notebooks/01-jgk-eda-label.ipynb` — distribution du label par cellule
+      (E09, 2026-08-29). Grain établi, schéma des 8 sessions réconcilié,
+      définition du label et son bornage arrêtés en ADR 0009 — voir
+      `01-donnees/label.md`
 - [ ] Écart entre types de baccalauréat, variation par filière
 - [ ] Taux de féminisation par filière, concentration de la ségrégation
 - [ ] Sélectivité par filière

@@ -15,6 +15,49 @@ Format :
 
 ---
 
+## 2026-08-29 — E09, analyse exploratoire du label
+
+**Fait** : E09 validée — `notebooks/01-jgk-eda-label.ipynb` (34 cellules, dont
+20 de commentaire, sorties nettoyées), figure exportée dans
+`reports/figures/e09-distribution-taux-admission.png`. Grain établi : une
+ligne est une formation identifiée par `cod_aff_form`, pour une session — clé
+vérifiée sans doublon ni manque (14 252 valeurs distinctes en 2025).
+`cod_uai` seul ne suffit pas : 4 058 établissements pour 14 252 formations.
+Schéma réconcilié sur les huit millésimes : 83 colonnes communes sur 128 vues
+au moins une fois, dont 59 remplies à plus de 99 % partout.
+
+Trois faits de dérive relevés dans les données elles-mêmes :
+`etablissement_id_paysage` et `composante_id_paysage`, mortes en 2025 après
+avoir été renseignées à 47 % de 2021 à 2024 ; `pct_etab_orig`, dont la
+publication s'élargit à toutes les filières en 2023 ; `acc_term`, dont
+l'absence vaut 0 % ou 100 % selon la filière — non applicable, pas manquante,
+donc jamais à imputer.
+
+Le label dépasse 1 dans 8,9 % des cellules bac général, et ce dépassement
+persiste sur les grosses cellules (483 sur 7 154 au-delà de 100 vœux) : c'est
+structurel, `prop_tot` compte des propositions réémises après désistement,
+`nb_voe_pp` compte des vœux. J'ai comparé quatre définitions du taux avant de
+trancher : `acc / nb_voe_pp` ne dépasse jamais 1 mais mesurerait l'acceptation
+d'une proposition, pas l'admission — écartée.
+
+**Corrigé** : la moyenne de 0,522, déjà citée dans la documentation et le
+dossier, s'est avérée être la moyenne calculée sur le taux borné à 1 (la
+moyenne brute vaut 0,545). La borne était déjà appliquée dans le calcul, sans
+être écrite nulle part. Rendue explicite dans `01-donnees/label.md` et
+l'ADR 0009, sans changer le chiffre.
+
+**Décisions** : ADR 0009 — quatre décisions sur le label : conserver
+`prop_tot / nb_voe_pp`, borner à 1 en énonçant pourquoi, pondérer par
+l'effectif de la cellule à l'entraînement, ne pas exclure les petites
+cellules (un seuil à 30 vœux écarterait 26 % des observations).
+
+**Bloqué sur** : rien. Prochaine étape : E10, écarts entre types de bac et
+sélectivité par filière.
+
+**Jury** : aucune évaluation ce jour.
+
+---
+
 ## 2026-08-29 — E08, échantillons de test versionnés
 
 **Fait** : E08 validée — `data/samples/` (1,2 Mo, 17 échantillons couvrant

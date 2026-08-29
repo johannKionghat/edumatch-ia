@@ -23,17 +23,17 @@ Multiplicatif : si un terme s'annule, la recommandation disparaît.
 ## État d'avancement
 
 **L'architecture est en place, la configuration est centralisée, les trois
-connecteurs d'ingestion (Parcoursup, Sirene, référentiels) fonctionnent, et
-la suite de tests tourne sur des échantillons versionnés sans dépendre des
-sources brutes.** Le dépôt part d'une base propre, sans reprise de l'ancien
-MVP.
+connecteurs d'ingestion (Parcoursup, Sirene, référentiels) fonctionnent, la
+suite de tests tourne sur des échantillons versionnés sans dépendre des
+sources brutes, et l'analyse exploratoire du label est faite.** Le dépôt part
+d'une base propre, sans reprise de l'ancien MVP.
 
 | Bloc | Avancement |
 |---|---|
 | 1 — Gouvernance | à démarrer |
 | 2 — Architecture | structure, outillage et configuration posés, infrastructure à construire |
 | 3 — Pipeline | connecteurs Parcoursup, Sirene et référentiels opérationnels ; échantillons de test versionnés, suite complète indépendante des sources brutes |
-| 4 — Déploiement | à démarrer |
+| 4 — Déploiement | label défini et sa distribution analysée (`01-donnees/label.md`) ; modèle à démarrer |
 
 Le détail de ce qui reste est dans [`reste-a-faire.md`](reste-a-faire.md).
 Dernière évaluation du jury : *aucune*. Lancer `/jury`.
@@ -68,4 +68,4 @@ fur et à mesure que les modules correspondants seront écrits.
 | `jury/` | Les évaluations successives du jury |
 
 ---
-*Mise à jour : 2026-08-28, commit `144ee20`.*
+*Mise à jour : 2026-08-29, commit `7bcd5ef`.*

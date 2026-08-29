@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 8 / 46 étapes validées.**
+**État : 9 / 46 étapes validées.**
 
 ---
 
@@ -362,11 +362,58 @@ l'échantillon.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E09 | EDA — label et distributions | ⬜ | | |
+| E09 | EDA — label et distributions | ✅ validée | 2026-08-29 | `7bcd5ef` |
 | E10 | EDA — écarts et sélectivité | ⬜ | | |
 | E11 | EDA — équité et substituts | ⬜ | | |
 | E12 | EDA — stabilité inter-millésimes | ⬜ | | |
 | E13 | Décision de variables (ADR) | ⬜ | | |
+
+**E09 — ce qui a été vérifié**
+- `notebooks/01-jgk-eda-label.ipynb` (34 cellules, dont 20 de commentaire,
+  sorties nettoyées) établit le grain de l'analyse : une ligne est une
+  formation identifiée par `cod_aff_form`, pour une session. Clé vérifiée sans
+  doublon ni manque : 14 252 valeurs distinctes pour 14 252 lignes en 2025.
+  `cod_uai` seul ne suffit pas : 4 058 établissements pour 14 252 formations
+- Schéma mesuré sur les huit millésimes empilés : 85 colonnes en 2018,
+  92 en 2019, 115 en 2020, 118 de 2021 à 2025. **83 colonnes communes aux 8
+  sessions** sur 128 vues au moins une fois, dont 59 remplies à plus de 99 %
+  partout — c'est le socle sur lequel un modèle entraîné sur toute la période
+  peut s'appuyer
+- Trois faits de dérive relevés dans les données elles-mêmes :
+  `etablissement_id_paysage` et `composante_id_paysage` absentes jusqu'en
+  2020, renseignées à environ 47 % de 2021 à 2024, vides à 100 % en 2025 ;
+  `pct_etab_orig` passe de 46 % à 100 % de remplissage en 2023, rupture nette
+  qui correspond à un élargissement de la publication à toutes les filières
+  (elle ne concernait que BTS et CPGE) ; `acc_term` reste à 45-56 % de
+  remplissage sur toute la période
+- `acc_term` n'est pas une valeur manquante mais une valeur **non
+  applicable** : son absence vaut 0 % pour les BTS et CPGE, 100 % pour toutes
+  les autres filières, jamais entre les deux. L'imputer fabriquerait de la
+  donnée et redonnerait la filière au modèle sous une autre forme
+- **Le label dépasse 1 dans 8,9 % des cellules bac général** (1 219 sur
+  13 685), et le dépassement persiste sur les grosses cellules (483 sur
+  7 154 au-delà de 100 vœux) : ce n'est pas un artefact de petit effectif,
+  c'est structurel — `prop_tot` compte des propositions émises, réémises
+  après désistement, quand `nb_voe_pp` compte des vœux
+- Moyennes et médianes reproduites à l'identique : bac général 0,522 / 0,498 ;
+  technologique 0,433 / 0,381 ; professionnel 0,405 / 0,333. Masses aux
+  bornes mesurées : taux nul pour 1,2 %, 12,9 % et **21,6 % (2 779
+  formations)** des cellules selon le bac ; taux à 1 pour 13,1 %, 11,8 % et
+  13,1 %
+
+**E09 — décision explicitée, pas nouvelle dans le résultat**
+La moyenne de 0,522 déjà citée dans la documentation et le dossier est la
+moyenne calculée sur le taux **borné à 1** (la moyenne brute vaut 0,545). La
+borne était donc déjà appliquée dans le calcul, sans être écrite nulle part.
+Corrigé : `01-donnees/label.md` et l'ADR 0009 rendent la borne explicite, sans
+changer le chiffre.
+
+**E09 — décision prise** : ADR 0009 — quatre décisions sur le label : conserver
+`prop_tot / nb_voe_pp` (mesure l'accessibilité, pas la préférence du candidat :
+l'alternative `acc / nb_voe_pp` ne dépasse jamais 1 mais mesurerait
+l'acceptation), borner à 1 en énonçant pourquoi, pondérer par l'effectif de la
+cellule à l'entraînement, ne pas exclure les petites cellules (un seuil à
+30 vœux écarterait 26 % des observations).
 
 ## Phase 3 — Qualité et transformation
 
