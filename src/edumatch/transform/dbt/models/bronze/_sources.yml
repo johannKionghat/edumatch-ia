@@ -1,0 +1,40 @@
+version: 2
+
+# Déclare les huit fichiers CSV bruts comme des sources dbt, pour que
+# `dbt docs generate` les fasse apparaître comme les racines du graphe de
+# lignage (critère 3.8) : sans cette déclaration, le modèle silver
+# apparaîtrait comme un nœud isolé, sans origine visible.
+#
+# Chaque fichier est lu directement par DuckDB (`read_csv`, sans copie
+# intermédiaire), avec `all_varchar=true` : la même garantie que
+# `pandas.read_csv(dtype=str)` dans le chargeur Python
+# (`edumatch.transform.reconciliation._charger_millesime`), pour la même
+# raison — un type ne doit jamais dépendre de la présence ou non d'un
+# département corse dans le millésime en cours.
+#
+# La liste des huit millésimes est dupliquée ici depuis
+# `configs/base.yaml` (`donnees.parcoursup.millesimes`) : dbt ne permet pas
+# de déclarer des sources depuis une boucle sur une valeur externe. La
+# duplication est couverte par un test de contrat
+# (`tests/unit/test_transform_dbt_sources.py`), qui échoue si les deux
+# listes divergent — sur le même principe que les contrôles de
+# `tests/data/test_variables_reference.py` pour l'ADR 0013.
+sources:
+  - name: bronze_parcoursup
+    description: >
+      Les huit millésimes Parcoursup bruts (`data/raw/parcoursup/`),
+      immuables (bronze). `{{ env_var('EDUMATCH_RAW_PARCOURSUP_DIR') }}` est
+      injectée par `edumatch.transform.run_dbt`, jamais codée en dur ici.
+    meta:
+      external_location: >-
+        read_csv('{{ env_var('EDUMATCH_RAW_PARCOURSUP_DIR') }}/{identifier}.csv',
+        delim=';', all_varchar=true, header=true)
+    tables:
+      - name: parcoursup_2018
+      - name: parcoursup_2019
+      - name: parcoursup_2020
+      - name: parcoursup_2021
+      - name: parcoursup_2022
+      - name: parcoursup_2023
+      - name: parcoursup_2024
+      - name: parcoursup_2025

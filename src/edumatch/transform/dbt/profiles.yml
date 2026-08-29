@@ -1,0 +1,15 @@
+# Profil de connexion dbt, local au projet (`--profiles-dir` pointe ici,
+# jamais vers ~/.dbt) : un dépôt cloné doit pouvoir lancer `make transform`
+# sans configuration globale sur la machine.
+#
+# `path` vient d'une variable d'environnement, jamais d'un chemin en dur :
+# c'est `edumatch.transform.run_dbt` qui la calcule depuis
+# `Settings.interim_dir`, pour que le fichier DuckDB vive au même endroit que
+# tout le reste de silver (`data/interim/`), quel que soit l'environnement.
+edumatch_transform:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('EDUMATCH_DBT_DUCKDB_PATH') }}"
+      threads: 1

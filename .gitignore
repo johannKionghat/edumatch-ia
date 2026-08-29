@@ -70,3 +70,9 @@ PROGRAMME_AUTODIDACTE*.md
 
 # ─── Documents de l'école et de tiers — hors dépôt ───────────────
 docs/sous-docs-projets/reference/
+
+# artefact local de dbt (identifiant de telemetrie, propre a la machine)
+src/edumatch/transform/dbt/.user.yml
+target/
+dbt_packages/
+logs/

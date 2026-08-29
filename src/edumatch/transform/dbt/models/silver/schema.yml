@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: stg_parcoursup
+    description: >
+      Silver Parcoursup : les huit millésimes réconciliés dans un schéma
+      unique de 128 colonnes classées (ADR 0013), typées, avec la clé
+      `cod_aff_form` reconstruite pour 2018 et 2019 (ADR 0010). Grain :
+      une ligne = une formation, sur une session, pour un type de
+      baccalauréat et un statut de boursier — les deux dernières dimensions
+      ne sont pas des colonnes, elles sont portées par le label (ADR 0009) et
+      appliquées en aval (E19).
+    columns:
+      - name: session
+        description: Le millésime (2018 à 2025), ajouté par la réconciliation, jamais lu tel quel du fichier source.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+      - name: cod_aff_form
+        description: >
+          Identifiant de la formation. Reconstruit pour 2018 et 2019 depuis
+          `lien_form_psup` (couverture 92,4 % et 94,6 %, ADR 0010) : ce n'est
+          pas une colonne complète, `not_null` la signalerait à tort.

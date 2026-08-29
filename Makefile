@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down config data quality features train evaluate api test lint fmt docs clean
+.PHONY: help install up down config data quality transform transform-lignage features train evaluate api test lint fmt docs clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -34,10 +34,17 @@ data:  ## Régénère TOUTES les données dérivées depuis data/raw
 	python -m edumatch.ingestion.parcoursup
 	python -m edumatch.ingestion.sirene
 	$(MAKE) quality
+	$(MAKE) transform
 	$(MAKE) features
 
 quality:  ## Exécute les contrôles qualité (bloquants)
 	python -m edumatch.quality.run
+
+transform:  ## Réconcilie les huit millésimes Parcoursup (bronze -> silver, E15)
+	python -m edumatch.transform.run
+
+transform-lignage:  ## Rejoue la réconciliation via dbt et génère le graphe de lignage (dbt docs)
+	python -m edumatch.transform.run_dbt
 
 samples:  ## Régénère data/samples/ depuis data/raw et data/external (config prod)
 	python -m edumatch.ingestion.echantillons

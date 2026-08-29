@@ -31,6 +31,11 @@ dependencies = [
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.5", "jupyter>=1.0"]
 rag = ["langchain>=0.2", "langchain-community>=0.2", "faiss-cpu>=1.8",
        "sentence-transformers>=3.0", "mistralai>=0.4"]
+# E15 : moteur de la transformation bronze -> silver. DuckDB plutôt que
+# PostgreSQL (voir l'arbitrage dans
+# src/edumatch/transform/dbt/models/silver/stg_parcoursup.py) : aucun
+# serveur, lit data/raw/*.csv directement, s'intègre nativement à dbt.
+transform = ["dbt-duckdb>=1.8,<1.9"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

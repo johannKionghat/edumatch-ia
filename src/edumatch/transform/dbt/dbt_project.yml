@@ -1,0 +1,30 @@
+# Projet dbt de la couche silver Parcoursup (E15).
+#
+# Ce fichier ne porte aucune connaissance métier (millésimes, colonnes,
+# seuils) : elle reste dans configs/base.yaml, lue par le modèle Python via
+# `edumatch.config.load_settings`. dbt n'est convoqué ici que pour ce qu'il
+# apporte réellement — le graphe de dépendances entre les sources bronze et
+# le modèle silver, produit automatiquement par `dbt docs generate`
+# (critère 3.8) — pas pour reformuler en Jinja une logique déjà écrite et
+# testée en Python pur (`edumatch.transform.reconciliation`).
+name: "edumatch_transform"
+version: "1.0.0"
+config-version: 2
+
+profile: "edumatch_transform"
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: []
+seed-paths: []
+
+# La base DuckDB et les artefacts de compilation ne sont pas des livrables :
+# ils sont reconstruits à chaque exécution depuis bronze (ADR « data/raw est
+# immuable, le reste se régénère »), donc ignorés par Git au même titre que
+# data/interim/.
+target-path: "target"
+clean-targets: ["target"]
+
+models:
+  edumatch_transform:
+    +materialized: table
