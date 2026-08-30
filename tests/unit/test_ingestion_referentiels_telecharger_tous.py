@@ -36,11 +36,23 @@ CONTENU_ROME_UTF8 = '"Numero_Fiche";"Codes_Rome_Code"\n"RNCP1";"M1607"\n'.encode
 
 
 def _contenu_xlsx_minimal() -> bytes:
-    """Un xlsx n'est qu'un ZIP : suffisant pour passer le contrôle de contrat du connecteur."""
+    """Un xlsx n'est qu'un ZIP : suffisant pour passer le contrôle de contrat du connecteur.
+
+    Le résultat est figé une fois pour toutes dans `CONTENU_XLSX_FT` ci-dessous, et
+    c'est cette constante — jamais deux appels distincts — qui sert à la fois à
+    fabriquer la réponse et à vérifier ce qui a été écrit. `ZipFile.writestr`
+    horodate en effet chaque entrée à la seconde courante : deux appels séparés par
+    une frontière de seconde produisent des octets différents à contenu identique.
+    Comparer deux constructions indépendantes rendait ce test instable, d'autant
+    plus souvent que la suite complète était chargée et l'intervalle allongé.
+    """
     tampon = io.BytesIO()
     with zipfile.ZipFile(tampon, mode="w") as archive:
         archive.writestr("[Content_Types].xml", "<Types/>")
     return tampon.getvalue()
+
+
+CONTENU_XLSX_FT = _contenu_xlsx_minimal()
 
 
 def _zip_rncp() -> bytes:
@@ -135,7 +147,7 @@ class SessionFacticeCombinee:
         if url == URL_CATALOGUE_FT:
             return _ReponseJsonRncp(CATALOGUE_FT)
         if url == URL_XLSX_FT:
-            return _ReponseFluxIdeo(_contenu_xlsx_minimal())
+            return _ReponseFluxIdeo(CONTENU_XLSX_FT)
         raise AssertionError(f"URL inattendue appelée par telecharger_tous : {url}")
 
 
@@ -162,7 +174,7 @@ def test_telecharger_tous_enchaine_ideo_puis_rncp_dans_une_seule_session(setting
     assert resultats[0].chemin.read_bytes() == CONTENU_IDEO_UTF8
     assert resultats[1].chemin.read_bytes() == CONTENU_RNCP_UTF8
     assert resultats[2].chemin.read_bytes() == CONTENU_ROME_UTF8
-    assert resultats[3].chemin.read_bytes() == _contenu_xlsx_minimal()
+    assert resultats[3].chemin.read_bytes() == CONTENU_XLSX_FT
     assert session.urls_appelees == [
         URL_IDEO_FORMATIONS,
         URL_CATALOGUE_RNCP,
