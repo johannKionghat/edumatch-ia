@@ -224,23 +224,111 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
 
 ## ⚠️ Incohérences relevées
 
-**⚠️ INCOHÉRENCE — volumétrie du label dans le dossier de certification
-(2026-08-29, constatée en documentant E12)**
+**✅ RÉSOLU — volumétrie du label dans le dossier de certification**
+(constatée le 2026-08-29 en documentant E12, corrigée le 2026-08-30)
 
-Le dossier de certification (`dossier/_build_dossier.py`, ligne 620-621) et
-`ARCHITECTURE_EduMatch.md` (ligne 86) annoncent « 77 159 cellules
-exploitables par millésime ; 560 000 à 625 000 observations sur les huit
-sessions ». L'analyse de stabilité inter-millésimes (E12,
-`notebooks/04-jgk-eda-stabilite-millesimes.ipynb`) établit que le numérateur
-du label n'existe qu'à partir de la session 2020 : le volume réellement
-exploitable est de **440 030 cellules sur six sessions**, pas huit. Le
-chiffre de 77 159 pour la seule session 2025 reste exact.
+Le dossier annonçait « 77 159 cellules exploitables par millésime ; 560 000 à
+625 000 observations sur les huit sessions ». `_build_dossier.py` a été
+corrigé pour annoncer les chiffres réels (440 030 cellules exploitables sur
+les six sessions 2020-2025, ADR 0012) et le `.docx` régénéré.
+`ARCHITECTURE_EduMatch.md` a été relu à cette occasion : il affiche déjà
+440 030 cellules à l'endroit visé, rien à y corriger.
 
-Je n'ai pas corrigé `_build_dossier.py` ni régénéré le `.docx` : la
-consigne du dépôt est de ne jamais éditer ces fichiers à la main et de ne
-les régénérer qu'au moment dédié à la synchronisation du dossier. Le
-constat est déposé ici pour être traité à ce moment, avant toute lecture du
-dossier par le jury.
+---
+
+**✅ RÉSOLU — trois incohérences dossier ↔ dépôt** (relevées et corrigées le
+2026-08-30, à l'occasion d'une revue croisée dossier de certification /
+ADR / documentation technique)
+
+1. Le §6 (Bloc 3) annonçait des contrôles qualité « Great Expectations » —
+   l'ADR 0014 écarte cet outil et retient Pandera pour `parcoursup.py`, des
+   compteurs écrits à la main pour `sirene.py` et `referentiels.py`. Corrigé.
+2. Le §6 annonçait « chaîne de volume traitée en distribué avec PySpark » —
+   l'ADR 0016 mesure Spark 4,8 fois plus lent que Polars sur le fichier
+   Sirene complet (87,0 s contre 18,2 s), retient Polars en exécution
+   courante et Spark comme moteur implémenté, testé, branché sur le mode
+   cluster pour la trajectoire de volume (historique Sirene à 95,9 M
+   lignes, republication mensuelle). Le §6 racontait l'inverse de ce que le
+   projet a mesuré et assumé ; réécrit pour porter cette mesure et son
+   seuil de bascule.
+3. Le §7 se contredisait dans la même page : « 440 030 observations sur les
+   six sessions … 2020-2025 » puis, six lignes plus bas, « entraînement
+   2018-2023 ». Le protocole réel (ADR 0012, `04-modele/evaluation.md`) est
+   entraînement 2020-2023 (286 463 cellules), validation 2024 (76 408),
+   test 2025 (77 159) — corrigé, et la raison de la borne à six sessions
+   (numérateur du label absent en 2018-2019) explicitée dans le tableau.
+
+En corrigeant le point 3, une ambiguïté connexe a été traitée : la table de
+composition du score (§1.2 et §7) citait « Parcoursup, huit millésimes »
+comme source du terme d'accessibilité, sans distinguer le fichier brut
+(8 sessions) du volume exploitable pour l'entraînement (6 sessions) — l'ADR
+0012 demande explicitement cette distinction partout où le chiffre est
+cité. Les deux cellules de tableau précisent maintenant les deux volumes.
+
+---
+
+**✅ RÉSOLU — chiffres de féminisation obsolètes dans le dossier** (relevé et
+corrigé le 2026-08-30)
+
+Le §1.1 citait encore « 2 954 formations (20,7 %) à moins de 20 % de femmes »
+et « 21,3 % » de formations en zone équilibrée. `04-modele/equite.md` documente
+une correction de méthode déjà actée : ce chiffre incluait 179 formations à
+dénominateur nul (aucun candidat admis), où le taux de féminisation vaut
+mécaniquement 0 % sans rien dire de la féminisation d'un processus qui n'a
+pas eu lieu. Le chiffre corrigé, dénominateur non nul, est 2 775 formations
+(19,7 %), 17,9 % à plus de 80 % de femmes, 21,5 % en zone équilibrée. Le
+dossier reprenait la version pré-correction ; corrigé pour aligner ce
+paragraphe sur `04-modele/equite.md`.
+
+---
+
+**✅ RÉSOLU — code de certification dans l'en-tête du dossier** (relevée le
+2026-08-30, tranchée par moi le jour même : AIA02 est le bon
+code, corrigé dans `_build_dossier.py`)
+
+L'en-tête indiquait « Architecte en Intelligence Artificielle - Mastère 2
+(AIA01) ». Le code retenu est AIA02, conforme au nom du dossier de travail.
+Corrigé, `.docx` régénéré.
+
+---
+
+**✅ RÉSOLU — présent utilisé pour des composants non construits** (relevée
+le 2026-08-30 pour le seul paragraphe RAG, généralisée et corrigée le même
+jour selon la règle que je me suis fixée : « ce qui n'est pas construit passe
+au futur »)
+
+Vérification component par component contre le code réel du dépôt (pas
+seulement le RAG) :
+
+| Composant cité dans le dossier | Présent dans le dépôt ? | Vérifié par |
+|---|---|---|
+| Ingestion Parcoursup/Sirene/référentiels, contrôles qualité Pandera | Oui | `src/edumatch/ingestion/`, `src/edumatch/quality/`, E05-E14 validées |
+| Réconciliation des 8 millésimes, entrepôt en étoile | Oui | `src/edumatch/transform/`, dbt gold, E15-E16 validées |
+| Agrégats Sirene (Polars + Spark) | Oui | `src/edumatch/spark/`, E17 validée |
+| Chaîne NAF↔ROME↔formation | Oui | `src/edumatch/referentiel/`, E18 validée |
+| Label et pondération, variables, anti-fuite | Oui | `src/edumatch/features/`, E19-E20 validées |
+| Baseline, entraînement LightGBM tracé MLflow | Oui | `src/edumatch/models/baseline.py`, `train.py` |
+| SHAP (explicabilité), calibration, courbe d'apprentissage | Non | `src/edumatch/models/` ne contient ni `explain.py` ni code de calibration ; E23-E25 ⬜ |
+| Audit d'équité (parité, égalité des chances, ratio d'impact) | Non | pas de `fairness.py` ; E26 ⬜ (l'analyse exploratoire des substituts, elle, est faite — E11) |
+| Ablation Sirene | Non | pas de `ablation.py` ; E27 ⬜ |
+| Module de score (`matching/affinite.py`, `debouches.py`, `score.py`) | Non | `src/edumatch/matching/` ne contient qu'un `.gitkeep` ; E28 ⬜ |
+| API FastAPI, écran conseiller, journalisation article 12 | Non | `src/edumatch/api/` ne contient que des `.gitkeep` ; E29-E31 ⬜ |
+| Chatbot RAG | Non | `src/edumatch/rag/` ne contient qu'un `.gitkeep` ; E32 ⬜ |
+| DAG Airflow | Non | `pipelines/` ne contient qu'un `.gitkeep` ; le conteneur Airflow existe dans `docker-compose.yml` mais sans DAG chargé ; E33 ⬜ |
+| Détection de dérive Evidently, réentraînement automatique | Non | aucun usage d'`evidently` dans le code (dépendance déclarée, non utilisée) ; E34 ⬜ |
+| Conteneurs `Dockerfile.train`/`.serve` | Non | `docker/` ne contient qu'un `.gitkeep` ; E35 ⬜ |
+| CI/CD, workflows GitHub Actions, second dépôt | Non | `.github/workflows/` est vide ; E36 ⬜ ; un seul dépôt existe à ce jour |
+| Terraform, Kubernetes, HPA | Non | aucun fichier `.tf` ni manifeste Kubernetes dans le dépôt ; E37 ⬜ |
+| Monitoring Prometheus/Grafana, SLO | Non | aucune configuration Prometheus/Grafana dans le dépôt ; E38 ⬜ |
+
+Tous les paragraphes du dossier décrivant les lignes « Non » ont été
+réécrits au futur, avec la justification déjà arbitrée conservée (le choix
+technique reste assumé, seul le temps du verbe change), et une mention
+explicite de ce qui n'existe pas encore ainsi que de l'étape du plan qui le
+produira. Une correction de contenu accompagne ce changement de temps : le
+modèle en étoile (E16, déjà construit) porte les dimensions formation,
+candidat, session et territoire — pas de dimension « métier », que le
+dossier citait par erreur.
 
 > Toute divergence entre le code, la documentation et le dossier de
 > certification est inscrite ici sous cette mention, et remontée. Elle n'est

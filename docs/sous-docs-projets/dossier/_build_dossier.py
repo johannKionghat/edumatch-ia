@@ -82,7 +82,7 @@ table([
     ["Titre du projet", "EduMatch : moteur de matching explicable entre candidats et formations, "
                         "estimant les chances d'admission et les débouchés territoriaux, au "
                         "service de l'orientation scolaire et professionnelle"],
-    ["Certification", "Architecte en Intelligence Artificielle - Mastère 2 (AIA01)"],
+    ["Certification", "Architecte en Intelligence Artificielle - Mastère 2 (AIA02)"],
     ["Date", "Août 2026 (version 2)"],
 ])
 d.add_paragraph()
@@ -114,12 +114,14 @@ para("Le secteur de l'orientation est doublement structurant. Il repose sur l'ag
      "caractère rend les quatre blocs naturellement nécessaires.")
 
 para("La ségrégation par le genre est le trait le plus frappant de ces données. Sur la session "
-     "Parcoursup 2025, qui couvre 14 252 formations, 2 954 d'entre elles, soit 20,7 pour cent, "
-     "comptent moins de 20 pour cent de femmes parmi leurs admis, et 2 517 en comptent plus de "
-     "80 pour cent ; seules 21,3 pour cent se situent dans une zone équilibrée, entre 40 et 60 "
-     "pour cent. L'écart est structurel : la médiane du taux de féminisation atteint 18 pour cent "
-     "en école d'ingénieur, contre 86 pour cent en institut de formation en soins infirmiers et "
-     "90 pour cent dans les formations du travail social.")
+     "Parcoursup 2025, qui couvre 14 252 formations, 2 775 d'entre elles, soit 19,7 pour cent "
+     "sur dénominateur non nul (les formations n'admettant aucun candidat sont exclues du "
+     "calcul, sans quoi un taux nul mécanique se lirait à tort comme une extrême faible "
+     "féminisation), comptent moins de 20 pour cent de femmes parmi leurs admis, et 17,9 pour "
+     "cent en comptent plus de 80 pour cent ; seules 21,5 pour cent se situent dans une zone "
+     "équilibrée, entre 40 et 60 pour cent. L'écart est structurel : la médiane du taux de "
+     "féminisation atteint 18 pour cent en école d'ingénieur, contre 86 pour cent en institut de "
+     "formation en soins infirmiers et 90 pour cent dans les formations du travail social.")
 para("Il ne s'agit pas d'une sous-représentation globale : les femmes constituent 56,3 pour cent "
      "des admis, toutes formations confondues. Elles sont donc majoritaires, mais très "
      "inégalement réparties. Ce n'est pas l'accès à l'enseignement supérieur qui est en cause, "
@@ -166,7 +168,8 @@ table([
     ["Affinité", "Cela correspond-il aux centres d'intérêt du candidat ?",
      "Intérêts déclarés dans la requête", "Règles métier, aucun apprentissage"],
     ["Accessibilité", "Le candidat a-t-il une chance d'être admis ?",
-     "Parcoursup, huit millésimes", "MODÈLE APPRIS (LightGBM), explicabilité SHAP"],
+     "Parcoursup, huit millésimes bruts, six exploitables pour le label (2020-2025)",
+     "MODÈLE APPRIS (LightGBM, entraîné et tracé dans MLflow), explicabilité SHAP à venir"],
     ["Débouchés", "La formation mène-t-elle à un emploi atteignable ?",
      "Base Sirene, référentiels métiers",
      "Agrégats de densité et de dynamique des employeurs, aucun apprentissage"],
@@ -394,18 +397,20 @@ para("La couche de volume traite des dizaines de gigaoctets de données publique
      "structurellement nul.")
 
 para("Modélisation : un modèle relationnel normalisé sous PostgreSQL portera le transactionnel "
-     "(utilisateurs, établissements, historique des recommandations), et un modèle analytique en "
-     "étoile structurera les données d'orientation : la table de faits porte les cellules "
-     "d'observation, avec pour dimensions la formation, le candidat, le métier, le temps et le "
-     "territoire. Le choix de PostgreSQL plutôt que de conserver Firestore est justifié par le "
-     "besoin de cohérence relationnelle et de requêtes analytiques que le NoSQL documentaire sert "
-     "mal ; le modèle en étoile est retenu pour la prédominance des lectures analytiques.")
+     "(utilisateurs, établissements, historique des recommandations) — à construire, ce périmètre "
+     "n'existe pas encore. Le modèle analytique en étoile qui structure les données d'orientation, "
+     "lui, est déjà construit (E16) : la table de faits porte les cellules d'observation, avec pour "
+     "dimensions la formation, le candidat, la session et le territoire. Le choix de PostgreSQL "
+     "plutôt que de conserver Firestore est justifié par le besoin de cohérence relationnelle et de "
+     "requêtes analytiques que le NoSQL documentaire sert mal ; le modèle en étoile est retenu pour "
+     "la prédominance des lectures analytiques.")
 para("Infrastructure : les services seront conteneurisés avec Docker et orchestrés sur Kubernetes "
      "managé. Les données brutes atterriront dans un lac de données sur stockage objet "
      "S3-compatible. L'hébergement cible est un cloud souverain européen (Scaleway plutôt qu'un "
      "hyperscaler hors Union européenne), arbitrage de gouvernance assumé au regard des données "
-     "de mineurs. Sécurisation par chiffrement, gestion des accès par rôles et cloisonnement "
-     "réseau ; surveillance par Prometheus et Grafana avec alertes sur seuils.")
+     "de mineurs. Sécurité et supervision prévues, non encore mises en œuvre : chiffrement, "
+     "gestion des accès par rôles et cloisonnement réseau ; surveillance par Prometheus et "
+     "Grafana avec alertes sur seuils.")
 
 encadre("Justification du choix : Kubernetes managé plutôt qu'un dimensionnement fixe", [
     "Le volume de données ne justifie pas à lui seul une orchestration élastique : ce serait un "
@@ -459,10 +464,11 @@ bullets([
     "Chaîne de décision, traitée en mono-nœud avec Polars puis dbt : réconciliation des huit "
     "millésimes Parcoursup dont les schémas ont évolué, nettoyage, normalisation et construction "
     "des cellules d'observation. Volumétrie de l'ordre de la centaine de mégaoctets.",
-    "Chaîne de volume, traitée en distribué avec PySpark : agrégation de la base Sirene par "
-    "commune et par secteur d'activité, calcul des dynamiques de créations et cessations sur dix "
-    "ans, puis élargissement au bassin d'emploi. Volumétrie de l'ordre de la dizaine de "
-    "gigaoctets.",
+    "Chaîne de volume, agrégation de la base Sirene par commune et par secteur d'activité, "
+    "calcul des dynamiques de créations et cessations sur dix ans, puis élargissement au bassin "
+    "d'emploi. Volumétrie de l'ordre de la dizaine de gigaoctets. Deux moteurs implémentés et "
+    "testés contre le même résultat : Polars en exécution courante, PySpark branché sur le mode "
+    "cluster.",
 ])
 para("Le nettoyage de la chaîne Sirene mérite une précision, car il conditionne la faisabilité : "
      "les 43,9 millions de lignes ne sont jamais nettoyées ligne à ligne. Le format Parquet étant "
@@ -471,22 +477,29 @@ para("Le nettoyage de la chaîne Sirene mérite une précision, car il condition
      "est ainsi réduit avant toute transformation, et les contrôles qualité s'appliquent ensuite "
      "à des agrégats de quelques centaines de milliers de lignes, inspectables et testables.")
 
-encadre("Justification du choix : traitement distribué sur la couche de volume seulement", [
-    "Quelques dizaines de milliers de formations, soit 82 Mo mesurés sur disque, ne justifient en aucun "
-    "cas un cluster distribué. Employer Spark sur cette chaîne "
-    "serait un surdimensionnement, pénalisable au titre des critères d'arbitrage, de FinOps et de "
-    "GreenOps. La chaîne de décision est donc traitée en mono-nœud avec Polars et dbt.",
-    "Le calcul distribué est justifié par la chaîne de volume. La base Sirene compte 43 896 818 "
-    "établissements (métadonnée Parquet mesurée le 1er août 2026), soit 25 à 30 Go décompressés. "
-    "Cette volumétrie est réelle, publique et vérifiée par téléchargement : elle n'est pas déclarée.",
-    "Ce n'est d'ailleurs pas la taille du stockage qui impose le traitement distribué, mais la "
-    "nature du calcul : il faut joindre 43,9 millions d'établissements aux formations par "
-    "nomenclature d'activité et par territoire, puis agréger par secteur, par bassin et par année "
-    "sur dix ans d'historique. Le volume intermédiaire de jointure excède largement celui des "
-    "sources. Le format Parquet, en colonnes, est lu nativement par Spark.",
-    "La règle est symétrique : tout traitement dont la volumétrie reste inférieure à quelques "
-    "dizaines de gigaoctets est exécuté en mono-nœud. Le passage au distribué est conditionné à "
-    "un seuil, non appliqué par principe.",
+encadre("Justification du choix : mesurer avant de choisir le moteur de la chaîne de volume", [
+    "Quelques dizaines de milliers de formations, soit 82 Mo mesurés sur disque, ne justifient en "
+    "aucun cas un cluster distribué. La chaîne de décision est donc traitée en mono-nœud avec "
+    "Polars et dbt : ce point-là ne fait pas débat.",
+    "Pour la chaîne de volume, la question a été tranchée par la mesure et non par principe. "
+    "Sur le fichier Sirene complet (43 896 818 lignes, 54 colonnes, réduites à 9 colonnes utiles), "
+    "même filtre, même regroupement en 1 929 179 cellules : Polars traite le fichier en 18,2 "
+    "secondes, PySpark en 87,0 secondes (démarrage de la JVM inclus) — Spark est 4,8 fois plus "
+    "lent que Polars sur ce volume, pour un résultat rigoureusement identique. La conclusion "
+    "n'est pas que Spark est inutile, mais qu'il n'apporte rien tant que le calcul tient sur un "
+    "seul nœud.",
+    "Ce qui empêche d'écarter Spark pour autant : l'une des quatre sources Sirene retenues, "
+    "l'historique des établissements, compte à elle seule 95 865 102 lignes, et le stock est "
+    "republié chaque mois. Une fusion future de plusieurs de ces fichiers change d'ordre de "
+    "grandeur. Le job Spark est donc implémenté, testé (même résultat que Polars, vérifié ligne "
+    "à ligne sur un échantillon commun) et branché sur le mode cluster de la configuration "
+    "(`execution.moteur_volume`) — prêt à prendre le relais sans réécriture, mais pas employé par "
+    "défaut faute de bénéfice mesuré aujourd'hui.",
+    "Le seuil qui ferait basculer l'exécution courante vers Spark : la fusion de plusieurs des "
+    "quatre fichiers Sirene retenus, ou tout calcul intermédiaire qui ne tiendrait plus dans la "
+    "mémoire d'un poste de développement. Tant que ce seuil n'est pas franchi, Polars reste le "
+    "chemin de production réel, et le choix contraire — imposer Spark par principe — serait "
+    "pénalisable au titre des critères d'arbitrage, de FinOps et de GreenOps.",
 ])
 
 para("Réconciliation des nomenclatures. C'est le cœur de la difficulté technique du pipeline. "
@@ -504,17 +517,25 @@ para("Cette table de correspondance conditionne la qualité du terme de débouch
      "acceptable dès lors qu'elle est quantifiée.")
 
 para("Automatisation, qualité et supervision.", bold=True)
-para("L'orchestration est assurée par Apache Airflow : planification, reprise sur erreur avec "
-     "temporisation croissante, lignage. La chaîne s'exécute sans intervention manuelle, de la "
-     "collecte jusqu'à l'évaluation du modèle. Les contrôles qualité portent sur le schéma, la "
-     "complétude et la cohérence, au moyen de suites de tests versionnées (Great Expectations) : un "
-     "taux hors de l'intervalle admissible, un effectif "
-     "incohérent ou un millésime manquant bloquent la mise à jour. Ce blocage n'est pas une "
-     "précaution facultative : sans lui, une donnée corrompue se propage jusqu'au modèle sans que "
-     "personne ne le constate. La supervision suit la volumétrie traitée, le taux d'échec et la "
-     "durée d'exécution, avec alertes proactives. La conformité RGPD est assurée par la "
-     "minimisation et la traçabilité, la couche de volume ne contenant par construction aucune "
-     "donnée à caractère personnel.")
+para("Les contrôles qualité, déjà construits et exécutés (E14), portent sur le schéma, la "
+     "complétude et la cohérence, au moyen de contrôles versionnés (schémas Pandera pour "
+     "Parcoursup, compteurs écrits à la main pour Sirene et les référentiels, retenus après mesure "
+     "du coût de Great Expectations sur ce volume — inutile ici) : un taux hors de l'intervalle "
+     "admissible, un effectif incohérent ou un millésime manquant bloquent la mise à jour, "
+     "vérifié par une exécution réelle qui sort en échec sur les données du dépôt. Ce blocage "
+     "n'est pas une précaution facultative : sans lui, une donnée corrompue se propage jusqu'au "
+     "modèle sans que personne ne le constate. La conformité RGPD est assurée par la minimisation "
+     "et la traçabilité, la couche de volume ne contenant par construction aucune donnée à "
+     "caractère personnel.")
+para("Ce qui reste à construire : l'enchaînement de ces contrôles avec les étapes en amont et "
+     "en aval est aujourd'hui piloté manuellement (`Makefile`), pas encore par un orchestrateur. "
+     "Apache Airflow assurera la planification, la reprise sur erreur avec temporisation "
+     "croissante et le lignage, pour que la chaîne s'exécute sans intervention manuelle, de la "
+     "collecte jusqu'à l'évaluation du modèle. La supervision suivra la volumétrie traitée, le "
+     "taux d'échec et la durée d'exécution, avec alertes proactives. Ce choix est déjà arbitré "
+     "(Airflow est exigé par le référentiel de certification et retenu depuis l'architecture de "
+     "référence), et son exécution est la matière de l'étape suivante du pipeline, non encore "
+     "commencée.")
 
 para("À livrer à terme : diagramme du pipeline, code sur dépôt Git, capture vidéo du pipeline en "
      "production. Évaluation : lecture environ 20 min, présentation 5 min, questions 15 min.",
@@ -541,24 +562,28 @@ table([
      "Règles et pondérations métier. Aucun apprentissage, aucune donnée stockée : la valeur est "
      "fournie dans l'appel."],
     ["Accessibilité", "Le candidat a-t-il une chance d'être admis ?",
-     "Parcoursup, huit millésimes",
-     "MODÈLE APPRIS (LightGBM), explicabilité SHAP. C'est le composant d'intelligence "
-     "artificielle du système."],
+     "Parcoursup, huit millésimes bruts ; six exploitables pour l'entraînement (2020-2025), le "
+     "numérateur du label n'étant pas publié en 2018-2019",
+     "MODÈLE APPRIS (LightGBM, entraîné et tracé dans MLflow). C'est le composant "
+     "d'intelligence artificielle du système ; l'explicabilité SHAP reste à construire."],
     ["Débouchés", "La formation mène-t-elle à un emploi atteignable ?",
      "Base Sirene, référentiels métiers",
      "Agrégats de densité et de dynamique des employeurs du secteur dans le bassin de vie. "
      "Aucun apprentissage."],
 ], header=True)
-para("Les trois termes sont combinés de façon multiplicative. Si l'affinité est nulle, la "
-     "formation ne correspond pas ; si l'accessibilité est nulle, elle est hors de portée ; si "
-     "les débouchés sont nuls, elle ne mène nulle part. Dans les trois cas la recommandation doit "
-     "disparaître, ce qu'une somme pondérée ne permettrait pas.")
+para("Les trois termes seront combinés de façon multiplicative — le module qui les assemble "
+     "(`matching/`) reste à écrire (E28) ; seul le terme d'accessibilité, le modèle appris, "
+     "est construit à ce jour. Si l'affinité est nulle, la formation ne correspondra pas ; si "
+     "l'accessibilité est nulle, elle sera hors de portée ; si les débouchés sont nuls, elle ne "
+     "mènera nulle part. Dans les trois cas la recommandation devra disparaître, ce qu'une "
+     "somme pondérée ne permettrait pas.")
 para("Le terme de débouchés répond directement à la première cause identifiée en section 1.2, le "
      "manque d'information sur les débouchés, et il n'est donc pas une variable ajoutée mais une "
-     "dimension constitutive de la décision. Les variables issues de Sirene alimentent en outre le "
-     "modèle d'accessibilité, par un mécanisme explicite : la densité d'employeurs d'un secteur "
-     "détermine la demande locale de formation, donc la tension entre vœux et capacité, donc la "
-     "sélectivité. Cette hypothèse est testée, non postulée : voir l'étude d'ablation ci-dessous.")
+     "dimension constitutive de la décision. Les variables issues de Sirene alimenteront en "
+     "outre le modèle d'accessibilité, par un mécanisme explicite : la densité d'employeurs "
+     "d'un secteur détermine la demande locale de formation, donc la tension entre vœux et "
+     "capacité, donc la sélectivité. Cette hypothèse reste à tester, non postulée : voir l'étude "
+     "d'ablation ci-dessous, non encore réalisée.")
 
 encadre("Justification du choix : n'apprendre qu'un seul composant", [
     "Il serait tentant d'apprendre les trois termes. Ce serait une erreur d'architecture.",
@@ -577,11 +602,13 @@ encadre("Justification du choix : n'apprendre qu'un seul composant", [
 ])
 
 para("Algorithme. Le modèle d'accessibilité est entraîné par gradient boosting (LightGBM) sur les "
-     "résultats d'admission publiés. Le gradient boosting est retenu plutôt qu'un réseau de "
-     "neurones : les variables sont tabulaires, le coût d'inférence doit rester faible, et "
-     "l'explicabilité par valeurs de Shapley y est exacte et directement applicable. Il est "
-     "couplé à SHAP, qui fournit pour chaque recommandation les facteurs déterminants, exigence "
-     "directe de l'AI Act et du droit à explication du RGPD.")
+     "résultats d'admission publiés, entraînement tracé dans MLflow (paramètres, métriques, "
+     "artefact du modèle). Le gradient boosting est retenu plutôt qu'un réseau de neurones : "
+     "les variables sont tabulaires, le coût d'inférence doit rester faible, et l'explicabilité "
+     "par valeurs de Shapley y est exacte et directement applicable. Il sera couplé à SHAP, qui "
+     "fournira pour chaque recommandation les facteurs déterminants, exigence directe de l'AI "
+     "Act et du droit à explication du RGPD — le calcul est prévu à l'étape suivante, pas "
+     "encore écrit.")
 
 encadre("Justification du choix : apprendre sur les données publiques plutôt que sur le "
         "comportement des utilisateurs", [
@@ -599,14 +626,17 @@ encadre("Justification du choix : apprendre sur les données publiques plutôt q
     "campagne.",
 ])
 
-para("Le chatbot RAG (embeddings CamemBERT, recherche vectorielle FAISS, orchestration LangChain "
-     "et génération Mistral-small) est conservé comme brique secondaire. Son rôle est de "
-     "restituer en langue naturelle, avec citation des sources officielles, les éléments qui "
-     "fondent une recommandation. Il est intégré et supervisé, mais il n'est pas l'objet du "
-     "dispositif de réentraînement et de détection de dérive. Mistral et CamemBERT, souverains et "
-     "francophones, sont conservés plutôt que des modèles hors Union européenne, par conformité ; "
-     "LangChain et FastAPI sont conservés parce qu'ils sont déjà éprouvés : savoir ne pas migrer "
-     "une brique qui fonctionne est aussi un arbitrage d'architecte.")
+para("Le chatbot RAG est prévu comme brique secondaire, pas encore construite dans ce dépôt "
+     "(le dossier `src/edumatch/rag/` est vide à ce jour) : il sera réécrit plutôt que repris "
+     "tel quel du MVP décrit en section 2, dont l'ingestion et l'infrastructure ne répondent "
+     "pas aux exigences de conformité et de montée en charge du présent projet. Son rôle prévu "
+     "est de restituer en langue naturelle, avec citation des sources officielles, les éléments "
+     "qui fondent une recommandation, sans faire l'objet du dispositif de réentraînement et de "
+     "détection de dérive du modèle d'accessibilité. Les briques du MVP (embeddings CamemBERT, "
+     "recherche vectorielle FAISS, orchestration LangChain, génération Mistral-small) sont "
+     "d'ores et déjà pressenties pour la version réécrite, Mistral et CamemBERT étant "
+     "souverains et francophones : c'est un point de départ à revalider, pas une décision "
+     "arrêtée pour un composant qui reste à écrire.")
 
 para("Cible, protocole et équité du modèle d'accessibilité.", bold=True)
 para("L'unité d'observation est la cellule, croisement d'une formation, d'une session, d'un type "
@@ -622,23 +652,28 @@ table([
     ["Pondération", "Chaque observation est pondérée par l'effectif de la cellule : une cellule "
                     "de trois candidats porte un taux très bruité, une cellule de cinq cents une "
                     "information fiable"],
-    ["Séparation", "Strictement temporelle : entraînement 2018-2023, validation 2024, test 2025. "
-                   "Une séparation aléatoire placerait la même formation de part et d'autre et "
-                   "produirait une fuite d'information"],
+    ["Séparation", "Strictement temporelle : entraînement 2020-2023 (286 463 cellules), "
+                   "validation 2024 (76 408), test 2025 (77 159). Bornée aux six sessions où le "
+                   "label existe réellement (le numérateur ventilé par type de baccalauréat n'est "
+                   "pas publié en 2018-2019) : y inclure ces deux millésimes aurait placé une "
+                   "cible absente dans l'entraînement. Une séparation aléatoire, elle, placerait "
+                   "la même formation de part et d'autre et produirait une fuite d'information"],
     ["Référence obligatoire", "Taux d'admission de la même cellule à la session précédente. Si le "
                               "modèle ne bat pas cette référence, cela est rapporté"],
 ], header=True)
-para("Métriques. La performance est mesurée par l'erreur absolue moyenne pondérée par l'effectif, "
-     "et surtout par la qualité de calibration : puisque le système annonce une probabilité "
-     "d'admission à un candidat, un score bien ordonné mais mal calibré serait nuisible. Une "
-     "courbe d'apprentissage est produite en entraînant sur des fractions croissantes des "
-     "observations, afin d'établir si le volume disponible est suffisant plutôt que de l'affirmer.")
-para("Restitution. L'estimation est présentée comme une fréquence observée et non comme une "
-     "prédiction individuelle : « sur cent candidats ayant vos caractéristiques scolaires et "
+para("Métriques. La performance est déjà mesurée par l'erreur absolue moyenne pondérée par "
+     "l'effectif (baseline et entraînement, tracées dans MLflow). Restent à construire la "
+     "qualité de calibration — puisque le système annoncera une probabilité d'admission à un "
+     "candidat, un score bien ordonné mais mal calibré serait nuisible — et la courbe "
+     "d'apprentissage, obtenue en entraînant sur des fractions croissantes des observations pour "
+     "établir si le volume disponible est suffisant plutôt que de l'affirmer.")
+para("Restitution prévue. L'estimation sera présentée comme une fréquence observée et non comme "
+     "une prédiction individuelle : « sur cent candidats ayant vos caractéristiques scolaires et "
      "ayant demandé cette formation, tel nombre a reçu une proposition ». Le modèle ne connaît ni "
      "les notes exactes, ni les appréciations, ni la lettre de motivation, alors que la sélection "
-     "s'appuie sur l'ensemble du dossier. Cette formulation est à la fois plus exacte et conforme "
-     "à l'exigence de transparence sur la logique du traitement.")
+     "s'appuie sur l'ensemble du dossier. Cette formulation, à écrire dans l'écran de "
+     "supervision et l'API (non construits à ce jour), est à la fois plus exacte et conforme à "
+     "l'exigence de transparence sur la logique du traitement.")
 
 encadre("Justification du choix : exclure le genre du modèle, et pourquoi cela ne coûte rien", [
     "Aucune variable de genre n'entre dans le modèle. Elle est conservée exclusivement pour "
@@ -660,45 +695,52 @@ encadre("Justification du choix : exclure le genre du modèle, et pourquoi cela 
     "que le modèle apprendrait l'année suivante.",
 ])
 
-para("Audit d'équité. Les écarts de parité, l'égalité des chances et le ratio d'impact disparate "
-     "sont évalués sur quatre dimensions : type de baccalauréat, statut de boursier, genre et "
-     "territoire. La dimension territoriale n'est rendue mesurable que par la base Sirene, qui "
-     "permet de vérifier qu'un candidat issu d'un bassin à faible densité d'employeurs n'est pas "
-     "pénalisé. Elle répond à la deuxième cause structurelle identifiée en section 1.2, les "
-     "déterminismes sociaux et territoriaux, qui restait sans dispositif de mesure.")
+para("Audit d'équité, à construire sur le modèle entraîné. Les écarts de parité, l'égalité des "
+     "chances et le ratio d'impact disparate seront évalués sur quatre dimensions : type de "
+     "baccalauréat, statut de boursier, genre et territoire. Le travail préalable est déjà fait : "
+     "l'analyse exploratoire mesure d'ores et déjà l'écart d'admission à formation égale et les "
+     "substituts possibles du genre parmi les variables candidates (section 1.1). La dimension "
+     "territoriale ne sera rendue mesurable que par la base Sirene, qui permettra de vérifier "
+     "qu'un candidat issu d'un bassin à faible densité d'employeurs n'est pas pénalisé. Elle "
+     "répond à la deuxième cause structurelle identifiée en section 1.2, les déterminismes "
+     "sociaux et territoriaux, qui reste sans dispositif de mesure à ce jour.")
 
-encadre("Justification du choix : l'apport de chaque source est mesuré, non postulé", [
+encadre("Justification du choix : l'apport de chaque source sera mesuré, non postulé", [
     "Une source de données qui n'est pas réellement utilisée par le modèle finit par paraître "
-    "ajoutée artificiellement. Pour l'éviter, l'apport des variables issues de Sirene est établi "
-    "par une étude d'ablation.",
-    "Deux modèles sont entraînés dans les mêmes conditions : le premier sur les seules variables "
-    "issues des données d'admission, le second en y ajoutant les variables de tissu économique. "
-    "L'écart de performance est mesuré sur le jeu de test temporel, et l'analyse SHAP indique si "
-    "ces variables figurent effectivement parmi les contributeurs principaux.",
-    "Si l'apport prédictif s'avère nul, il est rapporté comme tel : les variables sont retirées du "
-    "modèle d'accessibilité, et Sirene ne subsiste que dans le terme de débouchés, qui repose sur "
-    "des agrégats et non sur de l'apprentissage. Dans les deux cas la source reste justifiée, mais "
-    "la justification est celle que la mesure établit.",
+    "ajoutée artificiellement. Pour l'éviter, l'apport des variables issues de Sirene sera "
+    "établi par une étude d'ablation — non encore réalisée à ce jour.",
+    "Deux modèles seront entraînés dans les mêmes conditions : le premier sur les seules "
+    "variables issues des données d'admission, le second en y ajoutant les variables de tissu "
+    "économique. L'écart de performance sera mesuré sur le jeu de test temporel, et l'analyse "
+    "SHAP indiquera si ces variables figurent effectivement parmi les contributeurs principaux.",
+    "Si l'apport prédictif s'avère nul, il sera rapporté comme tel : les variables seraient "
+    "alors retirées du modèle d'accessibilité, et Sirene ne subsisterait que dans le terme de "
+    "débouchés, qui repose sur des agrégats et non sur de l'apprentissage. Dans les deux cas la "
+    "source reste justifiée, mais la justification sera celle que la mesure établira.",
 ])
 
-para("Intégration : le modèle est exposé par une API FastAPI conteneurisée, avec gestion des "
-     "erreurs et sécurisation. Les recommandations alimentent l'écran de supervision consulté par "
-     "les conseillers d'orientation, qui matérialise l'exigence de contrôle humain posée par "
-     "l'article 14 du règlement sur l'IA : "
-     "le conseiller y revoit chaque recommandation, la contextualise à partir du dossier réel de "
-     "l'élève, que le modèle ne connaît pas, et peut l'écarter en motivant sa décision.")
-para("CI/CD : un pipeline GitHub Actions automatise les tests, la construction d'images, le suivi "
-     "des expériences avec MLflow et le déploiement versionné. Deux dépôts distincts sont prévus, "
-     "l'un pour la solution IA, l'autre pour la chaîne d'intégration et de déploiement.")
-para("Réentraînement et dérive : la dérive est ici mesurable sur des données réelles, les huit "
-     "millésimes publiés portant des évolutions authentiques : réforme du baccalauréat, variation "
-     "des capacités d'accueil, effet de la campagne 2020. Evidently compare la distribution "
-     "courante à la référence d'entraînement et déclenche, au-delà d'un seuil documenté, un "
-     "réentraînement reproductible. Le monitoring en production couvre la performance du modèle, "
-     "la latence de l'API et la disponibilité, avec alertes sur seuils.")
-para("Conformité et accessibilité : explicabilité par SHAP, tests d'équité écartant les variables "
-     "discriminantes, et conformité RGAA de l'écran de supervision pour les personnes en "
-     "situation de handicap.")
+para("Intégration, à construire : le modèle sera exposé par une API FastAPI conteneurisée, "
+     "avec gestion des erreurs et sécurisation — le dossier `src/edumatch/api/` est vide à ce "
+     "jour. Les recommandations alimenteront l'écran de supervision consulté par les "
+     "conseillers d'orientation, qui matérialisera l'exigence de contrôle humain posée par "
+     "l'article 14 du règlement sur l'IA : le conseiller y reverra chaque recommandation, la "
+     "contextualisera à partir du dossier réel de l'élève, que le modèle ne connaît pas, et "
+     "pourra l'écarter en motivant sa décision.")
+para("CI/CD, à construire : un pipeline GitHub Actions automatisera les tests, la construction "
+     "d'images, le suivi des expériences avec MLflow et le déploiement versionné — aucun "
+     "workflow n'est écrit à ce jour. Deux dépôts distincts sont prévus, l'un pour la solution "
+     "IA, l'autre pour la chaîne d'intégration et de déploiement ; seul le premier existe "
+     "aujourd'hui.")
+para("Réentraînement et dérive, à construire : la dérive sera mesurable sur des données réelles, "
+     "les huit millésimes publiés portant des évolutions authentiques (réforme du baccalauréat, "
+     "variation des capacités d'accueil, effet de la campagne 2020). Evidently comparera la "
+     "distribution courante à la référence d'entraînement et déclenchera, au-delà d'un seuil à "
+     "documenter, un réentraînement reproductible. Le monitoring en production couvrira la "
+     "performance du modèle, la latence de l'API et la disponibilité, avec alertes sur seuils "
+     "— rien de ce dispositif n'est en place aujourd'hui.")
+para("Conformité et accessibilité, à construire : explicabilité par SHAP, tests d'équité "
+     "écartant les variables discriminantes, et conformité RGAA de l'écran de supervision pour "
+     "les personnes en situation de handicap.")
 para("À livrer à terme : présentation de la solution, dépôt n°1 (développement de la solution IA), "
      "dépôt n°2 (intégration et déploiement continus), capture vidéo en production. Deux dépôts "
      "de code distincts sont attendus.", italic=True)

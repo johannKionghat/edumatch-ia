@@ -15,6 +15,95 @@ Format :
 
 ---
 
+## 2026-08-30 — Dossier de certification : présent réservé à ce qui existe, futur pour le reste
+
+**Fait** : deux arbitrages appliqués à `dossier/_build_dossier.py`, `.docx`
+régénéré :
+
+1. Correction du code de certification en en-tête : AIA01 → AIA02.
+2. Vérification de chaque composant technique cité dans le dossier contre
+   le code réel du dépôt, composant par composant, pas seulement le RAG
+   déjà signalé. Construits et laissés au présent : ingestion des quatre
+   sources, contrôles qualité Pandera, réconciliation des huit millésimes,
+   entrepôt en étoile, agrégats Sirene, chaîne NAF↔ROME↔formation, label et
+   pondération, variables et contrat anti-fuite, baseline, entraînement
+   LightGBM tracé dans MLflow. Non construits et repassés au futur, avec
+   justification déjà arbitrée conservée et renvoi à l'étape du plan
+   d'exécution du projet qui les produira : explicabilité SHAP (E25),
+   calibration et courbe d'apprentissage (E23-E24), audit d'équité (E26),
+   ablation (E27), module de score `matching/` (E28), API FastAPI, écran
+   conseiller, journalisation article 12 (E29-E31), chatbot RAG (E32),
+   orchestration Airflow (E33), détection de dérive Evidently et
+   réentraînement automatique (E34), conteneurisation (E35), CI/CD et
+   second dépôt (E36), Terraform/Kubernetes (E37), monitoring Prometheus/
+   Grafana (E38).
+
+Une erreur de contenu trouvée au passage, indépendante du temps des
+verbes : le modèle en étoile décrivait une dimension « métier » qui
+n'existe pas dans le schéma construit (E16) — les dimensions réelles sont
+formation, candidat, session et territoire. Corrigé.
+
+**Décidé** : aucun nouvel ADR. Arbitrages éditoriaux tranchés par
+moi-même (code AIA02 ; présent réservé à l'existant).
+
+**Corrigé** : voir ci-dessus, table complète composant par composant dans
+`reste-a-faire.md`.
+
+**État** : 21 étapes validées dans `avancement.md` (jusqu'à E21, baseline) ;
+travail de cohérence documentaire, pas une nouvelle étape du plan. Code
+d'entraînement (E22) déjà écrit et testé mais non encore marqué validé dans
+`avancement.md` — à clarifier à la prochaine reprise du plan avant de
+poursuivre vers E23.
+
+---
+
+## 2026-08-30 — Synchronisation du dossier de certification : quatre incohérences corrigées
+
+**Fait** : revue croisée du dossier de certification contre les ADR et la
+documentation technique, à la suite d'une évaluation blanche du jury en
+ayant relevé trois. Corrections apportées à `dossier/_build_dossier.py`,
+`.docx` régénéré (`cd docs/sous-docs-projets/dossier && python
+_build_dossier.py`) :
+
+1. §6 annonçait des contrôles qualité « Great Expectations » — l'ADR 0014
+   retient Pandera (`parcoursup.py`) et des compteurs écrits à la main
+   (`sirene.py`, `referentiels.py`). Corrigé.
+2. §6 annonçait la chaîne de volume « traitée en distribué avec PySpark » —
+   l'ADR 0016 mesure Spark 4,8 fois plus lent que Polars sur le fichier
+   Sirene complet (87,0 s contre 18,2 s) et retient Polars en exécution
+   courante, Spark implémenté et branché sur le mode cluster pour la
+   trajectoire de volume. Le paragraphe racontait l'inverse de ce que le
+   projet a mesuré et assumé ; réécrit pour porter cette mesure.
+3. §7 se contredisait dans la même page : « 440 030 observations … 2020-2025 »
+   puis « entraînement 2018-2023 » six lignes plus bas. Corrigé vers le
+   protocole réel (ADR 0012) : entraînement 2020-2023, validation 2024,
+   test 2025. La table de composition du score, qui citait « Parcoursup,
+   huit millésimes » sans distinguer le fichier brut du volume exploitable
+   pour le label, a été précisée aux deux endroits où elle apparaît.
+4. §1.1 citait encore le chiffre de féminisation pré-correction (2 954
+   formations, 20,7 %, à moins de 20 % de femmes) alors que
+   `04-modele/equite.md` documente depuis le 2026-08-29 la correction de
+   méthode (dénominateur nul exclu) vers 2 775 formations (19,7 %). Corrigé,
+   avec la même correction pour les deux autres chiffres de la même phrase
+   (17,9 % à plus de 80 %, 21,5 % en zone équilibrée).
+
+**Décidé** : aucun nouvel ADR — ces quatre points sont des corrections de
+cohérence dossier ↔ dépôt, pas des décisions d'architecture.
+
+**Corrigé** : voir ci-dessus. Deux points relevés et **non corrigés**, faute
+de pouvoir les trancher dans le périmètre de cette session — inscrits dans
+`reste-a-faire.md` sous la mention ⚠️ INCOHÉRENCE : le code de certification
+en en-tête du dossier (« AIA01 » dans le texte contre « AIA02 » dans le nom
+du dossier de travail, à vérifier auprès de l'organisme) et la description du
+chatbot RAG au présent alors que `src/edumatch/rag/` ne contient qu'un
+`.gitkeep` (E32 non commencée) — à trancher à la prochaine synchronisation.
+
+**État** : phase exploratoire (E09-E13) et E14 validées ; E17 (agrégat
+Sirene, ADR 0016) en cours de documentation. Prochaine étape : E18, table de
+correspondance NAF ↔ ROME ↔ formation.
+
+---
+
 ## 2026-08-29 — E14, contrôles qualité bloquants
 
 **Fait** : E14 validée — `src/edumatch/quality/` : vocabulaire commun
