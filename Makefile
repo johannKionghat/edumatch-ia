@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features train evaluate api test lint fmt docs clean
+.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate api test lint fmt docs clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -68,6 +68,9 @@ features:  ## Construit la table de variables
 	python -m edumatch.features.build
 
 # ─── Modèle ─────────────────────────────────────────────────────────
+baseline:  ## Mesure la baseline (taux de la session précédente, E21) : le plancher à battre
+	python -m edumatch.models.baseline
+
 train:  ## Entraîne le modèle et enregistre l'exécution dans MLflow
 	python -m edumatch.models.train
 
