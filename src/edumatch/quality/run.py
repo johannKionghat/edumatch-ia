@@ -5,7 +5,7 @@ fichiers réellement présents dans `data/raw/` et `data/external/`, agrège
 les anomalies, journalise les avertissements et **bloque** au premier
 ensemble d'anomalies bloquantes rencontré : une chaîne qui journalise sans
 jamais interrompre laisserait une donnée corrompue atteindre `dbt` (E15) et,
-de là, le modèle (structure-projet.md, principe 5).
+de là, le modèle : les données se valident comme du code.
 
 `ErreurQualiteBloquante` (voir `_diagnostic.py`) est volontairement rangée
 du côté définitif du vocabulaire commun d'erreurs (`ingestion._flux`) : un

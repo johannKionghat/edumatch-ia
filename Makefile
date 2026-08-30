@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down config data quality transform transform-lignage gold features train evaluate api test lint fmt docs clean
+.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features train evaluate api test lint fmt docs clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -36,6 +36,7 @@ data:  ## Régénère TOUTES les données dérivées depuis data/raw
 	$(MAKE) quality
 	$(MAKE) transform
 	$(MAKE) gold
+	$(MAKE) sirene-agregats
 	$(MAKE) features
 
 quality:  ## Exécute les contrôles qualité (bloquants)
@@ -49,6 +50,9 @@ gold:  ## Construit le modèle en étoile (silver -> gold, E16) : faits et dimen
 
 transform-lignage:  ## Rejoue silver ET gold via dbt, génère le graphe de lignage complet (dbt docs)
 	python -m edumatch.transform.run_dbt
+
+sirene-agregats:  ## Agrège Sirene par commune x NAF (E17) : projection 9 colonnes, filtrage à la lecture
+	python -m edumatch.spark.run_sirene_agregats
 
 samples:  ## Régénère data/samples/ depuis data/raw et data/external (config prod)
 	python -m edumatch.ingestion.echantillons

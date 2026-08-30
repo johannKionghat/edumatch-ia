@@ -17,7 +17,7 @@ Deux gravités, et deux seulement :
   avertissement est journalisé, jamais silencieux, mais ne bloque rien.
 
 Un contrôle qui journalise sans jamais bloquer laisse une donnée corrompue
-atteindre le modèle (structure-projet.md, principe 5) : c'est pourquoi
+atteindre le modèle — les données se valident comme du code : c'est pourquoi
 `RapportControle.lever_si_bloquant` est la sortie normale de tout contrôle
 appelé depuis `edumatch.quality.run`, jamais un simple retour de valeur que
 l'appelant pourrait ignorer.
@@ -43,9 +43,9 @@ class Anomalie:
     """Une violation constatée par un contrôle, sur une source et une famille données.
 
     `famille` vaut l'une de « schema », « completude », « coherence » ou
-    « fraicheur » (plan-execution.md, E14) : elle sert à regrouper le rapport
-    à l'affichage, pas à la logique de blocage, qui ne dépend que de
-    `gravite`.
+    « fraicheur » (les quatre familles retenues à l'étape E14) : elle sert à
+    regrouper le rapport à l'affichage, pas à la logique de blocage, qui ne
+    dépend que de `gravite`.
     """
 
     source: str

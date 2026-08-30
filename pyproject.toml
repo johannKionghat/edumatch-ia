@@ -36,6 +36,12 @@ rag = ["langchain>=0.2", "langchain-community>=0.2", "faiss-cpu>=1.8",
 # src/edumatch/transform/dbt/models/silver/stg_parcoursup.py) : aucun
 # serveur, lit data/raw/*.csv directement, s'intègre nativement à dbt.
 transform = ["dbt-duckdb>=1.8,<1.9"]
+# E17 : moteur distribué de l'agrégat Sirene commune x NAF, retenu pour le
+# cluster de production (`execution.moteur_volume: cluster`). Le chemin
+# réellement emprunté en dev/staging (`local`) est Polars, déjà dans les
+# dépendances principales — voir l'arbitrage chiffré dans
+# src/edumatch/spark/sirene_agregats_polars.py.
+spark = ["pyspark>=3.5,<3.6"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

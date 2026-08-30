@@ -289,7 +289,8 @@ evaluation:
 
 # Seuils des contrôles qualité (E14, src/edumatch/quality/). Un contrôle qui
 # journalise sans bloquer laisse une donnée corrompue atteindre le modèle
-# (structure-projet.md, principe 5) : la distinction entre ce qui bloque et
+# — c'est le cinquième des principes que je me suis fixés pour ce dépôt :
+# les données se valident comme du code. La distinction entre ce qui bloque et
 # ce qui avertit est dans le code des contrôles, pas ici — cette section ne
 # porte que les seuils numériques, mesurés sur les fichiers sources réels.
 qualite:
