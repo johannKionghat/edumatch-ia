@@ -1,0 +1,93 @@
+version: 2
+
+models:
+  - name: dim_session
+    description: >
+      Une ligne par millésime Parcoursup vu dans silver (2018 à 2025).
+      `label_disponible` distingue les deux sessions (2018, 2019) sans
+      cellule exploitable (ADR 0012) : `fait_admission` ne les référence
+      jamais, ce champ documente pourquoi sans qu'il faille le déduire.
+    columns:
+      - name: session
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_formation
+    description: >
+      Une ligne par version SCD 2 de formation. Clé naturelle
+      `cod_aff_form`, stable d'une session à l'autre (vérifié dans silver :
+      10 826 formations présentes sur les 6 sessions 2020-2025, sur 16 960
+      vues au moins une fois). Cette dimension est plus étroite que le
+      catalogue silver : 43 858 versions pour 16 618 formations distinctes,
+      celles qui ont au moins une cellule exploitable. Une nouvelle version apparaît quand `capa_fin`,
+      `fili`, `form_lib_voe_acc`, `fil_lib_voe_acc`, `select_form`,
+      `contrat_etab`, `tri` ou `cod_uai` change. `cod_uai` est un attribut
+      de dimension pour l'analyse et la supervision, jamais une variable du
+      modèle (ADR 0011, ADR 0013).
+    columns:
+      - name: sk_formation
+        description: Clé de substitution, une par version SCD 2.
+        tests:
+          - unique
+          - not_null
+      - name: cod_aff_form
+        tests:
+          - not_null
+      - name: session_debut
+        tests:
+          - not_null
+      - name: session_fin
+        tests:
+          - not_null
+
+  - name: dim_territoire
+    description: >
+      Une ligne par couple (`dep`, `ville_etab`) distinct observé parmi les
+      cellules exploitables. SCD 1 : aucun historique suivi, l'affectation
+      académie/région d'un département ne varie pas dans les données
+      observées.
+    columns:
+      - name: sk_territoire
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_profil_candidat
+    description: >
+      Six lignes fixes, le produit (type de baccalauréat x boursier). Ne
+      vient d'aucune colonne source : porté par la structure du label
+      (ADR 0009).
+    columns:
+      - name: sk_profil
+        tests:
+          - unique
+          - not_null
+
+  - name: fait_admission
+    description: >
+      La table de faits. GRAIN : une ligne = une cellule dont le label est
+      calculable, soit (session, cod_aff_form, type_bac, boursier) — porté
+      ici par (session, sk_formation, sk_profil) une fois les dimensions
+      résolues. Mesures : `nb_voe_pp` (effectif, sert de pondération),
+      `prop_tot` (brut), `taux` (`prop_tot / nb_voe_pp`, borné à 1, ADR
+      0009), `taux_depasse_1` (le dépassement structurel avant bornage,
+      8,9 % des cellules bac général sur 2025, ADR 0009). 440 030 lignes
+      attendues sur les sessions 2020-2025 (67 768 / 71 080 / 72 784 /
+      74 831 / 76 408 / 77 159).
+    columns:
+      - name: session
+        tests:
+          - not_null
+      - name: sk_formation
+        tests:
+          - not_null
+      - name: sk_territoire
+        tests:
+          - not_null
+      - name: sk_profil
+        tests:
+          - not_null
+      - name: taux
+        tests:
+          - not_null
