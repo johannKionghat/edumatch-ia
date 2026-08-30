@@ -77,24 +77,22 @@ retour Jedha (§5 de mes notes de cadrage) sanctionne explicitement la
 surarchitecture : une dimension sans second grain qui la justifie n'est
 qu'une colonne de plus dans `dim_formation`.
 
-## Le label : calculé ici, pas laissé à l'étape dédiée
+## Le label : la formule vit dans `features/label.py` (E19), pas ici
 
 `fait_admission` porte `nb_voe_pp` (effectif, sert aussi de pondération),
-`prop_tot` (brut) et `taux` — `prop_tot / nb_voe_pp`, **borné à 1**, exactement
-la formule déjà arrêtée par l'ADR 0009. Ce n'est pas rouvrir la décision : le
-calcul est décidé et figé depuis E09, geler à nouveau son application dans
-chaque étape aval (features, entraînement, audit) dupliquerait la même
-formule à plusieurs endroits avec le risque qu'un jour elle diverge d'un
-endroit à l'autre. `taux_depasse_1` conserve, en clair, les 8,9 % de cellules
-où le brut dépassait 1 avant bornage (ADR 0009) : l'information n'est pas
-perdue, seulement rendue explicite plutôt que silencieusement écrasée.
+`prop_tot` (brut) et `taux` — `prop_tot / nb_voe_pp`, **borné à 1**, formule
+arrêtée par l'ADR 0009. Ce module ne la recalcule plus lui-même : il appelle
+`edumatch.features.label.calculer_taux`, qui en porte l'unique définition
+depuis E19. Avant E19, elle était codée ici même, le gold en avait besoin
+avant que l'étape dédiée n'existe ; la garder dupliquée à deux endroits
+aurait fait courir le risque qu'elle y diverge un jour sans que personne ne
+le remarque. `taux_depasse_1` conserve, en clair, les cellules où le brut
+dépassait 1 avant bornage (8,9 % sur le bac général en 2025, ADR 0009).
 
-Ce que ce module NE fait PAS, et qui reste à `features/label.py` (E19) :
-la pondération à l'entraînement (un simple `groupby` sur `effectif` ne
-suffit pas — E19 devra aussi gérer le split temporel), et toute décision
-qui n'est pas encore arrêtée aujourd'hui (seuil d'exclusion de petites
-cellules — actuellement aucun, ADR 0009 — pourrait un jour être révisé sans
-toucher à ce module).
+Ce module ne porte plus, et `features/label.py` (E19) porte désormais : la
+pondération à l'entraînement (poids = effectif de la cellule, ADR 0009), et
+toute décision non encore arrêtée (seuil d'exclusion de petites cellules —
+actuellement aucun, ADR 0009).
 """
 
 from __future__ import annotations
@@ -106,6 +104,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from edumatch.features.label import calculer_taux
 from edumatch.ingestion._flux import ecriture_atomique
 from edumatch.transform.reconciliation import COLONNE_CLE, COLONNE_SESSION
 
@@ -405,10 +404,8 @@ def construire_fait_admission(
             "par rapport aux faits, ce qui romprait l'intégrité référentielle."
         )
 
-    taux_brut = fait["prop_tot"].astype("Float64") / fait["nb_voe_pp"].astype("Float64")
     fait["effectif"] = fait["nb_voe_pp"]
-    fait["taux"] = taux_brut.clip(upper=1.0)
-    fait["taux_depasse_1"] = taux_brut > 1.0
+    fait["taux"], fait["taux_depasse_1"] = calculer_taux(fait["prop_tot"], fait["nb_voe_pp"])
 
     fait = fait[
         [
