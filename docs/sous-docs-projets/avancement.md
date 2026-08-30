@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 14 / 46 étapes validées.**
+**État : 16 / 46 étapes validées.**
 
 ---
 
@@ -604,8 +604,8 @@ décalage d'une session pour le reste. Clôture la phase exploratoire.
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
 | E14 | Contrôles qualité bloquants | ✅ validée | 2026-08-29 | `b166378` |
-| E15 | dbt — bronze vers silver | ⬜ | | |
-| E16 | dbt — modèle en étoile | ⬜ | | |
+| E15 | dbt — bronze vers silver | ✅ validée | 2026-08-29 | `95248e6` |
+| E16 | dbt — modèle en étoile | ✅ validée | 2026-08-30 | `cae2485` |
 | E17 | Job Spark Sirene | ⬜ | | |
 | E18 | Table NAF ↔ ROME ↔ formation | ⬜ | | |
 | E19 | Calcul du label | ⬜ | | |
@@ -654,6 +654,85 @@ traitement du pipeline ne les lit encore. Reporté dans `reste-a-faire.md`.
 **E14 — décision prise** : ADR 0014 — Pandera plutôt que Great Expectations,
 chiffré (447 Ko contre 5,7 Mo, une dépendance nouvelle contre neuf), avec le
 seuil de bascule écrit.
+
+**E15 — ce qui a été vérifié**
+- `src/edumatch/transform/reconciliation.py` réconcilie les huit millésimes
+  bronze en une table silver unique : reconstruction de la clé `cod_aff_form`
+  pour 2018 et 2019 (couverture mesurée **92,4 % et 94,6 %**, ADR 0010),
+  harmonisation des 128 colonnes classées par l'ADR 0013 (une colonne absente
+  d'un millésime devient une colonne de valeurs manquantes, jamais une colonne
+  absente du schéma final), typage générique sans table de correspondance à
+  maintenir à la main
+- Grain `(session, cod_aff_form)` vérifié unique à la construction — une
+  clé dupliquée au sein d'une même session lève une erreur définitive
+- Idempotence et écriture atomique par la même primitive que les connecteurs
+  d'ingestion (`ecriture_atomique`) : un fichier temporaire renommé une fois
+  l'écriture terminée, jamais de `silver.parquet` tronqué
+- Volumétrie obtenue : **104 274 lignes, 128 colonnes** ; `silver.parquet`
+  16 247 456 o, `silver.duckdb` (base de travail dbt) 22 294 528 o
+- Projet dbt (`src/edumatch/transform/dbt/`) : les huit sources bronze
+  déclarées dans `models/bronze/_sources.yml`, le modèle silver
+  `stg_parcoursup.py`, un test dbt singulier (`assert_grain_unique.sql`) qui
+  rejoue le même contrôle de grain que côté Python — redondant par
+  construction, gardé parce que E15 exige des tests dbt verts, pas seulement
+  une garantie invisible depuis `dbt test`
+
+**E15 — décision prise** : documentée dans l'ADR 0015 (avec E16, les deux
+étapes forment un seul arbitrage de modélisation de la couche gold, silver en
+étant le socle direct).
+
+**E16 — ce qui a été vérifié**
+- `src/edumatch/transform/etoile.py` construit les cinq tables gold à partir
+  de silver : le grain de `fait_admission` est la cellule `(session,
+  cod_aff_form, type_bac, boursier)`, portée après résolution des dimensions
+  par `(session, sk_formation, sk_profil)` — **vérifié unique** sur les
+  440 030 lignes produites, et **0 ligne** à taux hors `[0, 1]`
+- Volumétrie obtenue : `fait_admission` 440 030 lignes / 9 colonnes
+  (67 768 / 71 080 / 72 784 / 74 831 / 76 408 / 77 159 sur 2020-2025) ;
+  `dim_formation` 43 858 / 12 ; `dim_territoire` 1 448 / 6 ; `dim_profil_candidat`
+  6 / 4 ; `dim_session` 8 / 2 ; total sur disque 4 766 953 o (4,55 Mio)
+- 2018 et 2019 ne produisent aucune ligne de faits : `prop_tot_*` (numérateur
+  du label) n'y est renseigné sur aucune ligne, le filtre porte sur la
+  disponibilité de la donnée, jamais sur un millésime écrit en dur. Les deux
+  sessions restent présentes dans `dim_session`, avec `label_disponible =
+  false`
+- Écart de périmètre mesuré et documenté : le catalogue silver compte
+  16 960 formations distinctes sur 2020-2025 (dont 10 826 aux six sessions),
+  `dim_formation` n'en porte que 16 618 — 342 formations du catalogue
+  n'ont aucune cellule exploitable et n'entrent dans aucun fait
+- Trois garanties de construction vérifiées avant écriture : grain unique,
+  aucune dimension ni aucun fait orphelin, aucune jointure de dimension qui
+  fait varier le nombre de lignes (signature d'une plage SCD 2 qui se
+  recouvre) — un simple contrôle « pas de doublon sur le grain final »
+  n'aurait pas détecté ce dernier cas
+- Chaîne dbt complète verte : `dbt run` + `dbt test` → **26 nœuds, 26
+  succès** ; `dbt docs generate` → catalogue sur **6 nœuds** (`stg_parcoursup`
+  et les cinq tables gold) ; suite de tests du dépôt → **260 tests, 260
+  succès**
+
+**E16 — décision prise** : ADR 0015 — six arbitrages sur le modèle
+dimensionnel de la couche gold : grain à la maille cellule (pas
+formation-session, pas de ligne dépliée par genre), une étoile plutôt qu'une
+table plate ou un flocon, SCD 2 sur `dim_formation` (contre SCD 1, qui
+réécrirait l'histoire et introduirait une fuite rétrospective), pas de
+dimension « établissement » séparée (surarchitecture sans second grain qui la
+justifie), DuckDB/Parquet plutôt que PostgreSQL ou un entrepôt distant (la
+couche gold pèse 4,55 Mio), et un filtre d'exploitabilité écrit sur la donnée
+plutôt que sur un millésime en dur pour 2018-2019. Détail complet, options
+écartées et seuils de bascule : ADR 0015 ;
+`02-architecture/modele-etoile.md` pour le modèle lui-même ;
+`03-pipeline/transformation.md` pour l'enchaînement, les tests dbt qui
+bloquent et le lignage.
+
+**E16 — limites déclarées**
+- `session_fin` documente la dernière session **observée** d'une version de
+  formation, pas une garantie de continuité sur les sessions absentes.
+- `dim_formation` est construite formation par formation en Python, pas en
+  SQL ensembliste — négligeable à 16 618 formations, à réécrire en fonction
+  de fenêtre à un ordre de grandeur de plus.
+- La couche gold ne couvre que Parcoursup : les agrégats territoriaux Sirene
+  (E17) n'y sont pas encore rattachés.
+- Aucun partitionnement ni indexation à cette volumétrie — assumé, pas oublié.
 
 ## Phase 4 — Modèle
 
