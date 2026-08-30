@@ -92,8 +92,12 @@ posées.*
       individuels) documenté et à reprendre dans le registre des sources
       (E40) — voir `01-donnees/echantillons.md`
 - [x] `quality/` — schéma, complétude, cohérence, fraîcheur, **bloquantes** (E14)
-- [ ] `transform/` — projet dbt, bronze → silver → gold, tests et lignage
-- [ ] `spark/sirene_agregats.py` — 9 colonnes, filtres, agrégats commune × NAF, bassin
+- [x] `transform/` — projet dbt, bronze → silver → gold, tests et lignage (E15, E16)
+- [x] `spark/` — 9 colonnes, filtres, agrégats commune × NAF, deux moteurs
+      (Polars et Spark, même résultat vérifié), 1 929 179 cellules produites
+      (E17, 2026-08-30) — voir `03-pipeline/agregats-sirene.md` et l'ADR 0016.
+      **Point ouvert reporté ci-dessous** : la taille des cellules et son
+      articulation avec la protection des données
 - [ ] `referentiel/naf_rome_formation.csv` — actif versionné, **taux de couverture mesuré**
 - [ ] `features/label.py` — taux d'admission par cellule, pondération
 - [ ] `features/build.py` — variables N-1 à N-3 uniquement, **anti-fuite**
@@ -167,6 +171,23 @@ transformation) s'ouvre sur E14, contrôles qualité bloquants, **validée le
       pour l'unité légale) et ne sont soumis qu'au contrôle de fraîcheur. À
       construire quand un traitement du pipeline commencera à les lire
       (E18 pour la table de nomenclatures, potentiellement).
+
+## Point ouvert issu de l'agrégat Sirene (E17)
+
+- [ ] **La taille des cellules `(commune, NAF)` n'est pas traitée.** Mesuré
+      sur l'agrégat produit : 584 489 des 886 688 cellules qui portent au
+      moins un établissement actif-employeur (65,9 %) n'en portent qu'un
+      seul, 135 162 en portent 2, 54 808 en portent 3. Deux conséquences non
+      résolues à ce stade, détaillées dans `03-pipeline/agregats-sirene.md` :
+      une cellule à effectif 1 n'est pas un agrégat statistiquement
+      exploitable pour le terme « débouchés » du score (E28) ; et une
+      cellule à effectif 1 ou 2 identifie quasi directement un établissement,
+      alors que les données Sirene sont pseudonymisées et non anonymisées
+      (ADR 0008), et que les 20 501 établissements non diffusibles ne sont
+      pas filtrés à cette étape. La décision (maille plus grossière,
+      lissage, ou autre) relève à la fois de la protection des données et de
+      la construction du score : à trancher au plus tard à l'E28, pas
+      anticipée ici.
 
 ## Points ouverts issus de la décision de variables (E13)
 

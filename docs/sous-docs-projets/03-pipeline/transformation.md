@@ -235,7 +235,7 @@ La suite de tests complète du dépôt : `python -m pytest -q` → **260 passed*
   couche immuable du projet.
 - **Le job d'agrégation Sirene (E17) n'est pas encore raccordé** à cette
   couche gold : les agrégats territoriaux ne sont pas encore une table de
-  faits de cette étoile.
+  faits de cette étoile. Détail de cette étape : `agregats-sirene.md`.
 
 ---
 *Étapes E15 et E16 · dernière mise à jour : 2026-08-30.*

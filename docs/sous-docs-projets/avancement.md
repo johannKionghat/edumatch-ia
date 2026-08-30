@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 16 / 46 étapes validées.**
+**État : 17 / 46 étapes validées.**
 
 ---
 
@@ -606,7 +606,7 @@ décalage d'une session pour le reste. Clôture la phase exploratoire.
 | E14 | Contrôles qualité bloquants | ✅ validée | 2026-08-29 | `b166378` |
 | E15 | dbt — bronze vers silver | ✅ validée | 2026-08-29 | `95248e6` |
 | E16 | dbt — modèle en étoile | ✅ validée | 2026-08-30 | `cae2485` |
-| E17 | Job Spark Sirene | ⬜ | | |
+| E17 | Job Spark Sirene | ✅ validée | 2026-08-30 | `8ebe613` |
 | E18 | Table NAF ↔ ROME ↔ formation | ⬜ | | |
 | E19 | Calcul du label | ⬜ | | |
 | E20 | Construction des variables | ⬜ | | |
@@ -733,6 +733,63 @@ bloquent et le lignage.
 - La couche gold ne couvre que Parcoursup : les agrégats territoriaux Sirene
   (E17) n'y sont pas encore rattachés.
 - Aucun partitionnement ni indexation à cette volumétrie — assumé, pas oublié.
+
+**E17 — ce qui a été vérifié**
+- `src/edumatch/spark/` produit l'agrégat commune × NAF depuis
+  `StockEtablissement.parquet` (43 896 818 lignes, 54 colonnes, 355 row
+  groups, 2,20 Go) : 9 colonnes lues sur 54, filtrage à la lecture prouvé par
+  `df.explain(True)` (`ReadSchema` limité aux 9 colonnes, `PushedFilters`
+  renseignés) et par un test dédié
+- Grain `(codeCommuneEtablissement, activitePrincipaleEtablissement)`,
+  unicité vérifiée. Sortie : `data/processed/sirene/agregats_commune_naf.parquet`,
+  **1 929 179 lignes, 14 colonnes, 12 618 239 o (12,6 Mo)** — réduction de
+  2,20 Go à 12,6 Mo. 35 664 communes distinctes, 1 743 codes NAF distincts
+- **2 423 308** actifs-employeurs agrégés, **4 897 540** fermés-employeurs
+  conservés à côté (cessations non exclues, pour ne pas biaiser la mesure de
+  débouchés vers les seuls territoires en croissance). Écart avec les
+  2 436 624 actifs-employeurs du fichier : **13 316 lignes sans commune**,
+  vérifiées porter toutes un `codePaysEtrangerEtablissement` — des
+  établissements domiciliés à l'étranger, hors du grain territorial
+- Couverture NAF 2025 mesurée : **100,0 %** des actifs-employeurs agrégés (14
+  lignes seulement sans code NAF 2025), en vue de la bascule de nomenclature
+  prévue début 2027
+- `filtres.diffusible` déclaré en configuration mais **non appliqué** : écart
+  chiffré à 20 501 établissements non diffusibles sur 2 436 624 (0,84 %),
+  assumé et documenté, pas une omission silencieuse
+- Deux moteurs implémentés, un seul jeu de règles métier partagé
+  (`definitions.py`) : Polars (chemin `local`, dev/staging) et Spark (chemin
+  `cluster`, prod), même résultat vérifié ligne à ligne sur le même
+  échantillon. Mesure comparative sur le fichier complet, même filtre, mêmes
+  9 colonnes, même regroupement : **Polars 18,2 s** contre **PySpark 87,0 s**
+  (18,0 s de démarrage JVM + 69,0 s de calcul) — Spark 4,8× plus lent sur ce
+  volume
+- Suite de tests complète du dépôt : **278 tests, 278 succès** (260 avant
+  cette étape)
+
+**E17 — décision prise** : ADR 0016 — Polars en exécution courante, Spark
+implémenté et testé, branché sur `execution.moteur_volume: cluster`. La
+mesure (Spark plus lent) est rapportée telle quelle plutôt que masquée ; le
+choix retenu est assumé malgré elle, avec le seuil de bascule écrit (fusion
+de plusieurs fichiers Sirene — l'historique seul dépasse déjà 95,9 M lignes —
+ou calcul intermédiaire qui ne tient plus en mémoire sur un poste de
+développement).
+
+**E17 — limites déclarées**
+- Sur ce poste de développement (Windows), l'écrivain Parquet natif de Spark
+  échoue faute de `winutils.exe` : le résultat, déjà réduit à 12,6 Mo, est
+  ramené au pilote puis écrit par la primitive atomique du projet — valide
+  aussi sur le cluster de production Linux, pas un contournement propre à
+  Windows.
+- L'agrégat n'est pas encore raccordé à la couche gold Parcoursup : il vit
+  dans `data/processed/sirene/`, hors du modèle en étoile.
+- **Question ouverte, non tranchée** : mesuré sur l'agrégat produit,
+  584 489 des 886 688 cellules qui portent au moins un établissement actif
+  (65,9 %) n'en portent qu'un seul. Une cellule à effectif 1 n'est ni un
+  agrégat statistiquement exploitable pour le terme « débouchés » du score,
+  ni conforme à une logique de pseudonymisation quand l'établissement
+  identifié figure parmi les 20 501 non diffusibles non filtrés à cette
+  étape. Reportée dans `reste-a-faire.md`, à trancher au croisement de la
+  protection des données et de la construction du score (E28).
 
 ## Phase 4 — Modèle
 
