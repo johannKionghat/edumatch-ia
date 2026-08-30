@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 20 / 46 étapes validées.**
+**État : 21 / 46 étapes validées.**
 
 ---
 
@@ -951,7 +951,51 @@ arbitrage.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E21 | Baseline | ⬜ | | |
+| E21 | Baseline | ✅ validée | 2026-08-30 | `2b4c409` |
+
+**E21 — ce qui a été vérifié**
+- `src/edumatch/models/baseline.py` mesure quatre variantes, sans aucun
+  paramètre appris : le taux de la même cellule à la session précédente
+  (`session_precedente`, la règle retenue par `configs/base.yaml`), sa
+  version à couverture complète par repli sur une moyenne de groupe
+  (`session_precedente_avec_repli`), une moyenne pondérée par groupe
+  `(type de bac, boursier)` en fenêtre expansive
+  (`moyenne_groupe_expansive`), et une moyenne globale, sans distinction de
+  groupe (`moyenne_globale_expansive`)
+- Mesuré sur les 440 030 cellules réelles (E20), MAE pondérée par l'effectif
+  (ADR 0009) : **0,0664** sur validation + test à couverture comparable
+  (92,6 %), **0,0713** à couverture complète (100 %, repli inclus) — le
+  plancher que le modèle appris (E22-E23) doit désormais battre nettement.
+  J'ai recalculé ces chiffres indépendamment du code livré et je retrouve
+  les mêmes valeurs
+- Les deux moyennes de repli, mesurées comme second plancher plus naïf :
+  0,2098 (par groupe) et 0,2124 (globale) — environ trois fois pire que le
+  taux de la session précédente, ce qui justifie chiffrée le choix de la
+  règle retenue plutôt qu'une des deux autres
+- **Deux limites structurelles mesurées, pas masquées** : la session 2020
+  n'a de couverture nulle pour toute variante, aucune session antérieure ne
+  portant le numérateur du label ventilé par type de bac (ADR 0012),
+  vérifié par un test dédié ; les cellules sans antécédent reçoivent un
+  repli par moyenne de groupe en fenêtre expansive — jamais une moyenne
+  calculée sur tout l'entraînement, qui aurait utilisé des labels
+  postérieurs à la session prédite — et le score est rapporté avec et sans
+  ce repli plutôt que de le laisser implicite
+- Suite de tests complète du dépôt : **363 tests, 363 succès** (346 avant
+  cette étape, 17 nouveaux)
+
+**E21 — limite constatée et corrigée** : le paquet MLflow était déclaré dans
+les dépendances mais n'était pas installé dans l'environnement au moment de
+l'exécution d'E21. La baseline n'a donc pas été journalisée dans le registre
+d'expériences au moment de sa mesure, alors que la discipline retenue pour ce
+dépôt veut que le suivi d'expériences commence à la première expérience, pas
+après. Le paquet a été installé depuis le constat ; l'enregistrement
+rétroactif de cette baseline dans le registre est traité à l'étape suivante,
+avant l'entraînement du modèle.
+
+**E21 — décision prise** : aucun ADR nouveau — les règles comparées
+n'introduisent aucun arbitrage de modélisation, seulement une mesure. Le
+détail complet (tableau par session, comparatif des trois règles, le seuil
+posé pour l'étape suivante) est dans `04-modele/evaluation.md`.
 | E22 | Entraînement LightGBM | ⬜ | | |
 | E23 | Évaluation et calibration | ⬜ | | |
 | E24 | Courbe d'apprentissage | ⬜ | | |

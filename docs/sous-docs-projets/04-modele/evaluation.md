@@ -103,13 +103,108 @@ pour le professionnel) confirme l'asymétrie.
   est le cœur de l'enjeu d'équité du projet (E26), à quantifier avant de
   conclure sur le modèle.
 
-## Ce qui reste à faire (E21 à E24)
+## La baseline (E21) : le plancher mesuré avant d'entraîner
 
-- Baseline : taux de la session précédente (E21), à mesurer avant tout
-  entraînement — c'est le plancher de comparaison.
-- Split temporel strict, sans fuite (E22).
-- MAE pondérée, courbe de calibration, ECE (E23).
+`src/edumatch/models/baseline.py` ne contient aucun paramètre appris : il
+applique une règle fixe à la table de variables produite en E20 et note le
+résultat. C'est la référence à laquelle le modèle appris (E22-E23) devra se
+comparer.
+
+**La règle retenue par `configs/base.yaml`** (`taux_session_precedente`) :
+pour une cellule `(formation, type de baccalauréat, boursier)` à la session
+N, je prédis le taux observé de cette même cellule à la session N-1. Elle
+réutilise `features.label.calculer_taux` — même bornage à 1, même traitement
+du dénominateur nul — pour que la baseline et la cible qu'elle prédit soient
+définies de façon rigoureusement identique.
+
+**Pourquoi une baseline sans paramètre peut légitimement toucher le jeu de
+test.** La règle qui interdit de regarder deux fois le test protège contre
+l'ajustement implicite : comparer plusieurs variantes d'un modèle appris sur
+le test, puis retenir la meilleure, revient à entraîner sur le test sans le
+dire. Une règle qui n'a rien à ajuster n'a rien à sur-ajuster — son score sur
+le test est précisément le chiffre que le modèle appris devra battre à la
+fin, et le mesurer maintenant plutôt qu'après coup rend la comparaison
+honnête. Ce qui resterait interdit : comparer ici plusieurs variantes du
+futur modèle LightGBM sur ce même jeu de test pour en choisir une.
+
+### Résultat, par session et par périmètre agrégé
+
+MAE pondérée par l'effectif de la cellule (ADR 0009), mesurée sur les
+440 030 cellules réelles (E20) :
+
+| Périmètre | Couverture | MAE pondérée | MAE brute |
+|---|---:|---:|---:|
+| 2020 | 0 % | — | — |
+| 2021 | 89,9 % | 0,0811 | 0,1434 |
+| 2022 | 91,5 % | 0,0761 | 0,1381 |
+| 2023 | 92,1 % | 0,0686 | 0,1387 |
+| 2024 (validation) | 92,3 % | 0,0676 | 0,1364 |
+| 2025 (test) | 92,9 % | 0,0654 | 0,1269 |
+| validation + test | 92,6 % | **0,0664** | 0,1316 |
+| validation + test, repli inclus | 100 % | **0,0713** | 0,1477 |
+
+J'ai recalculé ces chiffres indépendamment du code livré et je retrouve les
+mêmes valeurs — c'est cette double vérification, et non la seule lecture du
+code, qui rend le chiffre défendable.
+
+**Le plancher est haut, et c'est une information sur le problème, pas un
+embarras.** Reconduire simplement le taux de l'an dernier prédit à ±6,6
+points en moyenne pondérée sur validation + test : la cible est fortement
+auto-corrélée d'une session à l'autre. Une baseline difficile à battre
+signifie que le signal utile qu'un modèle appris peut ajouter est plus étroit
+qu'il n'y paraît — c'est précisément ce que l'étape suivante doit mesurer
+honnêtement plutôt que suggérer implicitement qu'un modèle appris fait
+toujours mieux qu'une règle simple.
+
+### Le plancher retenu est le meilleur de trois règles triviales, pas la première venue
+
+Deux règles plus naïves, mesurées à côté, toutes deux en fenêtre expansive
+(la moyenne ne porte jamais sur la session cible ni sur une session future,
+même exigence anti-fuite que le split lui-même, ADR 0012) :
+
+| Règle | MAE pondérée, validation + test |
+|---|---:|
+| Moyenne pondérée par groupe `(type de bac, boursier)` | 0,2098 |
+| Moyenne globale, sans distinction de groupe | 0,2124 |
+
+Le taux de la session précédente les bat d'un facteur proche de trois : la
+persistance d'une cellule à l'autre porte beaucoup plus d'information que la
+seule appartenance à un groupe large. C'est ce comparatif, et non la seule
+intuition que « l'an dernier » est une bonne référence, qui justifie de
+retenir cette règle comme plancher officiel.
+
+### Le seuil posé avant d'entraîner
+
+Pour justifier d'exister, le modèle appris (E22-E23) doit descendre
+**nettement sous 0,0664** de MAE pondérée sur le périmètre validation + test
+à couverture comparable (92,6 %), et sous **0,0713** à couverture complète
+(100 %, repli inclus). Poser ce seuil maintenant, avant de voir le résultat
+de l'entraînement, est ce qui rend la comparaison à venir honnête : un seuil
+choisi après coup se plie toujours au résultat qu'on veut montrer.
+
+### Deux limites déclarées, mesurées plutôt que masquées
+
+1. **La session 2020 n'est prédictible par aucune baseline temporelle.**
+   Couverture nulle, mesurée et vérifiée par un test dédié
+   (`test_premiere_session_de_la_fenetre_labellisee_n_a_aucun_score`) :
+   aucune session antérieure ne porte le numérateur du label ventilé par
+   type de baccalauréat (ADR 0012). Ce n'est pas un défaut du code, c'est une
+   propriété du protocole temporel lui-même.
+2. **Les cellules sans antécédent reçoivent un repli par moyenne de groupe
+   en fenêtre expansive** — jamais une moyenne calculée sur tout
+   l'entraînement, qui aurait utilisé des labels postérieurs à la session
+   prédite. Le score est donné avec et sans ce repli (lignes « validation +
+   test » et « validation + test, repli inclus » du tableau ci-dessus) :
+   la couverture passe de 92,6 % à 100 %, et la MAE pondérée se dégrade de
+   0,0664 à 0,0713, ce qui chiffre exactement le coût du repli plutôt que de
+   le laisser implicite.
+
+## Ce qui reste à faire (E22 à E24)
+
+- Split temporel strict, sans fuite, entraînement du modèle (E22).
+- MAE pondérée, courbe de calibration, ECE, comparaison chiffrée à la
+  baseline ci-dessus (E23).
 - Courbe d'apprentissage à 10/25/50/100 % du volume (E24).
 
 ---
-*Mise à jour : 2026-08-29, commit `be2787c`.*
+*Mise à jour : 2026-08-30, commit `2b4c409`.*
