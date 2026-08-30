@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 19 / 46 étapes validées.**
+**État : 20 / 46 étapes validées.**
 
 ---
 
@@ -609,7 +609,7 @@ décalage d'une session pour le reste. Clôture la phase exploratoire.
 | E17 | Job Spark Sirene | ✅ validée | 2026-08-30 | `8ebe613` |
 | E18 | Table NAF ↔ ROME ↔ formation | ✅ validée | 2026-08-30 | `2439d26` |
 | E19 | Calcul du label | ✅ validée | 2026-08-30 | `8376639` |
-| E20 | Construction des variables | ⬜ | | |
+| E20 | Construction des variables | ✅ validée | 2026-08-30 | `a5ae188` |
 
 **E14 — ce qui a été vérifié**
 - `src/edumatch/quality/` : vocabulaire commun (`_diagnostic.py` —
@@ -899,6 +899,53 @@ du dépôt.
 définition du taux et le principe de la pondération. Cette étape est une mise
 en conformité du code avec une décision déjà arrêtée (regroupement de la
 formule, codage de la forme du poids), pas un nouvel arbitrage.
+
+**E20 — ce qui a été vérifié**
+- `src/edumatch/features/build.py` applique, colonne par colonne, le
+  classement arrêté par l'ADR 0013 (`modele.variables`) : les deux dimensions
+  de cellule sont résolues depuis `dim_profil_candidat`, les 9 colonnes de la
+  liste blanche sont lues par jointure directe sur la session prédite, les
+  35 colonnes décalées sont lues sur la table silver translatée de `+1`
+  session avant jointure — 46 variables au total
+- Jeu produit sur les huit millésimes réels : **440 030 lignes, 46
+  variables**, une ligne de sortie par cellule d'entrée (aucune jointure
+  n'est autorisée à changer ce nombre, `_joindre_sans_fan_out`)
+- **28 425 cellules sans antécédent décalé (6,46 %)** : session cible 2020
+  (pas de `prop_tot` ventilé en N-1, ADR 0012/0013 §6) et formations
+  nouvelles sans ligne silver en N-1. Valeur laissée `<NA>`, jamais imputée —
+  combler fabriquerait un antécédent qui n'a pas existé, LightGBM (ADR 0009,
+  ADR 0013) traite nativement l'absence. Colonne la plus souvent manquante :
+  `ran_grp1`, 20,7 %
+- **Contrat anti-fuite vérifié par mutation du code, refaite moi-même en plus
+  de celles rapportées lors du développement, code restauré après chaque
+  mutation** :
+  - décalage ramené de `+1` à `+0` → 4 tests échouent, tous ceux qui
+    reposent sur le décalage (dont
+    `test_les_variables_decalees_proviennent_reellement_de_la_session_precedente`),
+    342 restent verts
+  - `pct_f` (genre) et `cod_uai` (substitut) réintroduits de force dans les
+    colonnes produites → `test_aucune_colonne_de_genre_n_est_presente` et
+    `test_cod_uai_est_absent_du_jeu_construit` échouent chacun
+  - le test discriminant s'appuie sur une colonne dont la valeur diffère
+    franchement entre les deux sessions (`capa_fin` à 40 contre 999999) : un
+    test qui aurait seulement vérifié la présence des colonnes serait passé
+    même avec la jointure inversée, sans rien prouver
+- **Liste blanche, jamais liste noire** : une colonne non classée par l'ADR
+  0013 ne peut jamais entrer par défaut ; `_verifier_colonnes_licites`
+  refuse toute colonne hors des catégories déclarées
+- **Piège de nommage bloqué explicitement** : `fait_admission` porte déjà
+  `nb_voe_pp` et `prop_tot` sur la session prédite, homonymes de deux
+  colonnes décalées (même colonne source, lue à N-1). Sans contrôle, la
+  jointure aurait renommé les deux en silence (`_x`/`_y`) au lieu d'échouer,
+  laissant passer une variable de résultat de campagne sans signal. Le code
+  échoue désormais explicitement sur cette homonymie
+  (`_colonnes_a_construire`)
+- Suite de tests complète du dépôt : **346 tests, 346 succès** (327 avant
+  cette étape, 19 nouveaux)
+
+**E20 — décision prise** : aucun ADR nouveau — l'ADR 0013 couvre déjà le
+classement des variables. Cette étape en est l'application, pas un nouvel
+arbitrage.
 
 ## Phase 4 — Modèle
 

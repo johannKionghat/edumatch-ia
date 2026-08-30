@@ -148,6 +148,11 @@ Trois points ne sont pas tranchés à ce stade et sont suivis dans
    sont réellement publiées avant l'ouverture de la campagne. Cette preuve-là
    relève de l'ADR 0013, pas d'un test automatisé.
 
+La construction effective de la table de variables à partir de ce classement
+— le mécanisme du décalage, le contrat anti-fuite et sa validation par
+mutation, le traitement des cellules sans antécédent — est documentée dans
+`variables.md` (E20).
+
 ## Où vit la décision dans le dépôt
 
 Le classement des 128 colonnes est écrit dans `configs/base.yaml`
@@ -160,4 +165,4 @@ n'appartient à deux catégories à la fois. Les quatre contrôles ont été
 vérifiés par mutation, pas par relecture.
 
 ---
-*Mise à jour : 2026-08-29, commit `f7c1449`.*
+*Mise à jour : 2026-08-30 (E20, ajout du renvoi vers `variables.md`), commit `a5ae188`.*
