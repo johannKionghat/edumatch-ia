@@ -165,5 +165,87 @@ extrêmes appelle une erreur absolue moyenne pondérée plutôt qu'une erreur
 quadratique, une vérification explicite de la calibration aux bornes, et un
 protocole temporel qui tient compte des deux ruptures ci-dessus.
 
+## Un seul lieu de définition du taux (E19)
+
+La formule `taux = prop_tot / nb_voe_pp`, bornée à 1, a d'abord été codée
+directement dans la couche gold (`edumatch.transform.etoile`, E16), qui en
+avait besoin avant que l'étape dédiée au label n'existe dans le plan
+d'exécution du projet. Depuis E19, elle vit dans un seul module,
+`src/edumatch/features/label.py` (`calculer_taux`), et `etoile.py` l'appelle
+au lieu de la recalculer. Le comportement n'a pas changé d'une virgule — ce
+n'est pas une nouvelle décision, c'est une mise en conformité du code avec
+l'ADR 0009, déjà arrêtée.
+
+La raison de ce déplacement : une formule dupliquée à deux endroits du dépôt
+finit, tôt ou tard, par diverger d'un endroit à l'autre sans que personne ne
+le remarque — un correctif appliqué d'un côté, oublié de l'autre. En n'ayant
+plus qu'un seul point de définition, la couche gold, la construction des
+variables (E20), l'entraînement et l'audit d'équité lisent tous la même
+fonction.
+
+**Preuve que l'extraction n'a rien changé au résultat**, mesurée avant puis
+après sur `data/processed/parcoursup/fait_admission.parquet` :
+
+| | Avant | Après |
+|---|---:|---:|
+| Lignes | 440 030 | 440 030 |
+| Somme des taux | 201 404,572 630 955 43 | 201 404,572 630 955 43 |
+| Cellules à `taux_depasse_1` | 31 900 | 31 900 |
+| Empreinte SHA-256 du fichier | `932e2ca7...aa6106fd` | `932e2ca7...aa6106fd` |
+
+Empreinte complète : `932e2ca72461f1e896c4bdac5b500cff4425b098589c8114ef0a0c04aa6106fd`.
+Aucune valeur hors de `[0, 1]` avant comme après. C'est cette identité stricte
+qui rend l'opération défendable comme un déplacement de code, et non comme un
+changement de calcul déguisé.
+
+Un test de non-régression (`tests/data/test_features_label_non_regression.py`)
+fixe ce résultat à deux niveaux : un vecteur de cinq cellules figé sur la
+fonction isolée (couvre le bornage, la division par zéro et la valeur
+manquante), et le pipeline complet rejoué sur les échantillons versionnés du
+dépôt (1 280 cellules, somme des taux 558,742 252 776 133 5, 180 192
+d'effectif total). Toute dérive future de la formule, volontaire ou non, fait
+échouer ce test avant d'atteindre l'entraînement.
+
+## La pondération à l'entraînement : forme retenue et mesure de concentration
+
+L'ADR 0009 (décision 3) arrête le principe — pondérer par l'effectif de la
+cellule (`nb_voe_pp`) plutôt que traiter chaque cellule à poids égal — sans
+trancher la **forme** exacte du poids. C'était l'un des deux points que E19
+devait combler (`poids_effectif` dans `features/label.py`), l'autre étant le
+regroupement de la formule décrit ci-dessus.
+
+Avant de retenir l'effectif brut, la concentration de poids qu'il fait porter
+au 1 % de cellules les plus grosses a été mesurée sur les 440 030 cellules
+réelles, et comparée à trois formes alternatives qui n'ont jamais été
+retenues mais qui cadrent le choix :
+
+| Forme du poids | Part du poids total captée par le 1 % de cellules les plus grosses (4 400 / 440 030) |
+|---|---:|
+| Effectif brut (`nb_voe_pp`) — retenu | **25,9 %** |
+| Racine carrée | 7,2 % |
+| Plafonné au p99 | 15,4 % |
+| Log(1 + n) | 2,3 % |
+
+Effectifs par cellule, pour situer cette concentration : min 1, médiane 30,
+p99 1 868, max 16 483.
+
+**Retenu : l'effectif brut**, conforme à l'ADR 0009 (décision 3) et à
+`configs/base.yaml` (`modele.ponderation: effectif_cellule`). C'est la seule
+des quatre formes qui traduit fidèlement l'écart de fiabilité statistique
+entre une cellule à 3 vœux et une cellule à 500 — c'est exactement pour cette
+raison que l'ADR 0009 écarte le poids égal (option 4). La mesure confirme la
+décision déjà prise, elle ne la rouvre pas.
+
+**Écarté** : le poids égal pour toutes les cellules (biaiserait
+l'optimisation vers les petites cellules, nombreuses) ; la racine carrée et
+le plafond au p99 (atténuent la concentration, mais aussi l'écart de
+fiabilité statistique que la pondération est censée refléter).
+
+**Le seuil qui ferait reconsidérer** (déjà écrit dans l'ADR 0009) : si l'audit
+d'équité (E26) montre que cette concentration de poids défavorise
+structurellement un profil — le bac professionnel, notamment, où 21,6 % des
+formations n'émettent aucune proposition — il faudrait alors revoir la
+pondération, jamais la définition du taux.
+
 ---
-*Mise à jour : 2026-08-29, commit `be2787c`.*
+*Mise à jour : 2026-08-30 (E19).*

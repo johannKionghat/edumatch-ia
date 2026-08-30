@@ -123,8 +123,11 @@ Le label `taux` vaut `prop_tot / nb_voe_pp`, borné à 1 conformément à l'ADR 
 elle n'est pas perdue, elle est rendue explicite. `effectif` reprend `nb_voe_pp`
 et sert de poids à l'entraînement.
 
-Le label est calculé **ici et une seule fois**. Le répéter dans chaque étape aval
-aurait garanti qu'un jour deux versions de la formule divergent silencieusement.
+La formule du taux a **un seul lieu de définition** : `edumatch.features.label`
+(étape E19). Cette table l'applique, elle ne la recalcule pas — jusqu'à E19,
+elle la portait directement, ce qui aurait fait courir le risque qu'elle
+diverge un jour, silencieusement, d'une définition recalculée ailleurs. Détail
+et preuve de non-régression de ce déplacement : `01-donnees/label.md`.
 
 ### `dim_formation` — la seule dimension historisée
 

@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 18 / 46 étapes validées.**
+**État : 19 / 46 étapes validées.**
 
 ---
 
@@ -608,7 +608,7 @@ décalage d'une session pour le reste. Clôture la phase exploratoire.
 | E16 | dbt — modèle en étoile | ✅ validée | 2026-08-30 | `cae2485` |
 | E17 | Job Spark Sirene | ✅ validée | 2026-08-30 | `8ebe613` |
 | E18 | Table NAF ↔ ROME ↔ formation | ✅ validée | 2026-08-30 | `2439d26` |
-| E19 | Calcul du label | ⬜ | | |
+| E19 | Calcul du label | ✅ validée | 2026-08-30 | `8376639` |
 | E20 | Construction des variables | ⬜ | | |
 
 **E14 — ce qui a été vérifié**
@@ -860,6 +860,45 @@ France Travail (Licence Ouverte v2.0). La clause de partage à l'identique de
 l'ODbL s'applique potentiellement si cette table est redistribuée telle
 quelle — signalé dans `01-donnees/sources.md`, à reprendre par le registre
 des sources (E40).
+
+**E19 — ce qui a été vérifié**
+- `src/edumatch/features/label.py` regroupe en un seul lieu ce qui était
+  jusqu'ici codé directement dans la couche gold (`transform/etoile.py`) : la
+  formule du taux (`calculer_taux`), inchangée, et sa pondération à
+  l'entraînement (`poids_effectif`), décidée en principe par l'ADR 0009 mais
+  jamais codée jusqu'ici. `etoile.py` appelle désormais cette fonction au lieu
+  de la recalculer
+- **Preuve d'empreinte identique avant/après**, sur
+  `data/processed/parcoursup/fait_admission.parquet` réel : 440 030 lignes,
+  somme des taux 201 404,572 630 955 43, 31 900 cellules à `taux_depasse_1`,
+  empreinte SHA-256 `932e2ca72461f1e896c4bdac5b500cff4425b098589c8114ef0a0c04aa6106fd`
+  identique de part et d'autre — recalculée moi-même de façon indépendante,
+  pas seulement supposée. 0 valeur hors de `[0, 1]` avant comme après
+- **Mesure de concentration du poids**, sur les 440 030 cellules, avant de
+  confirmer la forme retenue : le 1 % de cellules les plus grosses (4 400)
+  capte 25,9 % du poids total avec l'effectif brut, contre 15,4 % plafonné au
+  p99, 7,2 % en racine carrée, 2,3 % en log(1+n). L'effectif brut est retenu
+  tel quel (ADR 0009, décision 3 ; `configs/base.yaml`,
+  `modele.ponderation: effectif_cellule`) : c'est la seule forme qui traduit
+  l'écart de fiabilité statistique entre une petite et une grosse cellule
+- Test de non-régression du label (`tests/data/test_features_label_non_regression.py`)
+  à deux niveaux : un vecteur de cinq cellules figé sur la fonction isolée, et
+  le pipeline complet rejoué sur les échantillons versionnés (1 280 cellules,
+  somme des taux 558,742 252 776 133 5, 180 192 d'effectif total)
+- Suite de tests complète du dépôt : **327 tests, 327 succès** (309 avant
+  cette étape)
+
+**E19 — limite à signaler avant la remise**
+`make` n'est pas présent dans le PATH de ce poste : les commandes Python
+sous-jacentes ont été employées directement à sa place pour produire les
+chiffres ci-dessus. La documentation invite pourtant le lecteur à reproduire
+par `make`. À vérifier sur un poste où `make` est disponible avant la remise
+du dépôt.
+
+**E19 — décision prise** : aucun ADR nouveau — l'ADR 0009 couvre déjà la
+définition du taux et le principe de la pondération. Cette étape est une mise
+en conformité du code avec une décision déjà arrêtée (regroupement de la
+formule, codage de la forme du poids), pas un nouvel arbitrage.
 
 ## Phase 4 — Modèle
 
