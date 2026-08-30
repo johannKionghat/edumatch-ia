@@ -91,6 +91,7 @@ modele:
     reg_lambda: 0.1
     n_estimators: 100
     early_stopping_rounds: 10
+  inclure_taux_precedent: true
 
 evaluation:
   metrique_principale: mae_ponderee

@@ -300,6 +300,15 @@ modele:
     reg_lambda: 0.1
     n_estimators: 2000
     early_stopping_rounds: 100
+  # Le taux de la session précédente (la baseline mesurée en E21) donné au
+  # modèle comme variable explicite, plutôt que laissé comme seul concurrent.
+  # Un ensemble d'arbres n'apprend pas nativement une division : sans cette
+  # variable, il ne dispose que du numérateur et du dénominateur séparés
+  # (`prop_tot_*` / `nb_voe_pp_*`, déjà dans `decalees` ci-dessus) et doit
+  # approximer leur quotient par des coupures successives. Activé après
+  # mesure sur la seule validation 2024 (jamais le test) : voir le compte
+  # rendu de l'étape pour le chiffre qui a tranché.
+  inclure_taux_precedent: true
 
 evaluation:
   metrique_principale: mae_ponderee

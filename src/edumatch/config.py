@@ -394,6 +394,11 @@ class ModeleConfig(_Strict):
     variables: VariablesConfig
     split: SplitConfig
     hyperparametres: HyperparametresConfig
+    # Le taux de la même cellule à la session précédente (la baseline, E21)
+    # comme variable explicite plutôt que comme seul concurrent (E22, comparaison
+    # à couverture égale). Décidé sur la seule validation 2024 : voir le
+    # compte rendu de l'étape pour le chiffre qui a tranché.
+    inclure_taux_precedent: bool
 
 
 class EvaluationConfig(_Strict):
