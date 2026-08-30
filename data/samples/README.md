@@ -13,7 +13,8 @@ lit uniquement `data/raw/` et `data/external/`, il ne les modifie ni ne les
 supprime jamais.
 
 Producteurs des données reprises ici : **INSEE** (base Sirene), **MESR**
-(Parcoursup), **France Compétences** (RNCP), **ONISEP** (base IDÉO). Le détail
+(Parcoursup), **France Compétences** (RNCP), **ONISEP** (base IDÉO), **France
+Travail** (table de correspondance ROME/NAF, E18). Le détail
 de chaque source — URL exacte, date de la donnée d'origine, empreinte du
 fichier source — est dans `manifeste.json`, section « Provenance » plus bas.
 
@@ -38,6 +39,8 @@ vérifié par empreinte SHA-256 sur deux générations successives.
 | Sirene — StockUniteLegaleHistorique | 500, sur 71 355 318 | Systématique, colonnes d'identité directe exclues | Licence Ouverte v2.0 |
 | IDÉO (4 jeux) | 300 par jeu | Systématique | **ODbL (odc-odbl)** |
 | RNCP | 300, sur 30 484 | Systématique | Licence Ouverte v2.0 |
+| RNCP — correspondance fiche/ROME (E18) | 300, sur 67 768 | Systématique | Licence Ouverte v2.0 |
+| France Travail — correspondance ROME/NAF (E18) | intégral, 112 Ko | Copie complète (structure hiérarchique, non ré-échantillonnable ligne à ligne) | Licence Ouverte v2.0 |
 
 Le détail (chemin source, nombre de lignes source, colonnes retenues et
 exclues, empreinte SHA-256 du fichier écrit, **et désormais l'URL, la date et

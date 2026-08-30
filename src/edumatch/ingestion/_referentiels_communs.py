@@ -97,6 +97,37 @@ def chemin_manifeste(settings: Settings) -> Path:
     return dossier_referentiels(settings) / "manifeste.json"
 
 
+def valider_forme_catalogue(catalogue: object, url_catalogue: str, nom_source: str) -> list[dict]:
+    """Valide la forme d'une réponse de catalogue data.gouv : partagée par RNCP et France Travail.
+
+    Les deux connecteurs interrogent la même API (`/api/1/datasets/<id>/`) et
+    attendent la même forme (`{"resources": [...]}`) : factoriser ce contrôle
+    évite qu'un champ absent soit toléré différemment selon la source. Rien
+    n'est déduit d'un champ manquant ou mal typé, l'appelant reçoit une
+    erreur explicite plutôt qu'une liste vide silencieuse.
+    """
+    if not isinstance(catalogue, dict):
+        raise ErreurCatalogueReferentiels(
+            f"Réponse du catalogue {nom_source} ({url_catalogue}) mal formée : un objet JSON "
+            f"était attendu à la racine, reçu {type(catalogue).__name__}."
+        )
+    ressources = catalogue.get("resources")
+    if ressources is None:
+        ressources = []
+    if not isinstance(ressources, list):
+        raise ErreurCatalogueReferentiels(
+            f"Réponse du catalogue {nom_source} ({url_catalogue}) mal formée : le champ "
+            f"'resources' doit être une liste, reçu {type(ressources).__name__}."
+        )
+    for index, ressource in enumerate(ressources):
+        if not isinstance(ressource, dict):
+            raise ErreurCatalogueReferentiels(
+                f"Réponse du catalogue {nom_source} ({url_catalogue}) mal formée : la ressource "
+                f"à l'index {index} doit être un objet JSON, reçu {type(ressource).__name__}."
+            )
+    return ressources
+
+
 def verifier_encodage(chemin: Path, encodage: str, contexte: str) -> None:
     """Vérifie que le fichier écrit décode intégralement selon l'encodage déclaré.
 

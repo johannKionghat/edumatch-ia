@@ -20,7 +20,12 @@ import requests
 
 from edumatch.config import load_settings
 from edumatch.ingestion._flux import ErreurDefinitive, ErreurTransitoire
-from edumatch.ingestion._referentiels_rncp import resoudre_ressource, telecharger
+from edumatch.ingestion._referentiels_rncp import (
+    chemin_destination_rome,
+    resoudre_ressource,
+    telecharger,
+    telecharger_rome,
+)
 from edumatch.ingestion.referentiels import (
     ErreurCatalogueReferentiels,
     ErreurContratReferentiels,
@@ -39,7 +44,25 @@ def _zip_avec(nom_membre: str, contenu: bytes) -> bytes:
     return tampon.getvalue()
 
 
-ZIP_NOMINAL = _zip_avec(NOM_CSV_STANDARD, CONTENU_CSV_UTF8)
+NOM_CSV_ROME = "export_fiches_CSV_Rome_2026_08_29.csv"
+CONTENU_ROME_UTF8 = '"Numero_Fiche";"Codes_Rome_Code";"Codes_Rome_Libelle"\n"RNCP1";"M1607";"Secrétariat"\n'.encode(
+    "utf-8"
+)
+
+
+def _zip_avec_deux_membres(membres: dict[str, bytes]) -> bytes:
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(tampon, mode="w") as archive:
+        for nom, contenu in membres.items():
+            archive.writestr(nom, contenu)
+    return tampon.getvalue()
+
+
+# Contient les deux membres réels de l'archive quotidienne (voir E18) : le
+# CSV standard et le fichier de codes ROME. Les tests du CSV standard, plus
+# haut dans ce fichier, restent valides puisqu'ils ne filtrent que sur le
+# motif du membre standard — ajouter le membre ROME ne les affecte pas.
+ZIP_NOMINAL = _zip_avec_deux_membres({NOM_CSV_STANDARD: CONTENU_CSV_UTF8, NOM_CSV_ROME: CONTENU_ROME_UTF8})
 
 URL_CATALOGUE = "https://exemple.test/api/1/datasets/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/"
 URL_ZIP_29 = "https://exemple.test/export-fiches-csv-2026-08-29.zip"
@@ -367,3 +390,54 @@ def test_aucune_url_rncp_en_dur() -> None:
 
     assert "static.data.gouv.fr" not in source
     assert "repertoire-national-des-certifications" not in source
+
+
+# ─── Membre ROME de la même archive (E18) ──────────────────────────────────
+
+
+def test_telecharger_rome_extrait_le_fichier_rome_et_ecrit_le_manifeste(settings_test) -> None:
+    """Le membre ROME est un fichier distinct du CSV standard, avec sa propre clé de manifeste."""
+    session = SessionFactice()
+    ressource = resoudre_ressource(settings_test, session=session)
+    resultat = telecharger_rome(ressource, settings_test, session=session)
+
+    assert resultat.telecharge is True
+    assert resultat.source == "rncp"
+    assert resultat.jeu == "rncp_rome"
+    assert resultat.chemin == chemin_destination_rome(settings_test, "2026-08-29")
+    assert resultat.chemin.name == "rncp_rome_2026-08-29.csv"
+    assert resultat.chemin.read_bytes() == CONTENU_ROME_UTF8
+
+    manifeste = json.loads((settings_test.external_dir / "referentiels" / "manifeste.json").read_text())
+    assert "rncp_rome:2026-08-29" in manifeste
+    assert "rncp:2026-08-29" not in manifeste, "telecharger_rome seul ne doit pas écrire la clé du CSV standard"
+
+
+def test_telecharger_rome_et_telecharger_standard_coexistent_dans_le_meme_manifeste(settings_test) -> None:
+    """Les deux membres de la même archive quotidienne s'écrivent côte à côte, sans se chevaucher."""
+    session = SessionFactice()
+    ressource = resoudre_ressource(settings_test, session=session)
+    resultat_standard = telecharger(ressource, settings_test, session=session)
+    resultat_rome = telecharger_rome(ressource, settings_test, session=session)
+
+    assert resultat_standard.chemin != resultat_rome.chemin
+    assert resultat_standard.chemin.exists() and resultat_rome.chemin.exists()
+    assert session.appels_zip == 2, "chaque membre déclenche son propre téléchargement de l'archive (voir docstring)"
+
+
+def test_telecharger_rome_second_appel_meme_jour_ne_retelecharge_pas(settings_test) -> None:
+    session = SessionFactice()
+    ressource = resoudre_ressource(settings_test, session=session)
+    telecharger_rome(ressource, settings_test, session=session)
+    resultat_second = telecharger_rome(ressource, settings_test, session=session)
+
+    assert session.appels_zip == 1
+    assert resultat_second.telecharge is False
+
+
+def test_archive_sans_le_membre_rome_leve_une_erreur_catalogue(settings_test) -> None:
+    session = SessionFactice(contenu_zip=_zip_avec(NOM_CSV_STANDARD, CONTENU_CSV_UTF8))
+    ressource = resoudre_ressource(settings_test, session=session)
+
+    with pytest.raises(ErreurCatalogueReferentiels, match="Aucun fichier"):
+        telecharger_rome(ressource, settings_test, session=session)

@@ -38,6 +38,10 @@ data:  ## Régénère TOUTES les données dérivées depuis data/raw
 	$(MAKE) gold
 	$(MAKE) sirene-agregats
 	$(MAKE) features
+	# naf-rome (E18) n'est pas enchaînée ici : elle suppose data/external/referentiels/
+	# déjà peuplé par edumatch.ingestion.referentiels, qui n'a pas encore de cible
+	# dédiée dans ce Makefile (gap antérieur à E18, pas corrigé ici). Lancer
+	# `make naf-rome` séparément une fois les référentiels téléchargés.
 
 quality:  ## Exécute les contrôles qualité (bloquants)
 	python -m edumatch.quality.run
@@ -53,6 +57,9 @@ transform-lignage:  ## Rejoue silver ET gold via dbt, génère le graphe de lign
 
 sirene-agregats:  ## Agrège Sirene par commune x NAF (E17) : projection 9 colonnes, filtrage à la lecture
 	python -m edumatch.spark.run_sirene_agregats
+
+naf-rome:  ## Réconcilie NAF -> ROME -> formation (E18) : couverture mesurée et déclarée
+	python -m edumatch.referentiel.naf_rome_formation
 
 samples:  ## Régénère data/samples/ depuis data/raw et data/external (config prod)
 	python -m edumatch.ingestion.echantillons

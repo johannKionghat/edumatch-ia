@@ -25,6 +25,9 @@ dependencies = [
     "pydantic-settings>=2.3",
     "python-dotenv>=1.0",
     "pyyaml>=6.0,<7.0",
+    # E18 : lecture de la table de correspondance ROME/NAF de France Travail,
+    # publiée uniquement en xlsx (voir src/edumatch/ingestion/_referentiels_france_travail.py).
+    "openpyxl>=3.1,<4.0",
 ]
 
 [project.optional-dependencies]

@@ -1,5 +1,5 @@
 {
-  "date_generation": "2026-08-29T07:33:02.883401+00:00",
+  "date_generation": "2026-08-30T08:25:10.532738+00:00",
   "methode": "echantillonnage systematique a pas fixe, sans graine aleatoire",
   "echantillons": [
     {
@@ -1352,7 +1352,7 @@
     },
     {
       "source": "rncp",
-      "chemin_source": "external\\referentiels\\rncp\\rncp_2026-08-29.csv",
+      "chemin_source": "external\\referentiels\\rncp\\rncp_2026-08-30.csv",
       "chemin_sortie": "referentiels\\rncp\\rncp_echantillon.csv",
       "lignes_source": 30484,
       "lignes_echantillon": 300,
@@ -1376,10 +1376,42 @@
       ],
       "colonnes_exclues": [],
       "licence": "Licence Ouverte v2.0",
-      "url": "https://static.data.gouv.fr/resources/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/20260829-020002/export-fiches-csv-2026-08-29.zip",
-      "date_source": "2026-08-29T02:00:12.883000+00:00",
+      "url": "https://static.data.gouv.fr/resources/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/20260830-020002/export-fiches-csv-2026-08-30.zip",
+      "date_source": "2026-08-30T02:00:13.328000+00:00",
       "empreinte_sha256_source": "41404bce3209edd511e3796035427536c4a2d9d0a63f9eaa6d5b30c8ce465149",
       "empreinte_sha256": "49dd223c166f94304ef75a3ac95777eedb45240b13c98dc101336b8af5732135"
+    },
+    {
+      "source": "rncp_rome",
+      "chemin_source": "external\\referentiels\\rncp\\rncp_rome_2026-08-30.csv",
+      "chemin_sortie": "referentiels\\rncp\\rncp_rome_echantillon.csv",
+      "lignes_source": 67768,
+      "lignes_echantillon": 300,
+      "colonnes_retenues": [
+        "Numero_Fiche",
+        "Codes_Rome_Code",
+        "Codes_Rome_Libelle"
+      ],
+      "colonnes_exclues": [],
+      "licence": "Licence Ouverte v2.0",
+      "url": "https://static.data.gouv.fr/resources/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/20260830-020002/export-fiches-csv-2026-08-30.zip",
+      "date_source": "2026-08-30T02:00:13.328000+00:00",
+      "empreinte_sha256_source": "2d04e9b190cf42e9f7fb6021bf50470cfc0e3ca1b610d80e34514c9773271f21",
+      "empreinte_sha256": "bc7d24ff20d89225cd53c5341ca3965285cb2f4724ffdcdc86c79baee17df099"
+    },
+    {
+      "source": "france_travail_rome_naf",
+      "chemin_source": "external\\referentiels\\france_travail\\rome_naf.xlsx",
+      "chemin_sortie": "referentiels\\france_travail\\rome_naf.xlsx",
+      "lignes_source": -1,
+      "lignes_echantillon": -1,
+      "colonnes_retenues": [],
+      "colonnes_exclues": [],
+      "licence": "Licence Ouverte v2.0",
+      "url": "https://www.francetravail.org/files/live/sites/peorg/files/documents/Statistiques-et-analyses/Open-data/ROME/rome-arborescence-des-secteurs-naf-juin-2026.xlsx",
+      "date_source": "2026-08-30T08:08:43.579938+00:00",
+      "empreinte_sha256_source": "fe9ff07d755304473d8fba573b8fb64e92052b996b18846d1080b6af7e1a98e0",
+      "empreinte_sha256": "fe9ff07d755304473d8fba573b8fb64e92052b996b18846d1080b6af7e1a98e0"
     }
   ]
 }

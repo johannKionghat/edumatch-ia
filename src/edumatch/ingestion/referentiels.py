@@ -39,6 +39,7 @@ from pathlib import Path
 import requests
 
 from edumatch.config import Settings, get_settings
+from edumatch.ingestion import _referentiels_france_travail as france_travail
 from edumatch.ingestion import _referentiels_rncp as rncp
 from edumatch.ingestion._flux import (
     ecrire_manifeste,
@@ -203,21 +204,26 @@ def telecharger_tous(
     session: requests.Session | None = None,
     forcer: bool = False,
 ) -> list[ResultatTelechargementReferentiel]:
-    """Télécharge les jeux IDÉO puis l'export RNCP du jour, dans cet ordre.
+    """Télécharge IDÉO, puis les deux membres RNCP du jour, puis la table France Travail.
 
     Une session HTTP unique est réutilisée pour l'ensemble des appels, comme
-    pour Parcoursup et Sirene. La résolution de l'export RNCP (`_referentiels_rncp.
-    resoudre_ressource`) et son téléchargement (`_referentiels_rncp.telecharger`)
-    sont délégués au module dédié, pour la raison expliquée dans son
-    docstring : la mécanique d'un export quotidien archivé en ZIP n'a rien de
-    commun avec le téléchargement direct des jeux IDÉO.
+    pour Parcoursup et Sirene. La résolution et le téléchargement de chaque
+    source RNCP et France Travail sont délégués à leur module dédié
+    (`_referentiels_rncp`, `_referentiels_france_travail`) : la mécanique d'un
+    export quotidien archivé en ZIP, ou d'une ressource résolue par titre,
+    n'a rien de commun avec le téléchargement direct des jeux IDÉO.
     """
     settings = settings or get_settings()
     with session_http(session) as session_active:
         resultats = telecharger_tous_ideo(settings=settings, session=session_active, forcer=forcer)
         ressource_rncp = rncp.resoudre_ressource(settings=settings, session=session_active)
+        resultats.append(rncp.telecharger(ressource_rncp, settings=settings, session=session_active, forcer=forcer))
         resultats.append(
-            rncp.telecharger(ressource_rncp, settings=settings, session=session_active, forcer=forcer)
+            rncp.telecharger_rome(ressource_rncp, settings=settings, session=session_active, forcer=forcer)
+        )
+        ressource_ft = france_travail.resoudre_ressource(settings=settings, session=session_active)
+        resultats.append(
+            france_travail.telecharger(ressource_ft, settings=settings, session=session_active, forcer=forcer)
         )
         return resultats
 

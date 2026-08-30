@@ -72,18 +72,27 @@ Licence ODbL des jeux ONISEP (IDÉO) :
 
 from __future__ import annotations
 
-import csv
 import json
 import logging
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from hashlib import sha256
 from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
 from edumatch.config import Settings, load_settings
+from edumatch.ingestion._echantillons_communs import EchantillonResultat
+from edumatch.ingestion._echantillons_communs import ecrire_csv as _ecrire_csv
+from edumatch.ingestion._echantillons_communs import empreinte as _empreinte
+from edumatch.ingestion._echantillons_communs import indices_systematiques as _indices_systematiques
+from edumatch.ingestion._echantillons_communs import lire_csv as _lire_csv
+from edumatch.ingestion._echantillons_communs import manifeste_source as _manifeste_source
+from edumatch.ingestion.echantillons_referentiels import (
+    generer_echantillon_france_travail,
+    generer_echantillon_rncp,
+    generer_echantillon_rncp_rome,
+    generer_echantillons_ideo,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -123,70 +132,6 @@ FICHIERS_SIRENE_SANS_RESTRICTION: frozenset[str] = frozenset(
 )
 
 
-@dataclass(frozen=True)
-class EchantillonResultat:
-    """Trace de la génération d'un échantillon : source, méthode, taille, licence.
-
-    `url`, `date_source` et `empreinte_sha256_source` décrivent le fichier
-    d'origine (dans `data/raw/` ou `data/external/`, jamais versionnés) et
-    sont recopiés depuis les manifestes de collecte — voir `_provenance_*`
-    ci-dessous. Sans eux, un lecteur du dépôt qui n'a que `data/samples/`
-    ne peut pas remonter à la source publique exacte : le README l'affirmait
-    avant que ce champ n'existe, ce qui était faux.
-    """
-
-    source: str
-    chemin_source: Path
-    chemin_sortie: Path
-    lignes_source: int
-    lignes_echantillon: int
-    colonnes_retenues: list[str]
-    colonnes_exclues: list[str]
-    licence: str
-    url: str
-    date_source: str
-    empreinte_sha256_source: str
-    empreinte_sha256: str = field(repr=False)
-
-
-def _indices_systematiques(total: int, cible: int) -> list[int]:
-    """Indices d'un échantillonnage systématique à pas fixe, sans graine.
-
-    `pas = total // cible` : un index retenu tous les `pas`, à partir de 0.
-    Toujours le même résultat pour un `total` et un `cible` donnés — c'est ce
-    qui rend la génération reproductible sans avoir à fixer une graine
-    aléatoire.
-    """
-    if total <= 0 or cible <= 0:
-        return []
-    pas = max(total // cible, 1)
-    return list(range(0, total, pas))[:cible]
-
-
-def _empreinte(chemin: Path) -> str:
-    hachage = sha256()
-    with chemin.open("rb") as flux:
-        for bloc in iter(lambda: flux.read(1 << 20), b""):
-            hachage.update(bloc)
-    return hachage.hexdigest()
-
-
-def _manifeste_source(chemin: Path) -> dict:
-    """Lit un manifeste de collecte (`data/raw/**/manifeste.json`, `data/external/**/manifeste.json`).
-
-    Ces manifestes ne sont jamais versionnés (voir `.gitignore`) : c'est
-    précisément pourquoi leurs champs `url`, `date` et empreinte doivent être
-    recopiés dans le manifeste des échantillons, seul document de lignage
-    que le dépôt expose réellement à un lecteur.
-    """
-    if not chemin.exists():
-        raise FileNotFoundError(
-            f"Manifeste de collecte introuvable : {chemin}. "
-            "Régénérer la source avant de produire les échantillons."
-        )
-    return json.loads(chemin.read_text(encoding="utf-8"))
-
-
 def _provenance_parcoursup(settings: Settings, annee: int) -> dict[str, str]:
     manifeste = _manifeste_source(settings.raw_dir / "parcoursup" / "manifeste.json")
     entree = manifeste.get(str(annee))
@@ -209,32 +154,6 @@ def _provenance_sirene(settings: Settings, fichier: str) -> dict[str, str]:
     return {
         "url": entree["url"],
         "date_source": entree["date_publication_stock"],
-        "empreinte_sha256_source": entree["empreinte_sha256"],
-    }
-
-
-def _provenance_ideo(settings: Settings, nom_jeu: str) -> dict[str, str]:
-    manifeste = _manifeste_source(settings.external_dir / "referentiels" / "manifeste.json")
-    entree = manifeste.get(f"ideo:{nom_jeu}")
-    if entree is None:
-        raise KeyError(f"Aucune entrée pour ideo:{nom_jeu} dans le manifeste des référentiels.")
-    return {
-        "url": entree["url"],
-        "date_source": entree["date_telechargement"],
-        "empreinte_sha256_source": entree["empreinte_sha256"],
-    }
-
-
-def _provenance_rncp(settings: Settings, chemin_source: Path) -> dict[str, str]:
-    manifeste = _manifeste_source(settings.external_dir / "referentiels" / "manifeste.json")
-    date_export = chemin_source.stem.removeprefix("rncp_")
-    cle = f"rncp:{date_export}"
-    entree = manifeste.get(cle)
-    if entree is None:
-        raise KeyError(f"Aucune entrée pour {cle} dans le manifeste des référentiels.")
-    return {
-        "url": entree["url"],
-        "date_source": entree["date_publication"],
         "empreinte_sha256_source": entree["empreinte_sha256"],
     }
 
@@ -268,29 +187,6 @@ def _echantillonner_parquet(
             break
     table = pa.concat_tables(morceaux) if morceaux else pa.table({c: [] for c in colonnes})
     return table, total
-
-
-def _lire_csv(chemin: Path, encodage: str, delimiteur: str) -> tuple[list[str], list[list[str]]]:
-    """Lit un CSV avec le module `csv` — jamais `wc -l` ni un simple `split("\\n")`.
-
-    Nécessaire pour le RNCP : ses intitulés de certification contiennent des
-    retours à la ligne à l'intérieur de champs entre guillemets. Un comptage
-    par ligne physique s'y est déjà trompé une fois sur ce projet.
-    """
-    with chemin.open("r", encoding=encodage, newline="") as flux:
-        lecteur = csv.reader(flux, delimiter=delimiteur)
-        lignes = list(lecteur)
-    if not lignes:
-        return [], []
-    return lignes[0], lignes[1:]
-
-
-def _ecrire_csv(chemin: Path, entete: list[str], lignes: list[list[str]], delimiteur: str) -> None:
-    chemin.parent.mkdir(parents=True, exist_ok=True)
-    with chemin.open("w", encoding="utf-8", newline="") as flux:
-        ecrivain = csv.writer(flux, delimiter=delimiteur, quoting=csv.QUOTE_MINIMAL)
-        ecrivain.writerow(entete)
-        ecrivain.writerows(lignes)
 
 
 def generer_echantillon_parcoursup(settings: Settings) -> list[EchantillonResultat]:
@@ -376,72 +272,6 @@ def generer_echantillons_sirene(settings: Settings) -> list[EchantillonResultat]
     return resultats
 
 
-def generer_echantillons_ideo(settings: Settings) -> list[EchantillonResultat]:
-    """Un échantillon par jeu IDÉO — ODbL : attribution et partage à l'identique documentés dans le README."""
-    cfg = settings.donnees.referentiels.ideo
-    cible = settings.donnees.echantillons_test.lignes_par_jeu_ideo
-    resultats: list[EchantillonResultat] = []
-    for nom_jeu, jeu_cfg in cfg.jeux.items():
-        source = settings.external_dir / "referentiels" / "ideo" / f"{nom_jeu}.csv"
-        if not source.exists():
-            LOGGER.warning("IDÉO %s introuvable, jeu ignoré : %s", nom_jeu, source)
-            continue
-        # utf-8-sig plutôt que l'utf-8 déclaré en configuration : robuste à un
-        # BOM éventuel en tête de fichier (présent sur ces exports), sans le
-        # recopier dans l'échantillon écrit.
-        entete, lignes = _lire_csv(source, "utf-8-sig", jeu_cfg.delimiteur)
-        indices = _indices_systematiques(len(lignes), cible)
-        lignes_retenues = [lignes[i] for i in indices]
-        sortie = settings.samples_dir / "referentiels" / "ideo" / f"{nom_jeu}.csv"
-        _ecrire_csv(sortie, entete, lignes_retenues, jeu_cfg.delimiteur)
-        resultats.append(
-            EchantillonResultat(
-                source=f"ideo_{nom_jeu}",
-                chemin_source=source,
-                chemin_sortie=sortie,
-                lignes_source=len(lignes),
-                lignes_echantillon=len(lignes_retenues),
-                colonnes_retenues=entete,
-                colonnes_exclues=[],
-                licence=jeu_cfg.licence,
-                empreinte_sha256=_empreinte(sortie),
-                **_provenance_ideo(settings, nom_jeu),
-            )
-        )
-    return resultats
-
-
-def generer_echantillon_rncp(settings: Settings) -> list[EchantillonResultat]:
-    """Un échantillon du dernier export RNCP téléchargé — Licence Ouverte, pas de contrainte ODbL."""
-    cfg = settings.donnees.referentiels.rncp
-    dossier_rncp = settings.external_dir / "referentiels" / "rncp"
-    exports = sorted(dossier_rncp.glob("rncp_*.csv")) if dossier_rncp.exists() else []
-    if not exports:
-        LOGGER.warning("Aucun export RNCP trouvé dans %s, source ignorée.", dossier_rncp)
-        return []
-    source = exports[-1]  # le plus récent, tri lexicographique = tri chronologique (AAAA-MM-JJ)
-    cible = settings.donnees.echantillons_test.lignes_rncp
-    entete, lignes = _lire_csv(source, cfg.encodage, cfg.delimiteur)
-    indices = _indices_systematiques(len(lignes), cible)
-    lignes_retenues = [lignes[i] for i in indices]
-    sortie = settings.samples_dir / "referentiels" / "rncp" / "rncp_echantillon.csv"
-    _ecrire_csv(sortie, entete, lignes_retenues, cfg.delimiteur)
-    return [
-        EchantillonResultat(
-            source="rncp",
-            chemin_source=source,
-            chemin_sortie=sortie,
-            lignes_source=len(lignes),
-            lignes_echantillon=len(lignes_retenues),
-            colonnes_retenues=entete,
-            colonnes_exclues=[],
-            licence=cfg.licence,
-            empreinte_sha256=_empreinte(sortie),
-            **_provenance_rncp(settings, source),
-        )
-    ]
-
-
 def _ecrire_manifeste(settings: Settings, resultats: list[EchantillonResultat]) -> Path:
     """Consigne provenance, méthode et licence de chaque échantillon — le lignage de `data/samples/`."""
     manifeste = {
@@ -485,6 +315,8 @@ def generer_tous_les_echantillons(settings: Settings | None = None) -> list[Echa
     resultats += generer_echantillons_sirene(parametres)
     resultats += generer_echantillons_ideo(parametres)
     resultats += generer_echantillon_rncp(parametres)
+    resultats += generer_echantillon_rncp_rome(parametres)
+    resultats += generer_echantillon_france_travail(parametres)
     _ecrire_manifeste(parametres, resultats)
     return resultats
 

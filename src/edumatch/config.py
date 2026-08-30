@@ -172,6 +172,9 @@ class RncpConfig(_Strict):
     prefixe_ressource: str  # préfixe du titre des ressources d'export quotidien
     format_ressource: str  # "zip" : l'export est distribué sous forme d'archive
     nom_fichier_gabarit: str  # motif (glob) du CSV standard à l'intérieur de l'archive
+    # E18 : deuxième membre de la même archive, la correspondance fiche RNCP
+    # -> codes ROME (voir ingestion/_referentiels_rncp.telecharger_rome).
+    nom_fichier_rome_gabarit: str
     encodage: str
     delimiteur: str
     licence: str
@@ -187,9 +190,38 @@ class RncpConfig(_Strict):
         return valeur
 
 
+class FranceTravailConfig(_Strict):
+    """Résolution de la table de correspondance ROME/NAF de France Travail (E18).
+
+    Contrairement à Sirene et RNCP, ce n'est pas un export périodique : la
+    ressource existe en permanence dans le catalogue data.gouv, mais son nom
+    de fichier change à chaque révision du ROME (ex. suffixe "juin-2026"),
+    d'où la résolution par sous-chaîne de titre plutôt qu'un nom fixe —
+    aucune URL de fichier n'est codée en dur, seul l'identifiant du jeu de
+    données et le gabarit du catalogue le sont.
+    """
+
+    jeu_de_donnees: str
+    url_catalogue_gabarit: str  # gabarit vers l'API data.gouv, {jeu_de_donnees} à substituer
+    sous_chaine_titre_ressource: str  # sous-chaîne du titre identifiant la ressource ROME/NAF
+    format_ressource: str  # "xlsx" : seul format publié pour cette table
+    licence: str
+
+    @field_validator("url_catalogue_gabarit")
+    @classmethod
+    def _gabarit_contient_le_parametre_jeu_de_donnees(cls, valeur: str) -> str:
+        if "{jeu_de_donnees}" not in valeur:
+            raise ValueError(
+                "donnees.referentiels.france_travail.url_catalogue_gabarit doit "
+                "contenir le paramètre '{jeu_de_donnees}' à substituer."
+            )
+        return valeur
+
+
 class ReferentielsConfig(_Strict):
     ideo: IdeoConfig
     rncp: RncpConfig
+    france_travail: FranceTravailConfig
 
 
 class EchantillonsTestConfig(_Strict):

@@ -37,6 +37,25 @@ def test_ecriture_atomique_renomme_le_fichier_temporaire_a_la_reussite(tmp_path:
     assert not chemin.with_suffix(chemin.suffix + ".part").exists()
 
 
+def test_ecriture_atomique_en_mode_texte_ecrit_en_utf8_meme_sans_lencoder_de_la_plateforme(tmp_path: Path) -> None:
+    """Reproduit le bug réel : un manifeste portant un accent devait s'écrire en UTF-8, pas cp1252.
+
+    Sans le correctif, cette écriture réussit sous Windows (cp1252 sait
+    encoder un accent) mais produit des octets différents de ceux qu'une
+    relecture en UTF-8 explicite (`lire_manifeste`) attend — et échoue
+    franchement sous une configuration où la plateforme par défaut ne sait
+    pas encoder le caractère du tout.
+    """
+    chemin = tmp_path / "manifeste.json"
+
+    with ecriture_atomique(chemin, mode="w") as flux:
+        flux.write('{"titre": "Les tables de correspondance ROME / autres référentiels"}')
+
+    assert chemin.read_bytes().decode("utf-8") == (
+        '{"titre": "Les tables de correspondance ROME / autres référentiels"}'
+    )
+
+
 def test_ecriture_atomique_ne_laisse_aucun_fichier_apres_une_exception(tmp_path: Path) -> None:
     chemin = tmp_path / "fichier.txt"
 

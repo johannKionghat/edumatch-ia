@@ -25,16 +25,29 @@ from edumatch.ingestion.referentiels import telecharger_tous
 URL_IDEO_FORMATIONS = "https://exemple.test/ideo/formations.csv"
 URL_CATALOGUE_RNCP = "https://exemple.test/api/1/datasets/repertoire-national-des-certifications-professionnelles-et-repertoire-specifique/"
 URL_ZIP_RNCP = "https://exemple.test/export-fiches-csv-2026-08-29.zip"
+URL_CATALOGUE_FT = "https://exemple.test/api/1/datasets/58da857388ee384902e505f5/"
+URL_XLSX_FT = "https://exemple.test/rome-arborescence-des-secteurs-naf.xlsx"
 
 CONTENU_IDEO_UTF8 = '"code";"libellé"\n"A01";"formation générale"\n'.encode("utf-8")
 NOM_CSV_STANDARD = "export_fiches_CSV_Standard_2026_08_29.csv"
+NOM_CSV_ROME = "export_fiches_CSV_Rome_2026_08_29.csv"
 CONTENU_RNCP_UTF8 = '"Id_Fiche";"Intitule"\n"RNCP1";"Assistant(e) en comptabilité"\n'.encode("utf-8")
+CONTENU_ROME_UTF8 = '"Numero_Fiche";"Codes_Rome_Code"\n"RNCP1";"M1607"\n'.encode("utf-8")
+
+
+def _contenu_xlsx_minimal() -> bytes:
+    """Un xlsx n'est qu'un ZIP : suffisant pour passer le contrôle de contrat du connecteur."""
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(tampon, mode="w") as archive:
+        archive.writestr("[Content_Types].xml", "<Types/>")
+    return tampon.getvalue()
 
 
 def _zip_rncp() -> bytes:
     tampon = io.BytesIO()
     with zipfile.ZipFile(tampon, mode="w") as archive:
         archive.writestr(NOM_CSV_STANDARD, CONTENU_RNCP_UTF8)
+        archive.writestr(NOM_CSV_ROME, CONTENU_ROME_UTF8)
     return tampon.getvalue()
 
 
@@ -46,6 +59,12 @@ CATALOGUE_RNCP = {
             "url": URL_ZIP_RNCP,
             "last_modified": "2026-08-29T02:00:12.883000+00:00",
         }
+    ]
+}
+
+CATALOGUE_FT = {
+    "resources": [
+        {"title": "Les tables de correspondance ROME / autres référentiels - ROME/NAF", "format": "xlsx", "url": URL_XLSX_FT}
     ]
 }
 
@@ -113,6 +132,10 @@ class SessionFacticeCombinee:
             return _ReponseJsonRncp(CATALOGUE_RNCP)
         if url == URL_ZIP_RNCP:
             return _ReponseZipRncp(_zip_rncp())
+        if url == URL_CATALOGUE_FT:
+            return _ReponseJsonRncp(CATALOGUE_FT)
+        if url == URL_XLSX_FT:
+            return _ReponseFluxIdeo(_contenu_xlsx_minimal())
         raise AssertionError(f"URL inattendue appelée par telecharger_tous : {url}")
 
 
@@ -131,10 +154,20 @@ def test_telecharger_tous_enchaine_ideo_puis_rncp_dans_une_seule_session(setting
 
     resultats = telecharger_tous(settings=settings_test, session=session)
 
-    assert [r.source for r in resultats] == ["ideo", "rncp"], (
-        "l'ordre annoncé par le docstring de telecharger_tous est IDÉO puis RNCP"
+    assert [r.source for r in resultats] == ["ideo", "rncp", "rncp", "france_travail"], (
+        "l'ordre annoncé par le docstring de telecharger_tous est IDÉO, RNCP (standard puis "
+        "ROME), puis France Travail"
     )
-    assert [r.jeu for r in resultats] == ["formations", "rncp"]
+    assert [r.jeu for r in resultats] == ["formations", "rncp", "rncp_rome", "france_travail_rome_naf"]
     assert resultats[0].chemin.read_bytes() == CONTENU_IDEO_UTF8
     assert resultats[1].chemin.read_bytes() == CONTENU_RNCP_UTF8
-    assert session.urls_appelees == [URL_IDEO_FORMATIONS, URL_CATALOGUE_RNCP, URL_ZIP_RNCP]
+    assert resultats[2].chemin.read_bytes() == CONTENU_ROME_UTF8
+    assert resultats[3].chemin.read_bytes() == _contenu_xlsx_minimal()
+    assert session.urls_appelees == [
+        URL_IDEO_FORMATIONS,
+        URL_CATALOGUE_RNCP,
+        URL_ZIP_RNCP,
+        URL_ZIP_RNCP,  # deuxième téléchargement de la même archive pour le membre ROME — voir _telecharger_membre
+        URL_CATALOGUE_FT,
+        URL_XLSX_FT,
+    ]

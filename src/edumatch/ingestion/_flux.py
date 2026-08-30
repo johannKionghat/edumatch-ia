@@ -149,10 +149,22 @@ def ecriture_atomique(chemin: Path, mode: str = "wb") -> Iterator[IO]:
     Générique par construction : sert aussi bien à écrire un CSV en flux
     (`mode="wb"`, blocs successifs) qu'un manifeste JSON (`mode="w"`, un seul
     `write`).
+
+    En mode texte (tout `mode` sans "b"), l'encodage est explicitement UTF-8.
+    Laisser Python choisir celui de la plateforme (`cp1252` par défaut sous
+    Windows) ne fait pas échouer l'écriture — cp1252 sait encoder un accent —
+    mais produit des octets que la lecture correspondante ne sait pas relire :
+    `lire_manifeste` déclare déjà `encoding="utf-8"`. L'écriture et la lecture
+    d'un même fichier ne partageaient donc pas le même contrat, et le défaut
+    restait silencieux jusqu'à la relecture. Constaté sur un titre de
+    ressource France Travail contenant un accent (« référentiels »). Sous une
+    plateforme dont l'encodage par défaut ne saurait pas encoder le caractère,
+    l'écriture échouerait franchement — le même défaut se manifeste donc
+    différemment selon le poste, ce qui est la pire des deux situations.
     """
     chemin.parent.mkdir(parents=True, exist_ok=True)
     chemin_temporaire = chemin.with_suffix(chemin.suffix + ".part")
-    flux = chemin_temporaire.open(mode)
+    flux = chemin_temporaire.open(mode, encoding=None if "b" in mode else "utf-8")
     try:
         yield flux
     except Exception:

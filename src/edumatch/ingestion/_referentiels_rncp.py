@@ -54,6 +54,7 @@ from edumatch.ingestion._referentiels_communs import (
     ResultatTelechargementReferentiel,
     chemin_manifeste,
     dossier_referentiels,
+    valider_forme_catalogue,
     verifier_encodage,
 )
 
@@ -80,27 +81,8 @@ def _url_catalogue(settings: Settings) -> str:
 
 
 def _ressources_du_catalogue(catalogue: object, url_catalogue: str) -> list[dict]:
-    """Valide la forme de la réponse du catalogue, à l'identique de Sirene : rien n'est déduit d'un champ absent."""
-    if not isinstance(catalogue, dict):
-        raise ErreurCatalogueReferentiels(
-            f"Réponse du catalogue RNCP ({url_catalogue}) mal formée : un objet JSON "
-            f"était attendu à la racine, reçu {type(catalogue).__name__}."
-        )
-    ressources = catalogue.get("resources")
-    if ressources is None:
-        ressources = []
-    if not isinstance(ressources, list):
-        raise ErreurCatalogueReferentiels(
-            f"Réponse du catalogue RNCP ({url_catalogue}) mal formée : le champ "
-            f"'resources' doit être une liste, reçu {type(ressources).__name__}."
-        )
-    for index, ressource in enumerate(ressources):
-        if not isinstance(ressource, dict):
-            raise ErreurCatalogueReferentiels(
-                f"Réponse du catalogue RNCP ({url_catalogue}) mal formée : la ressource "
-                f"à l'index {index} doit être un objet JSON, reçu {type(ressource).__name__}."
-            )
-    return ressources
+    """Valide la forme de la réponse du catalogue — voir `valider_forme_catalogue`, partagée avec France Travail."""
+    return valider_forme_catalogue(catalogue, url_catalogue, "RNCP")
 
 
 def resoudre_ressource(settings: Settings, session: requests.Session | None = None) -> RessourceRncp:
@@ -162,6 +144,16 @@ def chemin_destination(settings: Settings, date_publication_jour: str) -> Path:
     return dossier_referentiels(settings) / "rncp" / f"rncp_{date_publication_jour}.csv"
 
 
+def chemin_destination_rome(settings: Settings, date_publication_jour: str) -> Path:
+    """Fichier de correspondance fiche RNCP -> codes ROME, membre distinct de la même archive.
+
+    Utilisé par E18 pour relier une certification (code RNCP) à un ou
+    plusieurs métiers ROME. Une ligne par couple (fiche, code ROME) : une
+    fiche RNCP peut couvrir plusieurs métiers.
+    """
+    return dossier_referentiels(settings) / "rncp" / f"rncp_rome_{date_publication_jour}.csv"
+
+
 def _extraire_csv_standard(contenu_zip: bytes, motif_nom: str, url: str) -> bytes:
     """Extrait, depuis l'archive téléchargée en mémoire, le CSV nommé selon `motif_nom` (glob).
 
@@ -220,11 +212,11 @@ def _extraire_csv_standard(contenu_zip: bytes, motif_nom: str, url: str) -> byte
 
 
 def _resultat_depuis_manifeste(
-    chemin: Path, entree: dict[str, object], telecharge: bool
+    jeu: str, chemin: Path, entree: dict[str, object], telecharge: bool
 ) -> ResultatTelechargementReferentiel:
     return ResultatTelechargementReferentiel(
         source="rncp",
-        jeu="rncp",
+        jeu=jeu,
         url=str(entree["url"]),
         chemin=chemin,
         telecharge=telecharge,
@@ -237,38 +229,63 @@ def _resultat_depuis_manifeste(
     )
 
 
-def telecharger(
+def _telecharger_membre(
     ressource: RessourceRncp,
     settings: Settings,
-    session: requests.Session | None = None,
-    forcer: bool = False,
+    *,
+    jeu: str,
+    motif_nom: str,
+    chemin_final: Path,
+    session: requests.Session | None,
+    forcer: bool,
 ) -> ResultatTelechargementReferentiel:
-    """Télécharge l'archive RNCP résolue, extrait le CSV standard, ou constate qu'il est déjà présent.
+    """Télécharge l'archive RNCP résolue et en extrait le membre `motif_nom`, ou constate qu'il est déjà présent.
+
+    Factorise ce que le CSV standard (`telecharger`) et le fichier de codes
+    ROME par fiche (`telecharger_rome`) partagent : les deux sont des membres
+    de la même archive quotidienne, avec la même mécanique d'idempotence par
+    date de publication. Seuls le motif du membre recherché, le chemin de
+    destination et le préfixe de la clé de manifeste diffèrent d'un appelant
+    à l'autre — factoriser évite que le contrat d'idempotence (déjà testé
+    pour le CSV standard) diverge silencieusement entre les deux membres.
+
+    Compromis assumé : chaque membre déclenche son propre téléchargement de
+    l'archive complète (~9,6 Mo au 30/08/2026) plutôt qu'un seul
+    téléchargement partagé entre les deux extractions. L'export n'est
+    consommé qu'une fois par jour ; doubler ce volume ne pèse pas assez pour
+    justifier de complexifier l'appelant (`referentiels.telecharger_tous`)
+    avec un cache d'octets en mémoire entre deux appels indépendants. Le
+    seuil qui ferait reconsidérer ce choix : une archive dont la taille
+    imposerait un flux plutôt qu'un chargement en mémoire (voir la limite
+    documentée dans `_extraire_csv_standard`), ou une fréquence de collecte
+    plus élevée qu'une fois par jour.
 
     Raises:
         ErreurReseauReferentiels: échec réseau ou HTTP — transitoire.
-        ErreurCatalogueReferentiels: archive mal formée, membre CSV absent ou
+        ErreurCatalogueReferentiels: archive mal formée, membre absent ou
             ambigu — définitif.
-        ErreurContratReferentiels: le CSV extrait ne décode pas selon
+        ErreurContratReferentiels: le fichier extrait ne décode pas selon
             l'encodage déclaré — définitif.
     """
     config = settings.donnees.referentiels.rncp
-    chemin_final = chemin_destination(settings, ressource.date_publication_jour)
     chemin_manif = chemin_manifeste(settings)
 
     manifeste = lire_manifeste(chemin_manif)
-    cle = f"rncp:{ressource.date_publication_jour}"
+    cle = f"{jeu}:{ressource.date_publication_jour}"
     entree_existante = manifeste.get(cle)
 
     if not forcer and fichier_intact(chemin_final, entree_existante):
         LOGGER.info(
-            "RNCP du %s déjà présent et intact (%s) : téléchargement évité.",
+            "%s du %s déjà présent et intact (%s) : téléchargement évité.",
+            jeu,
             ressource.date_publication_jour,
             chemin_final,
         )
-        return _resultat_depuis_manifeste(chemin_final, entree_existante, telecharge=False)
+        return _resultat_depuis_manifeste(jeu, chemin_final, entree_existante, telecharge=False)
 
-    LOGGER.info("Téléchargement de l'export RNCP du %s depuis %s", ressource.date_publication_jour, ressource.url)
+    LOGGER.info(
+        "Téléchargement de l'archive RNCP (%s) du %s depuis %s", jeu, ressource.date_publication_jour, ressource.url
+    )
     with session_http(session) as session_active:
         try:
             reponse = session_active.get(ressource.url, timeout=DELAI_ATTENTE_SECONDES_DEFAUT)
@@ -279,11 +296,11 @@ def telecharger(
             ) from erreur
         contenu_zip = reponse.content
 
-    contenu_csv = _extraire_csv_standard(contenu_zip, config.nom_fichier_gabarit, ressource.url)
+    contenu_csv = _extraire_csv_standard(contenu_zip, motif_nom, ressource.url)
     with ecriture_atomique(chemin_final, mode="wb") as flux:
         flux.write(contenu_csv)
 
-    verifier_encodage(chemin_final, config.encodage, f"RNCP du {ressource.date_publication_jour}")
+    verifier_encodage(chemin_final, config.encodage, f"RNCP ({jeu}) du {ressource.date_publication_jour}")
 
     taille_octets = chemin_final.stat().st_size
     empreinte = empreinte_sha256(chemin_final)
@@ -301,4 +318,53 @@ def telecharger(
     }
     ecrire_manifeste(chemin_manif, manifeste)
 
-    return _resultat_depuis_manifeste(chemin_final, manifeste[cle], telecharge=True)
+    return _resultat_depuis_manifeste(jeu, chemin_final, manifeste[cle], telecharge=True)
+
+
+def telecharger(
+    ressource: RessourceRncp,
+    settings: Settings,
+    session: requests.Session | None = None,
+    forcer: bool = False,
+) -> ResultatTelechargementReferentiel:
+    """Télécharge l'archive RNCP résolue, extrait le CSV standard, ou constate qu'il est déjà présent.
+
+    Raises: voir `_telecharger_membre`.
+    """
+    config = settings.donnees.referentiels.rncp
+    return _telecharger_membre(
+        ressource,
+        settings,
+        jeu="rncp",
+        motif_nom=config.nom_fichier_gabarit,
+        chemin_final=chemin_destination(settings, ressource.date_publication_jour),
+        session=session,
+        forcer=forcer,
+    )
+
+
+def telecharger_rome(
+    ressource: RessourceRncp,
+    settings: Settings,
+    session: requests.Session | None = None,
+    forcer: bool = False,
+) -> ResultatTelechargementReferentiel:
+    """Télécharge le fichier de correspondance fiche RNCP -> codes ROME, membre de la même archive.
+
+    Maillon central d'E18 : chaque ligne associe un `Numero_Fiche` RNCP à un
+    `Codes_Rome_Code` (une fiche peut apparaître sur plusieurs lignes, un
+    code ROME par ligne). Sans ce fichier, aucune fiche RNCP ne peut être
+    reliée à un métier ROME — le CSV standard n'en porte aucune trace.
+
+    Raises: voir `_telecharger_membre`.
+    """
+    config = settings.donnees.referentiels.rncp
+    return _telecharger_membre(
+        ressource,
+        settings,
+        jeu="rncp_rome",
+        motif_nom=config.nom_fichier_rome_gabarit,
+        chemin_final=chemin_destination_rome(settings, ressource.date_publication_jour),
+        session=session,
+        forcer=forcer,
+    )

@@ -48,8 +48,15 @@ donnees:
       prefixe_ressource: "export-fiches-csv-"
       format_ressource: zip
       nom_fichier_gabarit: "export_fiches_CSV_Standard_*.csv"
+      nom_fichier_rome_gabarit: "export_fiches_CSV_Rome_*.csv"
       encodage: utf-8
       delimiteur: ";"
+      licence: "Licence Ouverte v2.0"
+    france_travail:
+      jeu_de_donnees: "58da857388ee384902e505f5"
+      url_catalogue_gabarit: "https://exemple.test/api/1/datasets/{jeu_de_donnees}/"
+      sous_chaine_titre_ressource: "ROME/NAF"
+      format_ressource: xlsx
       licence: "Licence Ouverte v2.0"
   echantillons_test:
     lignes_par_millesime_parcoursup: 5

@@ -77,12 +77,32 @@ donnees:
       prefixe_ressource: "export-fiches-csv-"
       format_ressource: zip
       nom_fichier_gabarit: "export_fiches_CSV_Standard_*.csv"
+      # E18 : membre de la même archive, fiche RNCP -> codes ROME. Vérifié le
+      # 2026-08-30 en listant les membres réels de l'archive du jour (voir
+      # docs/sous-docs-projets/01-donnees) : présent aux côtés du CSV
+      # standard, du fichier Nsf, et de sept autres membres non retenus ici.
+      nom_fichier_rome_gabarit: "export_fiches_CSV_Rome_*.csv"
       # Vérifié le 2026-08-29 par décodage effectif du fichier téléchargé :
       # l'export est en UTF-8. À surveiller à chaque exécution (voir
       # ingestion/referentiels.py, qui rejette explicitement un fichier qui
       # ne décoderait pas selon cette valeur plutôt que de la supposer figée.
       encodage: utf-8
       delimiteur: ";"
+      licence: "Licence Ouverte v2.0"
+    # France Travail (ex-Pôle emploi) : la seule table publique trouvée qui
+    # relie directement un code ROME à la nomenclature NAF — au niveau
+    # division (2 chiffres), pas à la sous-classe complète utilisée par
+    # Sirene. Vérifiée le 2026-08-30 : dataset data.gouv
+    # 58da857388ee384902e505f5, ressource "Les tables de correspondance
+    # ROME / autres référentiels - ROME/NAF", licence Licence Ouverte
+    # ("fr-lo" dans le catalogue). Voir naf_rome_formation.py pour la mesure
+    # de couverture et la troncature du NAF Sirene à sa division.
+    france_travail:
+      jeu_de_donnees: 58da857388ee384902e505f5
+      url_catalogue_gabarit: >-
+        https://www.data.gouv.fr/api/1/datasets/{jeu_de_donnees}/
+      sous_chaine_titre_ressource: "ROME/NAF"
+      format_ressource: xlsx
       licence: "Licence Ouverte v2.0"
   # Tailles cibles des échantillons versionnés de data/samples/ (E08) — un
   # jeu figé, distinct de `echantillonnage` ci-dessus, qui ne sert qu'à
