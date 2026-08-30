@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 17 / 46 étapes validées.**
+**État : 18 / 46 étapes validées.**
 
 ---
 
@@ -607,7 +607,7 @@ décalage d'une session pour le reste. Clôture la phase exploratoire.
 | E15 | dbt — bronze vers silver | ✅ validée | 2026-08-29 | `95248e6` |
 | E16 | dbt — modèle en étoile | ✅ validée | 2026-08-30 | `cae2485` |
 | E17 | Job Spark Sirene | ✅ validée | 2026-08-30 | `8ebe613` |
-| E18 | Table NAF ↔ ROME ↔ formation | ⬜ | | |
+| E18 | Table NAF ↔ ROME ↔ formation | ✅ validée | 2026-08-30 | `2439d26` |
 | E19 | Calcul du label | ⬜ | | |
 | E20 | Construction des variables | ⬜ | | |
 
@@ -790,6 +790,76 @@ développement).
   identifié figure parmi les 20 501 non diffusibles non filtrés à cette
   étape. Reportée dans `reste-a-faire.md`, à trancher au croisement de la
   protection des données et de la construction du score (E28).
+
+**E18 — ce qui a été vérifié**
+- `src/edumatch/referentiel/naf_rome_formation.py` assemble trois sources
+  publiques réelles pour relier une formation IDÉO (ONISEP) à une division
+  NAF : formation IDÉO → fiche RNCP → code(s) ROME (via le membre ROME de
+  l'archive RNCP quotidienne) → division NAF (via la table France Travail
+  ROME/NAF)
+- Couverture mesurée maillon par maillon, jamais un taux global unique :
+  formations IDÉO avec code RNCP renseigné 3 857 / 5 869 (65,72 %) · fiches
+  de l'export ROME couvrant au moins un code ROME 24 424 / 24 424 (100 %) ·
+  formations avec RNCP rattachées à un ROME 3 605 / 3 857 (93,47 %) · codes
+  ROME de l'export RNCP couverts par la table France Travail 528 / 572
+  (92,31 %) · **chaîne complète formation IDÉO jusqu'à une division NAF
+  3 605 / 5 869 (61,42 %)** · lignes rattachées à une certification active
+  25 213 / 26 358 (95,66 %) · formations distinctes rattachées à une
+  certification active 3 412 / 3 605 (94,65 %)
+- Table produite : `data/processed/referentiel/naf_rome_formation.csv`,
+  **26 358 lignes, 8 colonnes**, 4 887 629 octets. État des certifications
+  exposé par une colonne (`rncp_actif`), jamais filtré : 25 213 lignes
+  actives, 1 145 radiées (4,3 %), 0 valeur nulle — le choix d'exclure les
+  radiées relève du calcul des débouchés (E28)
+- Suite de tests complète du dépôt : **309 tests, 309 succès** (278 avant
+  cette étape)
+
+**E18 — deux manques déclarés, pas comblés**
+1. Aucune formation Parcoursup n'est reliée à cette chaîne : vérifié sur les
+   huit millésimes et sur `dim_formation.parquet`, aucun ne porte de code
+   RNCP, NSF ou ROME. Seul un appariement textuel des libellés serait
+   possible, non arbitré ici — c'est exactement le type de correspondance
+   ambiguë que ce projet s'interdit de trancher sans mesure.
+2. La correspondance ROME/NAF n'existe qu'au niveau division (2 chiffres),
+   quand l'agrégat Sirene (E17) est à la sous-classe (5 caractères) : le
+   rattachement à un établissement réel perd la granularité fine de
+   l'activité. Aucune source publique ne relie ROME à la sous-classe.
+
+**E18 — un fait de qualité de source, rapporté tel quel**
+Contrôlé jusqu'à sa source : « BT métiers de la musique » (RNCP 919) ressort
+rattaché au code ROME D1211 « Vente en articles de sport et loisirs ». C'est
+l'export officiel du RNCP lui-même qui attribue ce code (et L1201 « Danse »)
+à cette fiche. La jointure est fidèle ; c'est la source qui est bruitée —
+une limite de la donnée publique, pas un défaut du code produit ici.
+
+**E18 — deux effets de bord, à mentionner honnêtement**
+- Le connecteur d'ingestion des référentiels (E07) a été étendu : un nouveau
+  membre de l'archive RNCP (le CSV RNCP↔ROME) et une nouvelle source
+  (France Travail, table ROME/NAF) s'ajoutent à ce qu'il téléchargeait déjà.
+  Le module qui génère les échantillons de test (`echantillons.py`) a dû
+  être scindé pour rester sous la limite de taille de fichier du projet,
+  cet ajout l'ayant fait dépasser le seuil.
+- Un bug d'encodage a été corrigé dans l'écriture atomique partagée par tout
+  le projet (`_flux.ecriture_atomique`) : en mode texte, l'encodage n'était
+  pas imposé et Python retombait sur celui de la plateforme (`cp1252` par
+  défaut sous Windows) — un défaut silencieux à l'écriture, révélé
+  seulement à la relecture (la lecture, elle, déclare explicitement
+  `utf-8`). Constaté sur un titre de ressource France Travail contenant un
+  accent. Corrigé en imposant `utf-8` en mode texte, avec un test de
+  non-régression qui reproduit le cas exact.
+
+**E18 — décision prise** : ADR 0017 — construire la chaîne sur trois sources
+réelles et déclarer le maillon Parcoursup manquant, plutôt que de l'apparier
+par libellés en texte libre. Seuil de bascule : la publication d'une table
+ROME↔NAF à la sous-classe, ou l'apparition d'un identifiant de certification
+dans un futur millésime Parcoursup.
+
+**E18 — question de gouvernance signalée, non tranchée**
+La table dérivée intègre des données IDÉO (ODbL) aux côtés de données RNCP et
+France Travail (Licence Ouverte v2.0). La clause de partage à l'identique de
+l'ODbL s'applique potentiellement si cette table est redistribuée telle
+quelle — signalé dans `01-donnees/sources.md`, à reprendre par le registre
+des sources (E40).
 
 ## Phase 4 — Modèle
 

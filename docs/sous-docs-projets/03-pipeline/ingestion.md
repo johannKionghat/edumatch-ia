@@ -1,6 +1,6 @@
 # Ingestion — les connecteurs
 
-**Dernière mise à jour** : 2026-08-29 (E08).
+**Dernière mise à jour** : 2026-08-30 (E18).
 
 Cette page couvre les trois connecteurs opérationnels à ce jour — Parcoursup,
 Sirene et référentiels — et les primitives qu'ils partagent. Elle sert de
@@ -12,6 +12,13 @@ stratégies de résolution d'URL » plus bas. Elle sert aussi au critère 3.6
 qui ne change jamais une fois publié (Parcoursup) au fichier réexporté chaque
 jour (RNCP).
 
+**Mise à jour du 2026-08-30 (E18)** : le volet référentiels s'est étendu de
+deux façons, décrites dans les sections dédiées plus bas — l'extraction d'un
+second membre de l'archive RNCP quotidienne, et une source nouvelle, la table
+France Travail ROME/NAF. Un correctif d'encodage touchant la primitive
+d'écriture atomique, commune à tout connecteur, est également décrit dans la
+section « Écriture atomique ».
+
 ## Ce qui existe
 
 | Fichier | Rôle |
@@ -20,8 +27,9 @@ jour (RNCP).
 | `src/edumatch/ingestion/parcoursup.py` | Connecteur Parcoursup : résolution d'URL par gabarit, orchestration des 8 millésimes |
 | `src/edumatch/ingestion/sirene.py` | Connecteur Sirene : résolution d'URL par interrogation du catalogue data.gouv, orchestration des 4 fichiers stock |
 | `src/edumatch/ingestion/referentiels.py` | Connecteur référentiels : point d'entrée public, volet IDÉO (URL fixe) |
-| `src/edumatch/ingestion/_referentiels_rncp.py` | Volet RNCP : résolution de l'export quotidien, extraction du CSV depuis l'archive ZIP |
-| `src/edumatch/ingestion/_referentiels_communs.py` | Vocabulaire d'erreur et primitives propres aux deux volets du connecteur référentiels |
+| `src/edumatch/ingestion/_referentiels_rncp.py` | Volet RNCP : résolution de l'export quotidien, extraction de **deux** membres depuis l'archive ZIP — le CSV standard et, depuis E18, le CSV de correspondance RNCP↔ROME |
+| `src/edumatch/ingestion/_referentiels_france_travail.py` | Volet France Travail (E18) : résolution par titre de ressource dans le catalogue, table de correspondance ROME/NAF |
+| `src/edumatch/ingestion/_referentiels_communs.py` | Vocabulaire d'erreur et primitives propres aux volets du connecteur référentiels |
 | `src/edumatch/ingestion/echantillons.py` | Génération de `data/samples/`, l'échantillon versionné des trois sources |
 
 ## Le connecteur Parcoursup
@@ -151,6 +159,56 @@ programmée à cadence quotidienne dans un DAG sur une longue durée — hors du
 périmètre de l'ingestion, qui garantit la disponibilité de l'instantané, pas
 sa purge. Détail complet, alternatives écartées et seuil de bascule : ADR
 0007.
+
+### RNCP — un second membre extrait de la même archive (E18)
+
+L'archive quotidienne RNCP contient dix fichiers ; le connecteur, jusqu'à
+E18, n'en extrayait qu'un seul, le CSV standard. Ce n'est pas une source
+nouvelle qui a été ajoutée, c'est une source déjà présente dans l'archive
+qu'on n'avait pas ouverte : le second membre, `rncp_rome_AAAA-MM-JJ.csv`,
+relie chaque fiche RNCP à un ou plusieurs codes ROME (`Numero_Fiche`,
+`Codes_Rome_Code`, `Codes_Rome_Libelle` — 3 colonnes), et sert de maillon
+central à la réconciliation NAF↔ROME↔formation (E18,
+`03-pipeline/reconciliation-naf-rome.md`). Sans lui, aucune fiche RNCP ne
+peut être reliée à un métier ROME.
+
+Le second membre suit exactement le même mécanisme d'idempotence que le
+premier — un fichier par date de publication, jamais écrasé — puisque les
+deux sont extraits de la même archive quotidienne. Mesuré sur l'export du
+2026-08-30 : `rncp_rome_2026-08-30.csv`, **4 353 036 octets**, Licence
+Ouverte v2.0 — même licence que le CSV standard de la même archive.
+
+Extraire le second membre déclenche un nouveau téléchargement complet de
+l'archive plutôt que de réutiliser en mémoire celle du premier : chaque appel
+au connecteur reste indépendant, l'archive n'étant consommée qu'une fois par
+jour, ce doublement de volume (~9,6 Mo) ne justifie pas de complexifier
+l'appelant avec un cache partagé entre deux extractions distinctes.
+
+### France Travail — une source nouvelle, résolue par titre (E18)
+
+Aucune table officielle ne relie directement un code NAF à un code ROME.
+France Travail publie, sur data.gouv, une table de correspondance ROME/NAF au
+sein du jeu de données ROME — ressource résolue à l'exécution par
+sous-chaîne de titre dans le catalogue (« Les tables de correspondance ROME /
+autres référentiels - ROME/NAF »), jamais par une URL en dur : le nom du
+fichier change à chaque édition du ROME (constaté :
+`rome-arborescence-des-secteurs-naf-juin-2026.xlsx`, **112 896 octets**,
+Licence Ouverte v2.0). C'est un cinquième cas de résolution d'URL, distinct
+des quatre déjà décrits plus haut : une requête au catalogue comme Sirene et
+RNCP, mais par titre plutôt que par nom de jeu ou par préfixe de ressource.
+
+Le fichier est un classeur Excel (xlsx), seul format publié pour cette table
+— pas de CSV alternatif au catalogue. Le contrat vérifié après téléchargement
+n'est donc pas un encodage de texte, comme pour IDÉO et RNCP, mais la
+validité du conteneur ZIP sous-jacent : un xlsx est un ZIP contenant au
+minimum `[Content_Types].xml`.
+
+**Un mécanisme d'idempotence différent de celui du RNCP.** Le RNCP est
+republié chaque jour, et l'idempotence porte donc sur la date de
+publication — voir la section dédiée plus haut. La table France Travail n'a
+aucune cadence de republication connue : l'idempotence porte ici sur
+l'empreinte SHA-256 du contenu, comme pour IDÉO — un nom de fichier fixe en
+configuration, retéléchargé seulement si son contenu a changé.
 
 `_correspond_au_fichier` sélectionne, parmi les ressources du catalogue,
 celle dont le titre porte exactement `Fichier {nom} -` : une correspondance
@@ -351,6 +409,18 @@ terminée avec succès (`os.replace`, atomique y compris sous Windows, où
 disque en cours de transfert laisse un `.part` orphelin, jamais un fichier
 tronqué sous le nom que le reste de la chaîne croirait complet — c'est ce qui
 protège l'immuabilité de `data/raw/`.
+
+**Correctif d'encodage (E18)** : en mode texte, cette primitive n'imposait
+pas l'encodage UTF-8 et laissait Python retenir celui de la plateforme
+(`cp1252` par défaut sous Windows). Ce défaut ne fait **pas** échouer
+l'écriture sous Windows — cp1252 sait encoder un accent — il produit des
+octets que la relecture en UTF-8 (déclarée explicitement par
+`lire_manifeste`) ne sait pas relire : le défaut est silencieux à l'écriture
+et ne se révèle qu'à la lecture. Constaté sur un titre de ressource France
+Travail contenant un accent (« référentiels »). Corrigé en imposant `utf-8`
+explicitement dès qu'un mode sans `b` est demandé ; test de non-régression
+en place
+(`test_ecriture_atomique_en_mode_texte_ecrit_en_utf8_meme_sans_lencoder_de_la_plateforme`).
 
 ## Le manifeste de traçabilité
 

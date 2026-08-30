@@ -508,6 +508,60 @@ donnée du modèle ne dépendra directement de cette fraîcheur (le RNCP sert de
 table de réconciliation NAF↔ROME↔formation à E18, recalculée à chaque
 exécution du pipeline, pas de latence critique).
 
+### C.3 — RNCP, membre ROME de l'archive quotidienne (E18)
+
+**Identifiant et accès** — même archive quotidienne que C.2, un membre
+distinct du CSV standard : `rncp_rome_2026-08-30.csv`, extrait de la même
+archive ZIP par un motif de nom, comme le CSV standard. Ce membre existait
+dans l'archive depuis le début, mais le connecteur de E07 n'en extrayait
+qu'un seul CSV sur les dix qu'elle contient — l'extension a été faite en E18,
+au moment où la réconciliation NAF↔ROME↔formation en a eu besoin.
+
+**Contenu** — 3 colonnes : `Numero_Fiche`, `Codes_Rome_Code`,
+`Codes_Rome_Libelle`. Une ligne par couple (fiche RNCP, code ROME) : une
+fiche peut couvrir plusieurs métiers.
+
+**Sortie mesurée, export du 2026-08-30** : **4 353 036 octets**, **24 424**
+fiches distinctes couvrant au moins un code ROME (100 % des fiches de cet
+export, par construction).
+
+**Licence** — Licence Ouverte v2.0 (Etalab), identique au CSV standard de la
+même archive (section C.2).
+
+### C.4 — France Travail, table de correspondance ROME/NAF (E18)
+
+**Identifiant et accès** — jeu de données data.gouv publié par France
+Travail, ressource résolue par sous-chaîne de titre (« Les tables de
+correspondance ROME / autres référentiels - ROME/NAF »), le nom de fichier
+changeant à chaque révision du ROME.
+
+**Fichier obtenu le 2026-08-30** :
+`rome-arborescence-des-secteurs-naf-juin-2026.xlsx`, **112 896 octets**.
+
+**Contenu** — un classeur Excel dont une feuille (« Secteur NAF ») porte une
+arborescence implicite : une ligne « division NAF » (2 chiffres) précède les
+lignes « code ROME » qui lui sont rattachées. La correspondance s'arrête à la
+**division NAF (2 chiffres)** — jamais à la sous-classe complète (5
+caractères) que porte le champ NAF de l'agrégat Sirene (E17).
+
+**Licence** — Licence Ouverte v2.0 (Etalab), même texte que Parcoursup,
+Sirene et RNCP.
+
+**Fréquence de mise à jour** — pas de cadence de republication connue
+(contrairement à Sirene, mensuel, et RNCP, quotidien) : l'idempotence du
+connecteur repose sur une empreinte SHA-256, pas sur une date de publication.
+
+### Note de gouvernance — la table dérivée E18 mêle deux régimes de licence
+
+`naf_rome_formation.csv` (E18) assemble IDÉO (ODbL, section C.1), le membre
+ROME et le CSV standard de l'archive RNCP (Licence Ouverte v2.0, sections
+C.2 et C.3) et la table France Travail ROME/NAF (Licence Ouverte v2.0,
+section C.4). Elle intègre des données IDÉO (le libellé de formation) : la
+clause de partage à l'identique de l'ODbL s'applique donc potentiellement à
+cette base dérivée si elle est redistribuée telle quelle. Cette question
+n'est pas tranchée ici — elle relève de la gouvernance (registre des
+sources, E40) et sera reprise à ce titre.
+
 ---
 
 ## Révision des chiffres retenus jusqu'ici
