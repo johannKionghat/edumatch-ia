@@ -345,6 +345,11 @@ equite:
   substituts_a_tester: [academie, etablissement_origine]
   seuil_impact_disparate: 0.80       # règle des quatre cinquièmes
 
+explicabilite:
+  top_n_figure: 15                   # variables affichées sur le diagramme d'importance globale (E25)
+  effectif_minimal_exemple: 30       # même plancher que l'analyse d'équité (E11) : sous ce seuil, une
+                                      # cellule ne dit rien de stable pour servir d'exemple commenté
+
 derive:
   reference: distribution_entrainement
   tests: [psi, kolmogorov_smirnov]

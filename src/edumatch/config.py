@@ -420,6 +420,27 @@ class EquiteConfig(_Strict):
     seuil_impact_disparate: float = Field(gt=0, le=1)
 
 
+class ExplicabiliteConfig(_Strict):
+    """Paramètres de l'explicabilité TreeSHAP (E25), tous des choix de présentation,
+    jamais des seuils qui changent un résultat.
+
+    `top_n_figure` : nombre de variables affichées sur le diagramme d'importance
+    globale — au-delà, les barres restantes sont trop fines pour rien ajouter à
+    la lecture.
+
+    `effectif_minimal_exemple` : effectif plancher pour qu'une cellule serve
+    d'exemple local commenté (haut, bas) — sous ce seuil, une seule
+    proposition supplémentaire ou en moins fait basculer le taux observé, et
+    l'exemple illustrerait le bruit plutôt que le modèle. Même valeur que le
+    plancher retenu par l'analyse d'équité (E11, "formations recevant au moins
+    trente vœux") : pas une coïncidence, la même raison — en dessous, une
+    cellule ne dit rien de stable.
+    """
+
+    top_n_figure: int = Field(ge=1)
+    effectif_minimal_exemple: int = Field(ge=1)
+
+
 class QualiteParcoursupConfig(_Strict):
     """Seuils du contrôle qualité Parcoursup (E14), tous mesurés sur le fichier source.
 
@@ -666,6 +687,7 @@ class Settings(BaseSettings):
     modele: ModeleConfig
     evaluation: EvaluationConfig
     equite: EquiteConfig
+    explicabilite: ExplicabiliteConfig
     qualite: QualiteConfig
     derive: DeriveConfig
     api: ApiConfig

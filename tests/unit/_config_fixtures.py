@@ -112,6 +112,10 @@ equite:
   substituts_a_tester: []
   seuil_impact_disparate: 0.80
 
+explicabilite:
+  top_n_figure: 5
+  effectif_minimal_exemple: 10
+
 qualite:
   parcoursup:
     seuil_completude: 0.99

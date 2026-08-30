@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate api test lint fmt docs clean
+.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api test lint fmt docs clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -76,6 +76,9 @@ train:  ## Entraîne le modèle et enregistre l'exécution dans MLflow
 
 evaluate:  ## Évalue sur le jeu de test, produit calibration et équité
 	python -m edumatch.models.evaluate
+
+explain:  ## Explicabilité TreeSHAP (E25) : importance globale, exemples locaux, précalcul par cellule
+	python -m edumatch.models.explain
 
 # ─── Service ────────────────────────────────────────────────────────
 api:  ## Lance l'API en local
