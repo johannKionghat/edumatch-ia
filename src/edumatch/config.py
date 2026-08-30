@@ -404,6 +404,11 @@ class ModeleConfig(_Strict):
 class EvaluationConfig(_Strict):
     metrique_principale: str
     calibration: bool
+    # Nombre de tranches également espacées sur [0, 1] pour le diagramme de
+    # fiabilité (E23) : la cible est un taux borné (ADR 0009), pas une classe,
+    # donc la calibration se lit par tranches de valeur prédite plutôt que par
+    # les déciles habituels d'une probabilité de classification.
+    n_tranches_calibration: int = Field(ge=2)
     courbe_apprentissage: list[float] = Field(min_length=1)
     baseline: str
 

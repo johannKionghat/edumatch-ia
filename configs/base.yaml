@@ -313,6 +313,10 @@ modele:
 evaluation:
   metrique_principale: mae_ponderee
   calibration: true
+  # 10 tranches de 0,1 sur [0, 1] : assez fin pour distinguer les deux masses
+  # aux bornes du label (taux nul, taux à 1 — ADR 0009) sans multiplier les
+  # tranches quasi vides sur 77 159 cellules par millésime.
+  n_tranches_calibration: 10
   courbe_apprentissage: [0.10, 0.25, 0.50, 1.00]
   baseline: taux_session_precedente
 

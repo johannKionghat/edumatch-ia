@@ -64,7 +64,6 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
-from pathlib import Path
 
 import lightgbm as lgb
 import numpy as np
@@ -72,13 +71,20 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from edumatch.config import HyperparametresConfig, Settings, VariablesConfig, get_settings
-from edumatch.features.build import NOM_FICHIER_VARIABLES, SOUS_DOSSIER
-from edumatch.features.label import poids_effectif
 from edumatch.models.baseline import (
     COLONNES_GROUPE as _COLONNES_GROUPE_BASELINE,
 )
 from edumatch.models.baseline import predire_moyenne_expansive, predire_session_precedente
-from edumatch.models.metrics import ScoreSession, classement_importance, score, score_baseline_couverture_egale
+from edumatch.models.jeux import (
+    ErreurJeuxDonnees,
+    JeuDonnees,
+    chemin_table_variables,
+    evaluer_sur_perimetre,
+    extraire_jeu,
+    preparer_matrice,
+    scores_par_session,
+)
+from edumatch.models.metrics import ScoreSession, classement_importance, score_baseline_couverture_egale
 
 LOGGER = logging.getLogger(__name__)
 
@@ -151,22 +157,15 @@ COLONNES_DERIVEES: tuple[str, ...] = (COLONNE_TAUX_PRECEDENT, COLONNE_A_ANTECEDE
 HYPERPARAMETRES_EXPLORES = "voir le commentaire ci-dessus : recherche conduite hors module, sur validation uniquement"
 
 
-class ErreurEntrainement(RuntimeError):
+class ErreurEntrainement(ErreurJeuxDonnees):
     """L'entraînement ne peut pas continuer sans violer une garantie attendue.
 
-    Définitive : une colonne hors classement, une source absente, ou un split
-    vide ne se règlent pas en relançant à l'identique.
+    Sous-classe de `jeux.ErreurJeuxDonnees` : un split vide (`extraire_jeu`)
+    et une source absente ou une colonne hors classement (ce module) sont la
+    même famille de défaillance — définitive, une colonne hors classement,
+    une source absente, ou un split vide ne se règlent pas en relançant à
+    l'identique.
     """
-
-
-@dataclass(frozen=True)
-class JeuDonnees:
-    """Les trois pièces alignées par index dont un entraînement ou une évaluation ont besoin."""
-
-    X: pd.DataFrame
-    y: pd.Series
-    poids: pd.Series
-    sessions: pd.Series
 
 
 @dataclass(frozen=True)
@@ -254,38 +253,6 @@ def ajouter_taux_precedent(table: pd.DataFrame) -> pd.DataFrame:
     return table
 
 
-def preparer_matrice(table: pd.DataFrame, colonnes: list[str]) -> pd.DataFrame:
-    """Convertit les types nullables Pandas issus de Parquet vers ce que LightGBM attend.
-
-    `Int64` / `Float64` (entiers et flottants nullables) -> `float64`, `NaN`
-    remplaçant `pandas.NA` ; LightGBM traite nativement l'absence, aucune
-    imputation n'a lieu ici. `string` / `object` / `boolean` -> `category` :
-    LightGBM détecte automatiquement les colonnes de ce type et les traite
-    par regroupement de modalités, sans encodage one-hot préalable qui
-    ferait exploser la dimension pour `fil_lib_voe_acc` (712 modalités).
-    """
-    matrice = table[colonnes].copy()
-    for colonne in matrice.columns:
-        dtype = str(matrice[colonne].dtype)
-        if dtype in ("Int64", "Float64"):
-            matrice[colonne] = matrice[colonne].astype("float64")
-        elif dtype in ("string", "str", "object", "bool", "boolean"):
-            matrice[colonne] = matrice[colonne].astype("category")
-    return matrice
-
-
-def _extraire_jeu(table: pd.DataFrame, sessions: list[int], colonnes: list[str]) -> JeuDonnees:
-    sous_table = table[table["session"].isin(sessions)]
-    if sous_table.empty:
-        raise ErreurEntrainement(f"Aucune cellule pour les sessions {sessions} dans la table de variables.")
-    return JeuDonnees(
-        X=preparer_matrice(sous_table, colonnes),
-        y=sous_table["taux"].astype("float64"),
-        poids=poids_effectif(sous_table["effectif"]).astype("float64"),
-        sessions=sous_table["session"],
-    )
-
-
 def entrainer_modele(
     entrainement: JeuDonnees, validation: JeuDonnees, hyperparametres: HyperparametresConfig
 ) -> lgb.LGBMRegressor:
@@ -326,29 +293,6 @@ def entrainer_modele(
         callbacks=[lgb.early_stopping(hyperparametres.early_stopping_rounds, verbose=False)],
     )
     return modele
-
-
-def evaluer_sur_perimetre(jeu: JeuDonnees, prediction: np.ndarray, perimetre: str) -> ScoreSession:
-    """MAE pondérée et non pondérée d'une prédiction déjà calculée sur un jeu donné.
-
-    Fine couche sur `metrics.score` : `JeuDonnees` est propre à ce module,
-    la formule qu'elle sert à évaluer ne l'est pas (voir `metrics.py`).
-    """
-    return score(jeu.y, jeu.poids, prediction, perimetre)
-
-
-def _scores_par_session(jeu: JeuDonnees, prediction: np.ndarray) -> list[ScoreSession]:
-    scores = []
-    for session in sorted(jeu.sessions.unique()):
-        masque = (jeu.sessions == session).to_numpy()
-        sous_jeu = JeuDonnees(
-            X=jeu.X.loc[masque] if hasattr(jeu.X, "loc") else jeu.X[masque],
-            y=jeu.y[masque],
-            poids=jeu.poids[masque],
-            sessions=jeu.sessions[masque],
-        )
-        scores.append(evaluer_sur_perimetre(sous_jeu, prediction[masque], str(session)))
-    return scores
 
 
 def _commit_git() -> str | None:
@@ -427,11 +371,54 @@ def _journaliser_mlflow(
         mlflow.lightgbm.log_model(modele, name="modele")
 
 
-def _chemin_variables(settings: Settings) -> Path:
-    return settings.processed_dir / SOUS_DOSSIER / NOM_FICHIER_VARIABLES
+def charger_table(settings: Settings) -> pd.DataFrame:
+    """Charge la table de variables et y ajoute le taux de la session précédente.
+
+    Partagé avec `models.evaluate` (E23) : les deux modules doivent lire
+    exactement la même table, avec la même colonne dérivée, pour que les
+    prédictions qu'`evaluate.py` recalcule s'alignent, ligne à ligne, sur
+    celles évaluées ici.
+    """
+    chemin = chemin_table_variables(settings)
+    if not chemin.exists():
+        raise ErreurEntrainement(f"{chemin} est introuvable : exécuter `make features` (E20) avant `make train`.")
+    table = pq.read_table(chemin).to_pandas()
+    return ajouter_taux_precedent(table)
 
 
-def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, RapportEntrainement]:
+def preparer_jeux(
+    table: pd.DataFrame, settings: Settings
+) -> tuple[list[str], JeuDonnees, JeuDonnees, JeuDonnees]:
+    """Les colonnes retenues et les trois jeux du split temporel, prêts pour `entrainer_modele`."""
+    colonnes = colonnes_features(settings.modele.variables, list(table.columns))
+    if not settings.modele.inclure_taux_precedent:
+        colonnes = [colonne for colonne in colonnes if colonne not in COLONNES_DERIVEES]
+
+    split = settings.modele.split
+    jeu_entrainement = extraire_jeu(table, split.entrainement, colonnes)
+    jeu_validation = extraire_jeu(table, split.validation, colonnes)
+    jeu_test = extraire_jeu(table, split.test, colonnes)
+    return colonnes, jeu_entrainement, jeu_validation, jeu_test
+
+
+@dataclass(frozen=True)
+class ResultatEntrainement:
+    """Tout ce que produit un entraînement complet (E22), y compris ce que l'évaluation (E23)
+    réutilise pour ne jamais recalculer un modèle ou une prédiction déjà obtenus ici.
+    """
+
+    modele: lgb.LGBMRegressor
+    rapport: RapportEntrainement
+    table: pd.DataFrame
+    colonnes: list[str]
+    jeu_validation: JeuDonnees
+    jeu_test: JeuDonnees
+    prediction_validation: np.ndarray
+    prediction_test: np.ndarray
+    moyenne_groupe: pd.Series
+
+
+def entrainer_et_evaluer(settings: Settings | None = None) -> ResultatEntrainement:
     """Charge la table de variables, entraîne le modèle et l'évalue selon le protocole (E22).
 
     Le test n'est chargé et prédit qu'une fois le modèle définitivement
@@ -439,20 +426,8 @@ def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, Rappo
     de ce module ne compare deux configurations sur le test.
     """
     settings = settings or get_settings()
-    chemin = _chemin_variables(settings)
-    if not chemin.exists():
-        raise ErreurEntrainement(f"{chemin} est introuvable : exécuter `make features` (E20) avant `make train`.")
-
-    table = pq.read_table(chemin).to_pandas()
-    table = ajouter_taux_precedent(table)
-    colonnes = colonnes_features(settings.modele.variables, list(table.columns))
-    if not settings.modele.inclure_taux_precedent:
-        colonnes = [colonne for colonne in colonnes if colonne not in COLONNES_DERIVEES]
-
-    split = settings.modele.split
-    jeu_entrainement = _extraire_jeu(table, split.entrainement, colonnes)
-    jeu_validation = _extraire_jeu(table, split.validation, colonnes)
-    jeu_test = _extraire_jeu(table, split.test, colonnes)
+    table = charger_table(settings)
+    colonnes, jeu_entrainement, jeu_validation, jeu_test = preparer_jeux(table, settings)
 
     debut = time.monotonic()
     modele = entrainer_modele(jeu_entrainement, jeu_validation, settings.modele.hyperparametres)
@@ -465,6 +440,7 @@ def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, Rappo
     # calculé sur `table` avant tout split, exactement comme le modèle n'a
     # accès qu'aux sessions <= N-1 pour prédire N.
     moyenne_groupe = predire_moyenne_expansive(table, _COLONNES_GROUPE_BASELINE)
+    split = settings.modele.split
 
     rapport = RapportEntrainement(
         colonnes_categorielles=sorted(jeu_entrainement.X.select_dtypes(include="category").columns),
@@ -473,8 +449,8 @@ def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, Rappo
         duree_secondes=duree,
         scores_validation=evaluer_sur_perimetre(jeu_validation, prediction_validation, "validation"),
         scores_test=evaluer_sur_perimetre(jeu_test, prediction_test, "test"),
-        scores_par_session=_scores_par_session(jeu_validation, prediction_validation)
-        + _scores_par_session(jeu_test, prediction_test),
+        scores_par_session=scores_par_session(jeu_validation, prediction_validation)
+        + scores_par_session(jeu_test, prediction_test),
         importance_variables=classement_importance(modele, colonnes),
         baseline_validation=score_baseline_couverture_egale(
             table, COLONNE_TAUX_PRECEDENT, moyenne_groupe, split.validation, "validation"
@@ -485,7 +461,28 @@ def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, Rappo
     )
 
     _journaliser_mlflow(modele, settings.modele.hyperparametres, rapport, colonnes, settings)
-    return modele, rapport
+    return ResultatEntrainement(
+        modele=modele,
+        rapport=rapport,
+        table=table,
+        colonnes=colonnes,
+        jeu_validation=jeu_validation,
+        jeu_test=jeu_test,
+        prediction_validation=prediction_validation,
+        prediction_test=prediction_test,
+        moyenne_groupe=moyenne_groupe,
+    )
+
+
+def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, RapportEntrainement]:
+    """Point d'entrée de `make train` (E22) : le modèle entraîné et son rapport, rien de plus.
+
+    `evaluate.py` (E23) appelle `entrainer_et_evaluer` directement plutôt que
+    cette fonction, pour récupérer aussi les jeux et les prédictions sans les
+    recalculer une seconde fois.
+    """
+    resultat = entrainer_et_evaluer(settings)
+    return resultat.modele, resultat.rapport
 
 
 def main() -> int:

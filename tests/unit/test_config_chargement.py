@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 from edumatch.config import ConfigurationError, get_settings, load_settings
 
-from conftest import BASE_YAML
+from _config_fixtures import BASE_YAML
 
 # ─── Chargement nominal ──────────────────────────────────────────────────────
 

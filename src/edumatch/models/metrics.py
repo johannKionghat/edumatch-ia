@@ -84,6 +84,25 @@ class ScoreSession:
         )
 
 
+def predictions_baseline_couverture_egale(
+    table: pd.DataFrame,
+    colonne_prediction: str,
+    moyenne_groupe: pd.Series,
+    sessions: list[int],
+) -> pd.Series:
+    """La prédiction du plancher (E21), avec repli, sur `sessions` — sans la noter.
+
+    Extrait de `score_baseline_couverture_egale` pour qu'`models.evaluate`
+    (E23) puisse comparer cette même prédiction, cellule par cellule, à la
+    cible observée dans le diagramme de calibration et la ventilation par
+    type de baccalauréat, pas seulement en tirer une MAE agrégée. Voir cette
+    fonction pour la raison du repli par la moyenne de groupe.
+    """
+    masque = table["session"].isin(sessions)
+    sous_table = table.loc[masque]
+    return sous_table[colonne_prediction].fillna(moyenne_groupe.loc[masque])
+
+
 def score_baseline_couverture_egale(
     table: pd.DataFrame,
     colonne_prediction: str,
@@ -108,7 +127,7 @@ def score_baseline_couverture_egale(
     """
     masque = table["session"].isin(sessions)
     sous_table = table.loc[masque]
-    prediction = sous_table[colonne_prediction].fillna(moyenne_groupe.loc[masque])
+    prediction = predictions_baseline_couverture_egale(table, colonne_prediction, moyenne_groupe, sessions)
     poids = sous_table["effectif"].astype("float64")
     return ScoreSession(
         perimetre=perimetre,
@@ -133,6 +152,114 @@ def score(y: pd.Series, poids: pd.Series, prediction: np.ndarray, perimetre: str
         mae_ponderee=mae_ponderee(y, prediction, poids),
         mae_non_ponderee=mae_non_ponderee(y, prediction),
     )
+
+
+@dataclass(frozen=True)
+class PointCalibration:
+    """Un point du diagramme de fiabilité : une tranche de valeur prédite, sa moyenne
+    prédite et sa moyenne observée, toutes deux pondérées par l'effectif (E23).
+    """
+
+    tranche: int
+    borne_basse: float
+    borne_haute: float
+    n_cellules: int
+    poids: float
+    prediction_moyenne: float
+    observe_moyen: float
+
+    @property
+    def ecart(self) -> float:
+        """Positif : le modèle sur-annonce dans cette tranche. Négatif : il sous-annonce."""
+        return self.prediction_moyenne - self.observe_moyen
+
+
+@dataclass(frozen=True)
+class RapportCalibration:
+    """Le diagramme de fiabilité complet et l'erreur de calibration attendue (ECE), pondérée."""
+
+    perimetre: str
+    points: list[PointCalibration]
+    ece: float
+
+    def resume(self) -> str:
+        lignes = [f"calibration {self.perimetre:16s} ece_ponderee={self.ece:.4f}"]
+        for point in self.points:
+            lignes.append(
+                f"    [{point.borne_basse:.1f}, {point.borne_haute:.1f}[ n={point.n_cellules:6d}  "
+                f"prédit={point.prediction_moyenne:.3f}  observé={point.observe_moyen:.3f}  "
+                f"écart={point.ecart:+.3f}"
+            )
+        return "\n".join(lignes)
+
+
+def calibration(
+    observe: pd.Series,
+    poids: pd.Series,
+    prediction: pd.Series | np.ndarray,
+    n_tranches: int,
+    perimetre: str,
+) -> RapportCalibration:
+    """Diagramme de fiabilité sur une cible continue bornée, et son erreur de calibration attendue.
+
+    La cible est un taux dans [0, 1] (ADR 0009), pas une classe : la
+    calibration usuelle d'un classifieur (probabilité prédite contre
+    fréquence observée dans des tranches de probabilité) se transpose ici en
+    découpant `n_tranches` intervalles également espacés sur [0, 1] et en
+    comparant, dans chacun, la moyenne prédite à la moyenne observée — les
+    deux pondérées par l'effectif de la cellule, cohérent avec la MAE
+    pondérée qui gouverne le reste de l'évaluation.
+
+    `prediction` est **écrêtée à [0, 1]** avant le découpage en tranches et
+    le calcul des moyennes affichées : un arbre ne connaît pas la borne du
+    label (voir `train.py`, test `test_predictions_sont_dans_lintervalle_du_label`),
+    et un excès au-delà de 1 n'a pas de sens à représenter comme une
+    probabilité annoncée sur un diagramme de fiabilité. L'écrêtage ne change
+    rien à la MAE rapportée ailleurs, qui reste calculée sur la valeur brute.
+
+    L'ECE retournée est la moyenne des écarts absolus par tranche, pondérée
+    par le poids total de chaque tranche rapporté au poids total du
+    périmètre — une tranche vide (aucune cellule dont la prédiction y tombe)
+    est simplement absente du rapport, jamais comblée par une valeur
+    inventée.
+    """
+    predit = np.clip(np.asarray(prediction, dtype="float64"), 0.0, 1.0)
+    observe_arr = observe.to_numpy(dtype="float64")
+    poids_arr = poids.to_numpy(dtype="float64")
+    poids_total = float(poids_arr.sum())
+
+    bornes = np.linspace(0.0, 1.0, n_tranches + 1)
+    points: list[PointCalibration] = []
+    ece = 0.0
+    for indice in range(n_tranches):
+        basse, haute = bornes[indice], bornes[indice + 1]
+        derniere_tranche = indice == n_tranches - 1
+        if derniere_tranche:
+            masque = (predit >= basse) & (predit <= haute)
+        else:
+            masque = (predit >= basse) & (predit < haute)
+        n_cellules = int(masque.sum())
+        if n_cellules == 0:
+            continue
+        poids_tranche = poids_arr[masque]
+        poids_tranche_total = float(poids_tranche.sum())
+        prediction_moyenne = float((predit[masque] * poids_tranche).sum() / poids_tranche_total)
+        observe_moyen = float((observe_arr[masque] * poids_tranche).sum() / poids_tranche_total)
+        points.append(
+            PointCalibration(
+                tranche=indice,
+                borne_basse=float(basse),
+                borne_haute=float(haute),
+                n_cellules=n_cellules,
+                poids=poids_tranche_total,
+                prediction_moyenne=prediction_moyenne,
+                observe_moyen=observe_moyen,
+            )
+        )
+        if poids_total > 0:
+            ece += (poids_tranche_total / poids_total) * abs(prediction_moyenne - observe_moyen)
+
+    return RapportCalibration(perimetre=perimetre, points=points, ece=float(ece))
 
 
 def classement_importance(modele: object, colonnes: list[str]) -> list[tuple[str, float]]:
