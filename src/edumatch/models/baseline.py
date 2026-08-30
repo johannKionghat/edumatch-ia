@@ -301,8 +301,8 @@ def _journaliser_mlflow(rapport: RapportBaseline, settings: Settings) -> None:
     """Enregistre le périmètre `validation+test` dans MLflow, si le suivi est configuré.
 
     Le suivi d'expériences doit commencer à la première expérience, pas
-    après (principe 4 de `structure-projet.md`) — cette baseline en est une,
-    même sans paramètre à ajuster. L'absence de `mlflow_tracking_uri` ou du
+    après : c'est l'un des principes que je me suis fixés pour ce dépôt, et
+    cette baseline est bien une expérience, même sans paramètre à ajuster. L'absence de `mlflow_tracking_uri` ou du
     paquet lui-même n'est pas masquée : elle est journalisée et le calcul du
     score, qui ne dépend pas de MLflow, se poursuit sans lui.
     """
