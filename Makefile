@@ -80,6 +80,9 @@ evaluate:  ## Évalue sur le jeu de test, produit calibration et équité
 explain:  ## Explicabilité TreeSHAP (E25) : importance globale, exemples locaux, précalcul par cellule
 	python -m edumatch.models.explain
 
+ablation:  ## Ablation (E27) : apport de chaque source de variables, écart mesuré même s'il est nul
+	python -m edumatch.models.ablation
+
 # ─── Service ────────────────────────────────────────────────────────
 api:  ## Lance l'API en local
 	uvicorn edumatch.api.main:app --reload --port 8000

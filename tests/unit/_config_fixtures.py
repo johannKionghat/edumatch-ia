@@ -112,6 +112,9 @@ equite:
   substituts_a_tester: []
   seuil_impact_disparate: 0.80
 
+ablation:
+  seuil_gain_mentions: 0.01
+
 explicabilite:
   top_n_figure: 5
   effectif_minimal_exemple: 10

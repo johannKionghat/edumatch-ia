@@ -345,6 +345,13 @@ equite:
   substituts_a_tester: [academie, etablissement_origine]
   seuil_impact_disparate: 0.80       # règle des quatre cinquièmes
 
+# Seuils de reconsidération de l'ablation (E27, adr/0013). Le seul retrait
+# dont la décision (ADR 0013) fixe un seuil chiffré est celui des mentions ;
+# celui de cod_uai se déclenche dès qu'une perte est mesurée, sans valeur à
+# régler (voir `models/ablation.py`).
+ablation:
+  seuil_gain_mentions: 0.01
+
 explicabilite:
   top_n_figure: 15                   # variables affichées sur le diagramme d'importance globale (E25)
   effectif_minimal_exemple: 30       # même plancher que l'analyse d'équité (E11) : sous ce seuil, une

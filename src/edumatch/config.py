@@ -420,6 +420,20 @@ class EquiteConfig(_Strict):
     seuil_impact_disparate: float = Field(gt=0, le=1)
 
 
+class AblationConfig(_Strict):
+    """Seuils de reconsidération de l'ablation (E27, adr/0013 § « Ce qui ferait reconsidérer »).
+
+    `seuil_gain_mentions` : gain d'erreur absolue moyenne pondérée, mesuré sur
+    la validation, au-delà duquel les variables de mention (écartées par
+    défaut, ADR 0013 §3) seraient réintroduites. Fixé par l'ADR à 0,01, pas
+    au jugé : en dessous, la contamination du baccalauréat en contrôle
+    continu (2020-2021) sur deux des quatre sessions d'entraînement ne vaut
+    pas le risque qu'elle documente.
+    """
+
+    seuil_gain_mentions: float = Field(gt=0, le=1)
+
+
 class ExplicabiliteConfig(_Strict):
     """Paramètres de l'explicabilité TreeSHAP (E25), tous des choix de présentation,
     jamais des seuils qui changent un résultat.
@@ -687,6 +701,7 @@ class Settings(BaseSettings):
     modele: ModeleConfig
     evaluation: EvaluationConfig
     equite: EquiteConfig
+    ablation: AblationConfig
     explicabilite: ExplicabiliteConfig
     qualite: QualiteConfig
     derive: DeriveConfig
