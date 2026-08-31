@@ -83,6 +83,13 @@ explain:  ## Explicabilité TreeSHAP (E25) : importance globale, exemples locaux
 ablation:  ## Ablation (E27) : apport de chaque source de variables, écart mesuré même s'il est nul
 	python -m edumatch.models.ablation
 
+# ─── Matching ───────────────────────────────────────────────────────
+debouches:  ## Terme de débouchés (E28) : agrégat Sirene département x NAF k-anonymisé, correspondance formation -> IDÉO
+	python -m edumatch.matching.debouches
+
+matching-exemple:  ## Score à trois termes (E28) : exemple de bout en bout sur données réelles, pour un profil donné
+	python -m edumatch.matching.exemple
+
 # ─── Service ────────────────────────────────────────────────────────
 api:  ## Lance l'API en local
 	uvicorn edumatch.api.main:app --reload --port 8000

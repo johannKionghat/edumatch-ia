@@ -357,6 +357,22 @@ explicabilite:
   effectif_minimal_exemple: 30       # même plancher que l'analyse d'équité (E11) : sous ce seuil, une
                                       # cellule ne dit rien de stable pour servir d'exemple commenté
 
+# Score à trois termes (E28) : affinité x accessibilité x débouchés.
+# Voir src/edumatch/matching/ pour le détail de chaque terme et
+# src/edumatch/config.py (MatchingConfig) pour la justification de chaque
+# valeur ci-dessous.
+matching:
+  k_anonymat_debouches: 5                  # tranché par la gouvernance (risques.md, R2)
+  # Repère, pas une valeur mesurée : la médiane des cellules département x
+  # division NAF conservées après k-anonymat est de 71 établissements
+  # (25e centile 23, 75e centile 291, sur data/processed/matching/
+  # agregat_debouches_departement.parquet) — 100 place donc la moitié des
+  # cellules mesurées sous la saturation, l'autre moitié au-dessus,
+  # plutôt qu'un seuil trop bas qui saturerait la quasi-totalité des
+  # cellules à 1,0 et rendrait le terme peu discriminant.
+  seuil_saturation_etablissements: 100
+  facteur_territoire_hors_zone: 0.6        # atténuation, jamais une exclusion
+
 derive:
   reference: distribution_entrainement
   tests: [psi, kolmogorov_smirnov]

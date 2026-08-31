@@ -119,6 +119,11 @@ explicabilite:
   top_n_figure: 5
   effectif_minimal_exemple: 10
 
+matching:
+  k_anonymat_debouches: 5
+  seuil_saturation_etablissements: 20
+  facteur_territoire_hors_zone: 0.6
+
 qualite:
   parcoursup:
     seuil_completude: 0.99

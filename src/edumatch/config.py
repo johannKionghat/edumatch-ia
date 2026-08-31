@@ -530,6 +530,41 @@ class QualiteConfig(_Strict):
     referentiels: QualiteReferentielsConfig
 
 
+class MatchingConfig(_Strict):
+    """Paramètres du score à trois termes (E28) : affinité x accessibilité x débouchés.
+
+    `k_anonymat_debouches` : seuil de k-anonymat appliqué à l'agrégat Sirene
+    (département x division NAF) qui porte le terme « débouchés ». Arrêté à
+    5 par la gouvernance (`docs/sous-docs-projets/05-gouvernance/risques.md`,
+    R2) : au grain commune, ce seuil supprimerait 90,6 % des cellules et
+    46,9 % des établissements réels ; au grain département, seulement 35,0 %
+    des cellules pour 1,6 % des établissements — c'est ce renversement qui a
+    tranché le grain de restitution.
+
+    `seuil_saturation_etablissements` : nombre d'établissements
+    actifs-employeurs diffusibles, dans le département et les divisions NAF
+    d'une formation, au-delà duquel le terme de débouchés est jugé pleinement
+    disponible (valeur 1,0). En dessous, le terme croît linéairement de 0 à
+    1. La façon dont ce nombre se traduit en un facteur dans [0, 1] est une
+    règle de présentation, pas un modèle ; le seuil lui-même est un repère
+    choisi à partir de la distribution réellement observée sur l'agrégat
+    k-anonymisé (médiane à 71 établissements, 25e centile à 23 — voir
+    `configs/base.yaml`), pas une valeur mesurée au sens d'un résultat
+    statistique à défendre comme tel — à revoir si le produit exige une
+    échelle différente (voir `matching/debouches.py`).
+
+    `facteur_territoire_hors_zone` : facteur d'atténuation (pas d'exclusion)
+    appliqué au terme d'affinité quand le département demandé par le
+    candidat diffère de celui de la formation. Une préférence géographique
+    reste une préférence, jamais une contrainte absolue au même titre qu'un
+    type de formation demandé — décision arbitrée, déclarée comme telle.
+    """
+
+    k_anonymat_debouches: int = Field(ge=1)
+    seuil_saturation_etablissements: int = Field(ge=1)
+    facteur_territoire_hors_zone: float = Field(gt=0, le=1)
+
+
 class DeriveConfig(_Strict):
     reference: str
     tests: list[str] = Field(min_length=1)
@@ -703,6 +738,7 @@ class Settings(BaseSettings):
     equite: EquiteConfig
     ablation: AblationConfig
     explicabilite: ExplicabiliteConfig
+    matching: MatchingConfig
     qualite: QualiteConfig
     derive: DeriveConfig
     api: ApiConfig
