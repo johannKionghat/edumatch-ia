@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 26 / 46 étapes validées.**
+**État : 27 / 46 étapes validées.**
 
 ---
 
@@ -1001,7 +1001,7 @@ posé pour l'étape suivante) est dans `04-modele/evaluation.md`.
 | E24 | Courbe d'apprentissage | ✅ validée | 2026-08-30 | `a7d3aff` |
 | E25 | Explicabilité SHAP | ✅ validée | 2026-08-30 | `b64e665` |
 | E26 | Audit d'équité | ✅ validée | 2026-08-30 | `b64e665` |
-| E27 | Ablation | ⬜ | | |
+| E27 | Ablation | ✅ validée | 2026-08-31 | `3c1036f` |
 
 **E22 — ce qui a été vérifié**
 - `src/edumatch/models/train.py` sépare la table de variables (E20) selon le
@@ -1127,6 +1127,39 @@ groupe et figures : `04-modele/explicabilite.md` et `04-modele/equite.md`.
 passer `numpy` de 1.26 à 2.4.6 sur le poste de développement. La suite
 complète de tests passe avant et après, vérifié deux fois — la borne de
 version reste à fixer, voir `reste-a-faire.md`.
+
+**E27 — ce qui a été vérifié**
+- `src/edumatch/models/ablation.py` entraîne sept variantes avec les mêmes
+  hyperparamètres et le même split que la configuration de production
+  (E22), jugées sur la seule validation 2024 — le test n'est consulté
+  qu'une fois, pour la configuration déjà retenue, et son score est
+  rapporté tel quel plutôt que recalculé
+- **Le signal de l'an dernier porte l'essentiel du modèle** : retirer les
+  35 variables décalées coûte **+0,0422** de MAE pondérée (0,0698 → 0,1120),
+  quand passer de 3 variables à 48 n'en gagne que **0,0070**, soit environ
+  9 % relatif. Les 45 autres variables affinent, elles ne portent pas
+  l'essentiel — dit tel quel plutôt que de présenter les 48 variables comme
+  également indispensables
+- **Retirer les substituts du genre ne répare pas l'équité** : coût de
+  +0,0006 de MAE pondérée, et le ratio d'impact disparate du groupe à plus
+  de 80 % de candidates se dégrade légèrement, de 0,66 à 0,62, sur la
+  validation 2024. Résultat contre-intuitif rapporté tel quel : l'exclusion
+  de variables ne peut pas être le seul levier d'équité, ce qui conforte le
+  choix déjà fait en E26 de fonder l'équité sur la calibration par groupe
+- Les deux exclusions de l'ADR 0013 sont confirmées par la mesure, sans
+  franchir leur seuil de reconsidération : mentions +0,0003 (seuil 0,01),
+  `cod_uai` réintroduit +0,0001 (aucune perte mesurée à l'exclure)
+- **Sirene reste hors de portée de la mesure** : la chaîne NAF ↔ ROME ↔
+  formation (E18) ne relie aucune formation Parcoursup, donc Sirene n'est
+  jamais entrée dans le modèle entraîné. Ce n'est pas un écart nul mesuré,
+  c'est une ablation impossible à réaliser aujourd'hui — déclarée comme
+  telle plutôt que rapportée comme un résultat, voir `reste-a-faire.md`
+- Suite de tests : 490 succès (468 avant l'étape)
+
+**E27 — décision prise** : aucun ADR nouveau — l'étape confirme par la
+mesure les arbitrages déjà pris en ADR 0011 et ADR 0013, et clôt le
+protocole d'ablation prévu au bloc 4, à l'exception de Sirene. Détail
+complet : `04-modele/ablation.md`.
 
 ## Phase 5 — Service
 

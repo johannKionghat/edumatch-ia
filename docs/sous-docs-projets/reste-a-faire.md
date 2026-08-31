@@ -122,9 +122,14 @@ posées.*
       2026-08-30). Écart réel détecté sur les formations très féminisées,
       ratio d'impact disparate sous le seuil légal des quatre cinquièmes
       (0,76) — voir `04-modele/equite.md`
-- [ ] `models/ablation.py` — apport de Sirene mesuré, pas postulé. **En
-      cours d'écriture** ; un obstacle est déjà identifié, voir le point
-      ouvert ci-dessous
+- [x] `models/ablation.py` — sept variantes mesurées sur la validation 2024
+      (E27, 2026-08-31). Le signal de l'an dernier porte l'essentiel de la
+      performance (+0,0422 à le retirer, contre +0,0070 à passer de 3 à
+      48 variables) ; retirer les substituts du genre ne répare pas
+      l'équité (ratio d'impact disparate 0,66 → 0,62) ; les deux exclusions
+      de l'ADR 0013 sont confirmées. **L'apport de Sirene reste hors de
+      portée de la mesure**, voir le point ouvert ci-dessous — voir
+      `04-modele/ablation.md`
 - [ ] `matching/affinite.py`, `debouches.py`, `score.py`
 - [ ] `api/main.py`, `routes/`, schémas Pydantic
 - [ ] `api/audit.py` — journalisation article 12
@@ -236,18 +241,21 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
 
 ## Points ouverts issus du modèle (E22 à E26)
 
-- [ ] **L'ablation de Sirene, prévue par le plan d'exécution du projet, est
-      impossible à mesurer aujourd'hui.** La chaîne de nomenclatures
-      NAF ↔ ROME ↔ formation (E18) n'atteint aucune formation Parcoursup :
-      la table de correspondance ne couvre, en l'état, aucune des formations
-      du jeu de variables construit en E20. Sans cette jointure, aucune
-      variable issue des agrégats Sirene n'entre dans le modèle entraîné en
-      E22, et l'écart avec/sans Sirene que l'ablation doit mesurer ne peut
-      pas être calculé — il n'existe simplement rien à retirer. À traiter
-      avant de poursuivre l'écriture de `models/ablation.py` : soit la
-      couverture de la chaîne de nomenclatures se corrige, soit l'ablation
-      rapporte un écart nul faute de jonction possible, ce qui est un
-      résultat en soi, mais alors distinct d'un apport nul de la source.
+- [ ] **L'ablation de Sirene, prévue par le plan d'exécution du projet,
+      reste impossible à mesurer.** Confirmé par `models/ablation.py`
+      (E27, 2026-08-31) : la chaîne de nomenclatures NAF ↔ ROME ↔ formation
+      (E18) n'atteint aucune formation Parcoursup — huit millésimes
+      vérifiés, aucun ne porte de code RNCP, NSF ou ROME exploitable. Sans
+      cette jointure, aucune variable issue des agrégats Sirene n'entre dans
+      le modèle entraîné en E22, et l'écart avec/sans Sirene que l'ablation
+      doit mesurer ne peut pas être calculé — il n'existe simplement rien à
+      retirer. Ce n'est pas un écart nul mesuré, c'est une mesure qui n'a
+      pas d'objet : le critère 4.16 du bloc 4 n'est donc pas encore
+      entièrement couvert. Condition de clôture : soit la couverture de la
+      chaîne de nomenclatures se corrige et l'ablation est rejouée avec une
+      variante Sirene, soit l'impossibilité est actée définitivement dans la
+      Model Card (E42) comme limite du dispositif, sans être présentée comme
+      un apport nul. Détail : `04-modele/ablation.md`.
 
 - [ ] **⚠️ INCOHÉRENCE — un chiffre d'équité diverge entre l'analyse
       exploratoire et l'audit du modèle.** L'analyse exploratoire (E11,
