@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 21 / 46 étapes validées.**
+**État : 26 / 46 étapes validées.**
 
 ---
 
@@ -996,12 +996,137 @@ avant l'entraînement du modèle.
 n'introduisent aucun arbitrage de modélisation, seulement une mesure. Le
 détail complet (tableau par session, comparatif des trois règles, le seuil
 posé pour l'étape suivante) est dans `04-modele/evaluation.md`.
-| E22 | Entraînement LightGBM | ⬜ | | |
-| E23 | Évaluation et calibration | ⬜ | | |
-| E24 | Courbe d'apprentissage | ⬜ | | |
-| E25 | Explicabilité SHAP | ⬜ | | |
-| E26 | Audit d'équité | ⬜ | | |
+| E22 | Entraînement LightGBM | ✅ validée | 2026-08-30 | `102cca9` |
+| E23 | Évaluation et calibration | ✅ validée | 2026-08-30 | `a7d3aff` |
+| E24 | Courbe d'apprentissage | ✅ validée | 2026-08-30 | `a7d3aff` |
+| E25 | Explicabilité SHAP | ✅ validée | 2026-08-30 | `b64e665` |
+| E26 | Audit d'équité | ✅ validée | 2026-08-30 | `b64e665` |
 | E27 | Ablation | ⬜ | | |
+
+**E22 — ce qui a été vérifié**
+- `src/edumatch/models/train.py` sépare la table de variables (E20) selon le
+  split strictement temporel de l'ADR 0012 (entraînement 2020-2023, 286 463
+  cellules ; validation 2024, 76 408 ; test 2025, 77 159), entraîne un
+  LightGBM pondéré par l'effectif de la cellule (ADR 0009) et arrête ses
+  hyperparamètres sur la seule MAE pondérée de validation — le test n'est
+  touché qu'une fois, à la fin
+- MAE pondérée, à couverture égale (100 %, plancher E21 avec repli) :
+  validation **0,0690** contre plancher **0,0727** — le modèle passe devant.
+  Test **0,0758** contre plancher **0,0701** — le modèle reste derrière.
+  **Résultat rapporté tel quel, sans l'adoucir** : sur le jeu de test, la
+  règle qui reconduit simplement le taux de l'an dernier bat le modèle appris
+- Donner le taux de la session précédente comme variable explicite plutôt
+  que comme seul concurrent réduit l'écart en test de 0,0119 à 0,0057, sans
+  le combler. Cette variable arrive première en importance de gain,
+  sept fois la deuxième — un ensemble d'arbres n'apprend pas nativement un
+  quotient, il l'approxime mieux quand le quotient lui est donné
+- **Erreur de méthode trouvée et corrigée dans le code, pas seulement dans
+  le commentaire** : la première mesure comparait le modèle, qui prédit les
+  77 159 cellules de 2025, à un plancher qui n'en couvrait que 92,9 % —
+  jugé sur le seul sous-ensemble facile, ce qui exagérait l'écart en sa
+  faveur. La comparaison à couverture égale fait désormais partie du
+  rapport d'entraînement, et le plancher est réenregistré à chaque exécution
+
+**E22 — décision prise** : aucun ADR nouveau — LightGBM et sa pondération
+étaient déjà arbitrés (ADR 0009, ADR 0013). Ce qui reste n'est pas un défaut
+d'apprentissage mais un défaut de généralisation temporelle : le modèle capte
+des régularités de 2020-2023 qui ne se reconduisent pas en 2025, là où une
+règle qui ne suppose rien encaisse mieux la dérive — cohérent avec la
+non-stationnarité déjà mesurée en E12. Détail complet dans
+`04-modele/evaluation.md`.
+
+**E23 — ce qui a été vérifié**
+- `src/edumatch/models/evaluate.py` calcule l'erreur de calibration attendue
+  (ECE) pondérée par tranches de taux prédit (`modele.n_tranches_calibration`,
+  configuré à 10), comparée au même plancher qu'en E22
+- ECE pondérée : validation **0,0030** contre plancher **0,0141**, dix fois
+  mieux. Test **0,0371** contre plancher **0,0322** : la calibration
+  s'effondre elle aussi sur le test. Le modèle devient sur-confiant sur toute
+  la plage médiane des probabilités — il annonce 0,55 quand la réalité est
+  0,49 — et reste bien calibré aux extrêmes
+- **Le modèle perd sur les deux tableaux en test, précision et
+  calibration, non atténué** : ventilée par filière, son erreur est
+  systématiquement supérieure à celle du plancher, l'écart se creusant pour
+  le bac professionnel
+
+**E24 — ce qui a été vérifié**
+- `src/edumatch/models/courbe_apprentissage.py` mesure la MAE pondérée de
+  validation à 10, 25, 50 et 100 % du volume d'entraînement, échantillonné
+  par session et non par recul de la fenêtre temporelle — pour ne pas
+  mélanger l'effet du volume et celui de la proximité temporelle
+- MAE validation aux quatre paliers : 0,0758 · 0,0723 · 0,0705 ·
+  **0,0698**. L'écart entraînement/validation se referme de 0,0164 à 0,0039,
+  et le gain marginal se divise par deux à chaque doublement du volume
+  (0,0035 → 0,0018 → 0,0007)
+- **Conclusion établie deux fois, par deux chemins différents (E23 et E24),
+  convergente** : ce n'est pas un manque de données, c'est une dérive
+  temporelle. Le modèle a déjà extrait l'essentiel de ce que la fenêtre
+  2020-2023 peut lui apprendre ; ajouter du volume ne comblerait pas l'écart
+  observé en test, et la fenêtre labellisée est de toute façon bornée à six
+  sessions (ADR 0012)
+
+**E23-E24 — décision prise** : aucun ADR nouveau — mesure et confirmation
+d'un diagnostic déjà posé (E12). Détail complet, tableaux par filière et
+graphiques : `04-modele/evaluation.md`.
+
+**E25 — ce qui a été vérifié**
+- `src/edumatch/models/explain.py` calcule les valeurs de Shapley exactes
+  (TreeSHAP) sur le modèle entraîné en E22. L'axiome d'efficacité (la somme
+  des contributions plus la valeur de base doit reconstituer exactement la
+  prédiction) est vérifié à **2,1 × 10⁻¹⁵** près sur le modèle réel, et par
+  test unitaire sur un modèle jouet
+- Classement global, moyenne des valeurs absolues pondérée par l'effectif :
+  taux de la session précédente **33,5 %**, `nb_voe_pp` 9,1 %, libellé de
+  filière 8,4 %, département 7,5 %, capacité 6,0 %, `prop_tot` 5,7 %. Le
+  quotient et ses deux composantes portent ensemble **48,3 %** de
+  l'explication
+- **Écart entre deux mesures d'importance, rapporté tel quel** : l'importance
+  de gain de LightGBM (E22) faisait du taux précédent une variable sept fois
+  plus importante que la deuxième ; TreeSHAP la ramène à 33,5 %. Les deux
+  répondent à des questions différentes — réduction de perte cumulée sur
+  tous les nœuds contre contribution moyenne à une prédiction — et la
+  première surestime une variable très utilisée en profondeur
+- Précalcul complet mesuré sur les **440 030 cellules** des huit millésimes :
+  **8,3 minutes, 99,8 Mo** — réaliste en lot après chaque réentraînement, pas
+  à la demande par requête de l'API
+
+**E26 — ce qui a été vérifié**
+- `src/edumatch/models/fairness.py` ventile les prédictions du modèle
+  entraîné (E22), sur le seul test 2025, selon les quatre dimensions de
+  `configs/base.yaml` (`equite.dimensions`) : type de baccalauréat, statut de
+  boursier, territoire, genre. Le genre n'entre jamais dans le modèle ; il
+  n'est lu ici que pour l'audit, à partir des compteurs par sexe de la table
+  silver, et construit sur la composition **des candidats**, jamais sur celle
+  des admis — qui est en partie ce que le modèle prédit
+- **Définition d'équité privilégiée assumée** : la calibration par groupe.
+  Elle est incompatible avec la parité démographique et les cotes égalisées
+  dès que les taux de base diffèrent entre groupes — un théorème, pas un
+  arbitrage de goût. Ce que ce choix sacrifie, écrit explicitement : ni
+  égalité des taux de recommandation, ni égalité des vrais positifs entre
+  groupes
+- **Écart réel détecté, non atténué** : sur les formations à plus de 80 % de
+  candidates femmes, le modèle sur-annonce les chances d'admission — ECE
+  **0,066** contre 0,032 à 0,034 ailleurs — et le plancher y est mieux
+  calibré (0,048). Le ratio d'impact disparate de ce groupe reste **sous le
+  seuil des quatre cinquièmes, à 0,76**, même s'il améliore le 0,63 du
+  plancher. **Le système n'est donc pas équitable sur cette dimension : il
+  passe sous le seuil légal retenu, mieux que le plancher sur la sélection,
+  moins bien sur la calibration**
+- Les substituts du genre (établi en E11 : filière 19,5 % net, département
+  2,3 %) totalisent **14,2 %** de l'explication SHAP alors que le genre
+  n'entre jamais dans le modèle — le département pèse le plus lourd dans
+  l'explication tout en étant faible en corrélation au genre : importance au
+  modèle et corrélation à un attribut protégé sont deux axes distincts
+
+**E25-E26 — décision prise** : aucun ADR nouveau — la définition d'équité
+retenue applique un arbitrage déjà posé en E11 (ADR 0011) sur des prédictions
+réelles plutôt que sur des données brutes. Détail complet, tableaux par
+groupe et figures : `04-modele/explicabilite.md` et `04-modele/equite.md`.
+
+**Point de méthode signalé lors de cette étape** : installer `shap` a fait
+passer `numpy` de 1.26 à 2.4.6 sur le poste de développement. La suite
+complète de tests passe avant et après, vérifié deux fois — la borne de
+version reste à fixer, voir `reste-a-faire.md`.
 
 ## Phase 5 — Service
 

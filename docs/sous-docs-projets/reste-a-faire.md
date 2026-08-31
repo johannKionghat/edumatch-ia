@@ -107,12 +107,24 @@ posées.*
 
 ## Bloc 4 — Déploiement
 
-- [ ] `models/baseline.py` — taux de la session précédente, **à mesurer en premier**
-- [ ] `models/train.py` — LightGBM pondéré, MLflow
-- [ ] `models/evaluate.py` — MAE pondérée, calibration, ECE, courbe d'apprentissage
-- [ ] `models/explain.py` — TreeSHAP, précalcul par cellule
-- [ ] `models/fairness.py` — 4 dimensions, ratio d'impact disparate
-- [ ] `models/ablation.py` — apport de Sirene mesuré, pas postulé
+- [x] `models/baseline.py` — taux de la session précédente, plancher mesuré
+      (E21, 2026-08-30)
+- [x] `models/train.py` — LightGBM pondéré, MLflow, comparé au plancher à
+      couverture égale (E22, 2026-08-30). Résultat mitigé : le modèle bat le
+      plancher en validation, reste derrière en test — voir
+      `04-modele/evaluation.md`
+- [x] `models/evaluate.py` — MAE pondérée, calibration, ECE, courbe
+      d'apprentissage (E23-E24, 2026-08-30). En test, le modèle perd sur les
+      deux tableaux, précision et calibration, contre le plancher
+- [x] `models/explain.py` — TreeSHAP, précalcul par cellule (E25,
+      2026-08-30) — voir `04-modele/explicabilite.md`
+- [x] `models/fairness.py` — 4 dimensions, ratio d'impact disparate (E26,
+      2026-08-30). Écart réel détecté sur les formations très féminisées,
+      ratio d'impact disparate sous le seuil légal des quatre cinquièmes
+      (0,76) — voir `04-modele/equite.md`
+- [ ] `models/ablation.py` — apport de Sirene mesuré, pas postulé. **En
+      cours d'écriture** ; un obstacle est déjà identifié, voir le point
+      ouvert ci-dessous
 - [ ] `matching/affinite.py`, `debouches.py`, `score.py`
 - [ ] `api/main.py`, `routes/`, schémas Pydantic
 - [ ] `api/audit.py` — journalisation article 12
@@ -219,6 +231,50 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
       l'ouverture de la campagne. Cette preuve relève du raisonnement de
       l'ADR 0013, pas d'un test automatisé — à rappeler si la liste blanche
       est un jour étendue.
+
+---
+
+## Points ouverts issus du modèle (E22 à E26)
+
+- [ ] **L'ablation de Sirene, prévue par le plan d'exécution du projet, est
+      impossible à mesurer aujourd'hui.** La chaîne de nomenclatures
+      NAF ↔ ROME ↔ formation (E18) n'atteint aucune formation Parcoursup :
+      la table de correspondance ne couvre, en l'état, aucune des formations
+      du jeu de variables construit en E20. Sans cette jointure, aucune
+      variable issue des agrégats Sirene n'entre dans le modèle entraîné en
+      E22, et l'écart avec/sans Sirene que l'ablation doit mesurer ne peut
+      pas être calculé — il n'existe simplement rien à retirer. À traiter
+      avant de poursuivre l'écriture de `models/ablation.py` : soit la
+      couverture de la chaîne de nomenclatures se corrige, soit l'ablation
+      rapporte un écart nul faute de jonction possible, ce qui est un
+      résultat en soi, mais alors distinct d'un apport nul de la source.
+
+- [ ] **⚠️ INCOHÉRENCE — un chiffre d'équité diverge entre l'analyse
+      exploratoire et l'audit du modèle.** L'analyse exploratoire (E11,
+      `04-modele/equite.md`) mesure que l'écart d'admission entre femmes et
+      hommes, à formation égale, reste inférieur à 5 points dans **83,8 %**
+      des cas. L'audit d'équité sur les prédictions (E26,
+      `src/edumatch/models/fairness.py`) rapporte un chiffre différent sur
+      une question voisine, **73,4 %**. Les deux mesures ne portent
+      vraisemblablement pas sur le même filtre d'effectif minimal par
+      formation (l'E11 impose au moins 30 vœux de chaque sexe ; l'E26 audite
+      la totalité du test 2025 sans ce même plancher), mais ce n'est pas
+      vérifié — seulement l'hypothèse la plus probable. Je ne corrige ni le
+      code ni le chiffre : à réconcilier avant d'écrire la Model Card (E42),
+      qui ne peut pas porter deux chiffres contradictoires sur le même
+      objet.
+
+- [ ] **La borne de version de `numpy` n'est pas fixée après l'installation
+      de `shap`.** Installer `shap` pour l'explicabilité (E25) a fait passer
+      `numpy` de 1.26 à 2.4.6 sur le poste de développement, sans que ce
+      changement soit demandé pour lui-même. La suite complète de tests
+      passe avant et après ce changement, vérifié deux fois, donc aucune
+      régression n'est constatée à ce jour — mais `pyproject.toml` ne borne
+      pas encore la version de `numpy`, ce qui laisse la reproductibilité de
+      l'environnement dépendre de l'ordre d'installation des paquets plutôt
+      que d'une contrainte explicite. À corriger avant l'étape
+      d'industrialisation (E35-E36), où l'image de conteneur doit être
+      reproductible par construction.
 
 ---
 

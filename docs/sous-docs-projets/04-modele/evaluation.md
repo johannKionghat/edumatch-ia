@@ -199,12 +199,96 @@ choisi après coup se plie toujours au résultat qu'on veut montrer.
    0,0664 à 0,0713, ce qui chiffre exactement le coût du repli plutôt que de
    le laisser implicite.
 
-## Ce qui reste à faire (E22 à E24)
+## E22 — l'entraînement, résultat mitigé et rapporté tel quel
 
-- Split temporel strict, sans fuite, entraînement du modèle (E22).
-- MAE pondérée, courbe de calibration, ECE, comparaison chiffrée à la
-  baseline ci-dessus (E23).
-- Courbe d'apprentissage à 10/25/50/100 % du volume (E24).
+`src/edumatch/models/train.py` sépare la table de variables (E20) selon le
+split ci-dessus, entraîne un LightGBM pondéré par l'effectif de la cellule
+(ADR 0009), et arrête ses hyperparamètres sur la seule MAE pondérée de
+validation — le test 2025 n'est touché qu'une fois, à la fin, avec les
+hyperparamètres déjà figés.
+
+MAE pondérée, comparée au plancher **à couverture égale** (100 % des
+cellules, plancher avec repli de l'E21) :
+
+| Périmètre | Modèle | Plancher (E21, à couverture égale) | Verdict |
+|---|---:|---:|---|
+| Validation 2024 | **0,0690** | 0,0727 | le modèle passe devant |
+| Test 2025 | **0,0758** | 0,0701 | le modèle reste derrière |
+
+Le résultat est mitigé et se lit comme tel : en validation le modèle bat le
+plancher, en test il perd contre une règle qui ne suppose rien. Donner le
+taux de la session précédente comme variable explicite plutôt que comme seul
+concurrent réduit l'écart en test de moitié (0,0119 à 0,0057) sans le
+combler — cette variable arrive première en importance de gain, avec un gain
+sept fois supérieur à la deuxième. L'hypothèse testée était qu'un ensemble
+d'arbres n'apprend pas nativement un quotient ; la donner explicitement le
+confirme en partie.
+
+**Une erreur de méthode a été trouvée et corrigée dans le code, pas
+seulement commentée.** La première mesure comparait le modèle — qui prédit
+les 77 159 cellules de test — à un plancher qui n'en couvrait que 92,9 %,
+jugé sur son seul sous-ensemble facile, ce qui exagérait l'écart en sa
+faveur. La comparaison à couverture égale fait désormais partie du rapport
+d'entraînement produit par `train.py`, et les chiffres du plancher sont
+réenregistrés à chaque exécution : refaire cette erreur suppose de la voir.
+
+**Ce qui reste n'est pas un défaut d'apprentissage, c'est un défaut de
+généralisation temporelle** : le modèle capte des régularités de 2020-2023
+qui ne se reconduisent pas en 2025, là où une règle qui ne suppose rien
+encaisse mieux la dérive — cohérent avec la non-stationnarité de la cible
+déjà mesurée en E12 (la moyenne des taux par formation remonte jusqu'en 2024
+avant de refléchir en 2025).
+
+## E23 — calibration : le modèle perd sur les deux tableaux en test
+
+`src/edumatch/models/evaluate.py` calcule l'erreur de calibration attendue
+(ECE), pondérée par l'effectif, sur 10 tranches de taux prédit
+(`modele.n_tranches_calibration`).
+
+| Périmètre | ECE modèle | ECE plancher | Verdict |
+|---|---:|---:|---|
+| Validation 2024 | **0,0030** | 0,0141 | dix fois mieux que le plancher |
+| Test 2025 | **0,0371** | 0,0322 | la calibration s'effondre, pire que le plancher |
+
+En validation le modèle est remarquablement bien calibré. En test, il
+devient sur-confiant sur toute la plage médiane des probabilités : il annonce
+0,55 quand la réalité observée est 0,49. Il reste bien calibré aux extrêmes.
+**Le modèle perd donc sur les deux tableaux en test, précision et
+calibration, sans qu'aucun des deux ne rattrape l'autre.** Ventilée par
+filière, son erreur reste systématiquement supérieure à celle du plancher,
+l'écart se creusant pour le bac professionnel.
+
+## E24 — courbe d'apprentissage : ce n'est pas un manque de données
+
+`src/edumatch/models/courbe_apprentissage.py` mesure la MAE pondérée de
+validation à 10, 25, 50 et 100 % du volume d'entraînement. L'échantillonnage
+est stratifié **par session**, pas par recul de la fenêtre temporelle — pour
+ne pas mélanger l'effet du volume disponible et celui de la proximité
+temporelle avec la session cible, deux causes que la question posée par
+cette étape doit distinguer.
+
+| Volume | 10 % | 25 % | 50 % | 100 % |
+|---|---:|---:|---:|---:|
+| MAE validation | 0,0758 | 0,0723 | 0,0705 | **0,0698** |
+
+L'écart entre entraînement et validation se referme de 0,0164 à 0,0039, et le
+gain marginal se divise par deux à chaque doublement du volume (0,0035 puis
+0,0018 puis 0,0007) : le modèle a déjà extrait presque tout ce que la fenêtre
+2020-2023 peut lui apprendre.
+
+**Conclusion convergente, établie deux fois par deux chemins différents**
+(la dégradation en test d'un côté, la courbe d'apprentissage de l'autre) :
+ce n'est pas un manque de données, c'est une dérive temporelle. Chercher plus
+de volume ne comblerait pas l'écart mesuré en test, et la fenêtre labellisée
+est de toute façon bornée à six sessions (ADR 0012). La réponse relève de la
+surveillance de dérive et du réentraînement régulier (E33-E34), pas de la
+collecte.
+
+## Ce qui reste à faire (E27)
+
+- Ablation : apport mesuré de chaque source, dont Sirene — voir
+  `reste-a-faire.md` pour un obstacle déjà identifié sur la chaîne de
+  nomenclatures.
 
 ---
-*Mise à jour : 2026-08-30, commit `2b4c409`.*
+*Mise à jour : 2026-08-30, commits `102cca9` (E22), `a7d3aff` (E23-E24).*

@@ -1,10 +1,11 @@
-# Équité — matière établie à ce jour
+# Équité — les quatre dimensions, résultats (E26, critère 4.15)
 
-Ce document sera complété en E26 (`models/fairness.py`, quatre dimensions,
-ratio d'impact disparate, résultats sur les prédictions du modèle entraîné).
-Ce qui suit est ce que l'analyse exploratoire (E11) établit déjà : où
-l'inégalité se situe réellement dans les données, et quels substituts du
-genre existent dans les variables candidates du modèle.
+Ce qui suit couvre deux temps du projet : l'analyse exploratoire sur les
+données brutes (E11), qui établit où l'inégalité se situe et quels
+substituts du genre existent parmi les variables candidates, puis l'audit
+sur les prédictions du modèle réellement entraîné (E26,
+`src/edumatch/models/fairness.py`), qui vérifie si l'exclusion du genre à
+l'entrée suffit en pratique.
 
 Source : `notebooks/03-jgk-eda-equite-substituts.ipynb`.
 
@@ -132,16 +133,101 @@ fois le modèle entraîné (E26).
 Détail complet des deux arbitrages : `04-modele/specification.md` et
 l'ADR 0013.
 
-## Ce qui reste à faire (E26)
+## E26 — l'audit sur les prédictions réelles
 
-- Ratio d'impact disparate sur les prédictions, par sexe, académie et
-  établissement.
-- Vérifier si l'écart mesuré à l'admission (quasi nul) se retrouve dans les
-  prédictions du modèle, ou si la filière réintroduit un écart que
-  l'admission observée ne présentait pas.
-- Rejouer la mesure de substituts (ce carnet) sur l'ensemble de variables
-  finalement retenu en E20 (`04-modele/specification.md`), qui diffère de ce
-  qui a été exploré ici : `cod_uai` et `ville_etab` en sont désormais exclus.
+`src/edumatch/models/fairness.py` ne relance rien : il appelle la même
+fonction d'entraînement qu'E22 (même split temporel, même modèle déjà
+arrêté sur la validation) pour récupérer les prédictions du seul test 2025,
+puis les ventile selon les **quatre dimensions** de `configs/base.yaml`
+(`equite.dimensions`) : type de baccalauréat, statut de boursier, territoire,
+genre.
+
+Le genre n'entre jamais dans le modèle (ADR 0011, vérifié par test) ; ce
+module ne le lit que pour l'audit, à partir des compteurs de vœux et
+d'admissions par sexe déjà présents dans la table silver (E15) mais jamais
+transmis au modèle. Le genre d'une formation est construit sur la
+composition **des candidats** (`voe_tot_f / voe_tot`), jamais sur celle des
+admis — qui est en partie ce que le modèle prédit, la même précaution que
+celle déjà posée en E11.
+
+### La définition d'équité retenue, et ce qu'elle sacrifie
+
+**Définition privilégiée assumée : la calibration par groupe** — un taux
+prédit de 60 % doit correspondre à un taux observé de 60 % dans chaque
+groupe, quel que soit le groupe. Ce choix est incompatible avec la parité
+démographique et les cotes égalisées dès que les taux de base diffèrent
+entre groupes : c'est un théorème (l'impossibilité conjointe de ces critères
+d'équité en dehors du cas dégénéré où les groupes ont le même taux de base),
+pas un arbitrage de goût. Ce que ce choix sacrifie, écrit explicitement :
+ni l'égalité des taux de recommandation entre groupes, ni l'égalité des vrais
+positifs entre groupes ne sont garanties par ce dispositif.
+
+### Le passage d'un taux continu à une décision : le seuil assumé
+
+Le ratio d'impact disparate (règle des quatre cinquièmes) se définit sur une
+décision binaire, alors que la cible du modèle est un taux continu dans
+[0, 1] (ADR 0009). Une cellule est comptée « recommandée » si le taux prédit
+atteint au moins 50 % — plus d'une chance sur deux d'admission — plutôt
+qu'un partage par médiane, qui produirait toujours 50 % de cellules
+positives dans chaque groupe par construction et masquerait tout écart réel.
+Le taux de sélection par groupe est pondéré par l'effectif de la cellule,
+pas compté cellule par cellule, cohérent avec la pondération qui gouverne le
+reste du projet.
+
+### Résultat, non atténué : un écart réel qui passe sous le seuil légal
+
+Sur les formations à plus de 80 % de candidates femmes :
+
+| | Modèle | Plancher (E21) |
+|---|---:|---:|
+| ECE (formations très féminisées) | **0,066** | 0,048 |
+| ECE (autres formations) | 0,032 à 0,034 | — |
+| Ratio d'impact disparate | **0,76** | 0,63 |
+
+Le modèle **sur-annonce les chances d'admission** sur les formations très
+féminisées — une erreur de calibration presque deux fois supérieure à celle
+mesurée ailleurs — et le plancher y est mieux calibré que le modèle appris.
+Le ratio d'impact disparate de ce groupe reste **sous le seuil des quatre
+cinquièmes retenu** (`equite.seuil_impact_disparate`, 0,80), à 0,76, même si
+le modèle améliore nettement le 0,63 du plancher.
+
+**Le système n'est donc pas équitable sur cette dimension.** Il fait mieux
+que le plancher sur la sélection (le ratio d'impact disparate), moins bien
+sur la calibration — les deux verdicts doivent être rapportés ensemble,
+aucun des deux ne rachète l'autre. Ce résultat n'est pas adouci : c'est le
+constat que l'audit produit sur les données réelles du test 2025.
+
+### Les substituts, mesurés sur les prédictions
+
+Les substituts identifiés en E11 (filière 19,5 % net, département 2,3 % net,
+sur le genre observé) se retrouvent dans l'explication SHAP du modèle
+(E25) : ensemble, ils totalisent **14,2 %** de l'explication globale, alors
+que le genre n'entre jamais en entrée. Le département y pèse le plus lourd
+dans l'explication du modèle tout en étant le plus faible en corrélation au
+genre mesurée en E11 — importance au modèle et corrélation à un attribut
+protégé sont deux axes distincts, à ne pas confondre : une variable peut
+compter beaucoup pour le modèle sans être un vecteur important de
+discrimination indirecte, et inversement.
+
+### Ce que ce résultat confirme du dispositif à trois niveaux
+
+L'audit E26 est le troisième niveau du dispositif d'équité posé en E11 :
+l'exclusion à l'entrée (niveau 1) ne suffisait pas à garantir l'absence de
+traitement différencié, et cet audit le prouve concrètement plutôt que de le
+supposer. Le seuil qui rouvrirait l'arbitrage sur la filière (posé en E11 :
+« un impact disparate significatif porté par la filière ») est désormais
+observé — la suite du projet (Model Card, E42 ; plan de gouvernance, E44)
+doit porter ce résultat sans l'atténuer.
+
+## Ce qui reste ouvert après E26
+
+- Réconcilier l'écart de méthode déjà identifié entre l'analyse exploratoire
+  (83,8 % de formations à moins de 5 points d'écart d'admission, E11) et
+  l'audit (73,4 % rapporté par `fairness.py`) — un filtre d'effectif
+  vraisemblablement différent entre les deux mesures, voir
+  `reste-a-faire.md`.
+- Rejouer la mesure de substituts sur le jeu de variables final si un
+  prochain cycle d'entraînement en change la composition.
 
 ---
-*Mise à jour : 2026-08-29, commit `f7c1449`.*
+*Mise à jour : 2026-08-30, commit `b64e665`.*
