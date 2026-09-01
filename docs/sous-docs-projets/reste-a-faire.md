@@ -130,11 +130,27 @@ posées.*
       de l'ADR 0013 sont confirmées. **L'apport de Sirene reste hors de
       portée de la mesure**, voir le point ouvert ci-dessous — voir
       `04-modele/ablation.md`
-- [ ] `matching/affinite.py`, `debouches.py`, `score.py`
-- [ ] `api/main.py`, `routes/`, schémas Pydantic
-- [ ] `api/audit.py` — journalisation article 12
-- [ ] `api/static/` — écran conseiller, **conforme RGAA**
-- [ ] `rag/` — assistant, brique secondaire, **réécrit** et non repris du MVP
+- [x] `matching/affinite.py`, `debouches.py`, `score.py` (E28, 2026-09-01).
+      Score multiplicatif, un terme nul supprime la recommandation.
+      **Couverture du terme débouchés mesurée à 1,4 %** (6 017 lignes sur
+      440 030) faute de code RNCP/NSF/ROME dans les millésimes Parcoursup —
+      voir le point ouvert ci-dessous — `06-service/score.md`
+- [x] `api/main.py`, `routes/`, schémas Pydantic (E29, 2026-09-01). 6
+      routeurs, explication lue depuis le précalcul SHAP (jamais recalculée
+      en direct), dégradation explicite si Sirene manque, réponse 422 sur
+      catalogue trop grand — `06-service/api.md`
+- [x] `api/audit.py` — journalisation article 12 et `api/audit_purge.py` —
+      purge exécutable (E30, 2026-09-01). Trois paliers testés, idempotents.
+      **Déclenchement planifié restant, purge du journal de retour (T6) non
+      construite** — voir le point ouvert ci-dessous —
+      `06-service/journalisation-purge.md`
+- [x] `api/static/` — écran conseiller (E31, 2026-09-01). Écartement bloqué
+      côté client et serveur sans motif. **Audit RGAA automatisé fait,
+      audit manuel navigateur non déroulé** — voir le point ouvert ci-dessous
+      — `06-service/ecran-conseiller.md`, procédure : `reports/e31-audit-rgaa-procedure.md`
+- [x] `rag/` — assistant réécrit, non repris du MVP (E32, 2026-09-01). 7 403
+      documents, TF-IDF, citation garantie par construction —
+      `06-service/assistant-rag.md`
 - [ ] CI/CD — trois workflows *(dépôt 2)*
 - [ ] Evidently — dérive, seuil documenté en ADR
 - [ ] Vidéo de la solution en production
@@ -283,6 +299,45 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
       que d'une contrainte explicite. À corriger avant l'étape
       d'industrialisation (E35-E36), où l'image de conteneur doit être
       reproductible par construction.
+
+---
+
+## Points ouverts issus du service (E28 à E32)
+
+- [ ] **La couverture du terme débouchés reste à 1,4 %.** Mesuré sur les
+      fichiers réels (E28, `06-service/score.md`) : 7 libellés distincts sur
+      712 (1,0 %), 6 017 lignes sur 440 030 (1,4 %) atteignent un débouché
+      Sirene par appariement textuel exact ; les 98,6 % restants portent le
+      terme explicitement marqué indisponible, jamais deviné. C'est peu, et
+      c'est écrit tel quel plutôt que masqué. Un appariement approché
+      (distance d'édition, ou croisement du `code_nsf` IDÉO avec `fili`)
+      resterait à mesurer avant de conclure qu'aucune amélioration n'est
+      possible. Condition de clôture : soit la couverture se corrige et se
+      remesure, soit la limite est actée définitivement dans la Model Card
+      (E42) plutôt que présentée comme provisoire sans échéance.
+- [ ] **L'audit RGAA manuel n'a pas été déroulé dans un navigateur.** La
+      suite automatisée (`tests/unit/test_ecran_accessibilite.py`) couvre ce
+      qui se vérifie sans rendu réel — structure sémantique, étiquettes,
+      contraste recalculé. Le rendu réel, le comportement d'un lecteur
+      d'écran, le parcours clavier de bout en bout et la perception par une
+      personne daltonienne restent à vérifier suivant la procédure écrite
+      point par point dans `reports/e31-audit-rgaa-procedure.md`.
+- [ ] **La purge du journal d'inférence (T5) n'est pas planifiée.** Elle
+      existe, tourne, est testée et idempotente (E30,
+      `src/edumatch/api/audit_purge.py`), mais s'exécute à la demande. Le
+      déclenchement planifié relève de l'ordonnanceur — à construire avec le
+      DAG Airflow (E33).
+- [ ] **La purge du journal des décisions de conseiller (T6, `/feedback`)
+      n'est pas construite**, faute d'identifiant commun entre ce journal et
+      le journal d'inférence (T5) — les deux traces ne se corrèlent pas
+      aujourd'hui. La durée décidée (12 mois, alignée sur T5) reste une
+      intention pour ce journal précis.
+- [ ] **L'identifiant du conseiller, saisi sur l'écran de supervision, est
+      déclaratif et non vérifié.** Aucun mécanisme d'authentification n'est
+      branché à cette étape (E31).
+- [ ] **Le tableau de bord du taux d'écartement**, destiné au déployeur pour
+      vérifier que le contrôle humain (article 14) n'est pas une façade,
+      reste à construire.
 
 ---
 

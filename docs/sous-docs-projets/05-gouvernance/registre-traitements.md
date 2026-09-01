@@ -172,11 +172,11 @@ internes et rien d'autre.
 
 ---
 
-### T4 — Recommandation d'orientation (inférence) — **spécifié, non construit**
+### T4 — Recommandation d'orientation (inférence) — **construit** (E28-E29)
 
 | | |
 |---|---|
-| **Statut** | **À construire** — `src/edumatch/api/` ne contient aujourd'hui que des marqueurs de dossier |
+| **Statut** | **Existant** — `src/edumatch/matching/`, `src/edumatch/api/routes/matching.py`. Voir `06-service/score.md` et `06-service/api.md` pour le détail technique |
 | **Finalité** | Estimer, pour un candidat, ses chances d'admission dans une formation et lui restituer les facteurs de cette estimation |
 | **Données personnelles ?** | **Oui**, et **de mineurs** |
 | **Personnes concernées** | Lycéens de terminale, en majorité âgés de 17 à 18 ans, une minorité de 16 ans. **Le service n'est pas destiné aux moins de 15 ans** |
@@ -224,11 +224,11 @@ d'exprimer un point de vue et de contester par le formulaire de retour.
 
 ---
 
-### T5 — Journalisation des inférences — **spécifié, non construit**
+### T5 — Journalisation des inférences — **construit** (E30)
 
 | | |
 |---|---|
-| **Statut** | **À construire** — `src/edumatch/api/audit.py` |
+| **Statut** | **Existant** — `src/edumatch/api/audit.py`, purge exécutable dans `src/edumatch/api/audit_purge.py`. Voir `06-service/journalisation-purge.md` |
 | **Finalité** | Traçabilité exigée par l'AI Act pour un système à haut risque : savoir quelle version du modèle a produit quelle sortie, à quelle date |
 | **Données personnelles ?** | **Oui** pendant la phase en clair |
 | **Base légale** | **Obligation légale, art. 6.1.c** — la journalisation n'est pas un choix du responsable de traitement, elle est imposée par le règlement sur l'IA |
@@ -260,17 +260,23 @@ complémentaire, plus une marge de réclamation. Le choix de 36 mois correspond
 dérive du concept sur une cible qui bouge d'une session à l'autre.
 
 **Ce qui rend la durée vérifiable et non déclarative** : la purge doit être
-une tâche planifiée de l'ordonnanceur, avec journal d'exécution — pas une
-procédure écrite dans un document. Tant que cette tâche n'existe pas, la
-durée est une intention. Elle est inscrite comme telle en lacune L2.
+une tâche exécutable, avec journal d'exécution — pas une procédure écrite
+dans un document. **C'est fait (E30, commit `121c23c`)** :
+`src/edumatch/api/audit_purge.py` exécute les trois paliers, en mode
+simulation par défaut, en mode réel sur option explicite, idempotent
+(rejouer la purge à la même date ne change rien), et chaque passage
+journalise ses quatre compteurs dans `processed/audit/purges.jsonl`. La
+lacune L2 est levée sur ce point précis — voir `06-service/journalisation-purge.md`
+pour le détail, et la lacune reformulée en §4 ci-dessous pour ce qui reste
+ouvert : le déclenchement planifié.
 
 ---
 
-### T6 — Supervision humaine et écartement motivé — **spécifié, non construit**
+### T6 — Supervision humaine et écartement motivé — **construit** (E31)
 
 | | |
 |---|---|
-| **Statut** | **À construire** — écran conseiller |
+| **Statut** | **Existant** — `src/edumatch/api/static/`, `routes/ecran.py`, `feedback_store.py`. Voir `06-service/ecran-conseiller.md`. **Purge non construite** pour ce journal — voir ci-dessous et `06-service/journalisation-purge.md` |
 | **Finalité** | Permettre à un conseiller de comprendre une recommandation, de la contextualiser et de **l'écarter avec un motif** ; article 14 de l'AI Act |
 | **Données personnelles ?** | Oui — celles du candidat concerné, et l'identifiant professionnel du conseiller |
 | **Base légale** | Mission d'intérêt public ou intérêt légitime du déployeur, selon son statut ; **obligation légale** pour la part imposée par l'article 14 |
@@ -285,11 +291,11 @@ sans consigne est une collecte non maîtrisée.
 
 ---
 
-### T7 — Assistant conversationnel (brique secondaire) — **spécifié, non construit**
+### T7 — Assistant conversationnel (brique secondaire) — **construit** (E32)
 
 | | |
 |---|---|
-| **Statut** | **À construire** — `src/edumatch/rag/` |
+| **Statut** | **Existant** — `src/edumatch/rag/`. La question posée n'est jamais journalisée (seulement sa longueur et le nombre de résultats). Voir `06-service/assistant-rag.md` |
 | **Finalité** | Répondre à des questions sur les formations en citant ses sources documentaires |
 | **Données personnelles ?** | **Oui, potentiellement** — une question en texte libre peut contenir tout et n'importe quoi |
 | **Base légale** | Consentement, ou intérêt légitime du déployeur |
@@ -333,8 +339,8 @@ commit ne fait pas. C'est un coût connu et accepté, pas une découverte.
 | T2 échantillons | **Oui** (pseudonymisée) | art. 6.1.f | Vie du dépôt | Sans objet |
 | T3 agrégat territorial | **Oui** (indirecte) | art. 6.1.f | Écrasé chaque mois | Oui, par écrasement |
 | T4 inférence | **Oui**, mineurs | art. 6.1.a ou 6.1.e | Aucune conservation | À implémenter |
-| T5 journalisation | **Oui** | art. 6.1.c | 12 / 36 mois | **Non — lacune L2** |
-| T6 supervision | **Oui** | art. 6.1.c et 6.1.e | 12 mois | **Non** |
+| T5 journalisation | **Oui** | art. 6.1.c | 12 / 36 mois | **Oui — E30, `audit_purge.py`, testée, idempotente. Déclenchement planifié restant (lacune L2 réduite)** |
+| T6 supervision | **Oui** | art. 6.1.c et 6.1.e | 12 mois | **Non — écran construit (E31), purge du journal de retour pas encore construite, faute d'identifiant commun avec T5** |
 | T7 assistant | **Oui**, possible | art. 6.1.a | Aucune | **Non** |
 | T8 droits | **Oui** | art. 6.1.c | 3 ans après clôture | **Non** |
 
@@ -347,12 +353,17 @@ commit ne fait pas. C'est un coût connu et accepté, pas une découverte.
   d'entrepreneur individuel sortent des échantillons versionnés — au prix,
   chiffré dans l'ADR 0008, de 56,4 % de représentativité perdue sur les
   catégories juridiques.
-- **L2 — Aucune purge automatisée n'existe.** Les durées de T5 à T8 sont
-  décidées et écrites ; elles ne sont pas encore exécutées par une tâche
-  planifiée. Une durée sans mécanisme de purge n'est pas une durée de
-  conservation, c'est une intention.
+- **L2 — Réduite (E30, 2026-09-01).** Pour T5, la purge est exécutable,
+  testée et idempotente (`audit_purge.py`) : ce n'est plus une intention
+  pour ce journal. Ce qui reste ouvert : la purge n'est pas encore
+  **déclenchée par une tâche planifiée** de l'ordonnanceur — elle
+  s'exécute à la demande — et **T6 (journal de retour du conseiller) n'a
+  pas de purge**, faute d'identifiant commun avec T5. Voir
+  `06-service/journalisation-purge.md`.
 - **L3 — Aucune notice d'information n'est rédigée** à destination des
   candidats. C'est le premier livrable à produire dès que l'interface existe.
 
 ---
-*Étape E40 · rédigé le 2026-08-30.*
+*Étape E40 · rédigé le 2026-08-30 · mis à jour le 2026-09-01 (T4, T5, T6, T7
+et lacune L2 après construction de la phase 5, E28-E32) — la revue formelle
+complète de ce registre reste programmée à l'étape E40.*

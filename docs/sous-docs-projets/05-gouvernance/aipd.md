@@ -286,8 +286,15 @@ opposables, chacun suffisant à lui seul :
    pas ;
 3. il n'existe **aucun dispositif de contrôle humain**, donc aucune
    possibilité d'écarter une recommandation ;
-4. les **durées de conservation n'ont pas de purge exécutable**, ce qui les
-   ramène au rang d'intentions.
+4. ~~les **durées de conservation n'ont pas de purge exécutable**, ce qui les
+   ramène au rang d'intentions~~ — **motif levé le 2026-09-01 (E30)** :
+   `src/edumatch/api/audit_purge.py` exécute les trois paliers du journal
+   d'inférence (clair, pseudonymisé, agrégé), en mode simulation par
+   défaut, testé et idempotent. Détail : `06-service/journalisation-purge.md`.
+   Ce que ce motif ne couvre pas encore : le déclenchement de la purge
+   n'est pas planifié dans un ordonnanceur, et le journal des décisions de
+   conseiller (T6) n'a pas de purge propre — deux points désormais suivis
+   dans `reste-a-faire.md`, pas dans cet avis.
 
 S'y ajoutent deux conditions non bloquantes mais fermes : la notice
 d'information aux candidats, en termes qu'un adolescent comprend, et le seuil
@@ -299,4 +306,5 @@ nouvelle catégorie de personnes concernées, changement de public visant des
 élèves de moins de quinze ans.
 
 ---
-*Étape E41 · version 0.9 du 2026-08-30 · quatre compléments identifiés.*
+*Étape E41 · version 0.9 du 2026-08-30, mise à jour le 2026-09-01 (motif 4
+levé, voir §7) · trois compléments restants avant révision complète.*

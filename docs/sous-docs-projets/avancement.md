@@ -7,7 +7,7 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 27 / 46 étapes validées.**
+**État : 32 / 46 étapes validées.**
 
 ---
 
@@ -1165,11 +1165,130 @@ complet : `04-modele/ablation.md`.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E28 | Score à trois termes | ⬜ | | |
-| E29 | API | ⬜ | | |
-| E30 | Journalisation article 12 | ⬜ | | |
-| E31 | Écran conseiller RGAA | ⬜ | | |
-| E32 | Assistant RAG réécrit | ⬜ | | |
+| E28 | Score à trois termes | ✅ validée | 2026-09-01 | `53d1bdd` |
+| E29 | API | ✅ validée | 2026-09-01 | `0b61e25` |
+| E30 | Journalisation article 12 | ✅ validée | 2026-09-01 | `121c23c` |
+| E31 | Écran conseiller RGAA | ✅ validée | 2026-09-01 | `bbebefd` |
+| E32 | Assistant RAG réécrit | ✅ validée | 2026-09-01 | `b56ec9f` |
+
+**E28 — ce qui a été vérifié**
+- `src/edumatch/matching/score.py` combine affinité (règles), accessibilité
+  (modèle E22) et débouchés (agrégat Sirene) par un produit : un terme nul
+  supprime la recommandation, testé séparément pour les trois
+  (`tests/unit/test_matching_score.py::test_un_terme_nul_supprime_le_score`)
+- **Obstacle central mesuré, pas contourné** : aucun des huit millésimes
+  Parcoursup ne porte de code RNCP, NSF ou ROME — vérifié par inspection
+  des colonnes. L'appariement textuel des libellés avec le référentiel
+  IDÉO, mesuré sur les fichiers réels et vérifié à la main sur
+  l'échantillon des correspondances obtenues : **7 libellés distincts sur
+  712 (1,0 %), 6 017 lignes sur 440 030 (1,4 %)**
+- Pour les 98,6 % de lignes restantes, le terme est marqué **explicitement
+  indisponible**, jamais mis à zéro en silence : le score se réduit à
+  affinité × accessibilité, et le motif voyage avec le résultat
+- `matching/agregat_sirene_debouches.py` applique, pour la première fois,
+  les deux protections déclarées par la gouvernance et non appliquées par
+  le job d'agrégation de l'E17 : k-anonymat (k = 5, grain département ×
+  division NAF) et filtre `diffusible` (**20 488 établissements exclus**,
+  du même ordre de grandeur que les 20 501 mesurés par ailleurs sur
+  l'ensemble du stock)
+- Le genre n'entre ni dans le profil candidat ni dans le score — vérifié
+  par introspection au chargement du module et par test
+
+**E28 — décision prise** : aucun ADR nouveau — le score applique le
+principe d'architecture déjà arbitré (un seul composant appris). Détail
+complet, y compris les alternatives écartées à l'appariement textuel :
+`06-service/score.md`.
+
+**E29 — ce qui a été vérifié**
+- `src/edumatch/api/main.py` monte 6 routeurs : `health`, `matching`,
+  `explain`, `feedback`, `assistant`, `ecran`. 31 tests neufs, suite
+  complète à **572**
+- `/explain` ne recalcule jamais SHAP en direct : elle lit le précalcul de
+  l'E25 (440 030 cellules, 99,8 Mo, 8,3 minutes de calcul par lot), la
+  latence est bornée par une lecture de fichier, pas par un calcul à la
+  demande
+- Dégradation explicite si le stock Sirene manque : chaque formation porte
+  le statut de chaîne rompue avec son motif, jamais un zéro silencieux
+- La réserve sur le modèle (MAE pondérée test 0,0758 contre baseline
+  0,0701) est portée par chaque réponse de `/matching`, pas seulement par
+  la documentation
+- Catalogue trop grand : réponse **422** explicite plutôt qu'une troncature
+  invisible
+
+**E29 — décision prise** : aucun ADR nouveau. Deux dettes déclarées dans le
+code : modèle entraîné au démarrage faute de chargeur de registre, durée de
+conservation du journal de retour à construire — reprise par l'E30. Détail
+complet : `06-service/api.md`.
+
+**E30 — ce qui a été vérifié**
+- `src/edumatch/api/audit_purge.py` exécute les trois paliers de
+  conservation décidés par la gouvernance (12 mois en clair, 36 mois
+  pseudonymisé, puis agrégats), qui concilient le plancher de l'article 12
+  du règlement sur l'IA et le plafond de l'article 5.1.e du RGPD
+- Mode simulation par défaut, mode réel explicite ; chaque passage —
+  simulation comprise — journalise ses quatre compteurs dans
+  `processed/audit/purges.jsonl`
+- **Test rejoué** : trois lignes à trois âges, purge réelle lancée, la
+  fraîche reste intacte, l'intermédiaire change de jeton sans perdre ses
+  variables, l'ancienne disparaît du journal en clair pour réapparaître
+  comptée dans l'agrégat. Un second passage à la même date ne change rien
+  — **idempotence démontrée, pas supposée**
+- **La lacune de gouvernance L2 (« aucune purge automatisée n'existe »)
+  est levée pour le journal d'inférence (T5)** — reportée dans
+  `05-gouvernance/registre-traitements.md` et `05-gouvernance/aipd.md`
+  (motif 4 de l'avis du DPO)
+
+**E30 — deux lacunes déclarées, non closes** : le déclenchement planifié de
+la purge reste à poser (Airflow, E33), et la purge du journal des décisions
+de conseiller (T6) n'est pas construite, faute d'identifiant commun entre
+les deux journaux. Détail complet : `06-service/journalisation-purge.md`.
+
+**E31 — ce qui a été vérifié**
+- `src/edumatch/api/static/` (HTML, CSS, JS sans framework) et
+  `routes/ecran.py` : l'écartement d'une recommandation est **bloqué côté
+  client et côté serveur** tant qu'aucun motif n'est saisi
+- L'écran affiche, sans les masquer : l'indisponibilité du terme de
+  débouchés (98,6 % des formations), la réserve sur le modèle, et le
+  rappel que le score assiste sans décider
+- Prévention du XSS par construction : rendu par `textContent` et
+  `createElement`, jamais `innerHTML`
+- `tests/unit/test_ecran_accessibilite.py` : structure sémantique, chaque
+  champ associé à un `<label>`, zones dynamiques annoncées, **contraste
+  WCAG recalculé à chaque exécution** sur les couleurs déclarées dans
+  `style.css`
+- Procédure d'audit manuel écrite point par point pour ce que la suite
+  automatisée ne peut pas prouver sans navigateur (`reports/e31-audit-rgaa-procedure.md`)
+
+**E31 — décision prise** : aucun ADR nouveau. Trois limites déclarées :
+audit manuel RGAA non encore déroulé, identifiant conseiller déclaratif et
+non vérifié, tableau de bord du taux d'écartement non construit. Détail
+complet : `06-service/ecran-conseiller.md`.
+
+**E32 — ce qui a été vérifié**
+- `src/edumatch/rag/` (réécrit, jamais repris de l'ancien prototype) :
+  corpus de **7 403 documents** (5 869 formations, 1 534 métiers,
+  référentiels ONISEP ingérés en E07), chacun avec sa citation lue au
+  manifeste
+- La citation est garantie par construction : les sources retournées
+  viennent toujours de la recherche, jamais de ce que le modèle de langage
+  affirme avoir consulté. Sous le seuil de similarité configuré,
+  l'assistant dit qu'il ne sait pas
+- TF-IDF sur une dépendance déjà présente au projet — embeddings, base
+  vectorielle, reranker et évaluation automatisée écartés, faute de
+  critère qui les exige sur un corpus deux ordres de grandeur sous le
+  volume utile
+- Dégradation testée sans appel réseau : sans clé d'API, le client n'est
+  même pas construit ; avec une clé mais un appel en échec, réponse en
+  mode extractif avec avertissement nommé
+- La question posée n'est jamais journalisée, seulement sa longueur et le
+  nombre de résultats
+
+**E32 — décision prise** : aucun ADR nouveau. Brique hors du périmètre de
+la surveillance de dérive du modèle d'accessibilité, déclaré dans le code.
+Détail complet : `06-service/assistant-rag.md`.
+
+**Suite de tests à l'issue de la phase 5** : 668 tests verts
+(`python -m pytest -q`).
 
 ## Phase 6 — Industrialisation
 

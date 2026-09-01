@@ -15,6 +15,46 @@ Format :
 
 ---
 
+## 2026-09-01 — Phase 5 close : score, API, journalisation, écran conseiller, assistant
+
+**Fait** : E28 à E32 validées, cinq commits (`53d1bdd`, `0b61e25`,
+`121c23c`, `bbebefd`, `b56ec9f`). Score multiplicatif à trois termes, avec
+la couverture du terme débouchés mesurée et déclarée à 1,4 % plutôt que
+supposée ; API à 6 routes qui lit le précalcul SHAP et ne le recalcule
+jamais en direct ; journal d'inférence article 12 doté d'une purge
+exécutable, testée, idempotente sur trois paliers de conservation ; écran
+conseiller avec écartement bloqué sans motif côté client et serveur, et
+contraste WCAG recalculé à chaque exécution des tests ; assistant
+documentaire réécrit, 7 403 documents, citation garantie par construction.
+Suite de tests : 668 verts. Pages écrites dans `06-service/` (`score.md`,
+`api.md`, `journalisation-purge.md`, `ecran-conseiller.md`,
+`assistant-rag.md`), qui prouvent notamment les critères 4.17 (contrôle
+humain) et 4.18 (accessibilité, avec renvoi à la procédure d'audit manuel
+`reports/e31-audit-rgaa-procedure.md`).
+
+**Décisions** : aucun ADR nouveau sur cette phase — les cinq étapes
+appliquent des principes déjà arbitrés (un seul composant appris,
+sobriété technique de la brique RAG, conciliation article 12 / article
+5.1.e déjà écrite par la gouvernance). La lacune de gouvernance L2
+(« aucune purge automatisée n'existe ») est levée pour le journal
+d'inférence : `05-gouvernance/registre-traitements.md` (T4 à T7, section
+lacunes) et `05-gouvernance/aipd.md` (motif 4 de l'avis du DPO) mis à jour
+en conséquence, sans rouvrir l'avis défavorable sur la mise en service —
+trois motifs y restent non traités par cette phase.
+
+**Corrigé** : rien — aucune erreur trouvée en documentant cette phase.
+
+**Bloqué sur** : rien pour la documentation. Points ouverts reportés dans
+`reste-a-faire.md` : couverture des débouchés à 1,4 %, audit RGAA manuel
+non déroulé, purge du journal d'inférence non planifiée, purge du journal
+de retour du conseiller non construite, identifiant conseiller déclaratif.
+Prochaine étape : E33, DAG Airflow — en cours au moment de cette entrée,
+hors du périmètre de cette mise à jour de la documentation.
+
+**Jury** : aucune évaluation ce jour.
+
+---
+
 ## 2026-08-30 — Dossier de certification : présent réservé à ce qui existe, futur pour le reste
 
 **Fait** : deux arbitrages appliqués à `dossier/_build_dossier.py`, `.docx`
