@@ -155,6 +155,16 @@ api:
   audit:
     delai_pseudonymisation_jours: 365
     delai_agregation_jours: 1095
+
+orchestration:
+  tentatives_max: 3
+  delai_reprise_secondes: 1
+  facteur_backoff: 2.0
+  planification:
+    parcoursup: "@yearly"
+    sirene: "@monthly"
+    referentiels: "@daily"
+    purge_audit: "@daily"
 """
 
 DEV_YAML = """

@@ -386,6 +386,36 @@ derive:
   tests: [psi, kolmogorov_smirnov]
   seuil_reentrainement: 0.20         # PSI au-delà duquel on réentraîne
 
+# Orchestration du DAG (E33, Airflow). Les tâches enchaînent exactement la
+# chaîne déjà portée par le Makefile (make data, make sirene-agregats,
+# make naf-rome, make audit-purge-appliquer) ; ce bloc ne porte que les
+# paramètres de reprise et de planification, jamais un seuil métier.
+orchestration:
+  # Un premier essai plus deux reprises : au-delà, une coupure réseau ou un
+  # quota indisponible depuis trois tentatives n'est plus un incident
+  # transitoire à absorber seul, c'est une panne à faire remonter (voir
+  # src/edumatch/orchestration/reprise.py).
+  tentatives_max: 3
+  # Délai avant la première reprise, multiplié par facteur_backoff à chaque
+  # tentative suivante (60 s, puis 120 s) : assez court pour ne pas
+  # allonger inutilement une reprise après une coupure réseau brève, assez
+  # long pour laisser respirer un service en quota plutôt que de le
+  # marteler à la même cadence.
+  delai_reprise_secondes: 60
+  facteur_backoff: 2.0
+  # Cadence de chaque chaîne, alignée sur la fraîcheur réelle de chaque
+  # source (voir qualite.*.age_max_jours_avertissement ci-dessus, mesurée
+  # sur les fichiers sources) : Parcoursup publie une campagne par an,
+  # Sirene republie son stock chaque mois, l'export RNCP est quotidien. La
+  # purge du journal d'audit (E30, article 12) est planifiée à la même
+  # cadence que les référentiels : une durée de conservation qu'aucune
+  # tâche planifiée n'applique n'est pas une durée, c'est une intention.
+  planification:
+    parcoursup: "@yearly"
+    sirene: "@monthly"
+    referentiels: "@daily"
+    purge_audit: "@daily"
+
 api:
   slo_latence_p95_ms: 300
   max_formations_evaluees: 500       # plafond du catalogue scoré par requête /matching (recommander non vectorisé, E28)

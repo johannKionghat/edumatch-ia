@@ -55,6 +55,13 @@ transform = ["dbt-duckdb>=1.8,<1.9"]
 # dépendances principales — voir l'arbitrage chiffré dans
 # src/edumatch/spark/sirene_agregats_polars.py.
 spark = ["pyspark>=3.5,<3.6"]
+# E33 : chargée uniquement par pipelines/edumatch_pipeline.py, exécuté par le
+# planificateur du conteneur `airflow` (docker-compose.yml), jamais par le
+# reste du code ni par la suite de tests par défaut. La logique métier de
+# chaque tâche (src/edumatch/orchestration/) reste testable sans cet extra ;
+# seul le graphe lui-même (tests/unit/test_pipeline_dag_airflow.py) en a
+# besoin, et s'auto-ignore (`pytest.importorskip`) quand il est absent.
+airflow = ["apache-airflow>=2.9,<2.10"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

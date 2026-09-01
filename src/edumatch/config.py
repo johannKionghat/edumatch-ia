@@ -689,6 +689,43 @@ class ExecutionConfig(_Strict):
     niveau_journal: Literal["DEBUG", "INFO", "WARNING", "ERROR"]
 
 
+class PlanificationConfig(_Strict):
+    """Cadence de chaque chaîne du DAG (E33), une entrée par étoile du plan
+    d'exécution : Parcoursup (annuel), Sirene (mensuel), référentiels
+    (quotidien, tiré par l'export RNCP), purge du journal d'audit (quotidien,
+    article 12). Une chaîne de planification Airflow (cron ou préréglage
+    `@yearly`/`@monthly`/`@daily`), jamais un nombre de jours : c'est
+    `pipelines/edumatch_pipeline.py` qui l'interprète, ce module ne fait que
+    la porter typée.
+    """
+
+    parcoursup: str
+    sirene: str
+    referentiels: str
+    purge_audit: str
+
+
+class OrchestrationConfig(_Strict):
+    """Paramètres de reprise et de planification du DAG Airflow (E33).
+
+    `tentatives_max` : nombre total d'essais (le premier plus les reprises).
+    Au-delà, une erreur transitoire qui persiste n'est plus transitoire au
+    sens opérationnel — c'est une panne qui doit alerter un humain plutôt que
+    continuer de retenter indéfiniment.
+
+    `delai_reprise_secondes` / `facteur_backoff` : délai avant la première
+    reprise, multiplié par ce facteur à chaque tentative suivante
+    (temporisation croissante). Une erreur définitive (`ErreurDefinitive`,
+    dont `ErreurQualiteBloquante`) n'attend jamais ce délai : elle n'est
+    jamais retentée, voir `orchestration/reprise.py`.
+    """
+
+    tentatives_max: int = Field(ge=1)
+    delai_reprise_secondes: float = Field(gt=0)
+    facteur_backoff: float = Field(ge=1)
+    planification: PlanificationConfig
+
+
 # ─── Fusion des fichiers YAML ────────────────────────────────────────────────
 
 
@@ -838,6 +875,7 @@ class Settings(BaseSettings):
     derive: DeriveConfig
     api: ApiConfig
     execution: ExecutionConfig
+    orchestration: OrchestrationConfig
 
     # Secrets — uniquement lisibles depuis l'environnement, jamais du YAML.
     # `validation_alias` court-circuite le préfixe EDUMATCH_ pour coller aux

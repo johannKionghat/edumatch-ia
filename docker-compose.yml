@@ -26,15 +26,34 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
 
+  # Image de base uniquement : elle ne contient ni le paquet `edumatch` ni ses
+  # dépendances (pandas, lightgbm, pydantic-settings...). Une image dédiée,
+  # construite sur `apache/airflow:2.9.3` avec `pip install -e .[airflow]`,
+  # reste à faire (E35, `docker/`) pour que le planificateur puisse réellement
+  # importer `pipelines/edumatch_pipeline.py`. Déclaré ici comme lacune
+  # assumée, pas masqué.
   airflow:
     image: apache/airflow:2.9.3
     command: standalone
     environment:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      PYTHONPATH: /opt/airflow/src
+      EDUMATCH_ENV: ${EDUMATCH_ENV:-prod}
+      EDUMATCH_DATA_ROOT: /opt/airflow/data
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-edumatch}
+      POSTGRES_USER: ${POSTGRES_USER:-edumatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     ports: ["8080:8080"]
     volumes:
-      - "./dags:/opt/airflow/dags"
+      - "./pipelines:/opt/airflow/dags"
       - "./src:/opt/airflow/src"
+      - "./configs:/opt/airflow/configs"
+      - "./data:/opt/airflow/data"
+    depends_on:
+      postgres: { condition: service_healthy }
 
 volumes:
   pgdata:
