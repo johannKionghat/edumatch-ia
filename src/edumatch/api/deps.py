@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from fastapi import HTTPException, Request, status
 
+from edumatch.api.audit import NOM_FICHIER_JOURNAL as NOM_FICHIER_JOURNAL_AUDIT
+from edumatch.api.audit import SOUS_DOSSIER_AUDIT, JournalAudit
 from edumatch.api.feedback_store import NOM_FICHIER_JOURNAL, SOUS_DOSSIER_JOURNAL, JournalFeedback
 from edumatch.api.state import EtatExplicabilite, EtatMatching
 from edumatch.config import get_settings
@@ -49,4 +51,17 @@ def get_journal_feedback(request: Request) -> JournalFeedback:
     settings = get_settings()
     journal = JournalFeedback(settings.processed_dir / SOUS_DOSSIER_JOURNAL / NOM_FICHIER_JOURNAL)
     request.app.state.journal_feedback = journal
+    return journal
+
+
+def get_journal_audit(request: Request) -> JournalAudit:
+    """Même politique de construction paresseuse que `get_journal_feedback` : le journal
+    d'inférence (T5, article 12) n'est pas une dépendance dont l'absence doit empêcher l'API de
+    démarrer — voir `audit.py`."""
+    journal = getattr(request.app.state, "journal_audit", None)
+    if journal is not None:
+        return journal
+    settings = get_settings()
+    journal = JournalAudit(settings.processed_dir / SOUS_DOSSIER_AUDIT / NOM_FICHIER_JOURNAL_AUDIT)
+    request.app.state.journal_audit = journal
     return journal

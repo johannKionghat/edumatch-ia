@@ -54,6 +54,7 @@ async def _cycle_de_vie(app: FastAPI) -> AsyncIterator[None]:
         app.state.etat_explicabilite = None
 
     app.state.journal_feedback = None  # construit paresseusement au premier POST /feedback
+    app.state.journal_audit = None  # construit paresseusement à la première inférence /matching
     yield
 
 

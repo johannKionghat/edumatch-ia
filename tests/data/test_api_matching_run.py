@@ -15,7 +15,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from edumatch.api.deps import get_etat_matching
+from edumatch.api.audit import JournalAudit
+from edumatch.api.deps import get_etat_matching, get_journal_audit
 from edumatch.api.main import create_app
 from edumatch.api.state import construire_etat_matching
 from edumatch.config import Settings, load_settings
@@ -57,9 +58,10 @@ def test_etat_matching_degrade_le_terme_debouches_sans_planter(etat_matching) ->
     assert etat_matching.motif_indisponibilite_debouches is not None
 
 
-def test_matching_repond_sur_un_catalogue_reel(etat_matching) -> None:
+def test_matching_repond_sur_un_catalogue_reel(etat_matching, tmp_path: Path) -> None:
     app = create_app()
     app.dependency_overrides[get_etat_matching] = lambda: etat_matching
+    app.dependency_overrides[get_journal_audit] = lambda: JournalAudit(tmp_path / "journal.jsonl")
     client = TestClient(app)
 
     # Le premier profil disponible dans le catalogue réel de la session de test.

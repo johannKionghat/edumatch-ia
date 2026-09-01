@@ -8,12 +8,15 @@ contrat HTTP de la construction de l'état, déjà testée ailleurs.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import polars as pl
 import pytest
 from fastapi.testclient import TestClient
 
-from edumatch.api.deps import get_etat_matching
+from edumatch.api.audit import JournalAudit
+from edumatch.api.deps import get_etat_matching, get_journal_audit
 from edumatch.api.main import create_app
 from edumatch.api.state import EtatMatching, _artefacts_debouches_indisponibles
 from edumatch.matching.debouches import (
@@ -91,16 +94,21 @@ def _etat(*, disponible: bool = True) -> EtatMatching:
 
 
 @pytest.fixture()
-def client() -> TestClient:
+def client(tmp_path: Path) -> TestClient:
     app = create_app()
     app.dependency_overrides[get_etat_matching] = lambda: _etat()
-    return TestClient(app)
+    journal = JournalAudit(tmp_path / "journal.jsonl")
+    app.dependency_overrides[get_journal_audit] = lambda: journal
+    client = TestClient(app)
+    client.journal_audit = journal  # type: ignore[attr-defined]
+    return client
 
 
 @pytest.fixture()
-def client_debouches_indisponibles() -> TestClient:
+def client_debouches_indisponibles(tmp_path: Path) -> TestClient:
     app = create_app()
     app.dependency_overrides[get_etat_matching] = lambda: _etat(disponible=False)
+    app.dependency_overrides[get_journal_audit] = lambda: JournalAudit(tmp_path / "journal.jsonl")
     return TestClient(app)
 
 

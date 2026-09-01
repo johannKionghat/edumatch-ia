@@ -583,6 +583,46 @@ class AutoscalingConfig(_Strict):
         return self
 
 
+class AuditConfig(_Strict):
+    """Durées de conservation du journal d'inférence, article 12 du règlement sur l'IA (E30).
+
+    Conciliation entre le plancher de l'article 12 (conserver, au moins six
+    mois pour un système à haut risque) et le plafond de l'article 5.1.e du
+    RGPD (ne pas conserver au-delà du nécessaire) — arrêtée par la
+    gouvernance et reprise ici telle quelle (voir
+    `docs/sous-docs-projets/05-gouvernance/registre-traitements.md`, T5) :
+    trois paliers datés, jamais une conservation indéfinie.
+
+    `delai_pseudonymisation_jours` : durée du palier 1 (journal en clair).
+    Au-delà, `api.audit_purge` remplace l'identifiant d'exécution par un
+    jeton non réversible — le lien avec une personne est rompu, les
+    variables d'entrée et la sortie restent lisibles pour l'audit d'équité
+    et la détection de dérive. Valeur retenue : une campagne Parcoursup
+    entière (janvier à la phase complémentaire) plus une marge de
+    réclamation, soit 365 jours.
+
+    `delai_agregation_jours` : durée cumulée des paliers 1 et 2 (journal en
+    clair puis pseudonymisé). Au-delà, la ligne d'inférence disparaît :
+    seul un agrégat par session, type de baccalauréat et statut de boursier
+    est conservé. Valeur retenue : trois millésimes, la fenêtre minimale
+    pour observer une dérive du concept sur une cible qui bouge d'une
+    session à l'autre, soit 1095 jours (365 x 3).
+    """
+
+    delai_pseudonymisation_jours: int = Field(ge=1)
+    delai_agregation_jours: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def _paliers_croissants(self) -> "AuditConfig":
+        if self.delai_agregation_jours <= self.delai_pseudonymisation_jours:
+            raise ValueError(
+                "api.audit.delai_agregation_jours doit être strictement supérieur à "
+                "api.audit.delai_pseudonymisation_jours : le palier d'agrégation suit celui de "
+                "pseudonymisation, il ne peut pas le précéder."
+            )
+        return self
+
+
 class ApiConfig(_Strict):
     """Paramètres de l'API de matching (E29).
 
@@ -606,6 +646,7 @@ class ApiConfig(_Strict):
     slo_latence_p95_ms: int = Field(gt=0)
     max_formations_evaluees: int = Field(ge=1)
     top_n_max: int = Field(ge=1)
+    audit: AuditConfig
     # replicas et autoscaling n'existent qu'à partir de staging/prod.
     replicas: int | None = Field(default=None, ge=1)
     autoscaling: AutoscalingConfig | None = None

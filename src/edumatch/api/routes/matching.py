@@ -6,11 +6,13 @@ en mémoire (`api.state.EtatMatching`) puis délègue le scoring.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from edumatch.api.deps import get_etat_matching
+from edumatch.api.audit import JournalAudit
+from edumatch.api.deps import get_etat_matching, get_journal_audit
 from edumatch.api.schemas import (
     ProfilRequete,
     RecommandationFormation,
@@ -80,6 +82,31 @@ def _libelle_formation(catalogue: pd.DataFrame, identifiant_cellule: str) -> str
     return str(lignes.iloc[0]) if not lignes.empty else identifiant_cellule
 
 
+def _entrees_journal(profil: ProfilRequete, session: int) -> dict[str, Any]:
+    """Les variables d'entrée de l'inférence, au sens de T5 (`registre-traitements.md`) : la
+    session courante, déterminée côté serveur, plus le profil déclaré par le candidat — jamais
+    son genre, qui n'existe même pas dans `ProfilRequete` (voir le docstring du module)."""
+    return {
+        "session": session,
+        "type_bac": profil.type_bac,
+        "boursier": profil.boursier,
+        "type_formation": profil.type_formation,
+        "domaine": profil.domaine,
+        "departement": profil.departement,
+    }
+
+
+def _sortie_journal(reponse: ReponseMatching) -> dict[str, Any]:
+    """Le score produit, au sens de T5 : exactement ce que la réponse HTTP restitue, jamais
+    davantage (minimisation, art. 5.1.c) — aucun champ recalculé pour le seul journal."""
+    return {
+        "n_formations_disponibles": reponse.n_formations_disponibles,
+        "recommandations": [
+            {"identifiant_formation": r.identifiant_formation, "score": r.score} for r in reponse.recommandations
+        ],
+    }
+
+
 def _reponse_vide(etat: EtatMatching) -> ReponseMatching:
     return ReponseMatching(
         session=etat.session_courante,
@@ -94,15 +121,28 @@ def _reponse_vide(etat: EtatMatching) -> ReponseMatching:
 
 
 @router.post("/matching", response_model=ReponseMatching, summary="Recommande des formations pour un profil")
-def matching(profil: ProfilRequete, etat: EtatMatching = Depends(get_etat_matching)) -> ReponseMatching:
+def matching(
+    profil: ProfilRequete,
+    etat: EtatMatching = Depends(get_etat_matching),
+    journal: JournalAudit = Depends(get_journal_audit),
+) -> ReponseMatching:
     """Score le catalogue de la session courante pour le profil déclaré et retourne les
     meilleures formations, chaque terme du score restant visible séparément — jamais un score
-    seul (voir `matching/score.py`, l'effet du produit de trois termes)."""
+    seul (voir `matching/score.py`, l'effet du produit de trois termes).
+
+    Chaque appel journalise l'inférence (T5, article 12) avant de répondre — voir `api/audit.py`
+    et `_entrees_journal`/`_sortie_journal` ci-dessus pour ce qui est écrit."""
     settings = get_settings()
     sous_catalogue = _sous_catalogue(etat, profil)
     n_disponibles = len(sous_catalogue)
     if n_disponibles == 0:
-        return _reponse_vide(etat)
+        reponse = _reponse_vide(etat)
+        journal.enregistrer(
+            version_modele=settings.projet.version,
+            entrees=_entrees_journal(profil, etat.session_courante),
+            sortie=_sortie_journal(reponse),
+        )
+        return reponse
     if n_disponibles > settings.api.max_formations_evaluees:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -145,7 +185,7 @@ def matching(profil: ProfilRequete, etat: EtatMatching = Depends(get_etat_matchi
         )
         for resultat in resultats
     ]
-    return ReponseMatching(
+    reponse = ReponseMatching(
         session=etat.session_courante,
         recommandations=recommandations,
         n_formations_disponibles=n_disponibles,
@@ -155,3 +195,9 @@ def matching(profil: ProfilRequete, etat: EtatMatching = Depends(get_etat_matchi
         motif_indisponibilite_debouches=etat.motif_indisponibilite_debouches,
         avertissement_debouches=AVERTISSEMENT_DEBOUCHES,
     )
+    journal.enregistrer(
+        version_modele=settings.projet.version,
+        entrees=_entrees_journal(profil, etat.session_courante),
+        sortie=_sortie_journal(reponse),
+    )
+    return reponse

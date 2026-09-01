@@ -382,3 +382,8 @@ api:
   slo_latence_p95_ms: 300
   max_formations_evaluees: 500       # plafond du catalogue scoré par requête /matching (recommander non vectorisé, E28)
   top_n_max: 50                      # plafond du nombre de recommandations demandables
+  # Journal d'inférence article 12 (E30) : conciliation avec le plafond du RGPD (art. 5.1.e),
+  # voir registre-traitements.md T5 et src/edumatch/config.py:AuditConfig.
+  audit:
+    delai_pseudonymisation_jours: 365    # 12 mois — palier 1 -> 2
+    delai_agregation_jours: 1095         # 36 mois (365 x 3) — palier 2 -> 3

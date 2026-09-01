@@ -146,6 +146,9 @@ api:
   slo_latence_p95_ms: 300
   max_formations_evaluees: 500
   top_n_max: 50
+  audit:
+    delai_pseudonymisation_jours: 365
+    delai_agregation_jours: 1095
 """
 
 DEV_YAML = """
