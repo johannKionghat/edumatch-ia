@@ -147,6 +147,8 @@ derive:
   reference: distribution_entrainement
   tests: [psi]
   seuil_reentrainement: 0.20
+  n_tranches_psi: 10
+  top_k_categories_psi: 30
 
 api:
   slo_latence_p95_ms: 300

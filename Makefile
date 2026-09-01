@@ -83,6 +83,9 @@ explain:  ## Explicabilité TreeSHAP (E25) : importance globale, exemples locaux
 ablation:  ## Ablation (E27) : apport de chaque source de variables, écart mesuré même s'il est nul
 	python -m edumatch.models.ablation
 
+derive:  ## Dérive (E34) : PSI/KS variables, cible et prédictions, seuil de réentraînement (ADR 0018)
+	python -m edumatch.models.derive
+
 # ─── Matching ───────────────────────────────────────────────────────
 debouches:  ## Terme de débouchés (E28) : agrégat Sirene département x NAF k-anonymisé, correspondance formation -> IDÉO
 	python -m edumatch.matching.debouches

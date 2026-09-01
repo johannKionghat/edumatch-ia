@@ -381,10 +381,17 @@ rag:
   seuil_similarite_minimale: 0.05
   modele_generation: mistral-small-latest
 
+# Détection de dérive (E34, src/edumatch/models/derive.py). Seuil et granularité
+# arrêtés par l'ADR 0018, sur la mesure réelle des six sessions labellisées
+# (2020-2025, ADR 0012) : voir l'ADR pour le détail par famille de dérive
+# (variables, cible, prédictions) et pour la raison du regroupement en
+# catégories (top_k_categories_psi) plutôt qu'un PSI par modalité brute.
 derive:
   reference: distribution_entrainement
   tests: [psi, kolmogorov_smirnov]
-  seuil_reentrainement: 0.20         # PSI au-delà duquel on réentraîne
+  seuil_reentrainement: 0.20         # PSI au-delà duquel on réentraîne (médiane des variables, ADR 0018)
+  n_tranches_psi: 10                 # même granularité que evaluation.n_tranches_calibration (E23)
+  top_k_categories_psi: 30           # au-delà, catégories les moins fréquentes regroupées sous "autre"
 
 # Orchestration du DAG (E33, Airflow). Les tâches enchaînent exactement la
 # chaîne déjà portée par le Makefile (make data, make sirene-agregats,

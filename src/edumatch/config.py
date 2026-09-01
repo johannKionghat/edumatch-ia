@@ -598,9 +598,29 @@ class RagConfig(_Strict):
 
 
 class DeriveConfig(_Strict):
+    """Détection de dérive (E34) : `models/derive.py`.
+
+    `n_tranches_psi` : nombre de tranches de quantile de la référence pour le
+    PSI d'une variable numérique — même granularité que
+    `evaluation.n_tranches_calibration` (E23), pour la même raison : assez
+    fin pour distinguer une translation de distribution, pas au point de
+    multiplier des tranches quasi vides.
+
+    `top_k_categories_psi` : au-delà de ce nombre de modalités dans la
+    référence, les catégories les moins fréquentes sont regroupées sous une
+    modalité `__autre__` avant de calculer le PSI d'une variable
+    catégorielle. Sans ce plafond, une colonne à forte cardinalité
+    (`fil_lib_voe_acc`, 712 modalités mesurées sur `data/processed/`) ferait
+    dominer le PSI par un simple renouvellement de libellés d'une session à
+    l'autre plutôt que par un déplacement réel de la distribution — voir
+    `models/derive.py` pour la mesure qui a arrêté cette valeur.
+    """
+
     reference: str
     tests: list[str] = Field(min_length=1)
     seuil_reentrainement: float = Field(gt=0, lt=1)
+    n_tranches_psi: int = Field(ge=2)
+    top_k_categories_psi: int = Field(ge=1)
 
 
 class AutoscalingConfig(_Strict):

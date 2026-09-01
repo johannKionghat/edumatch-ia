@@ -52,7 +52,7 @@ def test_quatre_dag_sont_definis(module_pipeline) -> None:
     assert module_pipeline.dag_audit_purge.dag_id == "edumatch_audit_purge"
 
 
-def test_dag_parcoursup_enchaine_les_cinq_etapes_dans_l_ordre(module_pipeline) -> None:
+def test_dag_parcoursup_enchaine_les_six_etapes_dans_l_ordre(module_pipeline) -> None:
     dag = module_pipeline.dag_parcoursup
     assert _ids_taches(dag) == {
         "ingerer_parcoursup",
@@ -60,6 +60,7 @@ def test_dag_parcoursup_enchaine_les_cinq_etapes_dans_l_ordre(module_pipeline) -
         "transformer_silver",
         "construire_gold",
         "construire_variables",
+        "detecter_derive",
     }
     def aval(id_tache: str) -> list[str]:
         return [t.task_id for t in dag.get_task(id_tache).downstream_list]
@@ -68,7 +69,8 @@ def test_dag_parcoursup_enchaine_les_cinq_etapes_dans_l_ordre(module_pipeline) -
     assert aval("controler_qualite") == ["transformer_silver"]
     assert aval("transformer_silver") == ["construire_gold"]
     assert aval("construire_gold") == ["construire_variables"]
-    assert dag.get_task("construire_variables").downstream_list == []
+    assert aval("construire_variables") == ["detecter_derive"]
+    assert dag.get_task("detecter_derive").downstream_list == []
 
 
 def test_dag_sirene_enchaine_ingestion_qualite_agregat(module_pipeline) -> None:

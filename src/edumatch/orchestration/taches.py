@@ -23,6 +23,7 @@ from edumatch.api import audit_purge
 from edumatch.config import Settings, get_settings
 from edumatch.features import build as features_build
 from edumatch.ingestion import parcoursup, referentiels, sirene
+from edumatch.models import derive as models_derive
 from edumatch.quality import run as quality_run
 from edumatch.quality._diagnostic import RapportControle
 from edumatch.referentiel import naf_rome_formation
@@ -102,6 +103,23 @@ def construire_variables(settings: Settings | None = None) -> Any:
     """Construit la table de variables d'apprentissage depuis gold (E20)."""
     settings = settings or get_settings()
     return features_build.executer(settings)
+
+
+def detecter_derive(settings: Settings | None = None) -> models_derive.RapportDerive:
+    """Mesure la dérive des variables, de la cible et des prédictions (E34).
+
+    N'échoue jamais sur une dérive détectée : contrairement à `controler_qualite`
+    (une donnée cassée bloque la chaîne), une dérive au-delà du seuil est un
+    signal à examiner, pas une panne — elle est seulement journalisée en
+    avertissement (`models.derive.main`) pour que le DAG continue et que le
+    rapport (figures, MLflow) reste consultable même quand il recommande un
+    réentraînement.
+    """
+    settings = settings or get_settings()
+    rapport = models_derive.executer(settings)
+    if rapport.reentrainement_recommande:
+        LOGGER.warning("Dérive au-delà du seuil de réentraînement (E34) : %s", rapport.resume())
+    return rapport
 
 
 def purger_audit(settings: Settings | None = None) -> Any:
