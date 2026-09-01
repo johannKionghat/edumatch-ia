@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer test lint fmt docs clean
+.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier test lint fmt docs clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -99,6 +99,9 @@ audit-purge:  ## Purge du journal d'inférence (E30, article 12) : SIMULATION, r
 
 audit-purge-appliquer:  ## Purge du journal d'inférence : exécution RÉELLE (journal réécrit, agrégats mis à jour)
 	PYTHONPATH=src python -m edumatch.api.audit_purge --appliquer
+
+ecran-verifier:  ## Vérifie la syntaxe de l'écran conseiller (E31) : `node --check` sur app.js
+	node --check src/edumatch/api/static/app.js
 
 # ─── Qualité du code ────────────────────────────────────────────────
 test:  ## Lance la suite de tests

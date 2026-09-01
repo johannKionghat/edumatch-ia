@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Écran conseiller — EduMatch-IA</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <a class="lien-evitement" href="#contenu-principal">Aller au contenu principal</a>
+
+  <header class="en-tete">
+    <h1>Écran conseiller — EduMatch-IA</h1>
+    <p class="avis-assistance">
+      Cette estimation assiste un conseiller humain&nbsp;; elle ne constitue jamais une décision
+      automatisée au sens de l'article&nbsp;22 du RGPD. Vous restez seul décisionnaire et pouvez
+      écarter toute recommandation, à condition d'en indiquer le motif.
+    </p>
+  </header>
+
+  <nav class="navigation-page" aria-label="Sections de la page">
+    <ul>
+      <li><a href="#recherche">Rechercher</a></li>
+      <li><a href="#resultats">Résultats</a></li>
+    </ul>
+  </nav>
+
+  <main id="contenu-principal">
+
+    <section id="recherche" aria-labelledby="titre-recherche">
+      <h2 id="titre-recherche">Rechercher des formations pour un profil</h2>
+
+      <form id="formulaire-recherche" novalidate>
+        <div class="champ">
+          <label for="champ-conseiller">Votre identifiant (pseudonyme), pour tracer vos décisions</label>
+          <input type="text" id="champ-conseiller" name="identifiant_conseiller" required maxlength="128"
+                 autocomplete="off">
+        </div>
+
+        <fieldset class="champ">
+          <legend>Type de baccalauréat du candidat (obligatoire)</legend>
+          <div class="options-radio">
+            <label><input type="radio" name="type_bac" value="bg" required> Général</label>
+            <label><input type="radio" name="type_bac" value="bt"> Technologique</label>
+            <label><input type="radio" name="type_bac" value="bp"> Professionnel</label>
+          </div>
+        </fieldset>
+
+        <fieldset class="champ">
+          <legend>Le candidat est-il boursier&nbsp;? (obligatoire)</legend>
+          <div class="options-radio">
+            <label><input type="radio" name="boursier" value="true" required> Oui</label>
+            <label><input type="radio" name="boursier" value="false"> Non</label>
+          </div>
+        </fieldset>
+
+        <div class="champ">
+          <label for="champ-type-formation">Type de formation (facultatif, ex. « BTS », « Licence »)</label>
+          <input type="text" id="champ-type-formation" name="type_formation" maxlength="64">
+        </div>
+
+        <div class="champ">
+          <label for="champ-domaine">Domaine recherché (facultatif, mot-clé dans l'intitulé)</label>
+          <input type="text" id="champ-domaine" name="domaine" maxlength="128">
+        </div>
+
+        <div class="champ">
+          <label for="champ-departement">Département visé (facultatif, code INSEE, ex. « 75 », « 2A »)</label>
+          <input type="text" id="champ-departement" name="departement" maxlength="3"
+                 aria-describedby="aide-departement">
+          <p id="aide-departement" class="aide-champ">Deux chiffres, trois pour l'outre-mer, ou 2A/2B pour la Corse.</p>
+        </div>
+
+        <div class="champ">
+          <label for="champ-top-n">Nombre de recommandations souhaitées</label>
+          <input type="number" id="champ-top-n" name="top_n" value="10" min="1" max="50">
+        </div>
+
+        <button type="submit">Rechercher</button>
+      </form>
+
+      <div id="messages-recherche" class="messages" role="alert" aria-live="assertive"></div>
+    </section>
+
+    <section id="resultats" aria-labelledby="titre-resultats" hidden>
+      <h2 id="titre-resultats">Résultats</h2>
+
+      <div id="avertissements-generaux" class="bloc-avertissements"></div>
+
+      <ol id="liste-recommandations" class="liste-recommandations"></ol>
+    </section>
+
+    <section id="explication" aria-labelledby="titre-explication" hidden tabindex="-1">
+      <h2 id="titre-explication">Comprendre une recommandation</h2>
+      <div id="contenu-explication"></div>
+      <button type="button" id="bouton-fermer-explication">Fermer cette explication</button>
+    </section>
+
+  </main>
+
+  <footer class="pied-de-page">
+    <p>EduMatch-IA — outil d'aide à la décision, sans effet juridique automatique (article&nbsp;22 du RGPD).</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

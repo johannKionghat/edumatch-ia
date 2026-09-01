@@ -26,13 +26,17 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from edumatch.api.errors import enregistrer_gestionnaires_erreurs
-from edumatch.api.routes import explain, feedback, health, matching
+from edumatch.api.routes import ecran, explain, feedback, health, matching
 from edumatch.api.state import construire_etat_explicabilite, construire_etat_matching
 from edumatch.config import get_settings
+
+DOSSIER_STATIQUE = Path(__file__).resolve().parent / "static"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -76,6 +80,11 @@ def create_app() -> FastAPI:
     app.include_router(matching.router)
     app.include_router(explain.router)
     app.include_router(feedback.router)
+    app.include_router(ecran.router)
+    # Assets de l'écran conseiller (E31) : `style.css` et `app.js`, servis sous `/static/...`.
+    # `routes.ecran` reste seule responsable de ce qui répond sur `/` — monté en dernier, ce
+    # mount ne peut donc jamais capturer les routes déclarées ci-dessus (`/health`, `/matching`...).
+    app.mount("/static", StaticFiles(directory=DOSSIER_STATIQUE), name="static")
     return app
 
 

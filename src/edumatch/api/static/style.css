@@ -1,0 +1,299 @@
+/* Écran conseiller (E31) — feuille de style de l'écran de supervision.
+
+   Palette choisie et vérifiée pour un contraste WCAG 2.1 AA (RGAA) :
+   voir tests/unit/test_ecran_accessibilite.py::test_contrastes_declares_respectent_le_seuil_aa
+   pour le calcul exact, rejoué à chaque exécution de la suite plutôt que
+   documenté une fois puis oublié si une couleur change. */
+
+:root {
+  --couleur-texte: #1a1a1a;
+  --couleur-texte-attenue: #3d3d3d;
+  --couleur-fond: #ffffff;
+  --couleur-primaire: #0b3d91;
+  --couleur-primaire-texte: #ffffff;
+  --couleur-danger: #8a1f11;
+  --couleur-danger-texte: #ffffff;
+  --couleur-bordure: #595959;
+  --couleur-focus: #d17b00;
+  --couleur-erreur-fond: #f9e6e6;
+  --couleur-erreur-texte: #7a0000;
+  --couleur-succes-fond: #e8f3e8;
+  --couleur-succes-texte: #145214;
+  --couleur-avertissement-fond: #fff3cd;
+  --couleur-avertissement-texte: #5c3d00;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--couleur-texte);
+  background: var(--couleur-fond);
+  font-family: system-ui, "Segoe UI", Arial, sans-serif;
+  line-height: 1.5;
+}
+
+/* Lien d'évitement : visible seulement au focus clavier, jamais masqué à display:none
+   (un lecteur d'écran ou une navigation au clavier doit pouvoir l'atteindre). */
+.lien-evitement {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--couleur-primaire);
+  color: var(--couleur-primaire-texte);
+  padding: 0.75em 1em;
+  z-index: 100;
+}
+
+.lien-evitement:focus {
+  left: 0;
+}
+
+:focus {
+  outline: 3px solid var(--couleur-focus);
+  outline-offset: 2px;
+}
+
+.en-tete,
+.navigation-page,
+main,
+.pied-de-page {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+}
+
+.avis-assistance {
+  font-weight: 600;
+  border-left: 4px solid var(--couleur-primaire);
+  padding-left: 0.75rem;
+}
+
+.navigation-page ul {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid var(--couleur-bordure);
+}
+
+.navigation-page a {
+  color: var(--couleur-primaire);
+}
+
+fieldset.champ {
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1rem 0;
+}
+
+.champ {
+  margin-bottom: 1rem;
+}
+
+.champ label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.options-radio label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: normal;
+  margin-right: 1.25rem;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  max-width: 24rem;
+  padding: 0.5rem;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.aide-champ {
+  margin: 0.25rem 0 0 0;
+  color: var(--couleur-texte-attenue);
+  font-size: 0.9rem;
+}
+
+button {
+  font-size: 1rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button[type="submit"],
+button.bouton-principal {
+  background: var(--couleur-primaire);
+  color: var(--couleur-primaire-texte);
+}
+
+button.bouton-danger {
+  background: var(--couleur-danger);
+  color: var(--couleur-danger-texte);
+}
+
+button.bouton-secondaire {
+  background: var(--couleur-fond);
+  color: var(--couleur-primaire);
+  border-color: var(--couleur-primaire);
+}
+
+.messages:empty {
+  display: none;
+}
+
+.messages {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  background: var(--couleur-erreur-fond);
+  color: var(--couleur-erreur-texte);
+  border: 1px solid var(--couleur-erreur-texte);
+}
+
+.bloc-avertissements {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.avertissement {
+  background: var(--couleur-avertissement-fond);
+  color: var(--couleur-avertissement-texte);
+  border: 1px solid var(--couleur-avertissement-texte);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+}
+
+.liste-recommandations {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.carte-recommandation {
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.carte-recommandation h3 {
+  margin-top: 0;
+}
+
+.details-score dt {
+  font-weight: 600;
+}
+
+.details-score dd {
+  margin: 0 0 0.75rem 0;
+}
+
+.etat-indisponible {
+  font-weight: 600;
+}
+
+/* Le statut n'est jamais porté par la seule couleur : chaque badge répète l'information en texte
+   (voir app.js, qui écrit toujours "Indisponible" / "Mesuré" en toutes lettres à côté). */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge-disponible {
+  color: var(--couleur-succes-texte);
+  background: var(--couleur-succes-fond);
+}
+
+.badge-indisponible {
+  color: var(--couleur-erreur-texte);
+  background: var(--couleur-erreur-fond);
+}
+
+.actions-carte {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.formulaire-decision {
+  margin-top: 1rem;
+  border-top: 1px dashed var(--couleur-bordure);
+  padding-top: 1rem;
+}
+
+.formulaire-decision textarea {
+  width: 100%;
+  min-height: 4rem;
+  padding: 0.5rem;
+  border: 1px solid var(--couleur-bordure);
+  border-radius: 4px;
+  font: inherit;
+}
+
+.statut-decision {
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.statut-decision.succes {
+  color: var(--couleur-succes-texte);
+}
+
+.statut-decision.erreur {
+  color: var(--couleur-erreur-texte);
+}
+
+#explication {
+  border: 2px solid var(--couleur-primaire);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.tableau-contributions {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.tableau-contributions caption {
+  text-align: left;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.tableau-contributions th,
+.tableau-contributions td {
+  border: 1px solid var(--couleur-bordure);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.pied-de-page {
+  color: var(--couleur-texte-attenue);
+  border-top: 1px solid var(--couleur-bordure);
+  margin-top: 2rem;
+}
