@@ -144,6 +144,8 @@ derive:
 
 api:
   slo_latence_p95_ms: 300
+  max_formations_evaluees: 500
+  top_n_max: 50
 """
 
 DEV_YAML = """

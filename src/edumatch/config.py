@@ -584,7 +584,28 @@ class AutoscalingConfig(_Strict):
 
 
 class ApiConfig(_Strict):
+    """Paramètres de l'API de matching (E29).
+
+    `max_formations_evaluees` : plafond de lignes du catalogue soumises à
+    `matching.score.recommander` pour une seule requête `/matching`.
+    `recommander` boucle ligne à ligne, délibérément non vectorisé (voir son
+    docstring, E28) : au-delà de ce plafond, le temps de calcul menacerait
+    `slo_latence_p95_ms`. Au-delà, l'API répond 422 et demande de préciser un
+    département ou un domaine plutôt que de tronquer silencieusement le
+    catalogue — aucune formation écartée sans que l'appelant en soit informé.
+    Valeur retenue par ordre de grandeur avec `matching/exemple.py`, qui
+    documente un catalogue « de la taille d'une recherche candidate (quelques
+    centaines de lignes) » ; à mesurer précisément si ce plafond doit changer.
+
+    `top_n_max` : borne du nombre de recommandations qu'un appelant peut
+    demander (`ProfilRequete.top_n`) — protège des mêmes risques de latence
+    qu'un catalogue trop large, pour la raison inverse (page de résultats
+    demandée trop grande plutôt que catalogue trop large).
+    """
+
     slo_latence_p95_ms: int = Field(gt=0)
+    max_formations_evaluees: int = Field(ge=1)
+    top_n_max: int = Field(ge=1)
     # replicas et autoscaling n'existent qu'à partir de staging/prod.
     replicas: int | None = Field(default=None, ge=1)
     autoscaling: AutoscalingConfig | None = None

@@ -35,7 +35,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.5", "jupyter>=1.0"]
+# httpx : requis par `fastapi.testclient.TestClient` (E29) — déjà présent en
+# transitive (mlflow en dépend), déclaré ici car les tests de l'API l'utilisent
+# directement.
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.5", "jupyter>=1.0", "httpx>=0.25"]
 rag = ["langchain>=0.2", "langchain-community>=0.2", "faiss-cpu>=1.8",
        "sentence-transformers>=3.0", "mistralai>=0.4"]
 # E15 : moteur de la transformation bronze -> silver. DuckDB plutôt que

@@ -380,3 +380,5 @@ derive:
 
 api:
   slo_latence_p95_ms: 300
+  max_formations_evaluees: 500       # plafond du catalogue scoré par requête /matching (recommander non vectorisé, E28)
+  top_n_max: 50                      # plafond du nombre de recommandations demandables
