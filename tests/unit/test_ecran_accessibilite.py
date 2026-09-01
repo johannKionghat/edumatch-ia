@@ -182,8 +182,9 @@ def test_le_focus_reste_visible_aucun_outline_none_sans_remplacement() -> None:
 
 
 def test_app_js_est_syntaxiquement_valide() -> None:
-    """`testing-policy.md` : pour le JavaScript, vérification syntaxique + tests manuels
-    documentés. `node --check` ne fait qu'analyser la syntaxe, il n'exécute rien."""
+    """Politique de test que je me suis fixée : pour le JavaScript, vérification
+    syntaxique et tests manuels documentés. `node --check` ne fait qu'analyser
+    la syntaxe, il n'exécute rien."""
     resultat = subprocess.run(
         ["node", "--check", str(DOSSIER_STATIQUE / "app.js")],
         capture_output=True,

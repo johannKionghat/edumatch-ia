@@ -1,5 +1,6 @@
 """Gestion des erreurs de l'API (E29) : codes HTTP justes, messages qui n'exposent ni chemin
-interne ni trace (`rules/security-policy.md`).
+interne ni trace : c'est la règle de sécurité que je me suis fixée pour ce
+service.
 
 Chaque gestionnaire journalise le type d'erreur et le chemin de la requête —
 jamais le corps de la requête, qui peut porter des caractéristiques
