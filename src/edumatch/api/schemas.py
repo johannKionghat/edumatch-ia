@@ -196,3 +196,42 @@ class ReponseFeedback(BaseModel):
     identifiant_feedback: str
     horodatage: str
     enregistre: bool = True
+
+
+# ─── /assistant (E32, brique secondaire) ──────────────────────────────────────
+
+
+class RequeteAssistant(BaseModel):
+    """Une question posée à l'assistant documentaire. Jamais de champ libre au-delà de la
+    question elle-même : voir `rag/assistant.py`, aucune donnée personnelle n'est journalisée
+    par cette route."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    question: str = Field(min_length=1, max_length=500)
+
+
+class CitationAssistantReponse(BaseModel):
+    """Une source vérifiable, jamais une affirmation du modèle sur ce qu'il aurait consulté —
+    voir le docstring de `rag/assistant.Citation`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    identifiant: str
+    source: str
+    licence: str
+    url: str
+    date_collecte: str | None = None
+    extrait: str
+
+
+class ReponseAssistant(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reponse: str
+    mode: Literal["extractif", "generatif"]
+    citations: list[CitationAssistantReponse] = Field(
+        description="Toujours issues de la recherche documentaire, jamais d'une affirmation du "
+        "modèle — une réponse sans citation vérifiable n'est pas restituée telle quelle."
+    )
+    avertissement: str | None = None

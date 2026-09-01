@@ -137,6 +137,12 @@ qualite:
     age_max_jours_avertissement_ideo: 200
     age_max_jours_avertissement_rncp: 3
 
+rag:
+  jeux_indexes: [formations]
+  top_k: 4
+  seuil_similarite_minimale: 0.05
+  modele_generation: mistral-small-latest
+
 derive:
   reference: distribution_entrainement
   tests: [psi]

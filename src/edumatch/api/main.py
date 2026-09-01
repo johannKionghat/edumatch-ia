@@ -32,7 +32,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from edumatch.api.errors import enregistrer_gestionnaires_erreurs
-from edumatch.api.routes import ecran, explain, feedback, health, matching
+from edumatch.api.routes import assistant, ecran, explain, feedback, health, matching
 from edumatch.api.state import construire_etat_explicabilite, construire_etat_matching
 from edumatch.config import get_settings
 
@@ -59,6 +59,7 @@ async def _cycle_de_vie(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.journal_feedback = None  # construit paresseusement au premier POST /feedback
     app.state.journal_audit = None  # construit paresseusement à la première inférence /matching
+    app.state.assistant_rag = None  # construit paresseusement au premier POST /assistant (E32)
     yield
 
 
@@ -80,6 +81,7 @@ def create_app() -> FastAPI:
     app.include_router(matching.router)
     app.include_router(explain.router)
     app.include_router(feedback.router)
+    app.include_router(assistant.router)
     app.include_router(ecran.router)
     # Assets de l'écran conseiller (E31) : `style.css` et `app.js`, servis sous `/static/...`.
     # `routes.ecran` reste seule responsable de ce qui répond sur `/` — monté en dernier, ce

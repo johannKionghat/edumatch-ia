@@ -16,6 +16,9 @@ from edumatch.api.audit import SOUS_DOSSIER_AUDIT, JournalAudit
 from edumatch.api.feedback_store import NOM_FICHIER_JOURNAL, SOUS_DOSSIER_JOURNAL, JournalFeedback
 from edumatch.api.state import EtatExplicabilite, EtatMatching
 from edumatch.config import get_settings
+from edumatch.rag.assistant import AssistantRAG, construire_assistant
+from edumatch.rag.corpus import ErreurCorpusRag
+from edumatch.rag.index import ErreurIndexRag
 
 
 def get_etat_matching(request: Request) -> EtatMatching:
@@ -65,3 +68,25 @@ def get_journal_audit(request: Request) -> JournalAudit:
     journal = JournalAudit(settings.processed_dir / SOUS_DOSSIER_AUDIT / NOM_FICHIER_JOURNAL_AUDIT)
     request.app.state.journal_audit = journal
     return journal
+
+
+def get_assistant_rag(request: Request) -> AssistantRAG:
+    """Construit l'assistant documentaire (E32) au premier appel, comme `get_journal_feedback` :
+    un référentiel IDÉO absent (poste sans `data/external/referentiels/`) n'est pas une raison
+    d'empêcher tout le service de démarrer, seule cette route répond 503."""
+    assistant = getattr(request.app.state, "assistant_rag", None)
+    if assistant is not None:
+        return assistant
+    settings = get_settings()
+    try:
+        assistant = construire_assistant(settings)
+    except (ErreurCorpusRag, ErreurIndexRag) as erreur:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                f"Assistant documentaire non disponible : {erreur} Voir "
+                "`python -m edumatch.ingestion.referentiels` pour peupler data/external/referentiels/."
+            ),
+        ) from erreur
+    request.app.state.assistant_rag = assistant
+    return assistant

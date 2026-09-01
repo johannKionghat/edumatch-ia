@@ -373,6 +373,14 @@ matching:
   seuil_saturation_etablissements: 100
   facteur_territoire_hors_zone: 0.6        # atténuation, jamais une exclusion
 
+# Assistant documentaire (E32), brique secondaire : voir RagConfig dans
+# src/edumatch/config.py pour la justification de chaque valeur.
+rag:
+  jeux_indexes: [formations, metiers]
+  top_k: 4
+  seuil_similarite_minimale: 0.05
+  modele_generation: mistral-small-latest
+
 derive:
   reference: distribution_entrainement
   tests: [psi, kolmogorov_smirnov]

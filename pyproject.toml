@@ -39,8 +39,11 @@ dependencies = [
 # transitive (mlflow en dépend), déclaré ici car les tests de l'API l'utilisent
 # directement.
 dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.5", "jupyter>=1.0", "httpx>=0.25"]
-rag = ["langchain>=0.2", "langchain-community>=0.2", "faiss-cpu>=1.8",
-       "sentence-transformers>=3.0", "mistralai>=0.4"]
+# E32 : la recherche de passages utilise TfidfVectorizer (scikit-learn, déjà une dépendance
+# principale) — aucun modèle d'embeddings ni base vectorielle dédiée (voir
+# src/edumatch/rag/index.py). Le seul besoin réel de cet extra est l'appel optionnel au modèle
+# de génération, seulement si MISTRAL_API_KEY est renseignée (src/edumatch/rag/generation.py).
+rag = ["mistralai>=1.0"]
 # E15 : moteur de la transformation bronze -> silver. DuckDB plutôt que
 # PostgreSQL (voir l'arbitrage dans
 # src/edumatch/transform/dbt/models/silver/stg_parcoursup.py) : aucun

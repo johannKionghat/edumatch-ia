@@ -565,6 +565,38 @@ class MatchingConfig(_Strict):
     facteur_territoire_hors_zone: float = Field(gt=0, le=1)
 
 
+class RagConfig(_Strict):
+    """Paramètres de l'assistant documentaire (E32), brique secondaire de restitution.
+
+    Choix délibérément sobre : l'assistant retrouve les passages pertinents
+    par similarité lexicale (TF-IDF, `scikit-learn`, déjà une dépendance du
+    projet depuis E22) plutôt que par un index vectoriel dédié (embeddings +
+    base vectorielle). Le corpus indexé — quelques milliers de lignes IDÉO —
+    est très en dessous du volume où un index approximatif apporterait un
+    gain de latence mesurable ; voir `src/edumatch/rag/index.py`.
+
+    `jeux_indexes` : sous-ensemble de `donnees.referentiels.ideo.jeux` à
+    indexer — une liste explicite plutôt que « tous les jeux disponibles »,
+    pour qu'ajouter un jeu IDÉO à la configuration n'agrandisse pas le
+    corpus de l'assistant sans décision explicite.
+
+    `seuil_similarite_minimale` : score de similarité cosinus en dessous
+    duquel un passage n'est pas restitué. C'est le verrou anti-invention :
+    sous ce seuil, l'assistant déclare ne pas savoir plutôt que de citer un
+    passage sans rapport avec la question (voir `rag/assistant.py`).
+
+    `modele_generation` : nom du modèle appelé quand `MISTRAL_API_KEY` est
+    renseignée. Sans cette variable d'environnement, l'assistant reste en
+    mode extractif (voir `rag/generation.py`) — jamais un plantage, jamais
+    un silence.
+    """
+
+    jeux_indexes: list[str] = Field(min_length=1)
+    top_k: int = Field(ge=1)
+    seuil_similarite_minimale: float = Field(gt=0, le=1)
+    modele_generation: str
+
+
 class DeriveConfig(_Strict):
     reference: str
     tests: list[str] = Field(min_length=1)
@@ -802,6 +834,7 @@ class Settings(BaseSettings):
     explicabilite: ExplicabiliteConfig
     matching: MatchingConfig
     qualite: QualiteConfig
+    rag: RagConfig
     derive: DeriveConfig
     api: ApiConfig
     execution: ExecutionConfig
