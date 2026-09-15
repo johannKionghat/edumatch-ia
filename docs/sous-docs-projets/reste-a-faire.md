@@ -3,10 +3,15 @@
 Feuille de route vivante. Je la tiens à jour au fil du projet et des
 évaluations du jury.
 
-**État au 2026-09-15** : 39 étapes sur 46 du plan d'exécution du projet sont
+**État au 2026-09-15** : 41 étapes sur 46 du plan d'exécution du projet sont
 validées (`avancement.md`). L'ingestion, la qualité, l'entrepôt, le modèle,
-le service et la gouvernance sont construits et testés. Ce qui suit liste ce
-qui reste précisément, sans ambiguïté avec ce qui est déjà fait.
+le service et la gouvernance sont construits et testés. L'infrastructure
+Terraform/Kubernetes (E37) et le monitoring (E38) sont écrits et vérifiés
+dans les fichiers du second dépôt, `edumatch-cicd`, mais rien n'a encore
+tourné sur un cluster réel — voir le point ouvert dédié plus bas. Le CI/CD
+(E36) reste 🟡 en cours : les trois workflows existent, aucun n'a encore
+tourné sur la forge. Ce qui suit liste ce qui reste précisément, sans
+ambiguïté avec ce qui est déjà fait.
 
 ---
 
@@ -80,9 +85,17 @@ posées.*
       Markdown plutôt qu'en image exportée, pour que le diff montre le
       changement plutôt qu'une image qui se périme en silence
 - [ ] `docker/Dockerfile.train`, `docker/Dockerfile.serve`
-- [ ] Terraform — cluster, base, stockage objet, réseau *(dépôt 2)*
-- [ ] Manifestes Kubernetes, dont le HPA *(dépôt 2)*
-- [ ] Prometheus et Grafana *(dépôt 2)*
+- [x] Terraform — cluster, base, stockage objet, réseau *(dépôt 2,
+      `edumatch-cicd`, E37, 2026-09-15, commit `5ef5ff3`)*. Écrit et
+      vérifié en lecture — **jamais appliqué sur un compte Scaleway réel**,
+      voir le point ouvert dédié
+- [x] Manifestes Kubernetes, dont le HPA *(dépôt 2, même commit)* —
+      `requests`/`limits` présents sur les deux conteneurs du déploiement,
+      HPA de 1 à 6 réplicas sur un seuil CPU à 60 %. Même réserve : rien
+      n'a tourné sur un cluster
+- [x] Prometheus et Grafana *(dépôt 2, E38, 2026-09-15, commit `71b2d19`)* —
+      cinq alertes, chacune avec une action. Même réserve, et l'API
+      n'expose pas encore `/metrics` — voir le point ouvert dédié
 - [ ] Vidéo de l'infrastructure en production
 
 ## Bloc 3 — Pipelines
@@ -169,7 +182,9 @@ posées.*
 - [x] `rag/` — assistant réécrit, non repris du MVP (E32, 2026-09-01). 7 403
       documents, TF-IDF, citation garantie par construction —
       `06-service/assistant-rag.md`
-- [ ] CI/CD — trois workflows *(dépôt 2)*
+- [ ] CI/CD — trois workflows *(dépôt 2, `edumatch-cicd`, E36, 2026-09-15,
+      commit `a8e61f2`)*. Écrits, YAML valide — **aucun n'a encore tourné
+      sur la forge**, 🟡 en cours, pas validé — voir le point ouvert dédié
 - [x] Détection de dérive — PSI et KS implémentés directement dans
       `models/derive.py` et `derive_stats.py`, seuil documenté en ADR (E34,
       2026-09-01, ADR 0018). **Evidently écarté** pour un conflit de
@@ -322,6 +337,58 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
       que d'une contrainte explicite. À corriger avant l'étape
       d'industrialisation (E35-E36), où l'image de conteneur doit être
       reproductible par construction.
+
+---
+
+## Points ouverts issus de l'industrialisation, second dépôt (E36 à E38)
+
+Ces trois étapes vivent dans `edumatch-cicd`, le second dépôt du projet
+(critère 4.9), commité le 2026-09-15. Vérifié dans les fichiers eux-mêmes :
+les workflows sont syntaxiquement valides, les manifestes Kubernetes portent
+`requests`/`limits` et un HPA, les cinq règles Prometheus portent chacune une
+action. Aucun de ces trois éléments n'a encore tourné en conditions réelles —
+c'est ce point précis qui reste ouvert, pas la conception.
+
+- [ ] **La CI/CD (E36) n'a jamais tourné.** Les trois workflows
+      (`ci.yml`, `build-images.yml`, `deploy.yml`) existent mais aucun
+      passage n'a été exécuté sur la forge à ce jour : le critère de
+      l'étape — « lint, tests, build, déploiement » — décrit une exécution,
+      pas un fichier. Condition de clôture : un premier passage vert de
+      l'intégration continue, pour le commit exact poussé. Risque déjà
+      identifié à ce premier passage : les 716 tests du dépôt n'ont tourné
+      qu'en Python 3.12 sur le poste de développement, la CI les lance en
+      3.11, jamais essayé.
+- [ ] **`terraform apply` n'a jamais été exécuté.** Le cluster Kapsule, le
+      registre privé et le stockage objet décrits dans
+      `edumatch-cicd/terraform/` (E37) n'existent sur aucun compte Scaleway
+      réel. Le critère propre de l'étape (`requests`/`limits`, HPA) est
+      rempli par simple lecture des manifestes, mais le critère 2.3 du bloc
+      2 (« infrastructure déployée ») ne l'est pas tant qu'un `apply` réel
+      et une capture ne le démontrent pas.
+- [ ] **Aucun déploiement Kubernetes réel n'a eu lieu.** Les manifestes de
+      `edumatch-cicd/k8s/base/` n'ont jamais été appliqués sur un cluster —
+      ni les valeurs de `requests`/`limits`, posées par ordre de grandeur
+      dans les commentaires du fichier, ni le comportement du HPA n'ont été
+      mesurés sous charge réelle. À confirmer par `kubectl top pod` après un
+      premier déploiement.
+- [ ] **L'API n'expose pas de route `/metrics`.** Condition préalable au
+      fonctionnement réel du monitoring (E38) : sans instrumentation côté
+      service, Prometheus n'a aucune cible à interroger et le tableau de
+      bord Grafana reste vide. Le fichier de règles d'alerte le dit
+      lui-même, et la cinquième alerte (`EdumatchInstrumentationAbsente`)
+      est conçue pour détecter précisément cette absence plutôt que la
+      masquer. À construire côté `edumatch-ia` avant que le monitoring
+      puisse être démontré en fonctionnement.
+- [ ] **Les règles Prometheus n'ont pas été validées par l'outil officiel.**
+      Le format et la syntaxe de `monitoring/prometheus/alerts.yaml` n'ont
+      été vérifiés que par lecture, jamais rejoués par `promtool check
+      rules` ou équivalent.
+- [ ] **L'alerte de dérive du modèle (PSI, ADR 0018) n'est pas intégrée au
+      monitoring.** Le calcul tourne aujourd'hui en lot côté `edumatch-ia`
+      (`make derive`), pas comme un flux exposé en continu — condition
+      explicitement posée dans `edumatch-cicd` avant de l'ajouter : le DAG
+      de réentraînement (E33) devra pousser son résultat vers un
+      Pushgateway ou exposer lui-même `/metrics`.
 
 ---
 

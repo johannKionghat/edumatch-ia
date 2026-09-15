@@ -7,12 +7,20 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 39 / 46 étapes validées.**
+**État : 41 / 46 étapes validées.**
 
-Détail : E01 à E34 (phases 0 à 6, à l'exception de E35, E36, E37, E38, E39,
-non commitées) et E40, E41, E42, E43, E44 (phase 7, gouvernance, complète).
-Restent : E35, E36, E37, E38, E39 (industrialisation), E45 (diagrammes livrés,
-les trois vidéos manquent encore) et E46 (cohérence finale, slides).
+Détail : E01 à E34, E37 et E38 (phases 0 à 6, à l'exception de E35, E36
+— en cours, E39, non commitées côté exécution) et E40, E41, E42, E43, E44
+(phase 7, gouvernance, complète). Restent pleinement : E35, E39
+(industrialisation), E45 (diagrammes livrés, les trois vidéos manquent
+encore) et E46 (cohérence finale, slides). E36 est 🟡 en cours : ses
+workflows existent mais n'ont pas encore tourné sur la forge — voir le détail
+plus bas.
+
+**Précision de dépôt** : E36, E37 et E38 sont portées par le second dépôt,
+`edumatch-cicd` (CI/CD, infrastructure, monitoring), distinct de ce dépôt
+`edumatch-ia`. C'est la répartition attendue par le critère 4.9 du bloc 4 —
+deux dépôts de code distincts.
 
 ---
 
@@ -1302,9 +1310,9 @@ Détail complet : `06-service/assistant-rag.md`.
 | E33 | DAG Airflow | ✅ validée | 2026-09-01 | `09d107a` |
 | E34 | Détection de dérive | ✅ validée | 2026-09-01 | `c1af7a4` |
 | E35 | Conteneurisation | ⬜ | | |
-| E36 | CI/CD | ⬜ | | |
-| E37 | Infrastructure Terraform et Kubernetes | ⬜ | | |
-| E38 | Monitoring et SLO | ⬜ | | |
+| E36 | CI/CD | 🟡 en cours | 2026-09-15 | `a8e61f2` *(edumatch-cicd)* |
+| E37 | Infrastructure Terraform et Kubernetes | ✅ validée | 2026-09-15 | `5ef5ff3` *(edumatch-cicd)* |
+| E38 | Monitoring et SLO | ✅ validée | 2026-09-15 | `71b2d19` *(edumatch-cicd)* |
 | E39 | Panne provoquée et reprise, filmée | ⬜ | | |
 
 **E33 — ce qui a été vérifié**
@@ -1390,6 +1398,88 @@ structurants, argumentés dans le commit, non repris en ADR distinct.
 0,20, sans Evidently. Détail complet, dont le tableau des cinq comparaisons
 consécutives de sessions qui calibrent ce qu'est une dérive « normale » :
 `docs/sous-docs-projets/adr/0018-detection-de-derive-seuil-et-agregation.md`.
+
+**E36 — ce qui a été vérifié**
+- Le second dépôt du projet, `edumatch-cicd`, porte trois workflows
+  d'intégration continue — `ci.yml`, `build-images.yml`, `deploy.yml` —
+  commités le 2026-09-15 (`a8e61f2`)
+- Les trois volets attendus par le critère de l'étape sont couverts par le
+  YAML lui-même, syntaxiquement valide : lint et tests sur chaque poussée et
+  chaque demande de fusion, construction des deux images taguées par
+  l'empreinte du commit — jamais `latest`, qui rendrait un déploiement
+  irreproductible — et un déploiement déclenché à la main plutôt
+  qu'automatique, parce qu'il provisionne une infrastructure facturée
+- **Ce qui n'est pas vérifié, et ne peut pas l'être par lecture de fichier** :
+  aucun de ces trois workflows n'a encore tourné sur la forge. Le critère de
+  l'étape — « lint, tests, build, déploiement » — décrit une exécution, pas
+  un fichier : un workflow jamais exécuté ne prouve pas qu'il fait ce qu'il
+  prétend faire. **Marquée 🟡 en cours, pas validée**
+- Risque déjà identifié avant tout passage : les 716 tests du dépôt
+  `edumatch-ia` n'ont tourné qu'en Python 3.12 sur le poste de développement ;
+  `ci.yml` les lance en 3.11, jamais essayé à ce jour
+- **Condition exacte de validation** : un premier passage vert de
+  l'intégration continue sur la forge, pour le commit exact qui sera poussé
+
+**E36 — décision prise** : aucune nouvelle à cette étape — les trois workflows
+appliquent des choix déjà exposés dans le corps du commit du second dépôt
+(déploiement manuel plutôt qu'automatique, un tag par empreinte de commit
+plutôt que `latest`).
+
+**E37 — ce qui a été vérifié**
+- `edumatch-cicd/terraform/` (cluster Kapsule Scaleway, pool de nœuds
+  autoscale, réseau privé, registre privé, stockage objet) et
+  `edumatch-cicd/k8s/base/` (namespace, déploiement, service, HPA, politique
+  réseau, compte de service), commités le 2026-09-15 (`5ef5ff3`)
+- Le critère de l'étape — `requests`/`limits` définis, HPA configuré — est
+  vérifié en lisant les fichiers eux-mêmes : `k8s/base/deployment.yaml` porte
+  des `requests` et des `limits` sur les deux conteneurs (initialisation :
+  50m CPU / 64Mi requêtés, 250m / 128Mi en limite ; conteneur principal :
+  200m CPU / 320Mi requêtés, 1 CPU / 640Mi en limite) ; `k8s/base/hpa.yaml`
+  déclare un `HorizontalPodAutoscaler` de 1 à 6 réplicas sur un seuil
+  d'utilisation CPU à 60 %, avec un comportement de montée et de descente
+  distinct (montée immédiate, descente amortie sur 5 minutes)
+- Sur ce seul critère écrit, l'étape est remplie
+- **Ce qui reste non prouvé** : rien de tout cela n'a été appliqué sur un
+  cluster réel — le corps du commit `5ef5ff3` le dit lui-même. Le critère 2.3
+  du bloc 2 (« infrastructure déployée : cluster de calcul, serveurs ») reste
+  donc non prouvé tant qu'un `terraform apply` n'a pas tourné sur un compte
+  Scaleway réel et qu'une capture ne le démontre pas
+- Les valeurs de `requests`/`limits` sont elles-mêmes déclarées non mesurées
+  sous charge réelle dans les commentaires du fichier — posées par ordre de
+  grandeur à partir de l'empreinte connue du processus, à confirmer par
+  `kubectl top pod` après un premier déploiement
+
+**E37 — décision prise** : aucune nouvelle à cette étape. Le choix Scaleway
+(souveraineté, données de mineurs) et le HPA borné à 1-6 réplicas
+(saisonnalité de la période de vœux Parcoursup) sont déjà arbitrés et
+argumentés dans le corps du commit du second dépôt.
+
+**E38 — ce qui a été vérifié**
+- `edumatch-cicd/monitoring/` (Prometheus, Alertmanager, Grafana, SLO
+  déclaré), commité le 2026-09-15 (`71b2d19`)
+- Le critère de l'étape — alertes actionnables — est vérifié en lisant
+  `monitoring/prometheus/alerts.yaml` : les cinq règles déclarées (latence
+  p95 élevée, taux d'erreur 5xx élevé, aucun réplica disponible, plafond du
+  HPA atteint durablement, instrumentation absente) portent chacune un champ
+  `action` qui énumère des commandes précises à exécuter, pas seulement une
+  description du symptôme
+- Sur ce seul critère écrit, l'étape est remplie
+- **Ce qui reste non prouvé** : aucune de ces règles n'a tourné sur un
+  cluster réel, et surtout — écrit explicitement en tête du fichier lui-même
+  — **l'API n'expose pas encore de route `/metrics`** : sans instrumentation
+  côté service, Prometheus n'aurait aucune cible à interroger et le tableau
+  de bord Grafana resterait vide. La cinquième alerte
+  (`EdumatchInstrumentationAbsente`) est conçue précisément pour ce cas :
+  elle se déclencherait en continu tant que l'instrumentation n'existe pas,
+  ce qui documente le manque plutôt que de le masquer
+- L'alerte de dérive du modèle (PSI, ADR 0018) est volontairement absente de
+  ce fichier, pour la même raison : le calcul tourne aujourd'hui comme un
+  rapport en lot côté `edumatch-ia`, pas comme un flux exposé en continu
+
+**E38 — décision prise** : aucune nouvelle à cette étape. Le SLO déclaré
+(p95 sous 300 ms, disponibilité 99,5 %) et le choix de manifestes bruts
+plutôt qu'un opérateur Prometheus complet sont déjà arbitrés et argumentés
+dans le corps du commit du second dépôt.
 
 ## Phase 7 — Gouvernance
 
