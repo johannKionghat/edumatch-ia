@@ -1,6 +1,8 @@
 # ADR 0019 — Airflow en production sur une instance Scaleway dédiée, pas sur le cluster Kapsule
 
-**Date** : 2026-09-15 · **Statut** : proposé
+**Date** : 2026-09-15 · **Statut** : proposé, amendé le 2026-09-15 (voir la section
+« Amendement » en fin de document : moteur de l'agrégat Sirene et contenu de l'image
+Airflow, sans remise en cause du choix de l'instance dédiée)
 
 ## Contexte
 
@@ -317,12 +319,18 @@ Dans **`edumatch-cicd`**, une fois terminée la correction en cours sur ce dép�
 
 Dans **`edumatch-ia`** :
 
-7. `docker/Dockerfile.airflow` :
-   - installer une machine virtuelle Java headless compatible avec Spark 3.5 ;
-   - installer `.[spark]` avec le fichier de contraintes qu'Airflow publie pour 2.9.3 ;
+7. `docker/Dockerfile.airflow` — **fait, selon une prescription différente de celle
+   écrite ici** (voir l'amendement du 2026-09-15). La recommandation initiale était :
+   - ~~installer une machine virtuelle Java headless compatible avec Spark 3.5~~ ;
+   - ~~installer `.[spark]` avec le fichier de contraintes qu'Airflow publie pour
+     2.9.3~~ ;
    - copier `pipelines/` dans le dossier des DAG, pour que l'image embarque ses DAG au
      lieu de les monter depuis l'hôte : le graphe qui tourne en production est alors
      celui du commit étiqueté.
+
+   J'ai essayé les deux premiers points, puis je les ai abandonnés : ils cassent le cœur
+   d'Airflow. Le troisième est fait, et je l'ai complété par la copie de `configs/` et
+   l'ajout de `libgomp1`.
 8. `docker-compose.prod.yml`, une surcouche du fichier existant :
    - les services `airflow-init` (`airflow db migrate`, puis création du compte
      administrateur depuis l'environnement), `airflow-scheduler` et `airflow-webserver`,
@@ -348,11 +356,12 @@ Dans **`edumatch-ia`** :
 
 **Mesures à faire au premier lancement, avant de filmer** :
 
-- le pic mémoire de `agreger_sirene` en mode Spark (`docker stats`) : au-delà d'environ
-  6 Go, je passe à DEV1-XL ;
+- le pic mémoire de `agreger_sirene` avec le moteur `local` (Polars), retenu en
+  production par l'amendement, mesuré par `docker stats` : au-delà d'environ 6 Go, je
+  passe à DEV1-XL ;
 - la durée réelle du téléchargement Sirene sur l'instance ;
-- la vérification que l'import de `pyspark` échouait bien sans la correction 7, pour
-  confirmer le défaut décrit dans le contexte.
+- ~~la vérification que l'import de `pyspark` échouait bien sans la correction 7~~ :
+  faite avant l'instance, sur l'image elle-même (voir l'amendement).
 
 ## Ce qui ferait reconsidérer
 
@@ -367,3 +376,109 @@ Dans **`edumatch-ia`** :
 - **Un cluster Kapsule qui cesse d'être éphémère** et tourne en permanence avec de la
   marge mesurée : y loger Airflow coûterait alors moins qu'une instance à part, à
   condition que les entrées-sorties aient d'abord migré vers le stockage objet.
+
+## Amendement du 2026-09-15 — l'agrégat Sirene tourne en Polars en production
+
+### Ce que l'exécution a montré
+
+La correction 7 recommandait d'ajouter à l'image Airflow un JRE (environnement
+d'exécution Java) sans interface et l'extra `[spark]`, parce que `configs/prod.yaml`
+fixait `execution.moteur_volume: cluster`. J'ai construit l'image et je l'ai lancée. Deux
+essais successifs ont infirmé cette recommandation :
+
+1. **Le défaut déduit dans le contexte est confirmé.** L'image de base
+   `apache/airflow:2.9.3` ne contient ni Java (`java: command not found`) ni PySpark
+   (`ModuleNotFoundError: No module named 'pyspark'`). Le DAG `edumatch_sirene` aurait
+   bien échoué en production.
+2. **La correction prescrite construit l'image, mais casse Airflow lui-même.** Le paquet
+   `edumatch` exige `sqlalchemy>=2.0` et `pandas>=2.2` (`pyproject.toml`). Or Airflow
+   2.9.3 est construit pour SQLAlchemy 1.4. Avec le fichier de contraintes qu'Airflow
+   publie pour sa version, l'installation est impossible : ce fichier force
+   `pandas==2.1.4`, en conflit direct (`ResolutionImpossible`). Sans ce fichier, pip monte
+   SQLAlchemy en version 2, et `airflow dags list` échoue sur `MappedAnnotationError` dans
+   `TaskInstance`, un modèle interne d'Airflow écrit pour SQLAlchemy 1.4.
+
+Ma recommandation initiale supposait que le paquet du projet et Airflow pouvaient
+partager le même environnement Python. Ce n'est pas le cas. Je ne l'avais pas vérifié
+avant de l'écrire.
+
+### Ce qui change
+
+- **`configs/prod.yaml` passe de `moteur_volume: cluster` à `moteur_volume: local`.**
+  En production, la tâche `agreger_sirene` passe désormais par Polars.
+- **L'image Airflow n'embarque ni JRE ni `[spark]`.** Elle installe le paquet sans extra.
+- **`libgomp1` est ajouté à l'image.** C'est la bibliothèque d'exécution OpenMP (calcul
+  parallèle en mémoire partagée) dont LightGBM a besoin au chargement. Sans elle,
+  `import lightgbm` échouait (`libgomp.so.1: cannot open shared object file`), et avec
+  lui toutes les tâches qui touchent au modèle.
+- **L'image embarque ses DAG et sa configuration** : `pipelines/` est copié dans
+  `/opt/airflow/dags`, et `configs/` dans `/opt/airflow/project/configs`. En production,
+  l'image se suffit à elle-même, sans montage. Le paquet trouve ses fichiers YAML par un
+  chemin relatif à son propre fichier (`config.py` : `parents[2] / "configs"`) : ils
+  doivent donc se trouver à côté de `src/`. La variable
+  `PYTHONPATH=/opt/airflow/src:/opt/airflow/project/src` fixe l'ordre : en
+  développement, le code monté l'emporte s'il est présent ; sinon, c'est la copie
+  embarquée qui sert.
+
+**Vérifications faites sur l'image, sans aucun montage de volume** :
+
+- elle tourne sous l'utilisateur `airflow` ;
+- `import lightgbm` réussit ;
+- `airflow dags list-import-errors` ne renvoie rien ;
+- `airflow dags list` affiche les quatre DAG (`edumatch_parcoursup`, `edumatch_sirene`,
+  `edumatch_referentiels`, `edumatch_audit_purge`).
+
+J'insiste sur la condition « sans montage ». Lors d'un premier essai, le dossier des DAG
+était monté mais arrivait vide dans le conteneur : une vérification faite dans ces
+conditions ne prouve rien.
+
+### Pourquoi ce changement est cohérent, et pas un recul
+
+L'ADR 0016 concluait déjà que Polars reste le chemin de production réel tant que le
+calcul tient sur un nœud : 18,2 s contre 87,0 s pour Spark sur `StockEtablissement`,
+pour un résultat identique. En fixant `cluster` en production, `configs/prod.yaml`
+contredisait cette conclusion, et ni la configuration ni cet ADR ne l'avaient relevé. Je
+corrige ce désaccord en même temps que le défaut d'image, au lieu de le laisser de côté.
+
+Le critère 2.4 du bloc 2 (structures adaptées au volume) reste prouvé. Le job Spark est
+écrit et testé : `test_executer_moteur_cluster_ecrit_le_meme_resultat` compare les deux
+moteurs sur le même échantillon. On peut le sélectionner par la configuration. Ce que je
+revendique, c'est la capacité de basculer, pas une exécution permanente de Spark.
+
+### Ce qui ne change pas
+
+- **La décision de fond** : en production, Airflow tourne sur une instance DEV1-L
+  dédiée, pas sur Kapsule. Les raisons qui ont fait retenir l'option 2 ne dépendaient
+  pas du moteur de l'agrégat. Sans machine virtuelle Java ni exécuteurs Spark, la marge
+  mémoire de l'instance augmente plutôt qu'elle ne diminue. Le pic de la tâche en Polars
+  reste toutefois à mesurer (voir « Mesures à faire »).
+- **Les trois démonstrations de panne** restent valables telles qu'elles sont décrites
+  dans la section « Comment la panne sera montrée » :
+  - la coupure réseau porte sur l'ingestion Sirene, en amont de l'agrégat ;
+  - le blocage qualité porte sur Parcoursup ;
+  - la vérification d'idempotence compare le contenu de l'agrégat Sirene, quel que soit
+    le moteur qui l'a produit.
+- **Le seuil qui ferait reconsidérer le moteur**, celui de l'ADR 0016 : la fusion de
+  plusieurs fichiers Sirene, ou un calcul dont le travail intermédiaire ne tient plus
+  dans la mémoire d'un nœud.
+
+### La voie écartée, et à quelle condition elle revient
+
+Une autre voie réglerait le conflit de versions sans compromis : isoler PySpark dans un
+environnement Python séparé de celui d'Airflow, c'est-à-dire un second environnement
+virtuel invoqué par `ExternalPythonOperator`. Je l'écarte aujourd'hui, pour deux raisons :
+
+- elle impose de réécrire la tâche d'agrégation dans `pipelines/edumatch_pipeline.py` ;
+- elle oblige à maintenir deux jeux de dépendances dans l'image, pour un moteur que le
+  volume actuel ne demande pas.
+
+Elle devient la bonne réponse le jour où le seuil de l'ADR 0016 est franchi et où Spark
+doit tourner sous l'ordonnanceur. Une autre piste serait de monter Airflow vers une
+version compatible avec SQLAlchemy 2, mais je ne l'ai pas évaluée.
+
+### Ce qui reste à construire, mis à jour
+
+Le point 7 est fait. Les points 1 à 6 et 8 à 14 sont inchangés. S'y ajoute un contrôle
+à faire au premier lancement sur l'instance : relancer `airflow dags list-import-errors`
+et `airflow dags list` sur l'image tirée du registre, pour vérifier que ce que j'ai
+constaté en local vaut aussi pour l'image publiée par `build-images.yml`.
