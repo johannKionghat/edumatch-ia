@@ -49,7 +49,9 @@ des formations et juger l'équité a posteriori.
 | sans les substituts du genre | 44 | 0,0704 | +0,0006 | 0,0049 |
 
 Score de test de la configuration retenue, rapporté et non recalculé :
-MAE pondérée **0,0751** (n = 77 159).
+MAE pondérée **0,0758** (n = 77 159) — valeur enregistrée par le registre
+d'expériences, 0,075755 avant arrondi, identique à celle des autres pages du
+dossier.
 
 ## Le premier résultat : l'essentiel de la performance vient du signal N-1
 

@@ -1,7 +1,7 @@
 # Registre des traitements
 
 **Critère servi** : Bloc 1, 1.3 (et 1.6 pour la partie conformité) ·
-**Dernière revue** : 2026-08-30 · **Article de référence** : RGPD art. 30.
+**Dernière revue** : 2026-09-15 · **Article de référence** : RGPD art. 30.
 
 Ce registre distingue explicitement **ce qui existe aujourd'hui dans le dépôt**
 (T1 à T3, vérifiables par un fichier) de **ce qui est spécifié et pas encore
@@ -158,17 +158,23 @@ actifs employeurs non diffusibles (0,84 %) ne sont pas filtrés** : le filtre
 `diffusible: true` est déclaré dans `configs/base.yaml` mais n'est pas
 appliqué, faute d'une dixième colonne lue.
 
-**Deux exigences que je pose, et qui bloquent l'exposition de cet agrégat**
-(seuil arrêté et chiffré dans `risques.md`, R2) :
+**Deux exigences posées le 2026-08-30, et leur état au 2026-09-15** (seuil
+arrêté et chiffré dans `risques.md`, R2) :
 
-1. le filtre `diffusible` doit être **appliqué**, ce qui suppose de lire
-   `statutDiffusionEtablissement` en dixième colonne ;
+1. le filtre `diffusible` doit être **appliqué** — **fait** :
+   `src/edumatch/matching/agregat_sirene_debouches.py` exclut **20 488
+   établissements actifs employeurs** non diffusibles, sur les 2 423 308
+   rattachés à une commune ;
 2. l'agrégat au grain `commune × NAF` reste un **calcul intermédiaire jamais
-   exposé** ; l'exposition se fait au grain `département × NAF`, avec
-   suppression des cellules sous le seuil de 5 établissements.
+   exposé**, l'exposition se faisant au grain `département × division NAF` avec
+   suppression des cellules sous 5 établissements — **fait**. Le module ne
+   renvoie jamais l'effectif sous le seuil, pas même pour distinguer un zéro
+   réel d'une cellule supprimée.
 
-Tant que ces deux points ne sont pas implémentés, T3 alimente des travaux
-internes et rien d'autre.
+**Les deux points sont implémentés : T3 peut alimenter le terme de débouchés
+exposé.** Ce qui ne change pas : la donnée reste pseudonymisée, pas anonymisée,
+et k = 5 est une mesure de réduction du risque, non une sortie du champ du
+RGPD.
 
 ---
 
@@ -267,8 +273,16 @@ simulation par défaut, en mode réel sur option explicite, idempotent
 (rejouer la purge à la même date ne change rien), et chaque passage
 journalise ses quatre compteurs dans `processed/audit/purges.jsonl`. La
 lacune L2 est levée sur ce point précis — voir `06-service/journalisation-purge.md`
-pour le détail, et la lacune reformulée en §4 ci-dessous pour ce qui reste
-ouvert : le déclenchement planifié.
+pour le détail.
+
+**Le déclenchement planifié existe désormais** (2026-09-01, DAG Airflow) : le
+graphe `edumatch_audit_purge` de `pipelines/edumatch_pipeline.py` appelle
+`orchestration/taches.py::purger_audit`, à la cadence déclarée par
+`orchestration.planification.purge_audit` dans `configs/base.yaml`. Ce point
+mérite d'être souligné : cette tâche passe `simulation=False` **explicitement**,
+parce qu'une tâche planifiée qui se contenterait du mode par défaut du module
+— la simulation — ne purgerait jamais rien, et la durée de conservation
+redeviendrait une intention sans que personne ne s'en aperçoive.
 
 ---
 
@@ -285,9 +299,20 @@ ouvert : le déclenchement planifié.
 | **Destinataires** | Le déployeur |
 
 **La mesure qui accompagne le champ libre** : un avertissement explicite au
-conseiller (« ne consignez aucune information de santé, de situation
-familiale ou d'origine »), et une purge au même terme que T5. Un champ libre
-sans consigne est une collecte non maîtrisée.
+conseiller (« ne consignez aucune information de santé, de situation familiale
+ou d'origine »), et une purge au même terme que T5. Un champ libre sans consigne
+est une collecte non maîtrisée.
+
+**Deux manques, portés en motifs opposables par l'analyse d'impact** :
+
+1. **La purge de ce journal n'existe pas.** La durée est écrite (12 mois),
+   aucune tâche ne l'exécute, faute d'identifiant commun avec T5. Une donnée
+   personnelle conservée sans purge exécutable est un motif de blocage de la
+   mise en service (`aipd.md` §8.4, motif B).
+2. **L'identifiant du conseiller est déclaratif**, saisi sans vérification :
+   aucune authentification n'est branchée sur l'écran. La trace existe, elle
+   n'est **imputable à personne**, et l'écran expose des caractéristiques de
+   candidats sans contrôle d'accès (`aipd.md` §8.4, motif A).
 
 ---
 
@@ -337,10 +362,10 @@ commit ne fait pas. C'est un coût connu et accepté, pas une découverte.
 |---|---|---|---|---|
 | T1 catalogue et modèle | Non | Sans objet | Sans objet | Sans objet |
 | T2 échantillons | **Oui** (pseudonymisée) | art. 6.1.f | Vie du dépôt | Sans objet |
-| T3 agrégat territorial | **Oui** (indirecte) | art. 6.1.f | Écrasé chaque mois | Oui, par écrasement |
+| T3 agrégat territorial | **Oui** (indirecte) | art. 6.1.f | Écrasé chaque mois | Oui, par écrasement. **k = 5 et filtre de diffusion appliqués à la restitution** |
 | T4 inférence | **Oui**, mineurs | art. 6.1.a ou 6.1.e | Aucune conservation | À implémenter |
-| T5 journalisation | **Oui** | art. 6.1.c | 12 / 36 mois | **Oui — E30, `audit_purge.py`, testée, idempotente. Déclenchement planifié restant (lacune L2 réduite)** |
-| T6 supervision | **Oui** | art. 6.1.c et 6.1.e | 12 mois | **Non — écran construit (E31), purge du journal de retour pas encore construite, faute d'identifiant commun avec T5** |
+| T5 journalisation | **Oui** | art. 6.1.c | 12 / 36 mois | **Oui — `audit_purge.py`, testée, idempotente, et planifiée par le DAG `edumatch_audit_purge`. Lacune L2 levée pour T5** |
+| T6 supervision | **Oui** | art. 6.1.c et 6.1.e | 12 mois | **Non — écran construit, purge du journal de retour non construite, faute d'identifiant commun avec T5. Motif de blocage actif** |
 | T7 assistant | **Oui**, possible | art. 6.1.a | Aucune | **Non** |
 | T8 droits | **Oui** | art. 6.1.c | 3 ans après clôture | **Non** |
 
@@ -353,17 +378,31 @@ commit ne fait pas. C'est un coût connu et accepté, pas une découverte.
   d'entrepreneur individuel sortent des échantillons versionnés — au prix,
   chiffré dans l'ADR 0008, de 56,4 % de représentativité perdue sur les
   catégories juridiques.
-- **L2 — Réduite (E30, 2026-09-01).** Pour T5, la purge est exécutable,
-  testée et idempotente (`audit_purge.py`) : ce n'est plus une intention
-  pour ce journal. Ce qui reste ouvert : la purge n'est pas encore
-  **déclenchée par une tâche planifiée** de l'ordonnanceur — elle
-  s'exécute à la demande — et **T6 (journal de retour du conseiller) n'a
-  pas de purge**, faute d'identifiant commun avec T5. Voir
-  `06-service/journalisation-purge.md`.
+- **L2 — Levée pour T5, maintenue pour T6 (revue du 2026-09-15).** Pour T5, la
+  purge est exécutable, testée, idempotente **et planifiée** : ce n'est plus
+  une intention. **T6 n'a toujours pas de purge**, faute d'identifiant commun
+  avec T5 — c'est désormais un motif de blocage opposable, pas une simple
+  lacune (`aipd.md` §8.4, motif B).
 - **L3 — Aucune notice d'information n'est rédigée** à destination des
-  candidats. C'est le premier livrable à produire dès que l'interface existe.
+  candidats. L'interface existe désormais, mais elle s'adresse au
+  **conseiller** : la notice destinée au candidat reste entièrement à produire,
+  en français simple, compréhensible par un lecteur de 17 ans, affichée avant
+  la saisie et non dans un lien de bas de page. Motif de blocage actif
+  (motif C).
+- **L4 — Aucune authentification** ne protège l'écran qui expose les
+  caractéristiques d'un candidat, et l'identifiant du conseiller est
+  déclaratif. Lacune de sécurité et lacune de traçabilité à la fois : une
+  décision de supervision n'est imputable à personne. Motif de blocage actif
+  (motif A).
+- **L5 — Aucun dispositif d'exercice des droits (T8)**, aucune procédure de
+  notification de violation, aucun contrat de sous-traitance pour T7. Trois
+  réserves fermes, non bloquantes prises isolément, mais qui le deviennent au
+  premier usage réel.
 
 ---
-*Étape E40 · rédigé le 2026-08-30 · mis à jour le 2026-09-01 (T4, T5, T6, T7
-et lacune L2 après construction de la phase 5, E28-E32) — la revue formelle
-complète de ce registre reste programmée à l'étape E40.*
+*Étape E40 · rédigé le 2026-08-30 · mis à jour le 2026-09-01 après la
+construction du service, puis **revu intégralement le 2026-09-15** au moment de
+la production de l'analyse d'impact complète, de la Model Card et de la
+correspondance au règlement sur l'IA : T3 et T5 corrigés dans le sens du
+progrès, T6 dans le sens du manque, cinq lacunes désormais déclarées au lieu de
+trois.*

@@ -2,8 +2,8 @@
 
 **Critères servis** : Bloc 1 — 1.1 (politiques, classification, règles
 d'usage), 1.2 (rôles et responsabilités), 1.10 (gestion des secrets),
-1.11 (procédure d'audit et de mise à jour) · **Version** : 1.0 ·
-**Date** : 2026-08-30.
+1.11 (procédure d'audit et de mise à jour) · **Version** : 1.1 ·
+**Date** : 2026-08-30, révisée le 2026-09-15.
 
 Ce plan ne décrit pas une gouvernance idéale : il décrit **celle de ce
 dépôt**. Chaque politique énoncée ci-dessous pointe vers un fichier, une
@@ -12,8 +12,9 @@ traduction technique, elle est marquée **« non implémentée »** — parce qu
 conformité déclarée sans preuve d'implémentation n'en est pas une.
 
 Documents rattachés, qui font partie intégrante de ce plan :
-`registre-traitements.md`, `registre-sources.md`, `risques.md`, `aipd.md`,
-et, quand le modèle sera figé, la Model Card et la correspondance AI Act.
+`registre-traitements.md`, `registre-sources.md`, `risques.md`, `aipd.md`
+(version 1.0, complète), `model-card.md` et `ai-act.md`. **Les sept documents
+existent : le dossier de gouvernance n'a plus de pièce manquante.**
 
 ---
 
@@ -78,7 +79,7 @@ donc la seule qui compte.
 | **Délégué à la protection des données** | La qualification juridique, la base légale, les durées, l'AIPD, les licences. **Droit de blocage de la mise en production** | Les choix de modélisation | Ce dossier |
 | **Responsable du modèle** | Variables, protocole d'évaluation, seuils de dérive, contenu de la Model Card | La qualification juridique | `configs/base.yaml`, ADR 0009 à 0013 |
 | **Responsable de la sécurité technique** | Secrets, accès, chiffrement, cloisonnement | Le droit applicable | `.gitignore`, infrastructure |
-| **Superviseur humain** (AI Act art. 14) — le conseiller d'orientation | **L'écartement d'une recommandation**, avec motif | Le modèle et ses paramètres | Écran conseiller, à construire |
+| **Superviseur humain** (art. 14 du règlement sur l'IA) — le conseiller d'orientation | **L'écartement d'une recommandation**, avec motif | Le modèle et ses paramètres | Écran conseiller : `src/edumatch/api/static/`, `routes/ecran.py`, `routes/feedback.py` — **construit**, motif obligatoire bloqué côté client et côté serveur |
 
 **Les quatre décisions qui exigent l'accord du délégué à la protection des
 données**, et qu'aucun autre rôle ne peut prendre seul : ajouter une variable
@@ -97,9 +98,33 @@ ajouter une source.
 - une source est utilisée hors des conditions de sa licence ;
 - une conformité est affirmée sans preuve d'implémentation.
 
-**Trois de ces motifs sont actuellement actifs** : R2 (agrégat exposable sans
-seuil), la journalisation sans purge, et l'absence d'écran de supervision.
-Ils bloquent la mise en service, pas le développement.
+**État des motifs au 2026-09-15.** Les trois motifs actifs de la version 1.0 —
+agrégat exposable sans seuil, journalisation sans purge, absence d'écran de
+supervision — **sont levés** : k = 5 et filtre de diffusion appliqués au point
+de restitution, purge exécutable, testée, idempotente et planifiée, écran de
+supervision construit avec écartement motivé.
+
+**Cinq motifs les remplacent**, énumérés et argumentés dans `aipd.md` §8.4. En
+résumé, rattachés à la liste ci-dessus :
+
+| Motif | Rattachement à la liste |
+|---|---|
+| A — aucun contrôle d'accès à l'écran ; identifiant de conseiller déclaratif | « aucun dispositif de contrôle humain **effectif** » : un contrôle non imputable ne se démontre pas |
+| B — journal de supervision (T6) sans purge exécutable | « une donnée personnelle est conservée sans durée définie **ni purge exécutable** » |
+| C — aucune notice d'information destinée au candidat | Conformité affirmée sans preuve d'implémentation, côté droits des personnes |
+| D — restitution d'une probabilité dont le défaut de calibration est mesuré | Ajouté à la liste par la présente révision (voir ci-dessous) |
+| E — attribution des sources non effective | « une source est utilisée hors des conditions de sa licence » |
+
+**Un motif est ajouté à la liste opposable par cette révision**, parce que
+l'expérience du projet a montré qu'il manquait :
+
+> **Une estimation chiffrée est restituée à une personne alors que son défaut
+> de calibration est mesuré et non corrigé.** Mesurer la calibration et publier
+> quand même le chiffre serait pire que ne l'avoir jamais mesurée : cela
+> reviendrait à connaître le défaut et à l'opposer à personne.
+
+Ces motifs bloquent la **mise en service auprès de candidats réels**, pas le
+développement ni la démonstration encadrée.
 
 ## 4. Règles d'usage des données
 
@@ -111,7 +136,8 @@ Ils bloquent la mise en service, pas le développement.
 | Le genre ne sert qu'à l'audit | 4 colonnes classées `interdite` | même fichier de test |
 | Un échec de qualité **bloque** | Contrôles à l'entrée de chaque étape | `tests/data/test_quality_run_blocage.py` |
 | Aucune donnée simulée | Toute source publique, réelle, sous licence vérifiée | `registre-sources.md` et manifestes |
-| Aucune donnée personnelle dans les journaux applicatifs | Distinct des journaux d'inférence, qui en contiennent par obligation | **Non implémenté** |
+| Aucune donnée personnelle dans les journaux applicatifs | Le journal d'inférence est écrit dans un **registre dédié** (`processed/audit/journal.jsonl`), distinct de la sortie standard du service ; l'assistant documentaire ne journalise **jamais** la question posée, seulement sa longueur et le nombre de résultats | **Implémenté pour ces deux points** ; aucun contrôle automatisé ne garantit qu'aucun autre module n'écrira une donnée personnelle dans un journal applicatif |
+| Toute restitution territoriale passe un seuil de k-anonymat | k = 5 au grain `département × division NAF`, filtre `diffusible` appliqué | `src/edumatch/matching/agregat_sirene_debouches.py` |
 
 ## 5. Politique de gestion des secrets
 
@@ -153,7 +179,7 @@ commande ni fichier est un point non auditable.
 | 2 | Chaque source a une licence identifiée et à jour | `registre-sources.md` confronté aux manifestes |
 | 3 | L'attribution est effective côté utilisateur | Écran « Sources et licences », avec dates |
 | 4 | Chaque traitement a une base légale écrite | `registre-traitements.md` |
-| 5 | Chaque durée de conservation a une **purge exécutée** | Journal d'exécution de la tâche de purge |
+| 5 | Chaque durée de conservation a une **purge exécutée** | `processed/audit/purges.jsonl` — chaque passage, simulation comprise, y écrit son horodatage, son mode et ses quatre compteurs. **Un journal de supervision (T6) sans purge fait échouer ce point** |
 | 6 | Aucune variable de genre en entrée | `tests/data/test_features_build_antifuite.py` |
 | 7 | Aucune fuite temporelle | `tests/data/test_variables_reference.py`, vérifié par mutation |
 | 8 | Toute colonne de source est classée | même fichier |
@@ -189,8 +215,26 @@ doit être corrigé — jamais l'inverse.
 | Règles d'usage | **6 des 7 contrôlées automatiquement** |
 | Secrets — exclusion et externalisation | **En place et vérifiées** |
 | Secrets — rotation, révocation, détection | **Écrites, non outillées** |
-| Procédure d'audit | **Écrite, jamais exécutée** — le premier audit complet suppose un modèle en service |
-| Procédure de mise à jour | **Écrite, déjà appliquée** lors des corrections de chiffres |
+| Procédure d'audit | **Écrite, jamais exécutée intégralement** — le premier audit complet suppose un modèle en service. Sept de ses douze points sont cependant déjà outillés (1, 2, 4, 5, 6, 7, 8, 12) |
+| Procédure de mise à jour | **Écrite, et appliquée trois fois** : corrections de chiffres, révision du registre des traitements, révision de la matrice des risques du 2026-09-15 |
+| Analyse d'impact | **Complète (version 1.0)**, avis rendu, motivé et opposable |
+| Model Card | **Écrite**, performance ventilée sur 27 sous-populations |
+| Correspondance au règlement sur l'IA | **Écrite**, articles 9 à 15, chaque ligne pointant vers un composant ou déclarant l'absence |
 
 ---
-*Étape E44 · rédigé le 2026-08-30.*
+### Ce que ce plan ne couvre toujours pas
+
+- **Aucun système de management de la qualité formalisé** au sens de
+  l'article 17 du règlement sur l'IA, ni de certification ISO/IEC 42001. Les
+  cadres mobilisés — NIST AI RMF pour la structure des risques, ISO/IEC 27001
+  comme horizon de sécurité — sont des **cadres de travail, pas des normes
+  harmonisées** : les présenter autrement serait une faute.
+- **Aucun journal d'incident, aucune procédure de notification de violation,
+  aucun plan de surveillance après commercialisation.**
+- **Aucune détection de secrets en intégration continue** : la politique de
+  rotation et de révocation est écrite, elle n'est pas outillée.
+
+---
+*Étape E44 · rédigé le 2026-08-30, révisé le 2026-09-15 : motifs de blocage
+actualisés, un motif ajouté à la liste opposable, état de mise en œuvre repris
+point par point.*

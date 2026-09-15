@@ -1,6 +1,6 @@
 # Matrice des risques
 
-**Critère servi** : Bloc 1, 1.5 · **Dernière revue** : 2026-08-30 ·
+**Critère servi** : Bloc 1, 1.5 · **Dernière revue** : 2026-09-15 ·
 **Cadence de revue** : à chaque campagne Parcoursup, et à tout changement de
 source, de variable ou de modèle.
 
@@ -22,14 +22,14 @@ ne doivent pas être mélangés aux premiers.
 
 | # | Risque | Nature | G | V | Niveau | Réduit à | Statut |
 |---|---|---|:-:|:-:|---|---|---|
-| R1 | Violation de données personnelles | Personnes | 3 | 1 | Modéré | Faible | Partiellement traité |
-| R2 | Ré-identification par l'agrégat territorial | Personnes | 2 | **4** | **Élevé** | Faible | **Décision prise ici, non implémentée** |
-| R3 | Discrimination indirecte par variable substitut | Personnes | **4** | 3 | **Élevé** | Modéré | Mesuré, dispositif à trois niveaux |
-| R4 | Boucle de rétroaction sur l'orientation | Personnes | **4** | 2 | Élevé | Modéré | Identifié, surveillance à construire |
-| R5 | Estimation mal calibrée conduisant au renoncement | Personnes | **4** | 3 | **Élevé** | Modéré | Métrique définie, non mesurée |
-| R6 | Contrôle humain de façade (biais d'automatisation) | Personnes | 3 | 3 | Élevé | Modéré | Spécifié, non construit |
-| R7 | Information erronée sur les débouchés | Personnes | 3 | **4** | **Élevé** | Faible | Chaîne rompue, décision à prendre |
-| R8 | Obsolescence du modèle et des référentiels | Personnes | 3 | **4** | **Élevé** | Modéré | Dérive mesurée, surveillance à construire |
+| R1 | Violation de données personnelles | Personnes | 3 | **3** | **Élevé** | Faible | **Aggravé le 2026-09-15** : l'écran expose des données sans authentification |
+| R2 | Ré-identification par l'agrégat territorial | Personnes | 2 | **4** | **Élevé** | **Faible** | **Traité** — k = 5 et filtre de diffusion appliqués au point de restitution |
+| R3 | Discrimination indirecte par variable substitut | Personnes | **4** | 3 | **Élevé** | **Élevé** | **Mesuré sur les prédictions : impact disparate 0,76, sous le seuil légal. Non résolu** |
+| R4 | Boucle de rétroaction sur l'orientation | Personnes | **4** | 2 | Élevé | Modéré | Partiellement instrumenté (dérive des prédictions), **non mesuré** |
+| R5 | Estimation mal calibrée conduisant au renoncement | Personnes | **4** | **4** | **Élevé** | **Élevé** | **Mesuré, et défavorable** : sur-confiance de six points en test |
+| R6 | Contrôle humain de façade (biais d'automatisation) | Personnes | 3 | 3 | Élevé | Modéré | **Dispositif construit ; effectivité non démontrable** |
+| R7 | Information erronée sur les débouchés | Personnes | 3 | **4** | **Élevé** | **Faible** | **Tranché** : couverture 1,4 %, terme déclaré indisponible ailleurs |
+| R8 | Obsolescence du modèle et des référentiels | Personnes | 3 | **4** | **Élevé** | Modéré | **Surveillance construite** (ADR 0018) ; aveu : le seuil n'aurait pas vu la dégradation mesurée |
 | R9 | Non-conformité de réutilisation (licences) | Organisation | 2 | 2 | Modéré | Faible | Tranché dans le registre des sources |
 | R10 | Fuite de données dans le protocole d'évaluation | Organisation | **4** | 1 | Modéré | Faible | **Traité et testé** |
 | R11 | Secret versionné dans le dépôt | Organisation | **4** | 1 | Modéré | Faible | **Traité et vérifié** |
@@ -54,11 +54,19 @@ c'est une propriété d'architecture, et elle vaut mieux qu'une mesure.
 risque résiduel n'est pas la divulgation, c'est l'**impossibilité pratique de
 répondre à une opposition** sans réécrire l'historique du dépôt (T2, T8).
 
+**Ce qui s'est aggravé le 2026-09-15.** Une quatrième surface est apparue avec
+l'écran conseiller : **il expose les caractéristiques d'un candidat et n'est
+protégé par aucune authentification**, l'identifiant du conseiller étant
+déclaratif. La vraisemblance passe de 1 à 3 et le risque de modéré à élevé —
+non parce que les données ont changé, mais parce qu'une surface d'accès
+existe désormais et qu'aucun contrôle ne la garde. C'est le motif de blocage A
+de l'analyse d'impact.
+
 **Mesures** : minimisation vérifiée par
-`tests/data/test_echantillons_conformite.py` ; chiffrement au repos et
-cloisonnement par rôles à porter par le code d'infrastructure ; procédure de
-notification de violation à écrire (72 heures, art. 33) — **non écrite à ce
-jour**.
+`tests/data/test_echantillons_conformite.py` ; **authentification du
+conseiller : à construire, bloquante** ; chiffrement au repos et cloisonnement
+par rôles à porter par le code d'infrastructure ; procédure de notification de
+violation à écrire (72 heures, art. 33) — **non écrite à ce jour**.
 
 ---
 
@@ -131,9 +139,21 @@ sa commune, ce qui est un besoin légitime — alors il faudrait passer au
 regroupement par bassin d'emploi plutôt qu'au département, et remesurer le
 même tableau à ce grain avant de trancher.
 
-**Statut : décidé, non implémenté.** Ce point bloque l'exposition du terme
-« débouchés ». Je le dis comme tel : en l'état, il n'est pas conforme de
-publier cet agrégat.
+**Statut au 2026-09-15 : implémenté, et vérifié.**
+`src/edumatch/matching/agregat_sirene_debouches.py` construit l'agrégat
+consommé par le terme de débouchés au grain `département × division NAF`,
+applique **k = 5**, et applique le **filtre `diffusible`** que le job
+d'agrégation amont n'appliquait pas : **20 488 établissements actifs
+employeurs** non diffusibles sont exclus du comptage, sur les 2 423 308
+rattachés à une commune — cohérent avec les 20 501 mesurés sur l'ensemble du
+stock. Le grain communal reste un calcul intermédiaire jamais exposé, et le
+module ne renvoie jamais l'effectif sous le seuil, pas même pour distinguer un
+zéro réel d'une cellule supprimée : les deux cas passent par un simple
+indicateur d'existence.
+
+Ce que ce traitement **ne change pas** : Sirene reste pseudonymisée, pas
+anonymisée. k = 5 réduit le risque de ré-identification, il ne fait pas sortir
+la donnée du champ du RGPD.
 
 ---
 
@@ -165,8 +185,22 @@ audit a posteriori sur les prédictions avec ratio d'impact disparate.
 `cod_uai` et `ville_etab` sont exclus ; `fili` est conservée, et c'est une
 position assumée dont le seuil de réouverture est écrit.
 
-**Risque résiduel** : réel. Le modèle reconstituera partiellement le genre par
-la filière, quoi qu'il arrive. Seul le niveau 3 dira de combien.
+**Le niveau 3 a parlé, le 2026-08-30.** Sur le test 2025, les substituts
+totalisent **14,2 % de l'explication SHAP** alors que le genre n'entre jamais
+en entrée ; le **ratio d'impact disparate du groupe le plus féminisé est de
+0,76, sous le seuil des quatre cinquièmes**, et l'erreur de calibration y est
+**le double** de celle des autres groupes (0,0656 contre 0,0319 et 0,0341),
+supérieure à celle de la règle de référence (0,0475).
+
+**Et le levier envisagé ne fonctionne pas** : retirer les quatre substituts
+coûte +0,0006 de MAE pondérée et **dégrade** le ratio (0,66 → 0,62 en
+validation). L'information est diffuse dans les variables décalées, pas
+concentrée dans quatre colonnes de catalogue.
+
+**Risque résiduel : élevé, et non résolu.** Aucune mesure disponible dans ce
+projet ne le ramène sous le seuil. Ce qui reste ouvert — repondération à
+l'apprentissage, contrainte d'équité dans l'objectif, recalibration par groupe
+— n'a pas été tenté, et je ne le présente pas comme une solution acquise.
 
 ---
 
@@ -191,9 +225,19 @@ les paliers de conservation de T5 rendent possible ; **ne jamais présenter une
 estimation basse comme une interdiction** — c'est une exigence d'interface,
 pas de modèle.
 
-**Statut** : identifié et documenté, aucune surveillance construite. C'est le
-risque le plus difficile à mesurer du registre, et je ne prétends pas
-l'avoir traité.
+**Statut au 2026-09-15** : partiellement instrumenté. `models/derive.py`
+(ADR 0018) suit la distribution des **prédictions** d'une session à l'autre —
+PSI 0,0174 en validation 2024, 0,0296 en test 2025, contre un seuil de 0,20.
+C'est l'instrument qui verrait une boucle se refermer. Ce qu'il ne fait pas :
+sa référence est la distribution d'entraînement 2020-2023, pas une population
+post-déploiement, qui n'existe pas. **Aucun millésime postérieur à une mise en
+service n'a été observé** : ce risque restera, à l'échelle de ce projet,
+identifié, instrumenté et non mesuré. Je ne prétends pas l'avoir traité.
+
+**Une réduction structurelle mérite d'être notée** : le système **n'apprend
+pas en continu**. L'entraînement est une tâche de lot déclenchée sur un
+millésime publié ; aucune inférence ne remonte dans le modèle. La boucle ne
+peut donc pas se refermer en quelques heures — au pire en une campagne.
 
 ---
 
@@ -204,21 +248,37 @@ estimation à 20 % qui vaut en réalité 45 % peut coûter une candidature — d
 un parcours. La gravité pour la personne est maximale ; c'est le risque le
 plus directement lié à la qualité du modèle.
 
-**Ce qui est établi.** La première exécution enregistrée du modèle appris
-affiche une erreur absolue moyenne pondérée de 0,0820, **quand la règle
-naïve de référence atteint 0,0713** : à cet instant, le modèle appris est
-moins bon que la baseline qu'il doit battre. La conduite est écrite d'avance :
-la comparaison est rapportée telle quelle. Retoucher le protocole jusqu'à ce
-que le chiffre passe est la seule conduite exclue.
+**Ce qui est établi au 2026-09-15**, mesuré à couverture égale sur les 77 159
+cellules du test 2025, et rapporté tel quel :
 
-**Mesures** : erreur absolue moyenne pondérée par l'effectif de cellule, plus
-**courbe de calibration et erreur de calibration attendue** — la métrique qui
-compte le plus quand on annonce une probabilité, et celle qui manque encore ;
-affichage d'un intervalle plutôt que d'un point ; mention explicite que
-l'estimation porte sur une cellule et non sur une personne.
+| | Modèle | Règle de référence |
+|---|---:|---:|
+| MAE pondérée, validation 2024 | **0,0690** | 0,0727 |
+| MAE pondérée, test 2025 | 0,0758 | **0,0701** |
+| ECE, validation 2024 | **0,0030** | 0,0141 |
+| ECE, test 2025 | 0,0371 | **0,0322** |
 
-**Exigence bloquante** : aucune mise en service sans mesure de calibration
-publiée dans la Model Card, ventilée par type de baccalauréat.
+En validation, le modèle est remarquablement calibré. **En test, il devient
+sur-confiant sur toute la plage médiane : il annonce 0,55 quand la réalité
+observée est 0,49.** Il reste bien calibré aux extrêmes.
+
+**Pourquoi la vraisemblance passe de 3 à 4.** Elle n'était qu'estimée tant que
+la calibration n'était pas mesurée. Elle est désormais **constatée** : le
+défaut existe, il est chiffré, et il porte sur la plage de probabilités où un
+candidat hésite. Sur-confiance et renoncement sont les deux faces du même
+défaut : le candidat à qui l'on annonce 0,55 pour 0,49 candidate sur une
+formation moins accessible qu'annoncé et s'expose à un refus qu'il n'avait pas
+anticipé.
+
+**Mesures en place** : mention portée par **chaque réponse de l'API**
+(`MISE_EN_GARDE_ACCESSIBILITE`) et affichée à l'écran ; facteurs explicatifs
+présentés à côté du score ; formulation par catégorie et non par personne.
+**Mesure absente** : l'affichage d'un intervalle plutôt que d'un point.
+
+**Exigence bloquante, désormais chiffrée** : aucune restitution chiffrée à un
+candidat réel tant que le modèle ne passe pas **sous 0,0701 de MAE pondérée et
+sous 0,0322 d'ECE** sur une session de test non consultée pendant le réglage.
+Le seuil est écrit avant la prochaine mesure, pas après.
 
 ---
 
@@ -230,12 +290,19 @@ contredire, ou dont le bouton d'écartement n'est jamais utilisé, satisfait la
 lettre et manque l'objet. C'est le biais d'automatisation : un professionnel
 suit une recommandation chiffrée parce qu'elle est chiffrée.
 
-**Mesures exigées, et vérifiables** : l'écartement doit être **motivé**
-(champ obligatoire), **horodaté** et **journalisé** ; le taux d'écartement
-doit être **mesuré et affiché au déployeur** — un taux nul sur une année n'est
-pas un signe de qualité du modèle, c'est un signal d'alerte sur la supervision ;
-les facteurs explicatifs doivent être présentés **avant** le score, pour que le
-raisonnement précède le chiffre.
+**Mesures exigées, et leur état au 2026-09-15** :
+
+| Exigence | État |
+|---|---|
+| Écartement **motivé**, champ obligatoire | **Fait** — bloqué côté client **et** côté serveur. La double validation empêche qu'un contournement rende le contrôle cosmétique |
+| Horodaté et journalisé | **Fait** (`api/feedback_store.py`) |
+| Facteurs explicatifs présentés à côté du score | **Fait** |
+| Taux d'écartement **mesuré et affiché au déployeur** | **Non fait.** Un taux nul sur une campagne n'est pas un signe de qualité du modèle, c'est un signal d'alerte — encore faut-il pouvoir l'observer |
+| Identité du superviseur **vérifiée** | **Non fait** — identifiant déclaratif, aucune authentification. Une trace de supervision non imputable ne démontre rien |
+
+**Risque résiduel** : le dispositif existe et est bien conçu ; **son
+effectivité n'est pas démontrable**. C'est exactement la différence entre
+satisfaire la lettre de l'article 14 et en atteindre l'objet.
 
 ---
 
@@ -257,8 +324,22 @@ lycéen ne peut pas distinguer les deux.
 **Les deux seules issues acceptables** : un appariement mesuré, **avec son
 taux d'erreur déclaré** ; ou un périmètre restreint, chiffré et assumé, où le
 terme n'est calculé que pour les formations réellement raccordées, et déclaré
-indisponible ailleurs. Ce qui est exclu : laisser le manque dans un fichier
-de couverture sans qu'il apparaisse dans ce qui est montré à l'utilisateur.
+indisponible ailleurs. Ce qui est exclu : laisser le manque dans un fichier de
+couverture sans qu'il apparaisse dans ce qui est montré à l'utilisateur.
+
+**La seconde issue a été prise, et la mesure est sévère.** L'appariement
+textuel exact des libellés couvre **7 libellés distincts sur 712 (1,0 %)**,
+soit **6 017 lignes sur 440 030 (1,4 %)**, les sept correspondances relues à la
+main. **Pour les 98,6 % restants, le terme est explicitement marqué
+indisponible avec son motif**, jamais mis à zéro en silence, et le motif voyage
+jusqu'à l'écran du conseiller.
+
+**Risque résiduel : faible.** Non parce que la couverture est bonne — elle est
+mauvaise — mais parce qu'aucune personne n'est exposée à un chiffre faux. Un
+manque déclaré ne nuit à personne ; un chiffre inventé, si. Contrepartie à dire
+au déployeur : le troisième terme du score est sans valeur pour la
+quasi-totalité du catalogue, et c'est une limite du produit, pas un réglage en
+cours.
 
 ---
 
@@ -279,9 +360,24 @@ formations deviennent **plus** sélectives, alors que la moyenne par formation
 — la grandeur réellement apprise — évolue en sens inverse. Surveiller la
 mauvaise grandeur est pire que ne rien surveiller, parce qu'on croit savoir.
 
-**Mesures** : réentraînement annuel calé sur la publication du millésime ;
-seuil de dérive documenté ; contrôle de fraîcheur par source, avec un seuil à
-écrire pour IDÉO qui ne s'engage sur aucune cadence.
+**Mesures, et leur état au 2026-09-15** : réentraînement annuel calé sur la
+publication du millésime, porté par le DAG `edumatch_parcoursup` ; **seuil de
+dérive arrêté et mesuré** (ADR 0018 : PSI 0,20 appliqué à la **médiane** des 46
+variables, jamais au maximum — au maximum il se déclencherait en permanence à
+cause de deux variables dont la dérive n'est qu'un changement de libellé à la
+source, `region_etab_aff` 0,75 et `select_form` 0,35) ; contrôle de fraîcheur
+par source, avec un seuil restant à écrire pour IDÉO, qui ne s'engage sur
+aucune cadence.
+
+**L'aveu que ce registre doit porter** : au seuil retenu, **le dispositif
+n'aurait pas détecté la dégradation validation → test** mesurée par ailleurs.
+Dérive de la cible 0,0115, des prédictions 0,0174 puis 0,0296 : un ordre de
+grandeur sous 0,20. C'est cohérent avec la nature du phénomène — une dérive du
+concept, où la relation entre variables et cible se déforme sans que les
+distributions marginales bougent, est **par construction** invisible au PSI. Le
+PSI est un signal précoce sur les entrées et les sorties, **pas un substitut à
+la mesure de performance réelle**, qui n'arrive qu'avec la vérité terrain de la
+campagne suivante.
 
 ---
 
@@ -325,9 +421,32 @@ rotation et de révocation est écrite dans `plan-gouvernance.md`.
 - **Aucune procédure de notification de violation** (art. 33 et 34) n'est
   écrite. C'est une lacune, pas un oubli de rédaction : elle suppose de savoir
   qui héberge quoi, ce que l'infrastructure dira.
-- **Trois risques sont décidés et non implémentés** : R2 (seuil de
-  k-anonymat), R5 (calibration), R6 (écran de supervision). Ils conditionnent
-  la mise en service, et sont repris à ce titre dans l'analyse d'impact.
+- **Aucun journal d'incident** n'existe, alors que l'article 9 du règlement sur
+  l'IA suppose un processus de gestion des risques **continu**, donc alimenté
+  par les incidents réels.
+- **Aucun plan de surveillance après commercialisation** (art. 72). La mesure
+  de dérive en serait l'instrument ; elle n'en est pas le plan.
+- **Un risque nouveau, non listé ci-dessus parce qu'il relève de la sécurité
+  technique et non de ce registre** : l'absence de contrôle d'accès à l'écran
+  conseiller. Il est porté par R1, et par le motif de blocage A de l'analyse
+  d'impact.
+
+### Ce qui a changé au 2026-09-15
+
+| Risque | Avant | Après |
+|---|---|---|
+| R2 k-anonymat | Décidé, non implémenté | **Implémenté et vérifié** au point de restitution |
+| R5 calibration | Métrique définie, non mesurée | **Mesurée, et défavorable** — vraisemblance relevée de 3 à 4 |
+| R6 contrôle humain | Spécifié, non construit | **Construit** ; effectivité non démontrable |
+| R3 discrimination indirecte | Mesuré sur les entrées | **Mesuré sur les prédictions** — résiduel relevé de modéré à élevé |
+| R7 débouchés | Décision à prendre | **Tranché** — couverture 1,4 %, indisponibilité déclarée |
+| R8 obsolescence | Surveillance à construire | **Construite**, avec son aveu de portée |
+| R1 violation | Vraisemblance 1 | **Vraisemblance 3** — une surface d'accès non authentifiée est apparue |
+
+**Trois risques restent décidés et non traités** : R3 (aucun levier disponible
+ne ramène l'impact disparate sous le seuil), R4 (non mesurable sans millésime
+post-déploiement), et le contrôle d'accès porté par R1.
 
 ---
-*Étape E44 · rédigé le 2026-08-30.*
+*Étape E44 · rédigé le 2026-08-30, révisé le 2026-09-15 après les mesures
+d'équité, de calibration, de dérive et la construction du service.*
