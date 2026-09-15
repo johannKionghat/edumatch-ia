@@ -1435,10 +1435,23 @@ plutôt que `latest`).
   des `requests` et des `limits` sur les deux conteneurs (initialisation :
   50m CPU / 64Mi requêtés, 250m / 128Mi en limite ; conteneur principal :
   200m CPU / 320Mi requêtés, 1 CPU / 640Mi en limite) ; `k8s/base/hpa.yaml`
-  déclare un `HorizontalPodAutoscaler` de 1 à 6 réplicas sur un seuil
-  d'utilisation CPU à 60 %, avec un comportement de montée et de descente
-  distinct (montée immédiate, descente amortie sur 5 minutes)
+  déclare un `HorizontalPodAutoscaler` avec un plancher de 2 réplicas et un
+  plafond de 6 sur un seuil d'utilisation CPU à 60 %, avec un comportement de
+  montée et de descente distinct (montée immédiate, descente amortie sur
+  5 minutes)
 - Sur ce seul critère écrit, l'étape est remplie
+- **Correction apportée à la relecture** : les manifestes se contredisaient —
+  le déploiement fixait `replicas: 2` au nom de la disponibilité, pendant que
+  le HPA, qui a le dernier mot sur ce nombre dès qu'il cible un déploiement,
+  déclarait `minReplicas: 1` et aurait ramené à un seul pod en creux de
+  charge. Corrigé : le HPA porte désormais seul les deux bornes — plancher
+  de 2 réplicas (argument de disponibilité, indépendant du trafic) et
+  plafond de 6 (argument de charge : rapport mesuré de 1 à 6 entre le pic de
+  la période des vœux et le creux estival) — et `replicas` a été retiré du
+  déploiement, qui ne fixe plus qu'une valeur de départ à la création
+  initiale. Un `PodDisruptionBudget` (`minAvailable: 1`) et une anti-affinité
+  souple entre pods ont été ajoutés à cette occasion. Correction commitée dans le
+  second dépôt sous `4e23b85`
 - **Ce qui reste non prouvé** : rien de tout cela n'a été appliqué sur un
   cluster réel — le corps du commit `5ef5ff3` le dit lui-même. Le critère 2.3
   du bloc 2 (« infrastructure déployée : cluster de calcul, serveurs ») reste
@@ -1450,9 +1463,11 @@ plutôt que `latest`).
   `kubectl top pod` après un premier déploiement
 
 **E37 — décision prise** : aucune nouvelle à cette étape. Le choix Scaleway
-(souveraineté, données de mineurs) et le HPA borné à 1-6 réplicas
-(saisonnalité de la période de vœux Parcoursup) sont déjà arbitrés et
-argumentés dans le corps du commit du second dépôt.
+(souveraineté, données de mineurs) et le HPA borné à 2-6 réplicas
+(plancher de disponibilité, plafond dicté par la saisonnalité de la période
+de vœux Parcoursup) sont déjà arbitrés et argumentés dans le corps du commit
+du second dépôt ; la borne basse a été corrigée de 1 à 2 à la relecture pour
+lever la contradiction avec le déploiement, voir ci-dessus.
 
 **E38 — ce qui a été vérifié**
 - `edumatch-cicd/monitoring/` (Prometheus, Alertmanager, Grafana, SLO

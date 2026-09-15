@@ -91,8 +91,17 @@ posées.*
       voir le point ouvert dédié
 - [x] Manifestes Kubernetes, dont le HPA *(dépôt 2, même commit)* —
       `requests`/`limits` présents sur les deux conteneurs du déploiement,
-      HPA de 1 à 6 réplicas sur un seuil CPU à 60 %. Même réserve : rien
-      n'a tourné sur un cluster
+      HPA avec un plancher de 2 réplicas et un plafond de 6 sur un seuil CPU
+      à 60 %. ⚠️ Une contradiction a été trouvée à la relecture : le
+      déploiement fixait `replicas: 2` pendant que le HPA déclarait
+      `minReplicas: 1`, qui aurait eu le dernier mot et serait redescendu à
+      un seul pod en creux de charge. Corrigée : le HPA porte seul les deux
+      bornes (2 pour la disponibilité, 6 pour le rapport de charge mesuré
+      entre le pic de la période des vœux et le creux estival), `replicas`
+      retiré du déploiement, `PodDisruptionBudget` (`minAvailable: 1`) et
+      anti-affinité souple ajoutés. Correction commitée dans le second dépôt
+      sous `4e23b85`. Même réserve
+      qu'avant sur le reste : rien n'a tourné sur un cluster
 - [x] Prometheus et Grafana *(dépôt 2, E38, 2026-09-15, commit `71b2d19`)* —
       cinq alertes, chacune avec une action. Même réserve, et l'API
       n'expose pas encore `/metrics` — voir le point ouvert dédié
