@@ -3,8 +3,10 @@
 Feuille de route vivante. Je la tiens à jour au fil du projet et des
 évaluations du jury.
 
-**État au démarrage** : l'architecture est en place, le dépôt est initialisé,
-**aucun code métier n'est écrit**. Tout ce qui suit est à construire.
+**État au 2026-09-15** : 39 étapes sur 46 du plan d'exécution du projet sont
+validées (`avancement.md`). L'ingestion, la qualité, l'entrepôt, le modèle,
+le service et la gouvernance sont construits et testés. Ce qui suit liste ce
+qui reste précisément, sans ambiguïté avec ce qui est déjà fait.
 
 ---
 
@@ -47,23 +49,24 @@ posées.*
 
 ## Bloc 1 — Gouvernance des données
 
-- [ ] Plan de gouvernance : classification, rôles, règles d'usage
-- [ ] Registre des traitements
-- [ ] Registre des sources et de leurs licences — les 4 licences sont déjà
-      identifiées et enregistrées dans les manifestes de chaque connecteur
-      (Parcoursup, Sirene, RNCP : Licence Ouverte v2.0 ; ONISEP/IDÉO : ODbL,
-      partage à l'identique obligatoire sur toute base dérivée redistribuée).
-      La base légale du traitement « échantillons de test » (intérêt
-      légitime, art. 6.1.f) et l'attribution des 4 producteurs sont
-      également établies (E08). Le registre lui-même reste à écrire en E40 :
-      pas anticipé maintenant, pour respecter l'ordre du plan d'exécution du
-      projet — la matière est prête dans `01-donnees/sources.md`,
-      `01-donnees/echantillons.md`, `03-pipeline/ingestion.md` et l'ADR 0008,
-      et amorcée dans `05-gouvernance/`
-- [ ] AIPD — obligatoire, profilage de mineurs
-- [ ] Model Card
-- [ ] Matrice de risques
-- [ ] Correspondance AI Act, articles 9 à 15
+- [x] Plan de gouvernance : classification, rôles, règles d'usage
+      (`05-gouvernance/plan-gouvernance.md`, E44, complété le 2026-09-15)
+- [x] Registre des traitements (`05-gouvernance/registre-traitements.md`, E40,
+      amorcé le 2026-08-30, complété le 2026-09-15 — huit traitements, statut
+      « existant » ou « spécifié » explicite par ligne)
+- [x] Registre des sources et de leurs licences
+      (`05-gouvernance/registre-sources.md`, E40)
+- [x] AIPD — obligatoire, profilage de mineurs (`05-gouvernance/aipd.md`, E41,
+      version 0.9 le 2026-08-30, complète le 2026-09-15). **Avis scindé, pas
+      favorable sans réserve** : défavorable à la restitution du terme appris
+      à des candidats réels, le modèle étant battu par la règle de
+      dénombrement dans 23 des 27 sous-populations auditées ; favorable sous
+      réserves au reste du dispositif ; favorable sans réserve à une
+      démonstration encadrée
+- [x] Model Card (`05-gouvernance/model-card.md`, E42, format Mitchell,
+      performance ventilée par sous-population)
+- [x] Matrice de risques (`05-gouvernance/risques.md`, E44)
+- [x] Correspondance AI Act, articles 9 à 15 (`05-gouvernance/ai-act.md`, E43)
 - [ ] Politique de gestion des secrets, avec l'incident documenté
 - [ ] Procédure d'audit annuelle
 - [ ] Slides de présentation, 15 min
@@ -72,7 +75,10 @@ posées.*
 
 - [ ] `config.py` — Pydantic Settings, chargement des YAML par environnement
 - [ ] Modèle en étoile — schéma dbt, grain écrit
-- [ ] Diagrammes C4 exportés en image pour le dossier
+- [x] Diagrammes C4, niveaux 1 et 2 (`02-architecture/c4-contexte.md`,
+      `c4-conteneurs.md`, E45, 2026-09-15) — en Mermaid versionné dans le
+      Markdown plutôt qu'en image exportée, pour que le diff montre le
+      changement plutôt qu'une image qui se périme en silence
 - [ ] `docker/Dockerfile.train`, `docker/Dockerfile.serve`
 - [ ] Terraform — cluster, base, stockage objet, réseau *(dépôt 2)*
 - [ ] Manifestes Kubernetes, dont le HPA *(dépôt 2)*
@@ -98,12 +104,24 @@ posées.*
       (E17, 2026-08-30) — voir `03-pipeline/agregats-sirene.md` et l'ADR 0016.
       **Point ouvert reporté ci-dessous** : la taille des cellules et son
       articulation avec la protection des données
-- [ ] `referentiel/naf_rome_formation.csv` — actif versionné, **taux de couverture mesuré**
-- [ ] `features/label.py` — taux d'admission par cellule, pondération
-- [ ] `features/build.py` — variables N-1 à N-3 uniquement, **anti-fuite**
-- [ ] `pipelines/edumatch_pipeline.py` — DAG complet, reprise, blocage qualité
-- [ ] Tests : idempotence, anti-fuite, contrats de données
-- [ ] Vidéo du pipeline, **avec panne provoquée et reprise**
+- [x] `referentiel/naf_rome_formation.csv` — chaîne NAF↔ROME↔formation sur
+      trois sources réelles, couverture mesurée maillon par maillon (61,42 %
+      de bout en bout) (E18, 2026-08-30) — voir `03-pipeline/reconciliation-naf-rome.md`
+      et l'ADR 0017
+- [x] `features/label.py` — taux d'admission par cellule, pondération par
+      effectif regroupée en un seul lieu (E19, 2026-08-30)
+- [x] `features/build.py` — 46 variables, décalage d'une session pour les
+      compteurs, contrat anti-fuite vérifié par mutation de code (E20,
+      2026-08-30)
+- [x] `pipelines/edumatch_pipeline.py` — quatre DAG par cadence de source,
+      reprise décidée dans le code, blocage qualité (E33, 2026-09-01).
+      Idempotence, blocage et reprise **testés** sur données réelles ; **la
+      démonstration filmée reste à produire (E39)** — voir le point ouvert
+      ci-dessous
+- [x] Tests : idempotence, anti-fuite, contrats de données — couverts par les
+      suites citées à chaque étape ci-dessus
+- [ ] Vidéo du pipeline, **avec panne provoquée et reprise** (E39, non
+      commencée)
 
 ## Bloc 4 — Déploiement
 
@@ -152,7 +170,14 @@ posées.*
       documents, TF-IDF, citation garantie par construction —
       `06-service/assistant-rag.md`
 - [ ] CI/CD — trois workflows *(dépôt 2)*
-- [ ] Evidently — dérive, seuil documenté en ADR
+- [x] Détection de dérive — PSI et KS implémentés directement dans
+      `models/derive.py` et `derive_stats.py`, seuil documenté en ADR (E34,
+      2026-09-01, ADR 0018). **Evidently écarté** pour un conflit de
+      dépendance transitive reproduit deux fois (`python-multipart` de
+      FastAPI contre `multipart` de `litestar`, entraîné par la seule version
+      d'Evidently compatible avec le reste du projet), pas par préférence —
+      voir le point ouvert ci-dessous sur MLflow, cassé par un incident
+      voisin pendant ce même retrait
 - [ ] Vidéo de la solution en production
 
 ---
@@ -273,20 +298,18 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
       Model Card (E42) comme limite du dispositif, sans être présentée comme
       un apport nul. Détail : `04-modele/ablation.md`.
 
-- [ ] **⚠️ INCOHÉRENCE — un chiffre d'équité diverge entre l'analyse
-      exploratoire et l'audit du modèle.** L'analyse exploratoire (E11,
-      `04-modele/equite.md`) mesure que l'écart d'admission entre femmes et
-      hommes, à formation égale, reste inférieur à 5 points dans **83,8 %**
-      des cas. L'audit d'équité sur les prédictions (E26,
-      `src/edumatch/models/fairness.py`) rapporte un chiffre différent sur
-      une question voisine, **73,4 %**. Les deux mesures ne portent
-      vraisemblablement pas sur le même filtre d'effectif minimal par
-      formation (l'E11 impose au moins 30 vœux de chaque sexe ; l'E26 audite
-      la totalité du test 2025 sans ce même plancher), mais ce n'est pas
-      vérifié — seulement l'hypothèse la plus probable. Je ne corrige ni le
-      code ni le chiffre : à réconcilier avant d'écrire la Model Card (E42),
-      qui ne peut pas porter deux chiffres contradictoires sur le même
-      objet.
+- [x] **✅ RÉSOLU — l'incohérence de chiffre d'équité entre l'analyse
+      exploratoire et l'audit du modèle est réconciliée** (constatée en E11,
+      réconciliée le 2026-09-15 en écrivant l'AIPD, E41, commit `7dbb482`).
+      Même métrique, même session 2025, seul le filtre différait : avec un
+      plancher de trente vœux par sexe (celui de l'E11), 83,79 % des 11 099
+      formations qui l'atteignent présentent un écart inférieur à 5 points ;
+      sans ce plancher (celui audité par `fairness.py` en E26), 73,37 % des
+      14 159 formations. Le chiffre retenu pour la Model Card et l'AIPD est
+      le second, avec son effectif — c'est celui qui décrit la population
+      réellement soumise à l'audit d'équité, sans filtre de confort qui
+      écarterait les petites formations. Réconcilié par recalcul, pas par
+      hypothèse.
 
 - [ ] **La borne de version de `numpy` n'est pas fixée après l'installation
       de `shap`.** Installer `shap` pour l'explicabilité (E25) a fait passer
@@ -338,6 +361,35 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
 - [ ] **Le tableau de bord du taux d'écartement**, destiné au déployeur pour
       vérifier que le contrôle humain (article 14) n'est pas une façade,
       reste à construire.
+
+---
+
+## Points ouverts issus de l'industrialisation (E33-E34) et de la restitution (E45)
+
+- [ ] **Le registre d'expériences MLflow a été cassé puis réparé, sans test
+      qui garantisse qu'il reste utilisable.** Le retrait d'Evidently (E34,
+      pour le conflit de dépendance documenté dans l'ADR 0018) a désinstallé
+      au passage `opentelemetry-proto`, une dépendance transitive dont MLflow
+      dépend pour son propre fonctionnement. L'environnement a été réparé,
+      mais **aucun test du dépôt ne vérifie que le registre d'expériences est
+      utilisable** — un futur retrait ou une future mise à jour de dépendance
+      pourrait casser MLflow une deuxième fois sans qu'aucune suite ne le
+      révèle avant l'entraînement suivant. Trou de couverture à combler avant
+      l'industrialisation (E35-E36) : un test d'intégration minimal qui
+      démarre un run, enregistre un paramètre et une métrique, et le relit.
+- [ ] **Les trois vidéos obligatoires restent à produire** (E45) :
+      infrastructure en production, pipeline avec panne provoquée et sa
+      reprise (dépend de E39), solution en production (dépend au moins de
+      E35 à E38). Les diagrammes C4 et du pipeline, eux, sont livrés.
+- [ ] **La panne provoquée et sa reprise (E39) ne sont pas filmées.** Le
+      mécanisme de reprise lui-même est déjà testé sur données réelles (E33,
+      panne qualité et panne réseau reproduites et rejouées), mais rien n'a
+      encore été filmé.
+- [ ] **Le déploiement Scaleway reste à faire.** Décidé en principe (voir la
+      décision « Cloud » du cadrage du projet, à partir du J8), non encore
+      construit : aucune ressource Scaleway n'existe dans le dépôt à ce jour.
+- [ ] **Les slides de présentation (15 minutes) restent à écrire** (bloc 1,
+      critère 1.12).
 
 ---
 

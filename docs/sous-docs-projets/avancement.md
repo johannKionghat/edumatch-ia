@@ -7,7 +7,12 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 32 / 46 étapes validées.**
+**État : 39 / 46 étapes validées.**
+
+Détail : E01 à E34 (phases 0 à 6, à l'exception de E35, E36, E37, E38, E39,
+non commitées) et E40, E41, E42, E43, E44 (phase 7, gouvernance, complète).
+Restent : E35, E36, E37, E38, E39 (industrialisation), E45 (diagrammes livrés,
+les trois vidéos manquent encore) et E46 (cohérence finale, slides).
 
 ---
 
@@ -1294,30 +1299,226 @@ Détail complet : `06-service/assistant-rag.md`.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E33 | DAG Airflow | ⬜ | | |
-| E34 | Détection de dérive | ⬜ | | |
+| E33 | DAG Airflow | ✅ validée | 2026-09-01 | `09d107a` |
+| E34 | Détection de dérive | ✅ validée | 2026-09-01 | `c1af7a4` |
 | E35 | Conteneurisation | ⬜ | | |
 | E36 | CI/CD | ⬜ | | |
 | E37 | Infrastructure Terraform et Kubernetes | ⬜ | | |
 | E38 | Monitoring et SLO | ⬜ | | |
 | E39 | Panne provoquée et reprise, filmée | ⬜ | | |
 
+**E33 — ce qui a été vérifié**
+- `pipelines/edumatch_pipeline.py` (160 lignes) : **quatre DAG, un par cadence
+  réelle de source**, plutôt qu'un DAG unique cadencé au plus fréquent —
+  alternative écartée : un DAG quotidien unique, plus simple à écrire mais qui
+  réexécuterait Parcoursup et Sirene sans besoin (idempotent, donc pas
+  incorrect, mais un gaspillage d'ordonnancement 364 jours sur 365)
+- `src/edumatch/orchestration/reprise.py` (113 lignes) et `taches.py`
+  (117 lignes) : la reprise est **décidée dans le code, pas par le mécanisme
+  natif d'Airflow**. Le vocabulaire commun transitoire/définitif, écrit lors
+  de l'ingestion (E06) précisément pour qu'un orchestrateur puisse décider sans
+  connaître la classe interne du connecteur, est réemployé ici — retries à
+  zéro, explicite, sur chaque opérateur, pour ne jamais retenter cinq fois une
+  erreur définitive
+- **Trois propriétés prouvées sur données réelles, pas affirmées**
+  (`tests/integration/test_pipeline_enchainement.py`, 237 lignes) :
+  l'enchaînement silver → gold → variables est rejoué deux fois et produit des
+  tables strictement identiques (idempotence) ; une panne qualité provoquée
+  arrête réellement la chaîne avant la transformation, sans qu'aucun fichier
+  ne soit écrit, et la reprise fonctionne après restauration (blocage
+  qualité) ; la reprise réseau est testée avec le vrai connecteur et sa vraie
+  exception, pas une exception fabriquée pour l'occasion
+- La purge du journal d'inférence (T5), déclarée comme lacune de planification
+  à l'étape précédente (E30), a désormais son DAG
+
+**E33 — ce qui n'a pas été fait, dit sans détour**
+Airflow n'est pas installé dans l'environnement de développement — extra
+optionnel, pour ne pas risquer ses contraintes de dépendances sur les 680
+tests existants à cette étape. Le test de structure du graphe s'ignore tant
+qu'Airflow est absent ; il se déclenchera sans rien changer dès que l'image
+dédiée existera. Le conteneur monte les bons volumes et variables, mais
+l'image de base ne contient pas encore le paquet du projet. **La
+démonstration filmée d'une panne et de sa reprise reste à produire** — c'est
+l'objet de l'étape E39, non commencée.
+
+**E33 — décision prise** : aucun ADR séparé — quatre DAG par cadence et
+reprise décidée dans le code plutôt que retries natifs sont deux choix
+structurants, argumentés dans le commit, non repris en ADR distinct.
+
+**E34 — ce qui a été vérifié**
+- `src/edumatch/models/derive.py` (440 lignes) et `derive_stats.py`
+  (170 lignes) implémentent directement l'indice de stabilité de population
+  (PSI) et le test de Kolmogorov-Smirnov (KS), sur les six sessions où le
+  label existe (2020-2025, ADR 0012) — **Evidently est écarté pour une raison
+  technique reproduite deux fois**, pas par préférence : sa dernière version
+  compatible (0.7.21, seule à ne pas exiger un `numpy<2.1` en conflit avec le
+  reste du projet) entraîne `litestar`, dont la dépendance transitive
+  `multipart` (2.0.0) occupe le même nom d'import que `python-multipart`, dont
+  FastAPI dépend déjà (E29) — `import evidently` lève
+  (`ImportError: cannot import name 'MultipartSegment'`), reproduit et non
+  contourné par un `except ImportError` silencieux. L'environnement a été
+  restauré à l'identique plutôt que dégradé pour contourner le conflit
+- **Trois familles de dérive mesurées séparément, jamais confondues** :
+  variables (médiane du PSI sur 46), cible (`taux`), prédictions du modèle —
+  référence : les quatre sessions d'entraînement 2020-2023 regroupées, comparée
+  à validation 2024 et test 2025
+- **Le seuil de 0,20 est conservé mais s'applique à la médiane des 46
+  variables, jamais à leur maximum** : appliqué au maximum, il se
+  déclencherait en permanence à cause de deux colonnes de nomenclature
+  instable sans rapport avec la performance du modèle — `region_etab_aff`
+  (PSI brut 4,99, ramené à 0,75 une fois accents, casse et tirets
+  neutralisés : un renommage de référentiel région, pas un changement du
+  monde réel) et `select_form` (PSI 0,35, dû à un libellé tronqué propre au
+  seul millésime 2020). Une alerte qui se déclenche tous les jours est
+  désactivée au bout d'un mois
+- **Ce que le seuil ne verrait pas est écrit dans la décision, pas tu** : la
+  dérive de la cible et des prédictions reste entre 0,01 et 0,03, un ordre de
+  grandeur sous le seuil de 0,20, alors même que le modèle perd 0,0068 de MAE
+  pondérée et voit son ECE décupler entre validation et test (E23). **Le PSI,
+  à ce seuil, n'aurait pas détecté la dégradation validation → test déjà
+  mesurée** : soit c'est une dérive du concept au sens strict (P(Y|X) se
+  déforme sans que les distributions marginales bougent, ce que le PSI ne
+  peut pas voir par construction), soit un défaut de généralisation sur une
+  fenêtre d'entraînement courte (quatre sessions) — les deux lectures sont
+  écrites, aucune n'est tranchée à la place de la mesure réelle qui suivra
+- La détection **journalise et ne déclenche rien** : coupler un signal jamais
+  observé en usage réel à un réentraînement automatique serait prématuré
+- Deux figures produites : `reports/figures/e34-derive-trajectoire.png`,
+  `e34-derive-variables.png`
+
+**E34 — décision prise** : ADR 0018 — PSI médian sur 46 variables, seuil à
+0,20, sans Evidently. Détail complet, dont le tableau des cinq comparaisons
+consécutives de sessions qui calibrent ce qu'est une dérive « normale » :
+`docs/sous-docs-projets/adr/0018-detection-de-derive-seuil-et-agregation.md`.
+
 ## Phase 7 — Gouvernance
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E40 | Registres traitements et sources | ⬜ | | |
-| E41 | AIPD | ⬜ | | |
-| E42 | Model Card | ⬜ | | |
-| E43 | Correspondance AI Act | ⬜ | | |
-| E44 | Plan de gouvernance et risques | ⬜ | | |
+| E40 | Registres traitements et sources | ✅ validée | 2026-09-15 | `7dbb482` (amorcée le 2026-08-30, `5162c9e`) |
+| E41 | AIPD | ✅ validée | 2026-09-15 | `7dbb482` |
+| E42 | Model Card | ✅ validée | 2026-09-15 | `7dbb482` |
+| E43 | Correspondance AI Act | ✅ validée | 2026-09-15 | `7dbb482` |
+| E44 | Plan de gouvernance et risques | ✅ validée | 2026-09-15 | `7dbb482` (amorcée le 2026-08-30, `5162c9e`) |
+
+**E40 — ce qui a été vérifié**
+- `05-gouvernance/registre-traitements.md` (408 lignes) : huit traitements
+  (T1 à T8), avec une colonne **statut** qui distingue explicitement ce qui
+  existe aujourd'hui dans le dépôt, vérifiable par un fichier (T1 à T3), de ce
+  qui est spécifié et pas encore construit (T4 à T8) — chaque ligne renvoie à
+  un chemin réel (`data/raw/parcoursup/`, `src/edumatch/models/`, etc.), pas
+  à une intention
+- `05-gouvernance/registre-sources.md` (161 lignes) : les 4 licences des
+  sources (Parcoursup, Sirene, RNCP en Licence Ouverte v2.0 ; ONISEP/IDÉO en
+  ODbL) et leurs implications, dont le partage à l'identique qui se
+  déclenchera à l'exposition du terme débouchés
+- Complété le 2026-09-15 (`7dbb482`) : cinq motifs de blocage à la mise en
+  service remplacent les quatre motifs initiaux du 30 août, dont
+  **l'absence d'authentification sur un écran qui expose des données de
+  candidats** — motif nouveau, pas maintenu par précaution mais mesuré
+
+**E41 — ce qui a été vérifié**
+- `05-gouvernance/aipd.md` (550 lignes, complétée depuis la version 0.9 à
+  302 lignes du 30 août, qui laissait quatre sections ouvertes faute d'audit
+  d'équité et d'écran de supervision — les deux existent désormais, E26 et
+  E31)
+- **Le test de nécessité (art. 35) est refait avec les mesures, et il
+  échoue** : le modèle appris est battu par la règle de dénombrement dans
+  **23 des 27 sous-populations ventilées**, en précision comme en
+  calibration. Un traitement plus opaque, qui ajoute une surface de dérive et
+  un risque de discrimination indirecte pour un résultat inférieur à une
+  règle déjà construite, n'est pas nécessaire au sens de l'article 35
+- **L'avis est scindé, pas global** : favorable sur le principe, **défavorable
+  à la restitution du terme appris à des candidats réels**, favorable sous
+  réserves sur le reste du dispositif, favorable sans réserve pour une
+  démonstration encadrée. L'écran de supervision, l'explicabilité, la
+  journalisation et l'affinité restent jugés proportionnés — bloquer tout le
+  système aurait été une punition, pas une analyse
+- **Le ratio d'impact disparate de 0,76 est apprécié et non subi** : sous le
+  seuil légal des quatre cinquièmes, mais la règle de référence est à
+  0,63 — sur la sélection, le modèle améliore l'équité. Ce qui l'accable,
+  c'est la définition d'équité privilégiée, déclarée avant la mesure (E26) :
+  la calibration par groupe, sur laquelle il sur-annonce les chances dans les
+  formations très féminisées. Écrit explicitement : sous une définition de
+  parité, le verdict s'inverserait. Sur le bac professionnel, le ratio est à
+  0,58 contre 0,62 pour la règle — le modèle y amplifie légèrement l'écart
+- **L'incohérence de chiffre signalée dans `reste-a-faire.md` (83,8 % contre
+  73,4 %) est réconciliée par recalcul, pas par hypothèse** : même métrique,
+  même session, seul le filtre diffère. Avec un plancher de trente vœux par
+  sexe, 83,79 % sur 11 099 formations ; sans plancher, 73,37 % sur 14 159. Le
+  chiffre retenu est le second, avec son effectif — c'est celui qui décrit la
+  population réellement auditée par `fairness.py`, sans filtre de confort
+- Une divergence de chiffre entre deux pages du dossier est corrigée à cette
+  occasion : la page d'ablation portait 0,0751 là où le registre
+  d'expériences enregistre 0,075755 et où quatre autres pages portent 0,0758
+  — erreur de transcription, pas de mesure
+
+**E42 — ce qui a été vérifié**
+- `05-gouvernance/model-card.md` (438 lignes), format Mitchell : performance
+  **ventilée par sous-population**, les 27 cellules du test de nécessité de
+  l'AIPD (E41) y sont reprises telles quelles, dont les 23 où le modèle perd
+  contre la règle
+- Usages hors périmètre déclarés, cohérents avec l'avis scindé du DPO :
+  pas de restitution du terme appris à un candidat réel en l'état
+
+**E43 — ce qui a été vérifié**
+- `05-gouvernance/ai-act.md` (361 lignes) : articles 9 à 15 mappés chacun à un
+  composant existant du dépôt (gestion des risques, données et gouvernance,
+  documentation technique, journalisation — E30, transparence, contrôle
+  humain — E31, exactitude et robustesse)
+
+**E44 — ce qui a été vérifié**
+- `05-gouvernance/plan-gouvernance.md` (240 lignes) et
+  `05-gouvernance/risques.md` (452 lignes, complétée depuis 333 lignes le
+  30 août) : matrice de risques et procédure d'audit **rattachées au code**,
+  pas génériques — le seuil de k-anonymat (k = 5 au grain département × NAF,
+  mesuré sur l'agrégat réel : appliqué au grain commune × NAF il supprimerait
+  90,6 % des cellules et 46,9 % des établissements, contre 35,0 % des
+  cellules et 1,6 % des établissements au grain département) et le filtre
+  `diffusible` (20 501 établissements exclus de la diffusion par l'INSEE, non
+  filtrés au moment de la décision et corrigés depuis, E28) en sont la
+  matière, pas une politique abstraite
+- Complété le 2026-09-15 avec les résultats de l'audit d'équité (E26) et les
+  cinq motifs de blocage actualisés (voir E40)
+
+**E40-E44 — décision prise** : aucun ADR nouveau distinct — ces cinq étapes
+appliquent aux données produites par le projet les décisions déjà arbitrées
+(k-anonymat, ODbL, définition d'équité par calibration, ADR 0009 à 0018), sans
+introduire de nouvel arbitrage d'architecture. Le seul document qui tranche
+réellement quelque chose de nouveau est l'avis scindé du DPO dans l'AIPD
+(E41), qui n'est pas un ADR technique mais une décision de gouvernance — elle
+est actée dans `05-gouvernance/aipd.md` lui-même, pas dans `adr/`.
 
 ## Phase 8 — Restitution
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E45 | Diagrammes C4 et les 3 vidéos | ⬜ | | |
+| E45 | Diagrammes C4 et les 3 vidéos | 🟡 en cours | 2026-09-15 (volet diagrammes) | `9781652` |
 | E46 | Cohérence dossier ↔ dépôt, slides, répétition | ⬜ | | |
+
+**E45 — ce qui a été vérifié, partiel**
+- Trois diagrammes livrés, en Mermaid versionné dans le Markdown plutôt qu'en
+  image exportée — alternative écartée : une image se périme en silence sans
+  que personne ne voie qu'elle ment, là où un diff Git montre le changement :
+  `02-architecture/c4-contexte.md` (144 lignes), `c4-conteneurs.md`
+  (262 lignes), `03-pipeline/diagramme-pipeline.md` (257 lignes, le dossier
+  pipeline ne portait aucun diagramme jusqu'ici — le critère correspondant
+  n'était couvert par rien)
+- Le diagramme décrit le dépôt réel, pas une architecture idéale : trois
+  erreurs corrigées en le construisant — cinq producteurs de données, pas
+  quatre (France Travail est un connecteur à part entière, E18) ; PostgreSQL
+  n'est pas l'entrepôt mais la seule base de métadonnées du registre
+  d'expériences, l'entrepôt étant un fichier DuckDB en silver et du Parquet en
+  gold ; l'image de base est en Python 3.11, pas 3.12
+- Ce qui n'existe pas est marqué comme tel deux fois plutôt qu'une (mention
+  « prévu » dans le libellé et contour en pointillé) — une couleur seule
+  serait illisible en noir et blanc, et un jury lit souvent sur papier
+
+**E45 — ce qui reste à faire, non commencé** : les **trois captures vidéo**
+(infrastructure en production, pipeline avec panne filmée — dépend de E39,
+solution en production — dépend au moins de E35-E38). L'étape n'est donc pas
+validée : le livrable complet exige les vidéos, pas seulement les
+diagrammes.
 
 ---
 
