@@ -14,8 +14,11 @@ aucun n'a encore tourné sur la forge. Les trois images de conteneur (E35)
 sont construites, non-root, taguées par empreinte de commit, et vérifiées
 sans montage — mais la pile locale complète (service, entraînement,
 orchestration, registre d'expériences) n'a pas pu être levée de bout en bout
-sur ce poste de développement, voir le point ouvert dédié. Ce qui suit liste
-ce qui reste précisément, sans ambiguïté avec ce qui est déjà fait.
+sur ce poste de développement, voir le point ouvert dédié. Une revue de
+sécurité de l'API a par ailleurs durci E29 et E31 le même jour (commit
+`f7687ae`) sans créer d'étape nouvelle — voir le point ouvert dédié plus
+bas. Ce qui suit liste ce qui reste précisément, sans ambiguïté avec ce qui
+est déjà fait.
 
 ---
 
@@ -187,7 +190,9 @@ posées.*
 - [x] `api/main.py`, `routes/`, schémas Pydantic (E29, 2026-09-01). 6
       routeurs, explication lue depuis le précalcul SHAP (jamais recalculée
       en direct), dégradation explicite si Sirene manque, réponse 422 sur
-      catalogue trop grand — `06-service/api.md`
+      catalogue trop grand — `06-service/api.md`. **Durci le 2026-09-16**
+      (commit `f7687ae`) : authentification de `/feedback`, limitation de
+      débit, en-têtes de sécurité, métriques — voir le point ouvert dédié
 - [x] `api/audit.py` — journalisation article 12 et `api/audit_purge.py` —
       purge exécutable (E30, 2026-09-01). Trois paliers testés, idempotents.
       **Déclenchement planifié restant, purge du journal de retour (T6) non
@@ -483,12 +488,59 @@ c'est ce point précis qui reste ouvert, pas la conception.
       le journal d'inférence (T5) — les deux traces ne se corrèlent pas
       aujourd'hui. La durée décidée (12 mois, alignée sur T5) reste une
       intention pour ce journal précis.
-- [ ] **L'identifiant du conseiller, saisi sur l'écran de supervision, est
-      déclaratif et non vérifié.** Aucun mécanisme d'authentification n'est
-      branché à cette étape (E31).
+- [x] ✅ **RÉSOLU au 2026-09-16, commit `f7687ae`** — l'identifiant du
+      conseiller, saisi sur l'écran de supervision, était déclaratif et non
+      vérifié (E31). Une revue de sécurité a introduit une authentification
+      HTTP Basic sur `POST /feedback` : l'identifiant journalisé dérive
+      désormais du principal authentifié, jamais d'une valeur saisie par
+      l'appelant. C'était le motif A de l'analyse d'impact
+      (`05-gouvernance/aipd.md`, §8.4) ; il est levé. Détail :
+      `06-service/api.md`, `06-service/ecran-conseiller.md`.
 - [ ] **Le tableau de bord du taux d'écartement**, destiné au déployeur pour
       vérifier que le contrôle humain (article 14) n'est pas une façade,
       reste à construire.
+
+## Points ouverts issus du durcissement de sécurité de l'API (2026-09-16, commit `f7687ae`)
+
+Ce durcissement lève le motif A de l'analyse d'impact (identifiant de
+conseiller non imputable) sans clore les autres. Ce qui reste ouvert,
+assumé et écrit dans le code au moment du durcissement :
+
+- [ ] **La limitation de débit ne survit pas à plusieurs réplicas.** Le
+      compteur à fenêtre glissante (`api/rate_limit.py`) vit dans la
+      mémoire de chaque processus : avec plusieurs réplicas ou plusieurs
+      travailleurs, la limite réellement appliquée devient
+      `limite configurée × nombre de réplicas`, pas la valeur déclarée
+      (120 requêtes par minute). Condition de clôture : un magasin partagé
+      (par exemple Redis) avant tout déploiement à plusieurs pods — le HPA
+      du second dépôt monte déjà jusqu'à 6 réplicas.
+- [ ] **L'authentification ne couvre que `POST /feedback`.** `/matching`,
+      `/explain` et l'assistant restent anonymes — arbitrage assumé, le
+      motif démontré par la revue de sécurité ne portait que sur la route
+      qui écrit une décision imputée à quelqu'un. Seuil qui ferait
+      reconsidérer ce choix : l'écran en vient à exposer une donnée
+      nominative de candidat, ou il devient nécessaire de tracer qui a
+      consulté quoi, pas seulement qui a décidé quoi.
+- [ ] **Aucun verrouillage après une série d'échecs d'authentification.**
+      La limitation de débit borne le rythme des appels à `/feedback`,
+      mais n'introduit ni délai croissant ni blocage temporaire spécifique
+      après plusieurs mots de passe erronés consécutifs — seule protection
+      actuelle contre une recherche exhaustive de mot de passe.
+- [ ] **Pas de transport strict (`Strict-Transport-Security`) tant qu'aucun
+      TLS ne termine devant le service.** Les en-têtes de sécurité ajoutés
+      (`security_headers.py`) couvrent le contenu, le cadrage et le
+      référent, jamais le transport : ajouter cet en-tête sans TLS en place
+      mentirait sur une protection absente. À poser le jour où un relais
+      TLS est en service devant l'API, pas avant.
+- [ ] **Les trois autres motifs de blocage de l'analyse d'impact restent
+      ouverts** (`05-gouvernance/aipd.md`, §8.4) : absence de purge
+      exécutable du journal des décisions de conseiller T6 (motif B, déjà
+      détaillé ci-dessus), absence de notice d'information au candidat
+      (motif C), restitution d'une probabilité dont le défaut de
+      calibration est mesuré et non compensé par un double seuil (motif D),
+      et attribution des sources non effective au regard de la Licence
+      Ouverte v2.0 (motif E). Aucun des quatre n'est traité par ce
+      durcissement, qui ne portait que sur le motif A.
 
 ---
 

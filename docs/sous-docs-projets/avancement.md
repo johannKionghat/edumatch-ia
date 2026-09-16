@@ -1303,6 +1303,39 @@ Détail complet : `06-service/assistant-rag.md`.
 **Suite de tests à l'issue de la phase 5** : 668 tests verts
 (`python -m pytest -q`).
 
+**2026-09-16 — durcissement de sécurité de E29 et E31 (commit `f7687ae`)**
+
+Une revue de sécurité a porté sur l'API (E29) et l'écran conseiller (E31),
+déjà validées. Elle ne crée pas d'étape nouvelle du plan d'exécution du
+projet ; elle corrige un motif de blocage de l'analyse d'impact
+(`05-gouvernance/aipd.md`, §8.4, motif A) sur une étape déjà livrée.
+
+- **Authentification HTTP Basic sur `POST /feedback`** seulement :
+  l'identifiant du conseiller n'est plus déclaré dans le corps de la
+  requête, il dérive du principal authentifié (`api/auth.py`), comparaison
+  en temps constant. `/matching`, `/explain` et l'assistant restent
+  anonymes — arbitrage assumé, le motif corrigé ne concernait que la route
+  qui écrit une décision imputée à quelqu'un.
+- **Limitation de débit à fenêtre glissante** sur `/matching` (par adresse
+  IP) et `/feedback` (par conseiller authentifié), 120 requêtes par minute
+  par défaut. Limite non partagée entre réplicas, assumée et écrite.
+- **En-têtes de sécurité** sur toute réponse ; pas de
+  `Strict-Transport-Security` tant qu'aucun TLS ne termine devant le
+  service.
+- **Route `/metrics`** exposée, sans authentification ni donnée
+  personnelle.
+- **Bug trouvé à l'exécution du conteneur** : la bibliothèque
+  d'instrumentation Prometheus en version 7 casse toutes les routes avec la
+  version de FastAPI de l'image ; borne relevée en version 8, vérifié par
+  de vraies requêtes HTTP.
+- Suite complète : **732 tests, un ignoré** (`python -m pytest -q`).
+
+Détail : `06-service/api.md`, `06-service/ecran-conseiller.md`. Ce qui
+reste ouvert (limitation de débit non partagée entre réplicas,
+authentification non étendue aux routes de lecture, pas de verrouillage
+après échecs répétés, pas de transport strict) est reporté dans
+`reste-a-faire.md`.
+
 ## Phase 6 — Industrialisation
 
 | # | Étape | État | Date | Commit |

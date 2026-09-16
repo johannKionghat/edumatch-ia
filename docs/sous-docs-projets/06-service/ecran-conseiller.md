@@ -3,8 +3,9 @@
 **Critères servis** : Bloc 4, **4.17** (contrôle humain, article 14 du
 règlement sur l'IA) et **4.18** (accessibilité RGAA) · **Source** :
 `src/edumatch/api/static/` (`index.html`, `app.js`, `style.css`),
-`src/edumatch/api/routes/ecran.py` · **Commit** : `bbebefd` ·
-**Dernière revue** : 2026-09-01.
+`src/edumatch/api/routes/ecran.py`, `src/edumatch/api/auth.py` ·
+**Commit** : `bbebefd`, durci par `f7687ae` ·
+**Dernière revue** : 2026-09-16.
 
 Voir, comprendre, écarter avec motif — les trois actions que l'écran rend
 possibles, dans cet ordre.
@@ -33,6 +34,30 @@ L'écran dit ce que beaucoup d'interfaces cachent :
 Le flux d'écartement journalise, via `/feedback`, une décision motivée et
 horodatée — voir `journalisation-purge.md` pour ce que devient cette trace
 (T6 de la gouvernance) et ce qui n'est pas encore construit sur sa purge.
+
+**L'identifiant du conseiller n'est plus déclaratif** (revue de sécurité du
+2026-09-16, commit `f7687ae`) : jusqu'à cette date, `/feedback` acceptait un
+identifiant saisi librement dans le corps de la requête, ce qui permettait
+d'imputer un écartement à un conseiller qui ne l'avait jamais décidé — une
+trace de contrôle humain non imputable ne prouve rien au sens de l'article
+14. `/feedback` exige désormais une authentification HTTP Basic
+(`api/auth.py`) : l'identifiant journalisé est le principal authentifié,
+jamais une valeur saisie par le formulaire. Côté écran, le champ
+« Identifiant de conseiller » ne sert plus qu'à personnaliser l'affichage
+local — il n'est plus transmis à l'API. Une réponse **401** de `/feedback`
+affiche un message demandant de se reconnecter.
+
+`/matching` et l'écran lui-même (`GET /`) restent accessibles sans
+authentification : seule la route qui écrit une décision imputée à
+quelqu'un l'exige. Le motif corrigé ne portait que sur cette route ; le
+jour où l'écran affichera une donnée nominative de candidat, ou qu'il
+faudra tracer qui a consulté quoi et non plus seulement qui a décidé quoi,
+cette limite sera à revoir.
+
+Une limitation de débit (fenêtre glissante, 120 requêtes par minute par
+identifiant de conseiller) protège désormais `/feedback` contre une
+succession d'appels automatisés — voir `06-service/api.md` pour le détail
+et la limite assumée sur plusieurs réplicas.
 
 **Ce que ce critère ne couvre pas encore** : un tableau de bord du taux
 d'écartement, destiné au déployeur, n'existe pas — reporté dans
@@ -69,16 +94,22 @@ point : **`reports/e31-audit-rgaa-procedure.md`**. Cette procédure n'a pas
 encore été déroulée dans un navigateur réel — reporté dans
 `reste-a-faire.md`.
 
-## Trois limites déclarées
+## Limites déclarées
 
 1. **L'audit manuel RGAA reste à dérouler** dans un vrai navigateur, avec
    lecteur d'écran (voir la procédure référencée ci-dessus).
-2. **L'identifiant du conseiller est déclaratif**, saisi sans vérification
-   d'identité — aucun mécanisme d'authentification n'est branché à cette
-   étape.
-3. **Le tableau de bord du taux d'écartement** destiné au déployeur reste
+2. **Le tableau de bord du taux d'écartement** destiné au déployeur reste
    à construire.
+3. **L'authentification ne couvre que `/feedback`** — `/matching` et
+   l'écran restent anonymes, par choix assumé plutôt que par oubli (voir
+   ci-dessus).
+4. **Aucun verrouillage après une série d'échecs d'authentification** :
+   la limitation de débit borne le rythme des appels, mais n'introduit
+   pas de délai croissant ni de blocage spécifique après plusieurs mots de
+   passe erronés.
+5. ✅ **Résolu au 2026-09-16** — l'identifiant du conseiller n'est plus
+   déclaratif : voir la section dédiée ci-dessus.
 
 ---
 
-*Dernière mise à jour : 2026-09-01, commit `bbebefd`.*
+*Dernière mise à jour : 2026-09-16, commit `f7687ae`.*
