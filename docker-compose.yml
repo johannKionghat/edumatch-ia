@@ -138,6 +138,11 @@ services:
   # garantit que l'artefact de prédictions existe avant que l'API ne le cherche — sans elle,
   # elle retomberait sur son repli documenté (entraînement complet au démarrage).
   api:
+    # Nom d'image aligne sur celui qu'attendent la chaine de construction et les manifestes
+    # Kubernetes (`edumatch-serve`). Sans cette ligne, Compose nommait l'image d'apres le
+    # service (`edumatch-api`) : deux noms pour la meme image de service, et un manifeste qui
+    # ne trouve pas ce que la pile locale a construit.
+    image: edumatch-serve:${GIT_SHA:-latest}
     build:
       context: .
       dockerfile: docker/Dockerfile.serve
