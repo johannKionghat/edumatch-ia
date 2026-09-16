@@ -731,13 +731,20 @@ para("CI/CD, à construire : un pipeline GitHub Actions automatisera les tests, 
      "workflow n'est écrit à ce jour. Deux dépôts distincts sont prévus, l'un pour la solution "
      "IA, l'autre pour la chaîne d'intégration et de déploiement ; seul le premier existe "
      "aujourd'hui.")
-para("Réentraînement et dérive, à construire : la dérive sera mesurable sur des données réelles, "
-     "les huit millésimes publiés portant des évolutions authentiques (réforme du baccalauréat, "
-     "variation des capacités d'accueil, effet de la campagne 2020). Evidently comparera la "
-     "distribution courante à la référence d'entraînement et déclenchera, au-delà d'un seuil à "
-     "documenter, un réentraînement reproductible. Le monitoring en production couvrira la "
-     "performance du modèle, la latence de l'API et la disponibilité, avec alertes sur seuils "
-     "— rien de ce dispositif n'est en place aujourd'hui.")
+para("Dérive, déjà mesurée sur des données réelles (E34) : l'indice de stabilité de population "
+     "(PSI) et le test de Kolmogorov-Smirnov sont calculés directement sur les six sessions où "
+     "le label existe (2020-2025), pour trois familles distinctes — variables, cible, "
+     "prédictions du modèle. Evidently a été écarté : sa dernière version compatible avec le "
+     "reste du projet entraîne un conflit de dépendance transitive avec le paquet dont FastAPI "
+     "dépend déjà, reproduit et non contourné (ADR 0018). Le seuil de 0,20 s'applique à la "
+     "médiane du PSI des variables plutôt qu'à leur maximum, pour ne pas déclencher en "
+     "permanence sur deux colonnes de nomenclature instable sans rapport avec la performance du "
+     "modèle. Ce que cette mesure ne permet pas de conclure est écrit dans la décision : la "
+     "dégradation déjà observée entre validation et test reste sous ce seuil. Réentraînement, "
+     "à construire : la détection journalise un avertissement mais ne déclenche encore rien ; "
+     "l'automatisation reste à coupler à l'orchestrateur. Le monitoring en production couvrira "
+     "la performance du modèle, la latence de l'API et la disponibilité, avec alertes sur "
+     "seuils — rien de ce dernier dispositif n'est en place aujourd'hui.")
 para("Conformité et accessibilité, à construire : explicabilité par SHAP, tests d'équité "
      "écartant les variables discriminantes, et conformité RGAA de l'écran de supervision pour "
      "les personnes en situation de handicap.")

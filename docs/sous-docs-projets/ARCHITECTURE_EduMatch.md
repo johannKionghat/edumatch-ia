@@ -49,7 +49,7 @@ Principe structurant hérité du dossier : **deux couches séparées par la sens
 │  PostgreSQL managé   │   │  Stockage objet S3-compat. │
 │  • schémas bronze /  │   │  • lac de données (bruts)  │
 │    silver / gold     │   │  • artefacts MLflow        │
-│  • transactionnel    │   │  • rapports Evidently      │
+│  • transactionnel    │   │  • rapports de dérive PSI/KS│
 │  • backend MLflow    │   │  • SHAP précalculés        │
 └──────────────────────┘   └────────────────────────────┘
 ```
@@ -249,7 +249,7 @@ edumatch-cicd/
 └── monitoring/
     ├── prometheus/                # scrape API + Airflow
     ├── grafana/                   # 1 dashboard technique + 1 dashboard modèle
-    └── evidently/                 # PSI + KS, seuil de réentraînement documenté
+    └── derive/                    # PSI + KS calculés directement (ADR 0018), seuil documenté
 ```
 
 Traçabilité totale exigible en soutenance : **commit → image (tag = hash) → modèle (version MLflow) → déploiement**. Toute version en production remonte à un commit et un modèle.
@@ -266,7 +266,7 @@ Traçabilité totale exigible en soutenance : **commit → image (tag = hash) �
         │                              └── non ──▶ alerte, pas de promo  │
         └────────────────────────────────────────────────────────────────┘
                                     ▲
-        Evidently (PSI, KS) ────────┘
+        PSI + KS calculés directement (ADR 0018) ────────┘
         dérive données / concept / prédictions
         au-delà du seuil documenté → déclenchement du réentraînement
 ```

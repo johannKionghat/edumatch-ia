@@ -202,6 +202,18 @@ posées.*
       d'Evidently compatible avec le reste du projet), pas par préférence —
       voir le point ouvert ci-dessous sur MLflow, cassé par un incident
       voisin pendant ce même retrait
+
+**⚠️ INCOHÉRENCE — docstring de `src/edumatch/rag/__init__.py` cite encore
+Evidently** (relevée le 2026-09-15, en corrigeant la documentation après le
+retrait d'Evidently de `pyproject.toml`). Le fichier écrit : « Cette brique
+n'entre dans le périmètre d'aucune surveillance de dérive (`edumatch.models`,
+Evidently, E34) ». Depuis l'ADR 0018, la détection de dérive n'utilise plus
+Evidently — elle est faite par PSI et KS implémentés directement dans
+`models/derive.py` et `derive_stats.py`. Le fond de la phrase reste vrai
+(cette brique est hors périmètre de la surveillance de dérive), mais elle
+nomme un outil que le dépôt n'utilise plus. À corriger dans le code, pas
+seulement dans la doc : remplacer « Evidently, E34 » par « PSI/KS, E34 ».
+
 - [ ] Vidéo de la solution en production
 
 ---
