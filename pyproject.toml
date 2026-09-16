@@ -8,10 +8,19 @@ version = "0.1.0"
 description = "Moteur de matching explicable profil vers formation"
 requires-python = ">=3.11"
 dependencies = [
-    "pandas>=2.2",
-    "polars>=1.0",
-    "pyarrow>=15.0",
-    "requests>=2.32",
+    # Revue de sécurité (post-E35) : chaque dépendance ci-dessous portait une borne basse mais
+    # aucune borne haute — contraire à la politique du projet (`rules/security-policy.md` :
+    # « épingler les versions, pas de >= sans borne »). Les plafonds posés ici sont fixés à la
+    # première version majeure strictement au-dessus de celle réellement installée dans
+    # `edumatch-train:latest`/`edumatch-api:latest` au moment de cette revue (vérifié par
+    # `docker run --rm --entrypoint python edumatch-train:latest -c "..."`), pas choisis au
+    # jugé — sauf mention contraire par paquet. `sqlalchemy` et `mlflow` avaient déjà une borne
+    # haute motivée (voir leurs commentaires plus bas) : inchangées.
+    "pandas>=2.2,<4.0",       # installé : 3.0.5 — pas de version majeure 4 publiée à ce jour
+    "polars>=1.0,<2.0",       # installé : 1.44.2
+    "pyarrow>=15.0,<26.0",    # installé : 25.0.1 — pyarrow n'a pas de "major" au sens semver, borne au nombre entier suivant
+    "requests>=2.32,<3.0",    # installé : 2.34.2
+
     # E35 : plancher réel, pas arbitraire — `sqlalchemy` n'est importé nulle part dans
     # `src/edumatch` (vérifié : aucune occurrence). Le plancher vient de ce que ses
     # utilisateurs transitifs exigent réellement : alembic demande `sqlalchemy>=1.4.23`, et
@@ -22,14 +31,16 @@ dependencies = [
     # style SQLAlchemy 1.4, et lever à 2.0 fait échouer sa définition dès l'import
     # (`sqlalchemy.orm.exc.MappedAnnotationError`), reproduit avant cette correction.
     "sqlalchemy>=1.4.23,<3",
-    "psycopg2-binary>=2.9",
-    "lightgbm>=4.3",
-    "scikit-learn>=1.5",
-    "shap>=0.45",
+    "psycopg2-binary>=2.9,<3.0",   # installé : 2.9.13
+    "lightgbm>=4.3,<5.0",          # installé : 4.7.0
+    "scikit-learn>=1.5,<2.0",      # installé : 1.9.1
+    "shap>=0.45,<0.60",            # installé : 0.51.0 — shap n'a jamais publié de version 1.0,
+                                    # la borne haute vise une marge de publications mineures
+                                    # plutôt qu'un seuil "majeur" qui n'existe pas pour ce paquet
     # E23 : diagramme de fiabilité (calibration). Déjà présente en transitive
     # (shap l'utilise pour ses propres tracés) ; déclarée ici car evaluate.py
     # l'importe directement.
-    "matplotlib>=3.8",
+    "matplotlib>=3.8,<4.0",   # installé : 3.11.2
     # Même version mineure que le serveur de `docker-compose.yml` : un client 3.x face à un
     # serveur 2.x perd l'enregistrement des modèles (404 sur `logged-models`), vérifié.
     "mlflow>=3.16,<3.17",
@@ -39,14 +50,35 @@ dependencies = [
     # le laisser déclaré l'installait dans chaque image avec `litestar` et un paquet
     # `multipart` 2.0.0 qui occupe le nom d'import attendu par FastAPI — constaté dans l'image
     # de service, où `python-multipart` était de ce fait absent.
-    "fastapi>=0.111",
-    "uvicorn[standard]>=0.30",
-    "pydantic-settings>=2.3",
-    "python-dotenv>=1.0",
+    "fastapi>=0.111,<1.0",           # installé : 0.141.1 — toujours en 0.x, pas de "1.0" publié
+    "uvicorn[standard]>=0.30,<1.0",  # installé : 0.53.0 — même remarque que fastapi
+    "pydantic-settings>=2.3,<3.0",   # installé : 2.15.0
+    "python-dotenv>=1.0,<2.0",       # installé : 1.2.3
     "pyyaml>=6.0,<7.0",
     # E18 : lecture de la table de correspondance ROME/NAF de France Travail,
     # publiée uniquement en xlsx (voir src/edumatch/ingestion/_referentiels_france_travail.py).
     "openpyxl>=3.1,<4.0",
+    # E38 (monitoring) : expose `/metrics` au format Prometheus avec des noms de métriques déjà
+    # conventionnels (`http_request_duration_seconds`, `http_requests_total`) — ceux que
+    # `edumatch-cicd/monitoring/prometheus/alerts.yaml` et le tableau de bord Grafana
+    # interrogent. Alternative écartée : instrumenter à la main avec `prometheus_client` seul
+    # (histogrammes de latence, compteurs par route et par code, middleware ASGI). Réécrire
+    # l'équivalent pour un service à quatre routes n'apporterait rien, et risquerait de nommer
+    # les métriques différemment de la convention Prometheus la plus répandue. `prometheus_client`
+    # est une dépendance transitive de ce paquet — les deux compteurs métier de
+    # `routes/feedback.py` et `routes/matching.py` l'importent directement, sans le déclarer une
+    # deuxième fois ici.
+    #
+    # Plancher relevé à 8.0 (pas 7.0 comme documenté initialement dans
+    # edumatch-cicd/monitoring/README.md) : reproduit en conteneur réel — toute requête sur
+    # n'importe quelle route provoquait `AttributeError: '_IncludedRouter' object has no
+    # attribute 'path'` avec la version 7.1.0. FastAPI (>= 0.137, ici 0.141.1) représente
+    # désormais un routeur inclus par `app.include_router()` avec un objet interne
+    # `_IncludedRouter` que l'instrumentateur ne savait pas encore parcourir en version 7.x ;
+    # corrigé dans la série 8.x (voir la fonction `_effective_routes` de son module `routing.py`).
+    # Vérifié après coup : `docker compose build api` puis une requête réelle sur `/health`,
+    # `/metrics` et `/feedback` dans le conteneur reconstruit, plus la suite de tests complète.
+    "prometheus-fastapi-instrumentator>=8.0,<9.0",
 ]
 
 [project.optional-dependencies]

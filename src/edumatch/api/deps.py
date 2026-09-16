@@ -14,6 +14,7 @@ from fastapi import HTTPException, Request, status
 from edumatch.api.audit import NOM_FICHIER_JOURNAL as NOM_FICHIER_JOURNAL_AUDIT
 from edumatch.api.audit import SOUS_DOSSIER_AUDIT, JournalAudit
 from edumatch.api.feedback_store import NOM_FICHIER_JOURNAL, SOUS_DOSSIER_JOURNAL, JournalFeedback
+from edumatch.api.rate_limit import LimiteurDebit
 from edumatch.api.state import EtatExplicabilite, EtatMatching
 from edumatch.config import get_settings
 from edumatch.rag.assistant import AssistantRAG, construire_assistant
@@ -68,6 +69,33 @@ def get_journal_audit(request: Request) -> JournalAudit:
     journal = JournalAudit(settings.processed_dir / SOUS_DOSSIER_AUDIT / NOM_FICHIER_JOURNAL_AUDIT)
     request.app.state.journal_audit = journal
     return journal
+
+
+def get_limiteur_matching(request: Request) -> LimiteurDebit:
+    """Limiteur de débit de `/matching` (revue de sécurité), construit au premier appel
+    comme `get_journal_feedback` : un plafond de configuration n'a rien de coûteux à
+    charger au démarrage. Une instance par processus applicatif — voir les limites
+    assumées dans `rate_limit.py`."""
+    limiteur = getattr(request.app.state, "limiteur_matching", None)
+    if limiteur is not None:
+        return limiteur
+    settings = get_settings()
+    limiteur = LimiteurDebit(limite=settings.api.limite_requetes_par_minute, fenetre_secondes=60.0)
+    request.app.state.limiteur_matching = limiteur
+    return limiteur
+
+
+def get_limiteur_feedback(request: Request) -> LimiteurDebit:
+    """Même politique que `get_limiteur_matching`, instance distincte : `/feedback` compte
+    par identifiant de conseiller authentifié, `/matching` par adresse IP — mélanger les
+    deux compteurs ferait consommer le même quota à deux usages différents."""
+    limiteur = getattr(request.app.state, "limiteur_feedback", None)
+    if limiteur is not None:
+        return limiteur
+    settings = get_settings()
+    limiteur = LimiteurDebit(limite=settings.api.limite_requetes_par_minute, fenetre_secondes=60.0)
+    request.app.state.limiteur_feedback = limiteur
+    return limiteur
 
 
 def get_assistant_rag(request: Request) -> AssistantRAG:

@@ -9,6 +9,7 @@ silence, uniquement constatable au clic dans un navigateur.
 
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 
 import pandas as pd
@@ -21,7 +22,16 @@ from edumatch.api.feedback_store import JournalFeedback
 from edumatch.api.main import create_app
 from edumatch.api.audit import JournalAudit
 from edumatch.api.state import EtatExplicabilite, EtatMatching
+from edumatch.config import get_settings
 from edumatch.matching.debouches import ArtefactsDebouches, RapportCorrespondanceFormation, RapportKAnonymat
+
+IDENTIFIANT_TEST = "conseiller-test"
+MOT_DE_PASSE_TEST = "mot-de-passe-test"
+
+
+def _en_tete_basic(identifiant: str, mot_de_passe: str) -> dict[str, str]:
+    jeton = base64.b64encode(f"{identifiant}:{mot_de_passe}".encode("utf-8")).decode("ascii")
+    return {"Authorization": f"Basic {jeton}"}
 
 DOSSIER_STATIQUE = Path(__file__).resolve().parents[2] / "src" / "edumatch" / "api" / "static"
 JS = (DOSSIER_STATIQUE / "app.js").read_text(encoding="utf-8")
@@ -50,6 +60,9 @@ CHAMPS_MATCHING_RACINE = (
 )
 CHAMPS_EXPLAIN = ("prediction", "valeur_base", "avertissement_accessibilite", "contributions")
 CHAMPS_CONTRIBUTION = ("variable", "contribution")
+# Depuis la revue de sécurité, `identifiant_conseiller` n'en fait plus partie : `app.js` ne
+# l'envoie plus, l'API le dérive du principal HTTP Basic authentifié (`api/auth.py`) — voir
+# `schemas.RequeteFeedback`.
 CHAMPS_ENVOYES_A_FEEDBACK = (
     "session",
     "identifiant_formation",
@@ -57,7 +70,6 @@ CHAMPS_ENVOYES_A_FEEDBACK = (
     "boursier",
     "decision",
     "motif",
-    "identifiant_conseiller",
 )
 
 
@@ -132,13 +144,18 @@ def _etat_explicabilite() -> EtatExplicabilite:
 
 
 @pytest.fixture()
-def client(tmp_path: Path) -> TestClient:
+def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
+    monkeypatch.setenv("CONSEILLER_IDENTIFIANT", IDENTIFIANT_TEST)
+    monkeypatch.setenv("CONSEILLER_MOT_DE_PASSE", MOT_DE_PASSE_TEST)
+    get_settings.cache_clear()
     app = create_app()
     app.dependency_overrides[get_etat_matching] = lambda: _etat_matching()
     app.dependency_overrides[get_etat_explicabilite] = lambda: _etat_explicabilite()
     app.dependency_overrides[get_journal_audit] = lambda: JournalAudit(tmp_path / "audit.jsonl")
     app.dependency_overrides[get_journal_feedback] = lambda: JournalFeedback(tmp_path / "feedback.jsonl")
-    return TestClient(app)
+    client = TestClient(app, headers=_en_tete_basic(IDENTIFIANT_TEST, MOT_DE_PASSE_TEST))
+    yield client
+    get_settings.cache_clear()
 
 
 def test_reponse_matching_porte_tous_les_champs_lus_par_app_js(client: TestClient) -> None:
@@ -177,7 +194,6 @@ def test_requete_feedback_envoyee_par_app_js_est_acceptee(client: TestClient) ->
         "boursier": False,
         "decision": "ecartee",
         "motif": "Établissement fermé.",
-        "identifiant_conseiller": "conseiller-test",
     }
     assert set(corps) == set(CHAMPS_ENVOYES_A_FEEDBACK)
 

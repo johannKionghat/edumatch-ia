@@ -9,10 +9,12 @@ import logging
 from typing import Any
 
 import pandas as pd
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from prometheus_client import Counter
 
 from edumatch.api.audit import JournalAudit
-from edumatch.api.deps import get_etat_matching, get_journal_audit
+from edumatch.api.deps import get_etat_matching, get_journal_audit, get_limiteur_matching
+from edumatch.api.rate_limit import LimiteurDebit
 from edumatch.api.schemas import (
     ProfilRequete,
     RecommandationFormation,
@@ -64,6 +66,13 @@ MOTIFS_DEBOUCHES: dict[str, str] = {
     ),
 }
 MOTIF_PAR_DEFAUT = "Motif non documenté pour ce statut."
+
+# Signal métier (E38, non couvert par l'instrumentation HTTP générique) : combinaisons trop
+# restrictives, pas une panne d'infrastructure — voir monitoring/README.md côté edumatch-cicd.
+_MATCHING_SANS_RESULTAT = Counter(
+    "edumatch_matching_sans_resultat_total",
+    "Requêtes /matching pour lesquelles aucune formation ne correspond au profil.",
+)
 
 
 def _sous_catalogue(etat: EtatMatching, profil: ProfilRequete) -> pd.DataFrame:
@@ -122,20 +131,33 @@ def _reponse_vide(etat: EtatMatching) -> ReponseMatching:
 
 @router.post("/matching", response_model=ReponseMatching, summary="Recommande des formations pour un profil")
 def matching(
+    requete_http: Request,
     profil: ProfilRequete,
     etat: EtatMatching = Depends(get_etat_matching),
     journal: JournalAudit = Depends(get_journal_audit),
+    limiteur: LimiteurDebit = Depends(get_limiteur_matching),
 ) -> ReponseMatching:
     """Score le catalogue de la session courante pour le profil déclaré et retourne les
     meilleures formations, chaque terme du score restant visible séparément — jamais un score
     seul (voir `matching/score.py`, l'effet du produit de trois termes).
 
     Chaque appel journalise l'inférence (T5, article 12) avant de répondre — voir `api/audit.py`
-    et `_entrees_journal`/`_sortie_journal` ci-dessus pour ce qui est écrit."""
+    et `_entrees_journal`/`_sortie_journal` ci-dessus pour ce qui est écrit.
+
+    Cette route n'authentifie pas l'appelant (contrairement à `/feedback` depuis la revue de
+    sécurité) : le plafond de débit (revue de sécurité) est donc appliqué par adresse IP, pas
+    par identité — voir `rate_limit.py`."""
+    identite = requete_http.client.host if requete_http.client is not None else "inconnue"
+    if not limiteur.autoriser(identite):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Trop de requêtes /matching pour cette adresse : réessayer plus tard.",
+        )
     settings = get_settings()
     sous_catalogue = _sous_catalogue(etat, profil)
     n_disponibles = len(sous_catalogue)
     if n_disponibles == 0:
+        _MATCHING_SANS_RESULTAT.inc()
         reponse = _reponse_vide(etat)
         journal.enregistrer(
             version_modele=settings.projet.version,

@@ -154,6 +154,7 @@ api:
   slo_latence_p95_ms: 300
   max_formations_evaluees: 500
   top_n_max: 50
+  limite_requetes_par_minute: 120
   audit:
     delai_pseudonymisation_jours: 365
     delai_agregation_jours: 1095

@@ -30,9 +30,11 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from edumatch.api.errors import enregistrer_gestionnaires_erreurs
 from edumatch.api.routes import assistant, ecran, explain, feedback, health, matching
+from edumatch.api.security_headers import enregistrer_en_tetes_securite
 from edumatch.api.state import construire_etat_explicabilite, construire_etat_matching
 from edumatch.config import get_settings
 
@@ -77,12 +79,25 @@ def create_app() -> FastAPI:
         lifespan=_cycle_de_vie,
     )
     enregistrer_gestionnaires_erreurs(app)
+    # Revue de sécurité : en-têtes ajoutés à toute réponse, y compris les erreurs — voir
+    # `security_headers.py` pour ce qui est ajouté et pourquoi `Strict-Transport-Security` n'y
+    # figure pas tant qu'aucun TLS ne termine devant ce service.
+    enregistrer_en_tetes_securite(app)
     app.include_router(health.router)
     app.include_router(matching.router)
     app.include_router(explain.router)
     app.include_router(feedback.router)
     app.include_router(assistant.router)
     app.include_router(ecran.router)
+
+    # Instrumentation Prometheus (E38) : doit être appelée après que toutes les routes dont on
+    # veut mesurer la latence sont enregistrées, sinon `handler` resterait "none" pour elles dans
+    # les métriques. `/metrics` n'exige jamais l'authentification conseiller (le collecteur
+    # Prometheus n'en porte aucune) et n'expose que des compteurs et histogrammes agrégés par
+    # route et par code de statut : aucune donnée personnelle, aucune valeur de champ de requête.
+    # `include_in_schema=False` : ce n'est pas une route fonctionnelle pour un conseiller.
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
     # Assets de l'écran conseiller (E31) : `style.css` et `app.js`, servis sous `/static/...`.
     # `routes.ecran` reste seule responsable de ce qui répond sur `/` — monté en dernier, ce
     # mount ne peut donc jamais capturer les routes déclarées ci-dessus (`/health`, `/matching`...).

@@ -164,7 +164,13 @@ class ReponseExplication(BaseModel):
 
 class RequeteFeedback(BaseModel):
     """La décision d'un conseiller sur une recommandation. Voir `feedback_store.py` : aucune
-    donnée du candidat n'est portée par ce schéma, uniquement la cellule et la décision."""
+    donnée du candidat n'est portée par ce schéma, uniquement la cellule et la décision.
+
+    Ne porte plus `identifiant_conseiller` depuis la revue de sécurité : un champ déclaratif
+    aurait permis à n'importe quel appelant d'imputer un écartement à un conseiller qui ne
+    l'a jamais décidé. L'identifiant est désormais dérivé du principal HTTP authentifié
+    (`api/auth.get_conseiller_courant`), jamais saisi par le client — voir `routes/feedback.py`.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -174,9 +180,6 @@ class RequeteFeedback(BaseModel):
     boursier: bool
     decision: DecisionConseiller
     motif: str | None = Field(default=None, max_length=1000)
-    identifiant_conseiller: str = Field(
-        min_length=1, max_length=128, description="Identifiant pseudonyme du conseiller, jamais un nom."
-    )
 
     @model_validator(mode="after")
     def _motif_obligatoire_si_ecartee(self) -> "RequeteFeedback":

@@ -693,11 +693,22 @@ class ApiConfig(_Strict):
     demander (`ProfilRequete.top_n`) — protège des mêmes risques de latence
     qu'un catalogue trop large, pour la raison inverse (page de résultats
     demandée trop grande plutôt que catalogue trop large).
+
+    `limite_requetes_par_minute` : revue de sécurité — plafond du nombre de
+    requêtes qu'une même identité (adresse IP sur `/matching`, identifiant de
+    conseiller authentifié sur `/feedback`) peut effectuer par fenêtre
+    glissante de 60 secondes (`api/rate_limit.py`). `max_formations_evaluees`
+    borne le coût d'une seule requête, pas leur fréquence : rien n'empêchait
+    jusqu'ici des milliers d'appels consécutifs. Valeur de démonstration,
+    généreuse par rapport à un usage humain d'un conseiller (quelques
+    dizaines de recherches par minute au plus) — à resserrer avec une mesure
+    réelle de trafic avant une mise en production.
     """
 
     slo_latence_p95_ms: int = Field(gt=0)
     max_formations_evaluees: int = Field(ge=1)
     top_n_max: int = Field(ge=1)
+    limite_requetes_par_minute: int = Field(ge=1)
     audit: AuditConfig
     # replicas et autoscaling n'existent qu'à partir de staging/prod.
     replicas: int | None = Field(default=None, ge=1)
@@ -910,6 +921,11 @@ class Settings(BaseSettings):
     scw_access_key: str | None = Field(default=None, validation_alias="SCW_ACCESS_KEY")
     scw_secret_key: SecretStr | None = Field(default=None, validation_alias="SCW_SECRET_KEY")
     scw_default_project_id: str | None = Field(default=None, validation_alias="SCW_DEFAULT_PROJECT_ID")
+    # Revue de sécurité de l'API : identifiants HTTP Basic de l'écran conseiller
+    # (`api/auth.py`). Un seul principal partagé, jamais un identifiant en dur dans le code —
+    # voir l'ADR de l'étape pour pourquoi HTTP Basic plutôt qu'OAuth2/OIDC ici.
+    conseiller_identifiant: str | None = Field(default=None, validation_alias="CONSEILLER_IDENTIFIANT")
+    conseiller_mot_de_passe: SecretStr | None = Field(default=None, validation_alias="CONSEILLER_MOT_DE_PASSE")
 
     @classmethod
     def settings_customise_sources(

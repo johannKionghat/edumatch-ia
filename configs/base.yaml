@@ -427,6 +427,9 @@ api:
   slo_latence_p95_ms: 300
   max_formations_evaluees: 500       # plafond du catalogue scoré par requête /matching (recommander non vectorisé, E28)
   top_n_max: 50                      # plafond du nombre de recommandations demandables
+  # Revue de sécurité : fenêtre glissante de 60 s, par adresse IP sur /matching et par
+  # identifiant de conseiller authentifié sur /feedback (src/edumatch/api/rate_limit.py).
+  limite_requetes_par_minute: 120
   # Journal d'inférence article 12 (E30) : conciliation avec le plafond du RGPD (art. 5.1.e),
   # voir registre-traitements.md T5 et src/edumatch/config.py:AuditConfig.
   audit:

@@ -147,6 +147,12 @@ services:
       EDUMATCH_ENV: ${EDUMATCH_ENV:-prod}
       EDUMATCH_DATA_ROOT: /app/data
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      # Identifiants de l'ecran conseiller (authentification de `/feedback`). Sans eux, la
+      # route repond 503 : une trace de controle humain non imputable ne vaut rien, donc le
+      # service refuse d'ecrire plutot que d'accepter un identifiant declaratif. Valeurs
+      # lues depuis `.env`, jamais ecrites ici.
+      CONSEILLER_IDENTIFIANT: ${CONSEILLER_IDENTIFIANT:-}
+      CONSEILLER_MOT_DE_PASSE: ${CONSEILLER_MOT_DE_PASSE:-}
     ports: ["8000:8000"]  # /health, /matching, /explain, /feedback, écran conseiller sur `/`
     volumes:
       # `/app/data` en lecture seule par défaut : l'API ne doit jamais modifier les artefacts

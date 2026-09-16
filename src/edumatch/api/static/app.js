@@ -366,6 +366,11 @@ async function enregistrerDecision(formulaire, decisionCochee, motif, statut, re
     return;
   }
 
+  // `identifiant_conseiller` n'est plus envoyé ici (revue de sécurité) : un champ déclaratif
+  // aurait permis à n'importe quel appelant d'imputer un écartement à un autre conseiller. Le
+  // serveur le dérive désormais du principal HTTP Basic authentifié (`api/auth.py`) — le champ
+  // "Identifiant de conseiller" du formulaire de recherche ne sert donc plus qu'à personnaliser
+  // l'affichage local, jamais à s'identifier auprès de l'API.
   const corps = {
     session,
     identifiant_formation: recommandation.identifiant_formation,
@@ -373,7 +378,6 @@ async function enregistrerDecision(formulaire, decisionCochee, motif, statut, re
     boursier: profil.boursier,
     decision,
     motif: motif.value.trim() || null,
-    identifiant_conseiller: identifiantConseiller,
   };
 
   let reponse;
@@ -386,6 +390,12 @@ async function enregistrerDecision(formulaire, decisionCochee, motif, statut, re
   } catch {
     statut.classList.add("erreur");
     statut.textContent = "Le service est injoignable, la décision n'a pas été enregistrée.";
+    return;
+  }
+
+  if (reponse.status === 401) {
+    statut.classList.add("erreur");
+    statut.textContent = "Authentification requise ou invalide : rechargez la page et connectez-vous.";
     return;
   }
 

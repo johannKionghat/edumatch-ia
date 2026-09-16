@@ -16,8 +16,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from edumatch.api.audit import JournalAudit
-from edumatch.api.deps import get_etat_matching, get_journal_audit
+from edumatch.api.deps import get_etat_matching, get_journal_audit, get_limiteur_matching
 from edumatch.api.main import create_app
+from edumatch.api.rate_limit import LimiteurDebit
 from edumatch.api.state import EtatMatching, _artefacts_debouches_indisponibles
 from edumatch.matching.debouches import (
     ArtefactsDebouches,
@@ -257,3 +258,25 @@ def test_matching_service_non_initialise_repond_503() -> None:
     client = TestClient(create_app())
     reponse = client.post("/matching", json={"type_bac": "bg", "boursier": False})
     assert reponse.status_code == 503
+
+
+# ─── Limitation de débit (revue de sécurité) ─────────────────────────────────
+
+
+def test_matching_au_dela_de_la_limite_repond_429(tmp_path: Path) -> None:
+    """`/matching` n'authentifie personne : le plafond de débit (revue de sécurité) est
+    appliqué par adresse IP — voir `api/rate_limit.py`. `TestClient` porte toujours la même
+    adresse simulée (`testclient`), donc les deux appels partagent la même identité."""
+    etat = _etat()
+    limiteur = LimiteurDebit(limite=1, fenetre_secondes=60.0)  # une seule instance, partagée entre les appels
+    app = create_app()
+    app.dependency_overrides[get_etat_matching] = lambda: etat
+    app.dependency_overrides[get_journal_audit] = lambda: JournalAudit(tmp_path / "journal.jsonl")
+    app.dependency_overrides[get_limiteur_matching] = lambda: limiteur
+    client = TestClient(app)
+
+    premiere = client.post("/matching", json={"type_bac": "bg", "boursier": False})
+    assert premiere.status_code == 200
+
+    seconde = client.post("/matching", json={"type_bac": "bg", "boursier": False})
+    assert seconde.status_code == 429
