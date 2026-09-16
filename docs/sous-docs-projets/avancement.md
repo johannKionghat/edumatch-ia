@@ -1756,9 +1756,10 @@ diagrammes.
 
 ## Évaluations du jury
 
-| Date | Verdict | Blocs | Rapport |
+| Date | Verdict | Critères prouvés | Rapport |
 |---|---|---|---|
-| — | *aucune évaluation à ce jour* | | |
+| 2026-08-30 | PAS ENCORE PRÉSENTABLE | 12 / 54 | [`jury/2026-08-30.md`](jury/2026-08-30.md) |
+| 2026-09-16 | PAS ENCORE PRÉSENTABLE | 38 / 54 | [`jury/2026-09-16.md`](jury/2026-09-16.md) |
 
 ---
 

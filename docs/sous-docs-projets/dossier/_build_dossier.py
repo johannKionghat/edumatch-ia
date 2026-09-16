@@ -83,7 +83,7 @@ table([
                         "estimant les chances d'admission et les débouchés territoriaux, au "
                         "service de l'orientation scolaire et professionnelle"],
     ["Certification", "Architecte en Intelligence Artificielle - Mastère 2 (AIA02)"],
-    ["Date", "Août 2026 (version 2)"],
+    ["Date", "Septembre 2026 (version 3, régénérée contre le dépôt le 2026-09-16)"],
 ])
 d.add_paragraph()
 
@@ -169,7 +169,9 @@ table([
      "Intérêts déclarés dans la requête", "Règles métier, aucun apprentissage"],
     ["Accessibilité", "Le candidat a-t-il une chance d'être admis ?",
      "Parcoursup, huit millésimes bruts, six exploitables pour le label (2020-2025)",
-     "MODÈLE APPRIS (LightGBM, entraîné et tracé dans MLflow), explicabilité SHAP à venir"],
+     "MODÈLE APPRIS (LightGBM, entraîné et tracé dans MLflow), explicabilité SHAP produite "
+     "(TreeSHAP, précalculée sur les 440 030 cellules) — résultat de performance défavorable en "
+     "test, détaillé en section 7"],
     ["Débouchés", "La formation mène-t-elle à un emploi atteignable ?",
      "Base Sirene, référentiels métiers",
      "Agrégats de densité et de dynamique des employeurs, aucun apprentissage"],
@@ -346,37 +348,59 @@ h("4. Bloc 1 - Gouvernance des données", 1)
 para("Ce que le projet rend inévitable : données personnelles de mineurs et d'adultes, "
      "réutilisation de plusieurs sources publiques aux licences distinctes, contexte multi-parties "
      "prenantes et exigence de conformité AI Act non triviale.", italic=True)
-para("Le projet établira un plan de gouvernance complet : une politique de classification des "
-     "données (publiques, internes, personnelles, sensibles) et des règles d'usage associées ; "
+para("Le plan de gouvernance est écrit et versionné : une politique de classification des "
+     "données (publiques, internes, personnelles, sensibles) et des règles d'usage associées, dont "
+     "six sur sept sont aujourd'hui contrôlées automatiquement plutôt que déclarées sur le papier ; "
      "une répartition des rôles entre un Data Owner côté direction, des Data Stewards côté équipe "
-     "data et un DPO garant de la conformité ; un registre des traitements précisant finalité, "
-     "base légale, durée et destinataires. La documentation des origines, schémas, fraîcheurs et "
-     "lignages est produite par l'outillage du pipeline lui-même (tests de qualité et graphe de "
-     "lignage généré par dbt), sans introduire de catalogue supplémentaire à exploiter.")
-para("La gestion des risques couvrira quatre familles : la violation de données de mineurs "
-     "(chiffrement, minimisation, hébergement européen), la discrimination des recommandations "
-     "(audit d'équité, indicateurs de parité, explicabilité), la non-conformité de réutilisation "
-     "(registre des licences) et l'obsolescence des "
-     "données (contrôles de fraîcheur bloquants dans le pipeline).")
+     "data et un DPO garant de la conformité, chacun avec son périmètre de décision ; un registre "
+     "des traitements couvrant huit traitements identifiés (T1 à T8), avec finalité, base légale, "
+     "durée et destinataires, et l'état réel de chacun déclaré plutôt que supposé. La documentation "
+     "des origines, schémas, fraîcheurs et lignages est produite par l'outillage du pipeline "
+     "lui-même (tests de qualité et graphe de lignage généré par dbt), sans catalogue "
+     "supplémentaire à exploiter.")
+para("La gestion des risques couvre onze risques identifiés (R1 à R11), répartis sur quatre "
+     "familles : la violation de données de mineurs (chiffrement, minimisation, hébergement "
+     "européen), la discrimination des recommandations (audit d'équité, indicateurs de parité, "
+     "explicabilité), la non-conformité de réutilisation (registre des licences) et l'obsolescence "
+     "des données (contrôles de fraîcheur bloquants dans le pipeline).")
 table([
     ["Article", "Obligation", "Mise en œuvre dans EduMatch"],
-    ["9", "Gestion des risques", "Registre des risques, révisé à chaque campagne d'orientation"],
+    ["9", "Gestion des risques", "Registre des onze risques, révisé à chaque campagne "
+                                 "d'orientation"],
     ["10", "Gouvernance des données", "Contrôles de qualité automatisés, audit d'équité, "
                                       "registre des sources"],
     ["11", "Documentation technique", "Dossier technique et Model Card"],
-    ["12", "Journalisation", "Traçabilité horodatée de chaque recommandation produite"],
-    ["13", "Transparence", "Notice utilisateur et restitution des facteurs déterminants"],
+    ["12", "Journalisation", "Traçabilité horodatée de chaque recommandation produite, purge "
+                             "exécutable par paliers"],
+    ["13", "Transparence", "Notice utilisateur — à écrire ; restitution des facteurs "
+                           "déterminants par SHAP, produite"],
     ["14", "Contrôle humain", "Écran conseiller : revue, contextualisation, possibilité "
-                              "d'écarter"],
+                              "d'écarter, motif obligatoire"],
     ["15", "Exactitude et robustesse", "Protocole d'évaluation temporel, seuils de performance, "
-                                       "tests"],
+                                       "tests. Résultat mesuré défavorable au modèle appris en "
+                                       "test (section 7) — reporté, non atténué"],
 ], header=True)
-para("La conformité sera maintenue par une procédure d'audit annuelle calée sur le calendrier "
-     "Parcoursup, et par une procédure de mise à jour déclenchée par les évolutions "
-     "réglementaires.")
-para("À livrer à terme : plan de gouvernance des données, analyse d'impact, Model Card, registre "
-     "des sources, présentation synthétique. Évaluation : lecture jury environ 15 min, "
-     "présentation 15 min, questions 15 min.", italic=True)
+para("L'analyse d'impact (AIPD), obligatoire du fait du profilage systématique de mineurs, refait "
+     "le test de nécessité une fois les mesures disponibles, et non avant. Ce test échoue sur le "
+     "terme appris : une règle de dénombrement déjà construite (le taux de la session précédente) "
+     "fait mieux que le modèle en précision et en calibration sur la session de test la plus "
+     "récente. L'avis qui en découle est scindé plutôt que global : défavorable à la restitution, "
+     "à des candidats réels, de l'estimation produite par le modèle appris ; favorable, sous "
+     "réserves, au reste du dispositif (affinité, débouchés, explications SHAP, écran de "
+     "supervision, journalisation et purge) ; favorable, sans réserve de fond, à l'exploitation en "
+     "environnement de démonstration. Le seuil qui lèverait le premier point est écrit avant toute "
+     "nouvelle mesure : un modèle réentraîné descendant sous 0,0701 de MAE pondérée et 0,0322 "
+     "d'ECE sur une session de test non consultée pendant le réglage.")
+para("La conformité est maintenue par une procédure d'audit écrite, calée sur le calendrier "
+     "Parcoursup, avec douze points de contrôle et trois déclencheurs ; une procédure de mise à "
+     "jour, déjà appliquée à trois reprises, complète le dispositif. Ce qui reste ouvert dans ce "
+     "bloc n'est pas de la rédaction supplémentaire : une notice d'information lisible par un "
+     "lecteur mineur, et un identifiant de corrélation pour rendre purgeable le journal de "
+     "supervision, restent à écrire.")
+para("À livrer à terme : présentation synthétique devant le jury. Le reste des livrables du bloc "
+     "existe : plan de gouvernance des données, analyse d'impact, Model Card, registre des "
+     "sources. Évaluation : lecture jury environ 15 min, présentation 15 min, questions 15 min.",
+     italic=True)
 
 d.add_page_break()
 
@@ -399,18 +423,32 @@ para("La couche de volume traite des dizaines de gigaoctets de données publique
 para("Modélisation : un modèle relationnel normalisé sous PostgreSQL portera le transactionnel "
      "(utilisateurs, établissements, historique des recommandations) — à construire, ce périmètre "
      "n'existe pas encore. Le modèle analytique en étoile qui structure les données d'orientation, "
-     "lui, est déjà construit (E16) : la table de faits porte les cellules d'observation, avec pour "
+     "lui, est construit (E16) : la table de faits porte les cellules d'observation, avec pour "
      "dimensions la formation, le candidat, la session et le territoire. Le choix de PostgreSQL "
      "plutôt que de conserver Firestore est justifié par le besoin de cohérence relationnelle et de "
      "requêtes analytiques que le NoSQL documentaire sert mal ; le modèle en étoile est retenu pour "
      "la prédominance des lectures analytiques.")
-para("Infrastructure : les services seront conteneurisés avec Docker et orchestrés sur Kubernetes "
-     "managé. Les données brutes atterriront dans un lac de données sur stockage objet "
-     "S3-compatible. L'hébergement cible est un cloud souverain européen (Scaleway plutôt qu'un "
-     "hyperscaler hors Union européenne), arbitrage de gouvernance assumé au regard des données "
-     "de mineurs. Sécurité et supervision prévues, non encore mises en œuvre : chiffrement, "
-     "gestion des accès par rôles et cloisonnement réseau ; surveillance par Prometheus et "
-     "Grafana avec alertes sur seuils.")
+para("Infrastructure. Le service et l'entraînement sont conteneurisés (Docker, construction en "
+     "deux étapes, exécution non-root, sonde de santé, étiquette d'image portant l'empreinte du "
+     "commit) et orchestrés localement (Airflow, quatre DAG). Le code d'infrastructure cible existe "
+     "dans le second dépôt : Terraform pour un cloud souverain européen (Scaleway plutôt qu'un "
+     "hyperscaler hors Union européenne, arbitrage assumé au regard des données de mineurs — "
+     "réseau privé, cluster Kubernetes managé, registre d'images, stockage objet, instance "
+     "Airflow), manifestes Kubernetes complets (déploiement, service, autoscaling horizontal, "
+     "politique réseau, budget de disruption, compte de service). "
+     "**Rien de tout cela n'est déployé à ce jour** : aucun compte fournisseur n'est ouvert, "
+     "aucun `apply` n'a été exécuté, et `terraform validate` lui-même n'a pas pu être lancé faute "
+     "de binaire installé sur le poste de développement. C'est le point le plus exposé du projet, "
+     "je le déclare comme tel plutôt que de le présenter comme fait.")
+para("Sécurité, en l'état. Le cloisonnement réseau est réel : réseau privé Terraform, politique "
+     "réseau Kubernetes à entrée et sortie restreintes, exécution non-root et système de fichiers "
+     "en lecture seule côté conteneurs, gabarit de secret jamais commité. Le chiffrement, en "
+     "revanche, n'est implémenté nulle part dans le code d'infrastructure actuel, ni au repos sur "
+     "le stockage objet ni sur la base ; la gestion des accès par rôles se limite au compte de "
+     "service de la supervision, sans rôle applicatif distinct — deux manques déclarés, à traiter "
+     "avant tout déploiement réel. La supervision (Prometheus, Grafana, cinq alertes actionnables "
+     "dont l'absence d'instrumentation elle-même) est écrite et versionnée dans le second dépôt, "
+     "mais n'a jamais tourné : aucune capture, faute d'environnement où l'exécuter.")
 
 encadre("Justification du choix : Kubernetes managé plutôt qu'un dimensionnement fixe", [
     "Le volume de données ne justifie pas à lui seul une orchestration élastique : ce serait un "
@@ -430,8 +468,10 @@ encadre("Justification du choix : Kubernetes managé plutôt qu'un dimensionneme
     "interactive attendue.",
 ])
 
-para("À livrer à terme : diagrammes d'architecture selon le modèle C4, code d'infrastructure as "
-     "code, capture vidéo de l'infrastructure en production. Évaluation : lecture environ 20 min, "
+para("À livrer à terme : infrastructure effectivement déployée sur un compte fournisseur, "
+     "chiffrement et rôles applicatifs, capture de la supervision en fonctionnement, et la vidéo "
+     "de l'infrastructure en production. Les diagrammes C4 (niveaux 1 et 2, Mermaid) et le code "
+     "d'infrastructure as code existent d'ores et déjà. Évaluation : lecture environ 20 min, "
      "présentation 5 min, questions 15 min.", italic=True)
 
 d.add_page_break()
@@ -513,32 +553,42 @@ table([
 para("Cette table de correspondance conditionne la qualité du terme de débouchés : sans elle, "
      "l'existence d'employeurs du secteur correspondant à une formation ne peut être établie. "
      "Elle est construite, versionnée, testée et documentée comme un actif de données à part "
-     "entière ; son taux de couverture est mesuré et déclaré, une couverture partielle étant "
-     "acceptable dès lors qu'elle est quantifiée.")
+     "entière. Son taux de couverture, jusqu'à la NAF, est mesuré : 61,4 % des formations du "
+     "référentiel ONISEP portant un code RNCP renseigné sont rattachées à une division NAF. "
+     "**Mais aucun des huit millésimes Parcoursup ne porte de code RNCP, NSF ou ROME** : la "
+     "chaîne relie le référentiel ONISEP à la NAF, pas les formations Parcoursup elles-mêmes. Le "
+     "seul rapprochement mesuré entre les deux est un appariement textuel des libellés de "
+     "formation, et il ne couvre que **7 libellés distincts sur 712, soit 6 017 lignes sur "
+     "440 030 (1,4 %)** — les sept correspondances ont été relues à la main, ce sont des diplômes "
+     "d'État très normés dont l'intitulé varie peu d'une source à l'autre. Pour les 98,6 % de "
+     "lignes restantes, le terme de débouchés du score de matching (section 7) est marqué "
+     "explicitement indisponible, jamais mis à zéro en silence.")
 
 para("Automatisation, qualité et supervision.", bold=True)
-para("Les contrôles qualité, déjà construits et exécutés (E14), portent sur le schéma, la "
-     "complétude et la cohérence, au moyen de contrôles versionnés (schémas Pandera pour "
-     "Parcoursup, compteurs écrits à la main pour Sirene et les référentiels, retenus après mesure "
-     "du coût de Great Expectations sur ce volume — inutile ici) : un taux hors de l'intervalle "
-     "admissible, un effectif incohérent ou un millésime manquant bloquent la mise à jour, "
-     "vérifié par une exécution réelle qui sort en échec sur les données du dépôt. Ce blocage "
-     "n'est pas une précaution facultative : sans lui, une donnée corrompue se propage jusqu'au "
-     "modèle sans que personne ne le constate. La conformité RGPD est assurée par la minimisation "
-     "et la traçabilité, la couche de volume ne contenant par construction aucune donnée à "
-     "caractère personnel.")
-para("Ce qui reste à construire : l'enchaînement de ces contrôles avec les étapes en amont et "
-     "en aval est aujourd'hui piloté manuellement (`Makefile`), pas encore par un orchestrateur. "
-     "Apache Airflow assurera la planification, la reprise sur erreur avec temporisation "
-     "croissante et le lignage, pour que la chaîne s'exécute sans intervention manuelle, de la "
-     "collecte jusqu'à l'évaluation du modèle. La supervision suivra la volumétrie traitée, le "
-     "taux d'échec et la durée d'exécution, avec alertes proactives. Ce choix est déjà arbitré "
-     "(Airflow est exigé par le référentiel de certification et retenu depuis l'architecture de "
-     "référence), et son exécution est la matière de l'étape suivante du pipeline, non encore "
-     "commencée.")
+para("Les contrôles qualité (E14) portent sur le schéma, la complétude et la cohérence, au moyen "
+     "de contrôles versionnés (schémas Pandera pour Parcoursup, compteurs écrits à la main pour "
+     "Sirene et les référentiels, retenus après mesure du coût de Great Expectations sur ce "
+     "volume — inutile ici) : un taux hors de l'intervalle admissible, un effectif incohérent ou "
+     "un millésime manquant bloquent la mise à jour, vérifié par une exécution réelle qui sort en "
+     "échec sur les données du dépôt et par un scénario de panne rejouable par une commande. Ce "
+     "blocage n'est pas une précaution facultative : sans lui, une donnée corrompue se propage "
+     "jusqu'au modèle sans que personne ne le constate. La conformité RGPD est assurée par la "
+     "minimisation et la traçabilité, la couche de volume ne contenant par construction aucune "
+     "donnée à caractère personnel.")
+para("Apache Airflow orchestre la chaîne : quatre DAG, un par cadence réelle de source (annuelle "
+     "pour Parcoursup, mensuelle pour Sirene, quotidienne pour les référentiels, et un DAG de "
+     "purge), couvrant ingestion, qualité, silver, gold, variables, agrégats et réconciliation des "
+     "nomenclatures. La reprise sur erreur est décidée en code, pas confiée au retry natif "
+     "d'Airflow (désactivé) : un vocabulaire d'erreur transitoire contre définitive, une "
+     "temporisation croissante, deux scénarios de panne rejouables. **Ce qui manque encore à la "
+     "chaîne** : l'entraînement et l'évaluation du modèle n'y figurent pas — ils s'exécutent "
+     "encore par des commandes lancées à la main, hors du graphe. La supervision (volumétrie "
+     "traitée, taux d'échec, durée d'exécution) reste à ajouter au pipeline lui-même ; les alertes "
+     "aujourd'hui écrites portent sur le service d'inférence, pas sur le pipeline.")
 
-para("À livrer à terme : diagramme du pipeline, code sur dépôt Git, capture vidéo du pipeline en "
-     "production. Évaluation : lecture environ 20 min, présentation 5 min, questions 15 min.",
+para("À livrer à terme : capture vidéo du pipeline en production, avec panne et reprise. Le "
+     "diagramme du pipeline et le code sont déjà sur le dépôt. Évaluation : lecture environ "
+     "20 min, présentation 5 min, questions 15 min.",
      italic=True)
 
 d.add_page_break()
@@ -565,25 +615,30 @@ table([
      "Parcoursup, huit millésimes bruts ; six exploitables pour l'entraînement (2020-2025), le "
      "numérateur du label n'étant pas publié en 2018-2019",
      "MODÈLE APPRIS (LightGBM, entraîné et tracé dans MLflow). C'est le composant "
-     "d'intelligence artificielle du système ; l'explicabilité SHAP reste à construire."],
+     "d'intelligence artificielle du système ; l'explicabilité SHAP est produite (TreeSHAP), "
+     "mais le modèle ne bat pas son plancher en test (détail plus bas)."],
     ["Débouchés", "La formation mène-t-elle à un emploi atteignable ?",
      "Base Sirene, référentiels métiers",
      "Agrégats de densité et de dynamique des employeurs du secteur dans le bassin de vie. "
      "Aucun apprentissage."],
 ], header=True)
-para("Les trois termes seront combinés de façon multiplicative — le module qui les assemble "
-     "(`matching/`) reste à écrire (E28) ; seul le terme d'accessibilité, le modèle appris, "
-     "est construit à ce jour. Si l'affinité est nulle, la formation ne correspondra pas ; si "
-     "l'accessibilité est nulle, elle sera hors de portée ; si les débouchés sont nuls, elle ne "
-     "mènera nulle part. Dans les trois cas la recommandation devra disparaître, ce qu'une "
-     "somme pondérée ne permettrait pas.")
+para("Les trois termes sont combinés de façon multiplicative, module écrit et testé "
+     "(`matching/score.py`, `affinite.py`, `debouches.py`, E28) : un terme nul supprime la "
+     "recommandation, propriété vérifiée séparément pour les trois termes. Si l'affinité est "
+     "nulle, la formation ne correspond pas ; si l'accessibilité est nulle, elle est hors de "
+     "portée ; si les débouchés sont nuls ou indisponibles, elle ne mène nulle part démontrable. "
+     "Une somme pondérée ne le permettrait pas.")
 para("Le terme de débouchés répond directement à la première cause identifiée en section 1.2, le "
      "manque d'information sur les débouchés, et il n'est donc pas une variable ajoutée mais une "
-     "dimension constitutive de la décision. Les variables issues de Sirene alimenteront en "
-     "outre le modèle d'accessibilité, par un mécanisme explicite : la densité d'employeurs "
-     "d'un secteur détermine la demande locale de formation, donc la tension entre vœux et "
-     "capacité, donc la sélectivité. Cette hypothèse reste à tester, non postulée : voir l'étude "
-     "d'ablation ci-dessous, non encore réalisée.")
+     "dimension constitutive de la décision. **Sa couverture réelle est faible et mesurée** : "
+     "seules 6 017 lignes sur 440 030 (1,4 %) disposent d'un appariement vérifié entre une "
+     "formation Parcoursup et une activité économique, faute de code RNCP, NSF ou ROME porté par "
+     "le fichier Parcoursup lui-même (détail en section 6). Pour les autres lignes, le terme est "
+     "marqué explicitement indisponible plutôt que mis à zéro en silence. Les variables issues de "
+     "Sirene n'ont, pour la même raison, jamais pu entrer dans la table de variables du modèle "
+     "d'accessibilité : l'hypothèse d'un effet de la densité d'employeurs sur la sélectivité "
+     "reste non testée, faute de rattachement, et non infirmée par une mesure. Voir l'étude "
+     "d'ablation en fin de section.")
 
 encadre("Justification du choix : n'apprendre qu'un seul composant", [
     "Il serait tentant d'apprendre les trois termes. Ce serait une erreur d'architecture.",
@@ -605,10 +660,12 @@ para("Algorithme. Le modèle d'accessibilité est entraîné par gradient boosti
      "résultats d'admission publiés, entraînement tracé dans MLflow (paramètres, métriques, "
      "artefact du modèle). Le gradient boosting est retenu plutôt qu'un réseau de neurones : "
      "les variables sont tabulaires, le coût d'inférence doit rester faible, et l'explicabilité "
-     "par valeurs de Shapley y est exacte et directement applicable. Il sera couplé à SHAP, qui "
-     "fournira pour chaque recommandation les facteurs déterminants, exigence directe de l'AI "
-     "Act et du droit à explication du RGPD — le calcul est prévu à l'étape suivante, pas "
-     "encore écrit.")
+     "par valeurs de Shapley y est exacte et directement applicable. Il est couplé à SHAP "
+     "(`models/explain.py`), qui fournit pour chaque recommandation les facteurs déterminants, "
+     "exigence directe de l'AI Act et du droit à explication du RGPD : l'axiome d'efficacité de "
+     "SHAP est vérifié à 2,1 × 10⁻¹⁵ près sur le modèle réel et par un test indépendant sur un "
+     "modèle jouet, le précalcul complet est mesuré (440 030 cellules, 8,3 minutes, 99,8 Mo), et "
+     "la route `/explain` de l'API le sert.")
 
 encadre("Justification du choix : apprendre sur les données publiques plutôt que sur le "
         "comportement des utilisateurs", [
@@ -626,17 +683,18 @@ encadre("Justification du choix : apprendre sur les données publiques plutôt q
     "campagne.",
 ])
 
-para("Le chatbot RAG est prévu comme brique secondaire, pas encore construite dans ce dépôt "
-     "(le dossier `src/edumatch/rag/` est vide à ce jour) : il sera réécrit plutôt que repris "
-     "tel quel du MVP décrit en section 2, dont l'ingestion et l'infrastructure ne répondent "
-     "pas aux exigences de conformité et de montée en charge du présent projet. Son rôle prévu "
-     "est de restituer en langue naturelle, avec citation des sources officielles, les éléments "
-     "qui fondent une recommandation, sans faire l'objet du dispositif de réentraînement et de "
-     "détection de dérive du modèle d'accessibilité. Les briques du MVP (embeddings CamemBERT, "
-     "recherche vectorielle FAISS, orchestration LangChain, génération Mistral-small) sont "
-     "d'ores et déjà pressenties pour la version réécrite, Mistral et CamemBERT étant "
-     "souverains et francophones : c'est un point de départ à revalider, pas une décision "
-     "arrêtée pour un composant qui reste à écrire.")
+para("Le chatbot RAG, brique secondaire, est construit et réécrit pour ce projet plutôt que "
+     "repris du MVP décrit en section 2 (`src/edumatch/rag/`) : il restitue en langue naturelle, "
+     "avec citation des sources officielles, les éléments qui fondent une recommandation, sans "
+     "faire l'objet du dispositif de réentraînement et de détection de dérive du modèle "
+     "d'accessibilité. Le corpus (7 403 documents issus des référentiels ONISEP) est indexé par "
+     "recherche lexicale (TF-IDF) plutôt que par embeddings et base vectorielle, écartés faute de "
+     "volume qui en justifierait le coût ; la citation est garantie par construction, puisque la "
+     "liste des sources est bâtie à partir des documents retrouvés avant l'appel au modèle de "
+     "langage, jamais depuis ce que ce dernier prétend avoir consulté. Les briques du MVP "
+     "(CamemBERT, FAISS, LangChain, Mistral-small) n'ont donc pas été reprises : la sobriété "
+     "technique est ici la réponse d'architecte à un composant hors du périmètre certifiant "
+     "principal.")
 
 para("Cible, protocole et équité du modèle d'accessibilité.", bold=True)
 para("L'unité d'observation est la cellule, croisement d'une formation, d'une session, d'un type "
@@ -661,19 +719,33 @@ table([
     ["Référence obligatoire", "Taux d'admission de la même cellule à la session précédente. Si le "
                               "modèle ne bat pas cette référence, cela est rapporté"],
 ], header=True)
-para("Métriques. La performance est déjà mesurée par l'erreur absolue moyenne pondérée par "
-     "l'effectif (baseline et entraînement, tracées dans MLflow). Restent à construire la "
-     "qualité de calibration — puisque le système annoncera une probabilité d'admission à un "
-     "candidat, un score bien ordonné mais mal calibré serait nuisible — et la courbe "
-     "d'apprentissage, obtenue en entraînant sur des fractions croissantes des observations pour "
-     "établir si le volume disponible est suffisant plutôt que de l'affirmer.")
-para("Restitution prévue. L'estimation sera présentée comme une fréquence observée et non comme "
-     "une prédiction individuelle : « sur cent candidats ayant vos caractéristiques scolaires et "
+para("Résultat, rapporté tel quel : le modèle appris ne bat pas son plancher en test.", bold=True)
+table([
+    ["Métrique", "Modèle (test 2025)", "Plancher — taux de la session précédente (test 2025)",
+     "Verdict"],
+    ["MAE pondérée par l'effectif", "0,0758", "0,0701", "le modèle perd"],
+    ["Erreur de calibration attendue (ECE, 10 tranches)", "0,0371", "0,0322", "le modèle perd"],
+], header=True)
+para("En validation 2024, le modèle passait devant (0,0690 contre 0,0727 de MAE pondérée, 0,0030 "
+     "contre 0,0141 d'ECE) ; en test 2025 il repasse derrière sur les deux métriques à la fois. La "
+     "courbe d'apprentissage (10, 25, 50 et 100 % du volume d'entraînement : 0,0758, 0,0723, "
+     "0,0705, 0,0698 de MAE pondérée en validation) établit que ce n'est pas un manque de "
+     "données — le gain marginal se divise par deux à chaque doublement du volume — mais une "
+     "dérive temporelle entre les sessions d'entraînement (2020-2023) et la session de test "
+     "(2025). Le protocole d'évaluation n'a pas été retouché après ce résultat pour le faire "
+     "passer : le seuil que le modèle devait battre (0,0701 de MAE pondérée, à couverture égale) "
+     "a été écrit avant l'entraînement, dans le document d'évaluation, et le résultat est rapporté "
+     "tel qu'il est sorti. C'est ce résultat qui fonde l'avis du délégué à la protection des "
+     "données, défavorable à la restitution de cette estimation à des candidats réels tant qu'il "
+     "n'est pas corrigé (section 4).")
+para("Restitution. L'estimation est présentée comme une fréquence observée et non comme une "
+     "prédiction individuelle : « sur cent candidats ayant vos caractéristiques scolaires et "
      "ayant demandé cette formation, tel nombre a reçu une proposition ». Le modèle ne connaît ni "
      "les notes exactes, ni les appréciations, ni la lettre de motivation, alors que la sélection "
-     "s'appuie sur l'ensemble du dossier. Cette formulation, à écrire dans l'écran de "
-     "supervision et l'API (non construits à ce jour), est à la fois plus exacte et conforme à "
-     "l'exigence de transparence sur la logique du traitement.")
+     "s'appuie sur l'ensemble du dossier. Cette formulation est écrite dans l'écran de supervision "
+     "et servie par l'API (`src/edumatch/api/`, dix-neuf modules, huit fichiers de tests) ; elle "
+     "porte en outre la mise en garde issue du résultat ci-dessus, attachée à chaque score produit "
+     "plutôt que documentée à part.")
 
 encadre("Justification du choix : exclure le genre du modèle, et pourquoi cela ne coûte rien", [
     "Aucune variable de genre n'entre dans le modèle. Elle est conservée exclusivement pour "
@@ -695,43 +767,80 @@ encadre("Justification du choix : exclure le genre du modèle, et pourquoi cela 
     "que le modèle apprendrait l'année suivante.",
 ])
 
-para("Audit d'équité, à construire sur le modèle entraîné. Les écarts de parité, l'égalité des "
-     "chances et le ratio d'impact disparate seront évalués sur quatre dimensions : type de "
-     "baccalauréat, statut de boursier, genre et territoire. Le travail préalable est déjà fait : "
-     "l'analyse exploratoire mesure d'ores et déjà l'écart d'admission à formation égale et les "
-     "substituts possibles du genre parmi les variables candidates (section 1.1). La dimension "
-     "territoriale ne sera rendue mesurable que par la base Sirene, qui permettra de vérifier "
-     "qu'un candidat issu d'un bassin à faible densité d'employeurs n'est pas pénalisé. Elle "
-     "répond à la deuxième cause structurelle identifiée en section 1.2, les déterminismes "
-     "sociaux et territoriaux, qui reste sans dispositif de mesure à ce jour.")
+para("Audit d'équité, conduit sur les prédictions réelles du modèle entraîné "
+     "(`models/fairness.py`, E26), sur quatre dimensions : type de baccalauréat, statut de "
+     "boursier, genre et territoire. La définition d'équité privilégiée — la calibration par "
+     "groupe, un taux prédit de 60 % doit correspondre à un taux observé de 60 % dans chaque "
+     "groupe — est déclarée avant la mesure, parce qu'elle est incompatible avec la parité "
+     "démographique et les cotes égalisées dès que les taux de base diffèrent entre groupes : "
+     "c'est un théorème d'impossibilité, pas un arbitrage de goût.")
+table([
+    ["Indicateur", "Formations à plus de 80 % de candidates femmes", "Autres formations"],
+    ["Ratio d'impact disparate (modèle)", "0,76 — sous le seuil des quatre cinquièmes (0,80)",
+     "—"],
+    ["Ratio d'impact disparate (plancher)", "0,63", "—"],
+    ["Erreur de calibration attendue (ECE)", "0,066", "0,032 à 0,034"],
+], header=True)
+para("**Le système n'est pas équitable sur cette dimension**, et ce résultat n'est pas atténué : "
+     "il fait mieux que le plancher sur la sélection (0,76 contre 0,63) mais moins bien sur la "
+     "calibration, où il sur-annonce les chances d'admission sur les formations très féminisées "
+     "avec une erreur presque deux fois supérieure à celle mesurée ailleurs. Le travail exploratoire "
+     "en amont (section 1.1) avait déjà mesuré que l'établissement d'origine (28,9 % net "
+     "d'information mutuelle, corrigée de la cardinalité) et la filière (19,5 % net) sont les "
+     "substituts du genre les plus puissants parmi les variables candidates : l'établissement est "
+     "exclu du modèle pour cette raison et pour sa cardinalité, la filière est conservée car sa "
+     "suppression détruirait la capacité du modèle à distinguer les formations entre elles. "
+     "L'audit confirme que l'exclusion de variables à l'entrée ne suffit pas : le dispositif "
+     "d'équité du projet repose sur trois niveaux — exclusion du genre à l'entrée, mesure des "
+     "substituts, audit a posteriori sur les prédictions — et non sur le seul retrait de "
+     "colonnes. La dimension territoriale reste, à ce stade, non pénalisante dans les mesures "
+     "conduites ; elle répond à la deuxième cause structurelle identifiée en section 1.2.")
 
-encadre("Justification du choix : l'apport de chaque source sera mesuré, non postulé", [
+encadre("Justification du choix : l'apport de chaque source est mesuré, non postulé", [
     "Une source de données qui n'est pas réellement utilisée par le modèle finit par paraître "
-    "ajoutée artificiellement. Pour l'éviter, l'apport des variables issues de Sirene sera "
-    "établi par une étude d'ablation — non encore réalisée à ce jour.",
-    "Deux modèles seront entraînés dans les mêmes conditions : le premier sur les seules "
-    "variables issues des données d'admission, le second en y ajoutant les variables de tissu "
-    "économique. L'écart de performance sera mesuré sur le jeu de test temporel, et l'analyse "
-    "SHAP indiquera si ces variables figurent effectivement parmi les contributeurs principaux.",
-    "Si l'apport prédictif s'avère nul, il sera rapporté comme tel : les variables seraient "
-    "alors retirées du modèle d'accessibilité, et Sirene ne subsisterait que dans le terme de "
-    "débouchés, qui repose sur des agrégats et non sur de l'apprentissage. Dans les deux cas la "
-    "source reste justifiée, mais la justification sera celle que la mesure établira.",
+    "ajoutée artificiellement. Une étude d'ablation à sept variantes (`models/ablation.py`, E27) "
+    "mesure ce que chaque bloc de variables apporte réellement, sur la validation 2024.",
+    "Le résultat dominant : retirer les 35 variables décalées (dont le taux de la session "
+    "précédente) fait passer la MAE pondérée de validation de 0,0698 à 0,1120 (+0,0422) — "
+    "l'essentiel de la performance du modèle vient de connaître ce taux, les 45 autres variables "
+    "affinent la prédiction sans la porter. Retirer les quatre substituts du genre encore "
+    "présents (filière, sélectivité, département, académie) ne coûte que +0,0006 et ne répare "
+    "pas l'équité : le ratio d'impact disparate du groupe le plus féminisé se dégrade légèrement "
+    "(0,66 à 0,62) plutôt que de s'améliorer, ce qui confirme que l'information reconstituant le "
+    "genre est diffuse dans les variables décalées, pas concentrée dans ces quatre colonnes.",
+    "**L'apport de Sirene, en revanche, n'a pas pu être mesuré.** La chaîne de nomenclatures "
+    "(section 6) ne relie aucune formation Parcoursup à une activité NAF par une clé fiable : "
+    "Sirene n'est donc jamais entré dans la table de variables du modèle d'accessibilité, et il "
+    "n'existe rien à retirer d'un modèle où cette source n'est pas entrée. Ce n'est pas un "
+    "résultat d'apport nul — celui-là a été mesuré, pour les mentions et pour l'établissement "
+    "d'origine, et rapporté comme tel — c'est une limite du dispositif, déclarée plutôt que "
+    "déguisée en mesure. Le critère d'apport mesuré est donc rempli pour toutes les sources sauf "
+    "Sirene, conditionné au rattachement effectif de la chaîne de nomenclatures.",
 ])
 
-para("Intégration, à construire : le modèle sera exposé par une API FastAPI conteneurisée, "
-     "avec gestion des erreurs et sécurisation — le dossier `src/edumatch/api/` est vide à ce "
-     "jour. Les recommandations alimenteront l'écran de supervision consulté par les "
-     "conseillers d'orientation, qui matérialisera l'exigence de contrôle humain posée par "
-     "l'article 14 du règlement sur l'IA : le conseiller y reverra chaque recommandation, la "
-     "contextualisera à partir du dossier réel de l'élève, que le modèle ne connaît pas, et "
-     "pourra l'écarter en motivant sa décision.")
-para("CI/CD, à construire : un pipeline GitHub Actions automatisera les tests, la construction "
-     "d'images, le suivi des expériences avec MLflow et le déploiement versionné — aucun "
-     "workflow n'est écrit à ce jour. Deux dépôts distincts sont prévus, l'un pour la solution "
-     "IA, l'autre pour la chaîne d'intégration et de déploiement ; seul le premier existe "
-     "aujourd'hui.")
-para("Dérive, déjà mesurée sur des données réelles (E34) : l'indice de stabilité de population "
+para("Intégration. Le modèle est exposé par une API FastAPI conteneurisée (`src/edumatch/api/`, "
+     "dix-neuf modules, huit fichiers de tests dont un consacré à la sécurité) : gestion des "
+     "erreurs dédiée, authentification, limitation de débit, en-têtes de sécurité. Les "
+     "recommandations alimentent l'écran de supervision consulté par les conseillers "
+     "d'orientation, qui matérialise l'exigence de contrôle humain posée par l'article 14 du "
+     "règlement sur l'IA : le conseiller y revoit chaque recommandation, la contextualise à "
+     "partir du dossier réel de l'élève que le modèle ne connaît pas, et peut l'écarter en "
+     "motivant sa décision — écartement bloqué côté client et côté serveur, vérifié par test. "
+     "L'accessibilité RGAA de cet écran est couverte par des tests unitaires (structure "
+     "sémantique, contraste calculé par la formule WCAG, focus jamais supprimé) et par une "
+     "procédure d'audit navigateur écrite ; **cette procédure n'a pas encore été déroulée**, "
+     "aucun rapport d'audit n'existe à ce jour.")
+para("CI/CD. Trois workflows GitHub Actions sont écrits dans le second dépôt "
+     "(`edumatch-cicd`) : intégration (lint et tests), construction et publication d'images "
+     "étiquetées par l'empreinte du commit, déploiement délibéré et non automatique. "
+     "**Aucun de ces workflows n'a encore été exécuté** : une première exécution reste à "
+     "déclencher pour révéler ce qu'un YAML non testé cache toujours. Le suivi d'expériences "
+     "avec MLflow est en service (cinq exécutions tracées, paramètres et métriques), mais le "
+     "registre de modèles proprement dit est vide à ce jour — aucune version n'y est encore "
+     "enregistrée. Deux dépôts de code distincts existent, sans recouvrement : la solution IA "
+     "(ce dépôt) et l'intégration-déploiement (36 fichiers : workflows, Terraform, manifestes "
+     "Kubernetes, monitoring).")
+para("Dérive, mesurée sur des données réelles (E34) : l'indice de stabilité de population "
      "(PSI) et le test de Kolmogorov-Smirnov sont calculés directement sur les six sessions où "
      "le label existe (2020-2025), pour trois familles distinctes — variables, cible, "
      "prédictions du modèle. Evidently a été écarté : sa dernière version compatible avec le "
@@ -739,18 +848,21 @@ para("Dérive, déjà mesurée sur des données réelles (E34) : l'indice de sta
      "dépend déjà, reproduit et non contourné (ADR 0018). Le seuil de 0,20 s'applique à la "
      "médiane du PSI des variables plutôt qu'à leur maximum, pour ne pas déclencher en "
      "permanence sur deux colonnes de nomenclature instable sans rapport avec la performance du "
-     "modèle. Ce que cette mesure ne permet pas de conclure est écrit dans la décision : la "
-     "dégradation déjà observée entre validation et test reste sous ce seuil. Réentraînement, "
-     "à construire : la détection journalise un avertissement mais ne déclenche encore rien ; "
-     "l'automatisation reste à coupler à l'orchestrateur. Le monitoring en production couvrira "
-     "la performance du modèle, la latence de l'API et la disponibilité, avec alertes sur "
-     "seuils — rien de ce dernier dispositif n'est en place aujourd'hui.")
-para("Conformité et accessibilité, à construire : explicabilité par SHAP, tests d'équité "
-     "écartant les variables discriminantes, et conformité RGAA de l'écran de supervision pour "
-     "les personnes en situation de handicap.")
-para("À livrer à terme : présentation de la solution, dépôt n°1 (développement de la solution IA), "
-     "dépôt n°2 (intégration et déploiement continus), capture vidéo en production. Deux dépôts "
-     "de code distincts sont attendus.", italic=True)
+     "modèle. Ce que cette mesure ne permet pas de conclure est écrit dans la décision, et c'est "
+     "l'un des quatre résultats défavorables du projet à retenir : **le PSI à ce seuil n'aurait "
+     "pas signalé la dégradation pourtant observée entre validation et test.** Il s'agit d'une "
+     "dérive du concept — la relation entre les variables et la cible change alors que la "
+     "distribution des entrées bouge à peine — à laquelle un indice de stabilité de population, "
+     "qui ne compare que des distributions marginales, est aveugle par construction. "
+     "Réentraînement, à construire : la détection journalise un avertissement mais ne déclenche "
+     "encore rien, l'automatisation reste à coupler à l'orchestrateur. Le monitoring en "
+     "production (Prometheus, Grafana, SLO déclaré sur la latence p95 et la disponibilité) est "
+     "écrit et versionné dans le second dépôt, mais rien n'en a jamais tourné en production.")
+para("À livrer à terme : rapport d'audit RGAA exécuté, première exécution de la chaîne "
+     "d'intégration capturée, entraînement ajouté au graphe d'orchestration, modèle enregistré au "
+     "registre, et capture vidéo de la solution en production. Présentation de la solution, dépôt "
+     "n°1 (développement de la solution IA) et dépôt n°2 (intégration et déploiement continus) "
+     "existent déjà, avec du code réel et distinct.", italic=True)
 
 d.add_page_break()
 
@@ -770,9 +882,18 @@ table([
 ], header=True)
 para("Fil conducteur de la soutenance : partir des constats mesurés dans les données publiques. "
      "La ségrégation par le genre est massive alors même que les femmes sont majoritaires parmi "
-     "les admis, et l'accès reste inégal selon le baccalauréat d'origine. Puis dérouler la chaîne complète, de la "
-     "gouvernance à la solution déployée, en montrant que chaque source répond à une question "
-     "précise et qu'un seul composant est appris. Chaque choix est défendu par « X plutôt que Y parce que… ».")
+     "les admis, et l'accès reste inégal selon le baccalauréat d'origine. Puis dérouler la chaîne "
+     "complète, de la gouvernance à la solution, en montrant que chaque source répond à une "
+     "question précise et qu'un seul composant est appris. Chaque choix est défendu par « X "
+     "plutôt que Y parce que… ». Quatre résultats défavorables, mesurés et non atténués, "
+     "structurent une part importante de cette défense : le modèle appris ne bat pas le taux de "
+     "la session précédente en test (MAE pondérée 0,0758 contre 0,0701, ECE 0,0371 contre 0,0322), "
+     "le ratio d'impact disparate sur les formations très féminisées est à 0,76, sous le seuil "
+     "légal de 0,80, la couverture du terme de débouchés n'atteint que 1,4 % des lignes, et "
+     "l'avis du délégué à la protection des données est scindé, défavorable à la restitution du "
+     "terme appris à des candidats réels tant qu'il n'aura pas été corrigé. Chacun de ces "
+     "résultats est mesuré, documenté et assumé plutôt que dissimulé, ce qui est présenté comme "
+     "une garantie de rigueur plutôt que comme une faiblesse à minimiser.")
 
 # =====================================================================
 # 9. AUTOCONTRÔLE
@@ -793,11 +914,18 @@ bullets([
     "Bloc 3 : trois connecteurs, deux chaînes dimensionnées séparément, réconciliation de trois "
     "nomenclatures, automatisation, qualité, supervision.",
     "Bloc 4 : un seul modèle industrialisé, rôle de chaque source explicité, cible et protocole "
-    "définis, calibration, courbe d'apprentissage, ablation, équité sur quatre dimensions, CI/CD, "
-    "dérive, deux dépôts.",
+    "définis, calibration, courbe d'apprentissage, ablation, équité sur quatre dimensions, CI/CD "
+    "écrit, dérive mesurée, deux dépôts de code réel et distinct.",
     "Chaque choix important est justifié selon la forme « X plutôt que Y parce que… ».",
     "Aucune donnée n'est simulée : toutes les sources sont publiques, réelles et sous licence "
     "vérifiée.",
+    "Les quatre résultats défavorables du projet sont présents dans le corps du dossier, avec "
+    "leurs chiffres et leur diagnostic, et non tus ou relégués en annexe : performance du modèle "
+    "sous son plancher en test, ratio d'impact disparate sous le seuil légal, couverture du terme "
+    "de débouchés à 1,4 %, avis scindé et défavorable du délégué à la protection des données sur "
+    "le terme appris.",
+    "Ce qui n'existe pas encore est écrit au futur, sans ambiguïté : déploiement cloud réel, "
+    "exécution de la chaîne d'intégration, panne filmée, trois vidéos de production.",
     "Les limites du dispositif sont déclarées, notamment sur la granularité disponible pour "
     "l'audit de genre et sur la portée d'une estimation fondée sur des caractéristiques agrégées.",
     "Forme : document structuré en chapitres, en français, fichier nommé « KIONGHAT Johann ».",
