@@ -27,6 +27,7 @@ Model Reporting*).
 | **Pondération** | Chaque cellule pèse son effectif de vœux (ADR 0009) : une cellule à 3 vœux ne vaut pas une cellule à 500 |
 | **Code** | `src/edumatch/models/train.py` (entraînement), `evaluate.py` (calibration), `explain.py` (SHAP), `fairness.py` (équité), `ablation.py`, `derive.py` |
 | **Suivi d'expériences** | MLflow, expérience `edumatch-accessibilite` ; chaque exécution enregistre paramètres, métriques et empreinte du commit Git |
+| **Registre de modèles** | Version 1 de `edumatch-accessibilite`, enregistrée par `src/edumatch/models/registre.py` (`make register-model`) depuis l'exécution qui porte ces mêmes chiffres. **Aucun alias ni stade de production posé** : l'étiquette `statut_evaluation` et la description de la version disent en clair qu'elle ne bat pas le plancher en test — voir §6.1 |
 | **Licence des données d'entraînement** | Licence Ouverte v2.0 (Etalab) — voir `registre-sources.md` |
 | **Contact** | Le responsable du modèle et le délégué à la protection des données du projet (rôles définis dans `plan-gouvernance.md` §3) |
 
@@ -430,6 +431,7 @@ PYTHONPATH=src python -m edumatch.models.fairness     # 6.2 à 6.5, 9.5
 PYTHONPATH=src python -m edumatch.models.explain      # 7
 PYTHONPATH=src python -m edumatch.models.ablation     # 8.1, 9.4
 PYTHONPATH=src python -m edumatch.models.derive       # 9.3
+PYTHONPATH=src python -m edumatch.models.registre      # registre de modèles, ligne « Registre de modèles » ci-dessus
 ```
 
 ---
