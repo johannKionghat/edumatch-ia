@@ -7,11 +7,11 @@ Référence des étapes : le plan d'exécution du projet.
 > **Le dépôt fait foi.** Si ce journal déclare une étape faite mais que le code
 > ne le confirme pas, c'est ce journal qui est faux.
 
-**État : 41 / 46 étapes validées.**
+**État : 42 / 46 étapes validées.**
 
-Détail : E01 à E34, E37 et E38 (phases 0 à 6, à l'exception de E35, E36
-— en cours, E39, non commitées côté exécution) et E40, E41, E42, E43, E44
-(phase 7, gouvernance, complète). Restent pleinement : E35, E39
+Détail : E01 à E35, E37 et E38 (phases 0 à 6, à l'exception de E36 —
+en cours, E39, non commitées côté exécution) et E40, E41, E42, E43, E44
+(phase 7, gouvernance, complète). Restent pleinement : E39
 (industrialisation), E45 (diagrammes livrés, les trois vidéos manquent
 encore) et E46 (cohérence finale, slides). E36 est 🟡 en cours : ses
 workflows existent mais n'ont pas encore tourné sur la forge — voir le détail
@@ -1309,7 +1309,7 @@ Détail complet : `06-service/assistant-rag.md`.
 |---|---|---|---|---|
 | E33 | DAG Airflow | ✅ validée | 2026-09-01 | `09d107a` |
 | E34 | Détection de dérive | ✅ validée | 2026-09-01 | `c1af7a4` |
-| E35 | Conteneurisation | ⬜ | | |
+| E35 | Conteneurisation | ✅ validée | 2026-09-16 | `04c9a90` |
 | E36 | CI/CD | 🟡 en cours | 2026-09-15 | `a8e61f2` *(edumatch-cicd)* |
 | E37 | Infrastructure Terraform et Kubernetes | ✅ validée | 2026-09-15 | `5ef5ff3` *(edumatch-cicd)* |
 | E38 | Monitoring et SLO | ✅ validée | 2026-09-15 | `71b2d19` *(edumatch-cicd)* |
@@ -1398,6 +1398,100 @@ structurants, argumentés dans le commit, non repris en ADR distinct.
 0,20, sans Evidently. Détail complet, dont le tableau des cinq comparaisons
 consécutives de sessions qui calibrent ce qu'est une dérive « normale » :
 `docs/sous-docs-projets/adr/0018-detection-de-derive-seuil-et-agregation.md`.
+
+**E35 — ce qui a été vérifié**
+- Trois images construites : service, entraînement, orchestration. Les deux
+  images issues de Python sont bâties en **construction multi-étages**
+  (l'étape de compilation n'est pas embarquée dans l'image finale), chacune
+  tourne sous un **utilisateur non-root dédié**, l'image de service porte une
+  **sonde de santé**, et les trois portent une **étiquette qui contient
+  l'empreinte du commit**, jamais `latest` — un déploiement doit toujours
+  pouvoir remonter au code exact qui l'a produit
+- **Vérifié sur les images elles-mêmes, sans aucun montage de volume ni de
+  code** : l'application s'importe sans erreur, LightGBM s'importe sans
+  erreur, et les **quatre DAG Airflow se chargent**. C'est une vérification
+  volontairement stricte — une image qui ne fonctionne qu'une fois complétée
+  par un montage local ne prouve rien pour la production, où rien n'est monté
+  à part les données et la configuration
+- Tailles mesurées : image de service et image d'entraînement **1,88 Go**
+  chacune, image d'orchestration **3,37 Go** (Airflow et ses dépendances
+  propres pèsent plus lourd que le reste de la pile)
+- Suite de tests du dépôt à l'issue de l'étape : **720 tests passés, 1
+  ignoré**, exécution seule sur ce poste de développement — pas encore
+  rejouée dans un environnement isolé du poste
+
+**E35 — les défauts trouvés et corrigés, aussi importants que le livrable**
+
+Une vérification sur une image bâtie sans rien monter ne suffit pas à
+prouver qu'elle fonctionnera en production : elle prouve seulement que les
+imports réussissent. Plusieurs des défauts suivants n'étaient visibles qu'à
+l'exécution réelle, avec des volumes montés — c'est précisément ce qu'une
+vérification sur un dossier de données vide ne révèle jamais. Je le note
+franchement plutôt que de présenter la conteneurisation comme achevée sur la
+seule foi des imports qui réussissent.
+
+1. **Bibliothèque système absente dans l'image d'orchestration.** La
+   bibliothèque OpenMP, dont LightGBM dépend pour s'exécuter, n'était pas
+   installée dans l'image Airflow : `import lightgbm` y échouait, ce qui
+   aurait fait échouer toute tâche du DAG touchant au modèle. Corrigé en
+   l'ajoutant à l'image.
+2. **Fichiers de configuration et DAG non embarqués.** Le paquet du projet
+   résout ses fichiers de configuration par un chemin relatif à son propre
+   emplacement sur disque. Une fois installé par `pip` dans l'image, ce
+   chemin ne pointait plus vers rien : sans montage, l'import échouait en
+   production. Corrigé en embarquant explicitement la configuration et les
+   DAG dans l'image plutôt que de compter sur un montage qui ne serait pas
+   toujours présent.
+3. **Volume de données monté en lecture seule alors que la journalisation
+   réglementaire (article 12) doit y écrire.** Le montage initial était
+   large en lecture et en écriture avait été refusé par excès de prudence ;
+   l'écriture du journal d'audit échouait sur la brique la plus sensible du
+   projet au regard de la conformité. Corrigé : montage large en lecture,
+   étroit en écriture — seul le sous-répertoire d'audit est ouvert en
+   écriture.
+4. **Le registre d'expériences MLflow était cassé de deux façons
+   indépendantes, sans qu'aucun test ne le voie.** D'abord, le serveur
+   renvoyait au client un chemin local à son propre conteneur pour les
+   artefacts : aucun artefact n'arrivait côté client, permission refusée.
+   Ensuite, un client MLflow en version 3.x face à un serveur resté en
+   2.14 **perd silencieusement l'enregistrement des modèles** — l'API
+   correspondante n'existe pas côté serveur, réponse 404 jamais remontée
+   comme une erreur bloquante. Corrigé en deux temps : transmission des
+   artefacts par HTTP plutôt que par chemin local, et alignement du serveur
+   sur la version du client, désormais épinglée dans les deux images. La
+   protection déjà en place contre les en-têtes d'hôte non déclarés est
+   **conservée** : un hôte inconnu reste rejeté en 403, revérifié après la
+   correction.
+5. **Une dépendance abandonnée restait déclarée.** `evidently`, écarté
+   depuis l'ADR 0018 et dont plus aucun fichier n'importait le module,
+   restait dans les dépendances : il s'installait dans chaque image, avec un
+   paquet transitif qui occupe le même nom d'import qu'attend le service
+   (le conflit déjà identifié en E34). Retiré : chaque image perd environ
+   un demi-gigaoctet.
+6. **La configuration de production sélectionnait le mauvais moteur de
+   calcul.** Elle pointait vers Spark, en contradiction avec la décision
+   déjà arrêtée (ADR 0016 : Polars en exécution courante) — et installer
+   PySpark à côté d'Airflow dans la même image casse le fonctionnement
+   d'Airflow lui-même. Corrigé : la configuration de production sélectionne
+   désormais Polars.
+7. **Trois tests encodaient l'ancienne valeur de cette même configuration.**
+   Le test qui compare Spark et Polars lisait le moteur *depuis la
+   configuration de production* : après la correction du point 6, il aurait
+   fait tourner Polars deux fois en croyant démontrer l'égalité des deux
+   moteurs, sans jamais exécuter Spark. Corrigé : le test force explicitement
+   le moteur qu'il compare, plutôt que de le déduire d'une configuration que
+   quelqu'un d'autre peut changer.
+8. **Les bornes du dimensionnement automatique avaient dérivé de celles
+   réellement appliquées.** La configuration annonçait un plancher de 12
+   réplicas et un plafond à 70 % d'utilisation CPU, quand le manifeste
+   Kubernetes du second dépôt applique réellement 6 et 60 %. Corrigées pour
+   s'aligner sur le manifeste, qui fait foi puisque c'est lui qui s'exécute.
+
+**E35 — décision prise** : aucun ADR nouveau distinct — la construction
+multi-étages, l'utilisateur non-root et l'étiquetage par empreinte de commit
+appliquent des principes de sécurité et de traçabilité déjà retenus par le
+projet (secrets, discipline Git), sans introduire d'arbitrage d'architecture
+inédit à cette étape.
 
 **E36 — ce qui a été vérifié**
 - Le second dépôt du projet, `edumatch-cicd`, porte trois workflows

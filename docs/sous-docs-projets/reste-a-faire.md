@@ -3,15 +3,19 @@
 Feuille de route vivante. Je la tiens à jour au fil du projet et des
 évaluations du jury.
 
-**État au 2026-09-15** : 41 étapes sur 46 du plan d'exécution du projet sont
+**État au 2026-09-16** : 42 étapes sur 46 du plan d'exécution du projet sont
 validées (`avancement.md`). L'ingestion, la qualité, l'entrepôt, le modèle,
-le service et la gouvernance sont construits et testés. L'infrastructure
-Terraform/Kubernetes (E37) et le monitoring (E38) sont écrits et vérifiés
-dans les fichiers du second dépôt, `edumatch-cicd`, mais rien n'a encore
-tourné sur un cluster réel — voir le point ouvert dédié plus bas. Le CI/CD
-(E36) reste 🟡 en cours : les trois workflows existent, aucun n'a encore
-tourné sur la forge. Ce qui suit liste ce qui reste précisément, sans
-ambiguïté avec ce qui est déjà fait.
+le service, la conteneurisation et la gouvernance sont construits et
+testés. L'infrastructure Terraform/Kubernetes (E37) et le monitoring (E38)
+sont écrits et vérifiés dans les fichiers du second dépôt, `edumatch-cicd`,
+mais rien n'a encore tourné sur un cluster réel — voir le point ouvert dédié
+plus bas. Le CI/CD (E36) reste 🟡 en cours : les trois workflows existent,
+aucun n'a encore tourné sur la forge. Les trois images de conteneur (E35)
+sont construites, non-root, taguées par empreinte de commit, et vérifiées
+sans montage — mais la pile locale complète (service, entraînement,
+orchestration, registre d'expériences) n'a pas pu être levée de bout en bout
+sur ce poste de développement, voir le point ouvert dédié. Ce qui suit liste
+ce qui reste précisément, sans ambiguïté avec ce qui est déjà fait.
 
 ---
 
@@ -84,7 +88,12 @@ posées.*
       `c4-conteneurs.md`, E45, 2026-09-15) — en Mermaid versionné dans le
       Markdown plutôt qu'en image exportée, pour que le diff montre le
       changement plutôt qu'une image qui se périme en silence
-- [ ] `docker/Dockerfile.train`, `docker/Dockerfile.serve`
+- [x] `docker/` — trois images (service, entraînement, orchestration),
+      construction multi-étages, utilisateur non-root, sonde de santé sur le
+      service, étiquette par empreinte de commit (E35, 2026-09-16, commit
+      `04c9a90`). Vérifié sans montage : imports applicatifs et les quatre
+      DAG se chargent. **La pile locale complète n'a pas été levée de bout
+      en bout** — voir le point ouvert dédié
 - [x] Terraform — cluster, base, stockage objet, réseau *(dépôt 2,
       `edumatch-cicd`, E37, 2026-09-15, commit `5ef5ff3`)*. Écrit et
       vérifié en lecture — **jamais appliqué sur un compte Scaleway réel**,
@@ -358,6 +367,37 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
       que d'une contrainte explicite. À corriger avant l'étape
       d'industrialisation (E35-E36), où l'image de conteneur doit être
       reproductible par construction.
+
+---
+
+## Point ouvert issu de la conteneurisation (E35)
+
+- [ ] **La pile locale complète (service, entraînement, orchestration,
+      registre d'expériences) n'a pas pu être levée de bout en bout sur ce
+      poste de développement.** Les trois images sont vérifiées séparément,
+      sans montage — imports applicatifs, LightGBM, chargement des quatre
+      DAG — et huit défauts ont déjà été trouvés et corrigés à l'occasion
+      (bibliothèque OpenMP absente, configuration et DAG non embarqués,
+      volume d'audit en lecture seule, registre MLflow cassé de deux façons
+      indépendantes, dépendance abandonnée encore déclarée, mauvais moteur
+      de calcul en production, tests qui masquaient ce mauvais moteur,
+      bornes de dimensionnement désalignées — voir `avancement.md`, E35).
+      Cela ne prouve pas encore qu'un lancement conjoint des quatre services
+      avec les vrais volumes montés se déroule sans accroc : plusieurs des
+      huit défauts n'étaient visibles qu'à l'exécution réelle, jamais par la
+      seule lecture ou le seul import. Condition de clôture : un lancement
+      complet documenté, avec ses éventuels nouveaux défauts trouvés et
+      corrigés de la même façon.
+- [ ] **L'instrumentation des métriques de l'API (route `/metrics`) et
+      l'authentification de l'écran de supervision sont en cours de
+      traitement.** Ni l'une ni l'autre n'existent encore dans le dépôt à ce
+      jour — voir le détail de chacune dans les points ouverts dédiés
+      ci-dessous (monitoring, E36-E38, et écran conseiller, E28-E32).
+- [ ] **Le déploiement réel — Scaleway, cluster Kubernetes, images poussées
+      sur un registre — reste à faire.** Les trois images sont construites
+      et vérifiées localement (E35), mais aucune n'a encore été poussée sur
+      un registre distant ni exécutée sur un cluster réel — voir le point
+      ouvert sur `terraform apply` et le déploiement Kubernetes, ci-dessous.
 
 ---
 
