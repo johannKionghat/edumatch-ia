@@ -9,7 +9,7 @@ description = "Moteur de matching explicable profil vers formation"
 requires-python = ">=3.11"
 dependencies = [
     # Revue de sécurité (post-E35) : chaque dépendance ci-dessous portait une borne basse mais
-    # aucune borne haute — contraire à la politique du projet (`rules/security-policy.md` :
+    # aucune borne haute — contraire à la politique de sécurité que je me suis fixée (
     # « épingler les versions, pas de >= sans borne »). Les plafonds posés ici sont fixés à la
     # première version majeure strictement au-dessus de celle réellement installée dans
     # `edumatch-train:latest`/`edumatch-api:latest` au moment de cette revue (vérifié par

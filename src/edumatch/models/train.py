@@ -466,8 +466,8 @@ def exporter_catalogue_predictions(resultat: ResultatEntrainement, settings: Set
     artefact est produit par `make train` (ou `docker/Dockerfile.train`) et monté en volume au
     même chemin (`processed_dir`, dérivé de `EDUMATCH_DATA_ROOT`) que l'API lit.
 
-    Écriture atomique (fichier `.part` renommé à la fin, convention du dépôt, voir
-    `rules/structure-projet.md` §2) : un lecteur concurrent ne peut jamais observer un fichier
+    Écriture atomique (fichier `.part` renommé à la fin, convention du dépôt, et
+    principe d'immuabilité des données brutes que je me suis fixé) : un lecteur concurrent ne peut jamais observer un fichier
     tronqué."""
     catalogue = construire_catalogue_predictions(resultat)
     dossier = settings.processed_dir / SOUS_DOSSIER_CATALOGUE_PREDICTIONS
