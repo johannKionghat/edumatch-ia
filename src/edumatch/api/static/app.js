@@ -133,10 +133,62 @@ async function rechercherFormations(evenement) {
   afficherResultats(resultat, profil, identifiantConseiller);
 }
 
+// Traduit le nom technique d'un champ de formulaire (tel que Pydantic le rapporte dans
+// `loc`) en libellé lisible par un conseiller. Table distincte de `traductionsVariables`
+// ci-dessus : celle-ci porte les noms de variables du modèle (SHAP), celle-là les noms
+// de champs du formulaire de recherche et de décision.
+const libellesChampsFormulaire = {
+  type_bac: "Type de baccalauréat",
+  boursier: "Statut de boursier",
+  type_formation: "Type de formation",
+  domaine: "Domaine recherché",
+  departement: "Département visé",
+  top_n: "Nombre de recommandations",
+  identifiant_formation: "Formation",
+  session: "Session",
+  decision: "Décision",
+  motif: "Motif",
+};
+
+// Phrase associée à chaque type d'erreur de validation Pydantic v2 rencontré par
+// l'écran. Volontairement reformulée plutôt que reprise telle quelle : le message brut
+// de Pydantic (ex. le motif d'une expression régulière) n'est ni utile ni élégant pour
+// un conseiller, sans pour autant constituer une trace technique (aucun chemin de
+// fichier, aucun nom de module) — cette reformulation reste une amélioration de
+// lisibilité, pas une correction de fuite.
+const phrasesParTypeErreurValidation = {
+  missing: "ce champ est obligatoire.",
+  string_pattern_mismatch: "le format saisi ne correspond pas à celui attendu.",
+  string_too_long: "la valeur saisie est trop longue.",
+  string_too_short: "la valeur saisie est trop courte.",
+  int_parsing: "un nombre entier est attendu.",
+  bool_parsing: "une valeur « oui » ou « non » est attendue.",
+  greater_than_equal: "la valeur saisie est trop petite.",
+  less_than_equal: "la valeur saisie est trop grande.",
+};
+
+function libelleChampFormulaire(chemin) {
+  const nomChamp = (chemin || []).filter((segment) => segment !== "body").pop();
+  return libellesChampsFormulaire[nomChamp] || formaterNomTechnique(String(nomChamp || "Champ"));
+}
+
+function phraseErreurDeValidation(erreur) {
+  const libelle = libelleChampFormulaire(erreur.loc);
+  const phrase = phrasesParTypeErreurValidation[erreur.type] || "la valeur saisie n'est pas valide.";
+  return `${libelle} : ${phrase}`;
+}
+
 async function lireDetailErreur(reponse) {
   try {
     const corps = await reponse.json();
-    return typeof corps.detail === "string" ? corps.detail : `Erreur ${reponse.status}.`;
+    if (typeof corps.detail === "string") return corps.detail;
+    // FastAPI/Pydantic v2 renvoie, sur une erreur de validation 422, un tableau
+    // d'objets d'erreur (`type`, `loc`, `msg`) plutôt qu'une chaîne — un cas distinct
+    // à traiter, faute de quoi le conseiller ne voit que « Erreur 422. ».
+    if (Array.isArray(corps.detail) && corps.detail.length > 0) {
+      return corps.detail.map(phraseErreurDeValidation).join(" ");
+    }
+    return `Erreur ${reponse.status}.`;
   } catch {
     return `Erreur ${reponse.status}.`;
   }

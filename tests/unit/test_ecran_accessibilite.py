@@ -16,6 +16,7 @@ d'audit manuel qui referme ce que ces tests ne couvrent pas est décrite dans
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -55,6 +56,25 @@ def test_landmarks_principaux_presents_une_seule_fois() -> None:
 def test_lien_evitement_cible_le_contenu_principal() -> None:
     assert 'href="#contenu-principal"' in HTML
     assert 'id="contenu-principal"' in HTML
+
+
+def test_contenu_principal_est_focusable_par_programme() -> None:
+    """RGAA 12.7 / WCAG 2.4.1 : un lien d'évitement doit déplacer le *focus clavier* sur sa
+    cible, pas seulement faire défiler la page jusqu'à elle. `<main>` n'est pas nativement
+    focusable (ni un lien, ni un bouton, ni un champ) : sans `tabindex`, l'ancre `href="#…"`
+    ne fait que défiler — `document.activeElement` reste `<body>`, et le `Tab` suivant repart
+    du tout début du document. `tabindex="-1"` rend l'élément focusable par programme sans
+    l'ajouter à l'ordre de tabulation naturel (un `Tab` ne s'y arrête jamais directement) —
+    même technique que `#explication`, déjà en place plus bas dans ce même document, voir
+    `test_panneau_explication_est_focusable_au_clavier`.
+
+    Non-régression du défaut constaté dans `reports/e31-audit-rgaa-resultats.md`
+    (non-conformité n°1, majeure) : reproduit en direct par
+    `reports/e31-audit-rgaa/clavier-zoom-check.mjs` avant correction
+    (`lien_evitement_deplace_focus_dans_main: false`).
+    """
+    bloc = re.search(r'<main id="contenu-principal"[^>]*>', HTML).group(0)
+    assert 'tabindex="-1"' in bloc
 
 
 def test_pas_de_style_en_ligne_dans_le_document() -> None:
@@ -210,3 +230,93 @@ def test_app_js_ne_journalise_rien_en_console() -> None:
 
 def test_pas_de_var_dans_app_js() -> None:
     assert re.search(r"\bvar\s+\w", JS) is None
+
+
+# ─── Message d'erreur 422 lisible (non-régression, voir résultats d'audit) ──
+
+
+def _executer_lire_detail_erreur(detail: object) -> str:
+    """Exécute la fonction réelle `lireDetailErreur` de `app.js` dans un bac à sable Node,
+    avec une fausse réponse HTTP dont `.json()` renvoie le corps donné — sans navigateur,
+    ce qui est cohérent avec la politique de test de ce fichier pour le JavaScript (voir
+    `test_app_js_est_syntaxiquement_valide` : vérification automatisée quand c'est possible,
+    audit manuel documenté pour le reste)."""
+    chemin_app_js = json.dumps(str(DOSSIER_STATIQUE / "app.js"))
+    corps_reponse = json.dumps({"detail": detail}, ensure_ascii=False)
+    script = (
+        "const vm = require('vm');\n"
+        "const fs = require('fs');\n"
+        f"const code = fs.readFileSync({chemin_app_js}, 'utf8');\n"
+        "const sandbox = { document: { addEventListener: () => {} }, console };\n"
+        "vm.createContext(sandbox);\n"
+        "vm.runInContext(code, sandbox);\n"
+        f"const reponse = {{ status: 422, json: async () => ({corps_reponse}) }};\n"
+        "sandbox.lireDetailErreur(reponse).then((msg) => process.stdout.write(msg));\n"
+    )
+    resultat = subprocess.run(
+        ["node", "-e", script], capture_output=True, text=True, encoding="utf-8"
+    )
+    if resultat.returncode != 0 and "not found" in (resultat.stderr or "").lower():
+        pytest.skip("node indisponible dans cet environnement : vérification manuelle requise avant déploiement")
+    assert resultat.returncode == 0, resultat.stderr
+    return resultat.stdout
+
+
+def test_erreur_422_tableau_pydantic_nomme_le_champ_fautif() -> None:
+    """Non-régression du défaut n°2 (mineur) de `reports/e31-audit-rgaa-resultats.md` :
+    FastAPI/Pydantic v2 renvoie sur une 422 un **tableau** d'objets d'erreur
+    (`type`, `loc`, `msg`), pas une chaîne. Avant correction, `lireDetailErreur` ne
+    traitait que le cas chaîne et retombait sur le générique « Erreur 422. », reproduit
+    par requête directe (voir le rapport) et par
+    `reports/e31-audit-rgaa/clavier-zoom-check.mjs` (`departement_mal_forme_message`)."""
+    detail = [
+        {
+            "type": "string_pattern_mismatch",
+            "loc": ["body", "departement"],
+            "msg": "String should match pattern '^(2[AB]|[0-9]{2,3})$'",
+        }
+    ]
+    message = _executer_lire_detail_erreur(detail)
+    assert message != "Erreur 422."
+    assert "épartement" in message  # « Département visé », insensible à la casse initiale
+
+
+def test_erreur_422_ne_reprend_jamais_le_message_brut_de_pydantic() -> None:
+    """Le message affiché doit rester compréhensible par un conseiller, pas un copier-coller
+    du message de validation Pydantic (qui expose un motif d'expression régulière, illisible
+    pour qui ne programme pas)."""
+    detail = [
+        {
+            "type": "string_pattern_mismatch",
+            "loc": ["body", "departement"],
+            "msg": "String should match pattern '^(2[AB]|[0-9]{2,3})$'",
+        }
+    ]
+    message = _executer_lire_detail_erreur(detail)
+    assert "pattern" not in message.lower()
+    assert "[0-9]" not in message
+
+
+def test_erreur_422_multiple_champs_fautifs_sont_tous_signales() -> None:
+    detail = [
+        {"type": "missing", "loc": ["body", "type_bac"], "msg": "Field required"},
+        {"type": "missing", "loc": ["body", "boursier"], "msg": "Field required"},
+    ]
+    message = _executer_lire_detail_erreur(detail)
+    assert "baccalauréat" in message.lower()
+    assert "boursier" in message.lower()
+
+
+def test_erreur_422_n_expose_aucune_trace_technique() -> None:
+    """Ce qui était déjà conforme avant correction (voir le rapport d'audit, point « Ce qui est
+    déjà correct ») ne doit pas régresser avec la réécriture de `lireDetailErreur`."""
+    detail = [{"type": "string_pattern_mismatch", "loc": ["body", "departement"], "msg": "String should match pattern"}]
+    message = _executer_lire_detail_erreur(detail)
+    assert not re.search(r"Traceback|File \"|site-packages|edumatch\.api|\.py\"", message)
+
+
+def test_erreur_422_chaine_simple_reste_affichee_telle_quelle() -> None:
+    """Non-régression du comportement existant : une 422 dont `detail` est déjà une chaîne
+    (par exemple levée à la main ailleurs dans l'API) continue de s'afficher sans changement."""
+    message = _executer_lire_detail_erreur("Département introuvable.")
+    assert message == "Département introuvable."
