@@ -38,7 +38,7 @@ finale — voir [`reste-a-faire.md`](reste-a-faire.md) pour le détail et
 | 1 — Gouvernance | registres, AIPD, Model Card, correspondance AI Act et plan de gouvernance produits (`05-gouvernance/`) ; slides à faire |
 | 2 — Architecture | modèle en étoile, diagrammes C4 niveaux 1 et 2 livrés (`02-architecture/`) ; conteneurisation, Terraform, Kubernetes, monitoring à construire |
 | 3 — Pipeline | connecteurs, contrôles qualité bloquants, dbt bronze→silver→gold, agrégat Sirene, chaîne NAF↔ROME↔formation, DAG Airflow avec reprise et blocage qualité testés, détection de dérive sans Evidently (ADR 0018) ; panne filmée à faire |
-| 4 — Déploiement | modèle entraîné, évalué, expliqué (SHAP), audité pour l'équité et l'ablation ; score à trois termes, API, écran de supervision, assistant RAG en service ; CI/CD, registre de modèles en production, monitoring de production à construire |
+| 4 — Déploiement | modèle entraîné, évalué, expliqué (SHAP), audité pour l'équité et l'ablation ; score à trois termes, API, écran de supervision, assistant RAG en service ; réentraînement et évaluation dans le DAG Airflow, derrière une porte de promotion qui refuse aujourd'hui de publier ; une version enregistrée au registre de modèles, sans stade ni alias ; CI/CD et monitoring de production à construire |
 
 **Point à connaître avant toute présentation du bloc 4** : l'analyse d'impact
 (`05-gouvernance/aipd.md`) rend un avis scindé, pas favorable sans réserve. Le

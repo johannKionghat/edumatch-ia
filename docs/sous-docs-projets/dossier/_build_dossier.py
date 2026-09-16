@@ -578,13 +578,18 @@ para("Les contrôles qualité (E14) portent sur le schéma, la complétude et la
 para("Apache Airflow orchestre la chaîne : quatre DAG, un par cadence réelle de source (annuelle "
      "pour Parcoursup, mensuelle pour Sirene, quotidienne pour les référentiels, et un DAG de "
      "purge), couvrant ingestion, qualité, silver, gold, variables, agrégats et réconciliation des "
-     "nomenclatures. La reprise sur erreur est décidée en code, pas confiée au retry natif "
-     "d'Airflow (désactivé) : un vocabulaire d'erreur transitoire contre définitive, une "
-     "temporisation croissante, deux scénarios de panne rejouables. **Ce qui manque encore à la "
-     "chaîne** : l'entraînement et l'évaluation du modèle n'y figurent pas — ils s'exécutent "
-     "encore par des commandes lancées à la main, hors du graphe. La supervision (volumétrie "
-     "traitée, taux d'échec, durée d'exécution) reste à ajouter au pipeline lui-même ; les alertes "
-     "aujourd'hui écrites portent sur le service d'inférence, pas sur le pipeline.")
+     "nomenclatures, treize tâches distinctes au total (`src/edumatch/orchestration/taches.py`). "
+     "La reprise sur erreur est décidée en code, pas confiée au retry natif d'Airflow (désactivé) : "
+     "un vocabulaire d'erreur transitoire contre définitive, une temporisation croissante, deux "
+     "scénarios de panne rejouables. **Le réentraînement et l'évaluation du modèle sont désormais "
+     "dans le graphe** : le DAG annuel `edumatch_parcoursup` compte huit tâches et se termine par "
+     "`reentrainer_modele` puis `evaluer_modele`, déclenchées après la détection de dérive et "
+     "derrière le même contrôle qualité bloquant que le reste de la chaîne. Une porte de promotion "
+     "(`src/edumatch/orchestration/promotion.py`) refuse de publier un modèle réentraîné qui ne bat "
+     "pas strictement le plancher E21 en test : à ce jour, elle refuse, pour la même raison que la "
+     "section suivante détaille. La supervision (volumétrie traitée, taux d'échec, durée "
+     "d'exécution) reste à ajouter au pipeline lui-même ; les alertes aujourd'hui écrites portent "
+     "sur le service d'inférence, pas sur le pipeline.")
 
 para("À livrer à terme : capture vidéo du pipeline en production, avec panne et reprise. Le "
      "diagramme du pipeline et le code sont déjà sur le dépôt. Évaluation : lecture environ "
@@ -835,9 +840,13 @@ para("CI/CD. Trois workflows GitHub Actions sont écrits dans le second dépôt 
      "étiquetées par l'empreinte du commit, déploiement délibéré et non automatique. "
      "**Aucun de ces workflows n'a encore été exécuté** : une première exécution reste à "
      "déclencher pour révéler ce qu'un YAML non testé cache toujours. Le suivi d'expériences "
-     "avec MLflow est en service (cinq exécutions tracées, paramètres et métriques), mais le "
-     "registre de modèles proprement dit est vide à ce jour — aucune version n'y est encore "
-     "enregistrée. Deux dépôts de code distincts existent, sans recouvrement : la solution IA "
+     "avec MLflow est en service (cinq exécutions tracées, paramètres et métriques), et le "
+     "registre de modèles porte désormais une version : `edumatch-accessibilite` v1, enregistrée "
+     "par `src/edumatch/models/registre.py` (`make register-model`) depuis l'exécution "
+     "`678b04627c4945a69c4856c325d7493b` (commit `5162c9e`). **Cette version ne porte aucun stade "
+     "ni alias** : l'étiquette `statut_evaluation` posée sur la version déclare en clair qu'elle "
+     "ne bat pas le plancher en test, conformément aux mêmes chiffres que la section précédente. "
+     "Deux dépôts de code distincts existent, sans recouvrement : la solution IA "
      "(ce dépôt) et l'intégration-déploiement (36 fichiers : workflows, Terraform, manifestes "
      "Kubernetes, monitoring).")
 para("Dérive, mesurée sur des données réelles (E34) : l'indice de stabilité de population "
@@ -859,10 +868,11 @@ para("Dérive, mesurée sur des données réelles (E34) : l'indice de stabilité
      "production (Prometheus, Grafana, SLO déclaré sur la latence p95 et la disponibilité) est "
      "écrit et versionné dans le second dépôt, mais rien n'en a jamais tourné en production.")
 para("À livrer à terme : rapport d'audit RGAA exécuté, première exécution de la chaîne "
-     "d'intégration capturée, entraînement ajouté au graphe d'orchestration, modèle enregistré au "
-     "registre, et capture vidéo de la solution en production. Présentation de la solution, dépôt "
-     "n°1 (développement de la solution IA) et dépôt n°2 (intégration et déploiement continus) "
-     "existent déjà, avec du code réel et distinct.", italic=True)
+     "d'intégration capturée, un réentraînement qui bat effectivement le plancher pour que la "
+     "porte de promotion publie une version, et capture vidéo de la solution en production. "
+     "Présentation de la solution, dépôt n°1 (développement de la solution IA) et dépôt n°2 "
+     "(intégration et déploiement continus) existent déjà, avec du code réel et distinct.",
+     italic=True)
 
 d.add_page_break()
 

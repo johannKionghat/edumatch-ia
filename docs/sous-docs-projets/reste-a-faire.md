@@ -546,6 +546,25 @@ assumé et écrit dans le code au moment du durcissement :
 
 ## Points ouverts issus de l'industrialisation (E33-E34) et de la restitution (E45)
 
+- [ ] **Le réentraînement automatique (E33-E34) ne publie encore aucun modèle.**
+      `reentrainer_modele` et `evaluer_modele` ferment désormais la chaîne
+      annuelle `edumatch_parcoursup` (huit tâches), et une porte de promotion
+      (`src/edumatch/orchestration/promotion.py`) compare chaque réentraînement
+      au plancher E21 avant de publier. Elle refuse aujourd'hui : le modèle ne
+      bat pas le plancher en test (voir `04-modele/evaluation.md`). Condition
+      de clôture : soit un réentraînement finit par battre le plancher et la
+      porte publie, soit ce refus est acté comme fonctionnement attendu du
+      dispositif de sécurité plutôt que comme un manque à combler.
+- [ ] **Le registre de modèles porte une version, jamais un stade.** La
+      version `edumatch-accessibilite` v1 (`make register-model`) est
+      enregistrée pour la traçabilité du critère 4.10, avec un tag qui déclare
+      qu'elle ne bat pas le plancher. Aucune promotion n'a eu lieu, par
+      construction : promouvoir cette version reviendrait à contredire son
+      propre tag.
+- [ ] **L'image Airflow du second dépôt doit être reconstruite avant tout
+      déploiement.** Elle embarque une configuration antérieure à l'ajout du
+      réentraînement et de l'évaluation dans le DAG : le nouveau code ne s'y
+      charge pas tant que l'image n'est pas régénérée, constaté en local.
 - [ ] **Le registre d'expériences MLflow a été cassé puis réparé, sans test
       qui garantisse qu'il reste utilisable.** Le retrait d'Evidently (E34,
       pour le conflit de dépendance documenté dans l'ADR 0018) a désinstallé

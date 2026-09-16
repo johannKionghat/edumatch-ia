@@ -15,6 +15,44 @@ Format :
 
 ---
 
+## 2026-09-16 — Registre de modèles et réentraînement dans le graphe : documentation mise à jour
+
+**Fait** : deux faits vérifiés dans le code ont été propagés dans la
+documentation. D'une part le registre de modèles n'est plus vide :
+`src/edumatch/models/registre.py` enregistre la version
+`edumatch-accessibilite` v1, liée à l'exécution
+`678b04627c4945a69c4856c325d7493b` et au commit `5162c9e`, sans stade ni
+alias, avec un tag qui déclare qu'elle ne bat pas le plancher. D'autre part
+le DAG Airflow annuel `edumatch_parcoursup` compte désormais huit tâches :
+`reentrainer_modele` puis `evaluer_modele` le ferment, derrière une porte de
+promotion qui refuse aujourd'hui de publier un modèle qui perd contre le
+plancher. Corrigé en conséquence : `03-pipeline/diagramme-pipeline.md` (le
+diagramme des quatre chaînes et le compte de treize tâches, contre onze
+avant), `00-vue-ensemble.md`, `avancement.md` (entrée ajoutée sans valider
+d'étape nouvelle), `reste-a-faire.md` (trois points ouverts ajoutés : la
+porte qui refuse, la version non promue, l'image Airflow à reconstruire), et
+le dossier de certification lui-même — deux affirmations désormais fausses
+retirées de `_build_dossier.py` (registre vide, entraînement hors du graphe),
+`.docx` régénéré et vérifié par extraction de son texte.
+
+**Décisions** : aucun ADR nouveau — ces deux ajouts appliquent une décision
+déjà arbitrée (la porte de promotion ne publie jamais un modèle qui perd
+contre son plancher), ils ne l'introduisent pas.
+
+**Corrigé** : `03-pipeline/orchestration.md` et `05-gouvernance/model-card.md`
+portaient déjà la mise à jour correcte au moment de cette relecture ; seuls
+`diagramme-pipeline.md`, `00-vue-ensemble.md` et le dossier de certification
+avaient pris du retard sur le dépôt.
+
+**Bloqué sur** : rien pour la documentation. Le réentraînement ne bat
+toujours pas le plancher (reporté dans `reste-a-faire.md`), et l'image
+Airflow du second dépôt doit être reconstruite avant tout déploiement — les
+deux sont des points ouverts, pas des blocages de cette mise à jour.
+
+**Jury** : aucune évaluation ce jour.
+
+---
+
 ## 2026-09-01 — Phase 5 close : score, API, journalisation, écran conseiller, assistant
 
 **Fait** : E28 à E32 validées, cinq commits (`53d1bdd`, `0b61e25`,

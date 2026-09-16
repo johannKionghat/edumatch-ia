@@ -123,7 +123,7 @@ par cadence réelle de publication.
 flowchart LR
     subgraph D1["DAG parcoursup — annuel"]
         direction LR
-        A1["ingérer"] --> A2["<b>qualité</b>"] --> A3["silver"] --> A4["gold"] --> A5["variables"] --> A6["dérive"]
+        A1["ingérer"] --> A2["<b>qualité</b>"] --> A3["silver"] --> A4["gold"] --> A5["variables"] --> A6["dérive"] --> A7["réentraîner"] --> A8["évaluer"]
     end
     subgraph D2["DAG sirene — mensuel"]
         direction LR
@@ -140,7 +140,7 @@ flowchart LR
 
     classDef t fill:#438dd5,stroke:#2e6295,color:#fff
     classDef q fill:#c0392b,stroke:#8b271c,color:#fff
-    class A1,A3,A4,A5,A6,B1,B3,C1,C3,E1 t
+    class A1,A3,A4,A5,A6,A7,A8,B1,B3,C1,C3,E1 t
     class A2,B2,C2 q
 ```
 
@@ -252,6 +252,7 @@ derrière des reprises inutiles.
   [C4 niveau 2](../02-architecture/c4-conteneurs.md).
 
 ---
-*Étape E45 · vérifié le 2026-09-15 contre `pipelines/edumatch_pipeline.py`
-(4 DAG), `src/edumatch/orchestration/taches.py` (11 tâches) et
-`configs/base.yaml` (cadences et seuils).*
+*Étape E45 · vérifié le 2026-09-16 contre `pipelines/edumatch_pipeline.py`
+(4 DAG, dont un DAG annuel Parcoursup à huit tâches qui se termine par le
+réentraînement et son évaluation), `src/edumatch/orchestration/taches.py`
+(13 tâches) et `configs/base.yaml` (cadences et seuils).*

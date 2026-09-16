@@ -1752,6 +1752,39 @@ solution en production — dépend au moins de E35-E38). L'étape n'est donc pas
 validée : le livrable complet exige les vidéos, pas seulement les
 diagrammes.
 
+**2026-09-16 — registre de modèles et réentraînement dans le graphe (compléments à E33, E34 et au critère 4.10)**
+
+Deux compléments à des étapes déjà validées, sans étape nouvelle du plan
+d'exécution du projet.
+
+- **Le registre de modèles n'est plus vide.** `src/edumatch/models/registre.py`
+  (`make register-model`) enregistre la version `edumatch-accessibilite` v1,
+  liée à l'exécution `678b04627c4945a69c4856c325d7493b` et au commit `5162c9e`,
+  avec un tag `statut_evaluation` qui déclare en clair qu'elle ne bat pas le
+  plancher E21 en test. **Aucun stade ni alias posé** : rien ne fait de cette
+  version celle qui sert `/matching` — promouvoir un modèle qui perd contre la
+  règle triviale serait une affirmation chiffrée non vérifiée. Quatre tests
+  couvrent le module. La commande exige `MLFLOW_TRACKING_URI` (déjà dans
+  `.env.example`) : sans elle, elle échoue explicitement, vérifié.
+- **Le réentraînement et son évaluation sont désormais dans le DAG Airflow.**
+  `edumatch_parcoursup` compte huit tâches : les six déjà connues, puis
+  `reentrainer_modele` et `evaluer_modele`, qui s'enchaînent après
+  `detecter_derive` (E34) et derrière le même contrôle qualité bloquant que le
+  reste de la chaîne. Une porte de promotion
+  (`src/edumatch/orchestration/promotion.py`) refuse de publier un modèle
+  réentraîné qui ne bat pas strictement le plancher E21 en test — elle refuse
+  aujourd'hui, pour la même raison que le point précédent. Vérifié dans le
+  conteneur Airflow : aucune erreur d'import, quatre DAG chargés (1, 8, 3 et
+  3 tâches — `edumatch_audit_purge`, `edumatch_parcoursup`, `edumatch_sirene`,
+  `edumatch_referentiels`). Treize tâches distinctes au total dans
+  `src/edumatch/orchestration/taches.py`.
+- **Limite de la preuve** : `tests/unit/test_pipeline_dag_airflow.py` est
+  ignoré sur le poste de développement, Airflow n'y étant pas installé — la
+  vérification en conteneur ci-dessus est la seule preuve d'exécution du
+  graphe à ce jour. L'image Airflow du second dépôt embarque une configuration
+  antérieure à cet ajout : elle doit être reconstruite avant tout déploiement,
+  le nouveau code ne s'y charge pas sinon, constaté.
+
 ---
 
 ## Évaluations du jury
