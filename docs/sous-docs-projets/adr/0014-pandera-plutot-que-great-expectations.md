@@ -1,52 +1,39 @@
 # ADR 0014 — Pandera plutôt que Great Expectations pour les contrôles qualité
 
-**Date** : 2026-08-29 · **Statut** : accepté
+Statut : accepté (2026-08-29)
 
 ## Contexte
 
 E14 exige des contrôles qualité bloquants sur trois sources — Parcoursup,
 Sirene, référentiels. La structure du projet évoquait Great Expectations
-comme piste. Avant de l'adopter par défaut, j'ai mesuré le coût réel de
-chaque option contre le volume réel des données du dépôt : Parcoursup tient
-dans 82 Mo pour huit fichiers (14 252 lignes au plus par millésime), les
-référentiels dans quelques dizaines de milliers de lignes, et même Sirene
-(43,9 millions de lignes, 2,2 Go en Parquet) n'a jamais besoin d'être chargé
-en mémoire — il est lu par lots projetés sur 9 colonnes, comme le sera le job
-Spark d'agrégation (E17).
-
-Mesure faite avec `pip install --dry-run` sur l'environnement du dépôt :
-
-| | Great Expectations | Pandera |
-|---|---|---|
-| Poids du paquet | 5,7 Mo (wheel) | 447 Ko (wheel) |
-| Dépendances nouvelles | 9 directes (`altair`, `cryptography`, `jsonschema`, `marshmallow`, `ruamel.yaml`, `scipy`, `mistune`, `tqdm`, `tzlocal`) | 1 (`typeguard`) — le reste (`pandas`, `numpy`, `pydantic`) est déjà une dépendance du projet |
-| Mécanique minimale pour un contrôle bloquant | Magasin de contexte, suite d'attentes persistée, point de contrôle, action d'échec | `DataFrameSchema`, `.validate(df, lazy=True)`, exception `SchemaErrors` |
-
-## Options envisagées
-
-1. **Great Expectations** — écosystème complet (documentation HTML générée,
-   magasin de contextes, points de contrôle), pertinent pour un entrepôt
-   partagé entre plusieurs équipes, suivi dans la durée. Ici : neuf
-   dépendances nouvelles, dont plusieurs à compilation native, pour valider
-   un fichier de 82 Mo et un flux Sirene qui n'est de toute façon jamais un
-   DataFrame unique.
-2. **Pandera** — un schéma déclaré comme une fonction Python, validation en
-   mémoire, aucune dépendance nouvelle significative. Ne couvre bien que le
-   cas d'un DataFrame déjà construit (Parcoursup) ; pour Sirene, lu par
-   lots, un schéma Pandera couvrirait un lot et non le fichier entier, et les
-   compteurs de complétude devraient de toute façon être accumulés à la
-   main.
-3. **Compteurs et vérifications écrits à la main, sans dépendance** — retenu
-   pour `sirene.py` et `referentiels.py`, en complément de Pandera pour
-   `parcoursup.py`.
+comme piste, mais j'ai mesuré le coût réel de chaque option contre le volume
+réel des données : Parcoursup tient dans 82 Mo pour huit fichiers (14 252
+lignes au plus par millésime), les référentiels dans quelques dizaines de
+milliers de lignes, et même Sirene (43,9 millions de lignes, 2,2 Go) n'a
+jamais besoin d'être chargé en mémoire — il est lu par lots projetés sur 9
+colonnes. Mesuré avec `pip install --dry-run` sur l'environnement du
+dépôt : Great Expectations pèse 5,7 Mo et ajoute 9 dépendances directes
+(`altair`, `cryptography`, `jsonschema`...) ; Pandera pèse 447 Ko et
+n'ajoute qu'une dépendance (`typeguard`), le reste (`pandas`, `numpy`,
+`pydantic`) étant déjà présent.
 
 ## Décision
 
-Pandera pour `parcoursup.py` (un DataFrame par millésime). Compteurs et
-vérifications `pandas` écrits à la main pour `sirene.py` (flux par lots
-projetés) et `referentiels.py` — pas de dépendance supplémentaire, pour un
-coût de développement équivalent à ce qu'un DataFrame Pandera aurait de toute
-façon exigé d'accumulation manuelle. Great Expectations écarté.
+Pandera pour `parcoursup.py` (un DataFrame par millésime,
+`.validate(df, lazy=True)`). Compteurs et vérifications `pandas` écrits à la
+main pour `sirene.py` (flux par lots) et `referentiels.py`, sans dépendance
+supplémentaire, pour un coût de développement équivalent à ce qu'un
+DataFrame Pandera aurait de toute façon exigé d'accumulation manuelle.
+
+## Alternatives écartées
+
+- Great Expectations : pertinent pour un entrepôt partagé entre plusieurs
+  équipes, suivi dans la durée. Ici, neuf dépendances nouvelles, dont
+  plusieurs à compilation native, pour valider un fichier de 82 Mo et un
+  flux Sirene qui n'est de toute façon jamais un DataFrame unique.
+- Pandera pour Sirene aussi : un schéma Pandera couvrirait un lot et non le
+  fichier entier, et les compteurs de complétude devraient de toute façon
+  être accumulés à la main.
 
 ## Conséquences
 
@@ -57,9 +44,6 @@ de ces éléments n'est exigé par le critère 3.5 du bloc 3, qui porte sur la
 détection, la validation et le blocage — pas sur la traçabilité inter-équipes
 de l'historique des contrôles.
 
-**Seuil qui ferait reconsidérer la décision** : l'apparition d'un entrepôt
-partagé entre plusieurs équipes, suivi dans la durée, où la documentation
-générée automatiquement et l'historique des validations deviendraient
-eux-mêmes un livrable attendu — pas seulement un contrôle exécuté une fois
-par lancement de pipeline. Ce n'est pas la situation d'un candidat seul avec
-un entrepôt qui tient sur un poste de travail.
+Je reviendrais sur ce choix si un entrepôt partagé entre plusieurs équipes
+apparaissait, suivi dans la durée, où la documentation générée et
+l'historique des validations deviendraient eux-mêmes un livrable attendu.

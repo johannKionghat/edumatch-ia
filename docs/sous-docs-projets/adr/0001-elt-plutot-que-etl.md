@@ -1,29 +1,29 @@
 # ADR 0001 — ELT plutôt qu'ETL
 
-**Date** : 2026-08-24 · **Statut** : accepté
+Statut : accepté (2026-08-24)
 
 ## Contexte
 
 Trois sources publiques hétérogènes (Parcoursup, Sirene, référentiels), huit
-millésimes dont les schémas ont évolué, et des règles de nettoyage qui vont
+millésimes aux schémas qui ont évolué, et des règles de nettoyage appelées à
 changer pendant la construction.
-
-## Options envisagées
-
-1. **ETL** — transformer avant de charger. La couche brute n'est pas conservée.
-2. **ELT** — charger le brut en couche bronze, transformer ensuite avec dbt.
 
 ## Décision
 
-ELT.
+ELT : je charge le brut en couche bronze et je transforme ensuite avec dbt.
+
+## Alternatives écartées
+
+- ETL (transformer avant de charger) : la couche brute ne serait pas
+  conservée, et modifier une règle de nettoyage obligerait à retélécharger les
+  sources.
 
 ## Conséquences
 
-- Modifier une règle de nettoyage ne demande pas de re-télécharger les sources.
-- Le lignage brut → final est conservé : exigence du Bloc 3, critère 3.8.
-- Coût : stockage du brut, négligeable ici (Parcoursup 82 Mo mesurés, Sirene 4,63 Go).
-- La couche bronze est **immuable** : on n'y écrit jamais deux fois le même
-  fichier.
+Le lignage brut → final est conservé, ce qu'exige le critère 3.8 du bloc 3. Le
+coût de stockage du brut est négligeable ici (Parcoursup 82 Mo mesurés, Sirene
+4,63 Go). La couche bronze est immuable : je n'y écris jamais deux fois le
+même fichier.
 
-**Ce qui ferait reconsidérer** : une volumétrie brute dépassant plusieurs
-téraoctets, où le coût de stockage du brut deviendrait significatif.
+Je reviendrais sur ce choix si la volumétrie brute dépassait plusieurs
+téraoctets, au point de rendre ce stockage coûteux.

@@ -1,7 +1,7 @@
 # EduMatch — Architecture de référence
 
-**Moteur de matching explicable candidats ↔ formations**
-Alignée sur le dossier de certification (RNCP 38777) et le guide d'exécution — chaque composant est traçable vers un bloc de certification.
+Moteur de matching explicable candidats ↔ formations. Chaque composant
+décrit ici est rattaché à un bloc du dossier de certification (RNCP 38777).
 
 ---
 
@@ -21,7 +21,11 @@ Alignée sur le dossier de certification (RNCP 38777) et le guide d'exécution �
  référentiels, qq Mo      └─────────────────────────────┘       (journaux, registres)
 ```
 
-Principe structurant hérité du dossier : **deux couches séparées par la sensibilité et le volume**. La couche de volume (Sirene, aucune donnée personnelle, dizaines de Go) et la couche de décision (référentiels compacts + inférence, données personnelles minimisées). Le calcul lourd s'exécute là où le risque RGPD est structurellement nul.
+Principe structurant : deux couches séparées par la sensibilité et le
+volume. La couche de volume (Sirene, aucune donnée personnelle, plusieurs
+Go) et la couche de décision (référentiels compacts + inférence, données
+personnelles minimisées). Le calcul lourd s'exécute là où le risque RGPD
+est structurellement nul.
 
 ---
 
@@ -54,7 +58,9 @@ Principe structurant hérité du dossier : **deux couches séparées par la sens
 └──────────────────────┘   └────────────────────────────┘
 ```
 
-En **local (J1 → J7)**, le même graphe tourne en Docker Compose avec exactement trois services (`postgres`, `mlflow`, `airflow`) + l'API lancée à la main. L'isomorphisme local/prod est volontaire : ce qu'on filme à J8 est la même chaîne, provisionnée par Terraform.
+En local (J1 → J7), le même graphe tourne en Docker Compose avec trois
+services (`postgres`, `mlflow`, `airflow`) et l'API lancée à la main. La
+chaîne filmée à J8 est la même, provisionnée par Terraform.
 
 ---
 
@@ -88,7 +94,7 @@ GOLD    modèle en étoile                    densité, dynamique 10 ans,
         ENTRAÎNEMENT → ÉVALUATION → [seuil] → PROMOTION MLflow → DÉPLOIEMENT
 ```
 
-**Modèle en étoile (gold)** :
+Modèle en étoile (gold) :
 
 ```
                      dim_formation
@@ -98,7 +104,10 @@ GOLD    modèle en étoile                    densité, dynamique 10 ans,
                     dim_territoire ◀── agrégats Sirene rattachés ici
 ```
 
-Optimisation à retenir : les agrégats Sirene se rattachent à `dim_territoire` (et non à la table de faits), ce qui les rend réutilisables à la fois par le terme de débouchés et par les variables du modèle sans duplication — et permet de retirer les variables Sirene du modèle après ablation sans toucher au schéma.
+Les agrégats Sirene sont rattachés à `dim_territoire`, pas à la table de
+faits : ça les rend réutilisables à la fois par le terme de débouchés et
+par les variables du modèle sans duplication, et ça permet de retirer les
+variables Sirene du modèle après ablation sans toucher au schéma.
 
 ---
 
@@ -128,16 +137,21 @@ Requête candidat : { bac, mention, boursier, territoire, intérêts }   ← min
   notice art. 13)                  POST /feedback
 ```
 
-Décision d'architecture clé sur la latence : **les explications SHAP sont précalculées par cellule** (~77 000 par millésime, coût borné) et servies en lecture. L'inférence LightGBM est en mémoire. Le SLO p95 < 300 ms sur `/matching` tient sans cache supplémentaire.
+Sur la latence : les explications SHAP sont précalculées par cellule
+(environ 77 000 par millésime, coût borné) et servies en lecture.
+L'inférence LightGBM tient en mémoire. Le SLO p95 < 300 ms sur `/matching`
+tient sans cache supplémentaire.
 
-Le RAG (CamemBERT → FAISS → LangChain → Mistral-small) reste une **brique secondaire** montée dans le même conteneur API : il restitue les sources qui fondent une recommandation, il ne participe pas au score et n'est pas dans le périmètre dérive/réentraînement.
+Le RAG (CamemBERT → FAISS → LangChain → Mistral-small) est une brique
+secondaire, montée dans le même conteneur API : il restitue les sources
+qui fondent une recommandation, il ne participe pas au score et n'est pas
+dans le périmètre dérive/réentraînement.
 
 ---
 
 ## 5. Dépôt 1 — `edumatch-ia`
 
-Structure normée (*Cookiecutter Data Science* adapté). L'arborescence réelle du
-dépôt, à jour.
+Structure inspirée de *Cookiecutter Data Science*, adaptée au projet.
 
 ```
 edumatch-ia/
@@ -162,7 +176,7 @@ edumatch-ia/
 │   │   ├── models/{bronze,silver,gold}/
 │   │   └── schema.yml             tests not_null / unique / relationships → lignage
 │   ├── spark/
-│   │   └── sirene_agregats.py     LE job distribué : 9 col., filtre, agrégat, bassin
+│   │   └── sirene_agregats.py     job distribué : 9 col., filtre, agrégat, bassin
 │   ├── referentiel/
 │   │   └── naf_rome_formation.csv actif versionné + test de couverture dédié
 │   ├── features/
@@ -205,7 +219,6 @@ edumatch-ia/
 │   ├── 01-donnees/ … 05-gouvernance/
 │   ├── ARCHITECTURE_EduMatch.md   ce document
 │   ├── adr/                       un ADR par décision, écrit le jour même
-│   ├── jury/                      les évaluations successives
 │   └── dossier/                   dossier de certification + son générateur
 │
 ├── .github/workflows/             CI/CD (miroir du dépôt 2 pour les tests)
@@ -214,20 +227,20 @@ edumatch-ia/
 └── README.md
 ```
 
-**Correspondance medallion** — le dossier de certification parle bronze / silver /
-gold ; le système de fichiers suit la convention data science standard.
-`raw = bronze`, `interim = silver`, `processed = gold`. L'équivalence est
-rappelée dans le README.
+Le dossier de certification parle bronze / silver / gold ; le système de
+fichiers suit la convention data science standard. `raw = bronze`,
+`interim = silver`, `processed = gold` — l'équivalence est rappelée dans
+le README.
 
-Trois choix qui renforcent la défense devant le jury :
+Trois choix qui comptent pour la défense devant le jury :
 
-- **`config.py` centralisé** — aucun seuil ni chemin en dur. Chaque seuil cité en
-  ADR pointe vers une ligne de `configs/*.yaml`.
-- **`api/audit.py` isolé** — la journalisation de l'article 12 est un composant
-  nommé, pas un effet de bord dispersé dans les routes.
-- **`data/samples/` versionné** — quelques centaines de lignes par source, qui
-  permettent d'exécuter la suite de tests sans télécharger 4,6 Go. C'est ce qui
-  rend la CI possible.
+- `config.py` centralisé — aucun seuil ni chemin en dur. Chaque seuil
+  cité en ADR pointe vers une ligne de `configs/*.yaml`.
+- `api/audit.py` isolé — la journalisation de l'article 12 est un
+  composant nommé, pas un effet de bord dispersé dans les routes.
+- `data/samples/` versionné — quelques centaines de lignes par source,
+  qui permettent d'exécuter la suite de tests sans télécharger 4,6 Go.
+  C'est ce qui rend la CI possible.
 
 ## 6. Dépôt 2 — `edumatch-cicd`
 
@@ -245,14 +258,16 @@ edumatch-cicd/
 ├── k8s/
 │   ├── api-deployment.yaml        # 2 réplicas, requests/limits explicites
 │   ├── service.yaml + ingress.yaml# TLS
-│   └── hpa.yaml                   # ← matérialise l'argument saisonnalité 1:6
+│   └── hpa.yaml                   # matérialise l'argument saisonnalité 1:6
 └── monitoring/
     ├── prometheus/                # scrape API + Airflow
     ├── grafana/                   # 1 dashboard technique + 1 dashboard modèle
     └── derive/                    # PSI + KS calculés directement (ADR 0018), seuil documenté
 ```
 
-Traçabilité totale exigible en soutenance : **commit → image (tag = hash) → modèle (version MLflow) → déploiement**. Toute version en production remonte à un commit et un modèle.
+La chaîne de traçabilité visée en soutenance : commit → image (tag =
+hash) → modèle (version MLflow) → déploiement. Toute version en
+production remonte à un commit et un modèle.
 
 ---
 
@@ -271,7 +286,10 @@ Traçabilité totale exigible en soutenance : **commit → image (tag = hash) �
         au-delà du seuil documenté → déclenchement du réentraînement
 ```
 
-Trois propriétés non négociables du DAG, toutes testées et filmées : **idempotence** (relance = même résultat), **reprise sur erreur** (retries à temporisation croissante), **blocage qualité** (un échec de contrôle qualité arrête tout — une donnée corrompue n'atteint jamais le modèle).
+Trois propriétés du DAG, testées et filmées : idempotence (relance = même
+résultat), reprise sur erreur (retries à temporisation croissante),
+blocage qualité (un échec de contrôle qualité arrête tout, une donnée
+corrompue n'atteint jamais le modèle).
 
 ---
 
@@ -290,10 +308,21 @@ Trois propriétés non négociables du DAG, toutes testées et filmées : **idem
 
 ---
 
-## 9. Ce que cette architecture optimise — les cinq arbitrages
+## 9. Les cinq arbitrages qui structurent cette architecture
 
-1. **Distribué là où c'est nécessaire, et seulement là.** Spark sur Sirene (jointure 43,9 M d'établissements × formations, chiffre mesuré en E06 par métadonnée Parquet — corrigé depuis l'estimation 36 M, jamais recalculée), Polars + dbt sur Parcoursup (82 Mo, mesuré en E05, corrigé depuis l'estimation ~100 Mo). Le seuil est une règle, pas un principe.
-2. **Latence par précalcul, pas par cache.** Espace des cellules fini → SHAP et agrégats débouchés précalculés → SLO garanti par construction, sans Redis ni couche supplémentaire à opérer.
-3. **Coût par élasticité.** HPA dimensionné sur la saisonnalité 1:6 ; local jusqu'à J7, cloud provisionné/détruit par Terraform à J8. FinOps et GreenOps alignés.
-4. **Conformité par construction.** La séparation volume/décision fait que le périmètre RGPD est minimal *architecturalement*, pas par une politique qu'il faudrait faire respecter.
-5. **Réversibilité mesurée.** L'ablation peut retirer les variables Sirene du modèle sans toucher au schéma (agrégats sur `dim_territoire`) ; la promotion du modèle est conditionnée à un seuil, le rollback est un re-tag MLflow.
+1. **Distribué là où c'est nécessaire, seulement là.** Spark sur Sirene
+   (jointure 43,9 M d'établissements × formations, mesuré en E06 par
+   métadonnée Parquet), Polars + dbt sur Parcoursup (82 Mo, mesuré en
+   E05). Le seuil est une règle mesurée, pas un principe général.
+2. **Latence par précalcul, pas par cache.** L'espace des cellules est
+   fini, donc SHAP et agrégats débouchés sont précalculés : le SLO est
+   garanti par construction, sans Redis ni couche supplémentaire.
+3. **Coût par élasticité.** HPA dimensionné sur la saisonnalité 1:6 ;
+   local jusqu'à J7, cloud provisionné puis détruit par Terraform à J8.
+4. **Conformité par construction.** La séparation volume/décision rend le
+   périmètre RGPD minimal architecturalement, pas par une politique qu'il
+   faudrait faire respecter à côté.
+5. **Réversibilité mesurée.** L'ablation peut retirer les variables
+   Sirene du modèle sans toucher au schéma (agrégats sur
+   `dim_territoire`) ; la promotion du modèle est conditionnée à un
+   seuil, le rollback est un re-tag MLflow.

@@ -1,484 +1,136 @@
 # ADR 0019 — Airflow en production sur une instance Scaleway dédiée, pas sur le cluster Kapsule
 
-**Date** : 2026-09-15 · **Statut** : proposé, amendé le 2026-09-15 (voir la section
-« Amendement » en fin de document : moteur de l'agrégat Sirene et contenu de l'image
-Airflow, sans remise en cause du choix de l'instance dédiée)
+Statut : accepté (2026-09-15) · amendé le 2026-09-15 (moteur de l'agrégat
+Sirene et contenu de l'image Airflow, sans remise en cause du choix de
+l'instance dédiée)
 
 ## Contexte
 
-Le critère 3.12 du bloc 3 exige une vidéo du pipeline **en production**, avec une panne
-et sa reprise. Sans cette vidéo, le bloc n'est pas validé. Or, à la date de cette décision :
+Le critère 3.12 exige une vidéo du pipeline en production, avec une panne et
+sa reprise. Le graphe existe et est testé : quatre DAG (Parcoursup annuel,
+Sirene mensuel, référentiels et purge d'audit quotidiens), la reprise
+décidée dans le code (jusqu'à 3 tentatives, 60 s puis 120 s, uniquement pour
+une erreur transitoire) et prouvée par test d'intégration. Mais Airflow n'a
+jamais tourné dans un vrai Airflow : le service `docker-compose.yml` démarre
+en mode `standalone` sur SQLite, que la documentation Airflow elle-même
+déclare impropre à la production. Le socle Terraform provisionne un cluster
+Kapsule dont les manifestes ne déploient que l'API ; aucun fichier ne
+déploie Airflow dessus. Le dossier promet que la vidéo montre « la même
+chaîne, provisionnée par Terraform » : filmer sur le poste de développement
+contredirait cette phrase, et une incohérence entre dossier et dépôt
+invalide un bloc à elle seule.
 
-- Le graphe existe et il est testé : `pipelines/edumatch_pipeline.py` définit quatre DAG
-  (Parcoursup `@yearly`, Sirene `@monthly`, référentiels `@daily`, purge d'audit
-  `@daily`, voir `configs/base.yaml`). La reprise n'est pas confiée à Airflow
-  (`retries: 0`). Elle est décidée dans le code, par
-  `orchestration/reprise.py` : jusqu'à `tentatives_max: 3` exécutions, avec une
-  temporisation de 60 s puis 120 s (`delai_reprise_secondes: 60`,
-  `facteur_backoff: 2.0`), et seulement pour une `ErreurTransitoire`. Le blocage qualité
-  (`ErreurQualiteBloquante`, définitive) et l'idempotence de l'enchaînement sont prouvés
-  par `tests/integration/test_pipeline_enchainement.py`.
-- **Airflow n'a jamais tourné dans un vrai Airflow.** Les tests exécutent les fonctions
-  de `orchestration/taches.py` sans l'ordonnanceur. Le service `airflow` de
-  `docker-compose.yml` démarre en mode `standalone` sur une base SQLite embarquée. Ce mode
-  n'exécute qu'une tâche à la fois, et le fichier le déclare lui-même impropre à la
-  production.
-- Le socle Terraform (dépôt `edumatch-cicd`, dossier `terraform/`) provisionne un cluster
-  Kapsule : un pool de 1 à 2 nœuds DEV1-M (3 vCPU, 4 Go), un registre privé et un bucket
-  d'artefacts. Les manifestes `k8s/base/` ne déploient **que l'API**. Aucun fichier ne
-  déploie Airflow sur le cluster, et `terraform apply` n'a encore jamais été exécuté.
-- `ARCHITECTURE_EduMatch.md` promet que « ce qu'on filme à J8 est la même chaîne,
-  provisionnée par Terraform ». Filmer Airflow sur le poste de développement
-  contredirait cette phrase du dossier. Or une incohérence entre le dossier et le dépôt
-  invalide un bloc à elle seule.
-
-J'ai trouvé un défaut en instruisant cette décision, et il vaut quelle que soit l'option
-retenue. `configs/prod.yaml` fixe `execution.moteur_volume: cluster`, et le service
-`airflow` de `docker-compose.yml` démarre avec `EDUMATCH_ENV=prod`. La tâche
-`agreger_sirene` emprunte donc le chemin PySpark (`spark/run_sirene_agregats.py`, mode
-`local[*]`). Mais `docker/Dockerfile.airflow` installe le paquet sans l'extra `[spark]`
-(`pyproject.toml`), et l'image de base `apache/airflow` n'embarque pas de machine
-virtuelle Java. **En l'état, le DAG `edumatch_sirene` échouerait en production** au
-moment d'importer `pyspark`. Je ne l'ai pas encore observé : je l'ai déduit en lisant le
-code, et c'est la première chose à confirmer au premier lancement.
+En instruisant cette décision, j'ai aussi trouvé un défaut valable quelle
+que soit l'option retenue : `configs/prod.yaml` fixait le moteur de
+l'agrégat Sirene sur Spark, mais l'image Airflow n'embarque ni Java ni
+PySpark. Le DAG Sirene aurait échoué en production — déduit en lisant le
+code, à confirmer au premier lancement.
 
 ## Les chiffres qui servent à trancher
 
-Tarifs hors taxes, relevés le 2026-09-15 sur les pages tarifaires publiques de Scaleway :
-
-| Ressource | Prix horaire | Un mois complet |
-|---|---:|---:|
-| Instance DEV1-M (3 vCPU, 4 Go) | 0,0202 € | ≈ 14,74 € |
-| Instance DEV1-L (4 vCPU, 8 Go) | 0,04284 € | ≈ 31,27 € |
-| Instance DEV1-XL (4 vCPU, 12 Go) | 0,06508 € | ≈ 47,50 € |
-| IPv4 flexible | 0,005 € | ≈ 3,6 € |
-| Stockage bloc 5K | 0,000130 € / Go | ≈ 0,095 € / Go |
-
-Empreinte d'Airflow, d'après les sources officielles :
-
-- La documentation Airflow 2.9.3 demande **au moins 4 Go de mémoire** pour faire tourner
-  la pile Docker Compose de référence : base de métadonnées, ordonnanceur, serveur web,
-  travailleur, déclencheur. Elle recommande 8 Go sur macOS.
-- Les valeurs par défaut du chart Helm officiel (version 1.15.0) prévoient
-  `executor: CeleryExecutor`, et activent PostgreSQL, Redis, StatsD et le déclencheur.
-  **Aucun composant ne porte de `requests` ni de `limits`** : `resources: {}` partout.
-  L'ordonnanceur Kubernetes placerait donc ces pods sans connaître leur besoin.
-- Le guide de production du même chart écarte sa propre base embarquée : « Embedded
-  Postgres lacks stability, monitoring and persistence features that you need for a
-  production database. »
-
-Mémoire déjà réservée sur le cluster, d'après les manifestes :
-
-| Charge | `requests` mémoire |
-|---|---:|
-| API au pic, 6 réplicas × 320 Mi (`hpa.yaml`, `deployment.yaml`) | 1 920 Mi |
-| Prometheus, Alertmanager, Grafana (`monitoring/README.md`) | 448 Mi |
-| **Total déjà réservé** | **2 368 Mi** |
-| Capacité brute du pool au maximum (2 × 4 096 Mi) | 8 192 Mi |
-
-Volume à stocker, mesuré sur le poste de développement : `data/raw/sirene` 4,4 Go,
-`data/raw/parcoursup` 82 Mo, `interim` 37 Mo, `processed` 123 Mo, `external` 32 Mo. Soit
-environ 4,7 Go de données, auxquels s'ajoutent les images Docker et les fichiers
-temporaires de Spark (**à mesurer**).
-
-Deux chiffres restent inconnus et je ne les invente pas :
-
-- **le pic mémoire de la tâche `agreger_sirene` en mode Spark** sur les 43 896 818 lignes
-  de `StockEtablissement` ;
-- **la mémoire que Kapsule réserve au système sur chaque nœud DEV1-M.**
-
-Les deux sont à mesurer au premier lancement réel.
-
-## Options envisagées
-
-### 1. Airflow sur le cluster Kapsule (chart Helm officiel ou manifestes)
-
-- **Tenue en mémoire** : si j'ajoute les 4 Go minimum de la documentation aux 2 368 Mi
-  déjà réservés, j'arrive à 6 464 Mi, soit **79 % de la capacité brute du pool à son
-  maximum**. Ce calcul est fait avant la réservation système de chaque nœud et avant le
-  pic de la tâche Spark, qui s'exécute *dans* le travailleur. Deux nœuds DEV1-M ne
-  suffisent pas. Il faudrait un troisième nœud ou un pool dédié : +0,02 à +0,04 €/h
-  selon le type.
-- **Mise en œuvre** :
-  - Écrire des `requests`/`limits` pour chaque composant, puisque le chart n'en fournit
-    aucun.
-  - Choisir la base de métadonnées. La base embarquée est écartée par la documentation
-    du chart elle-même. Une base PostgreSQL managée Scaleway ajouterait un coût que je
-    n'ai pas vérifié.
-  - Construire l'image, qui doit porter les DAG.
-  - Surtout, résoudre le partage des données entre tâches. Avec l'exécuteur
-    `KubernetesExecutor`, chaque tâche tourne dans son propre pod : le pod
-    `controler_qualite` devrait relire ce que le pod `ingerer_sirene` vient d'écrire.
-    Or le stockage bloc Scaleway ne se monte que sur un seul nœud à la fois (accès
-    `ReadWriteOnce`, limite déjà relevée dans `terraform/main.tf`). Pour que plusieurs
-    pods voient les mêmes fichiers, il faudrait réécrire toutes les entrées-sorties du
-    pipeline vers le stockage objet, ce qui représente plusieurs jours. Avec
-    `LocalExecutor`, toutes les tâches restent dans un seul pod accroché à un volume
-    `ReadWriteOnce` : cela revient à une machine unique enfermée dans un pod, avec la
-    complexité de Kubernetes et sans rien de son intérêt.
-- **Charge d'ici le 24 septembre** : plusieurs jours, sur un socle jamais appliqué, pour
-  un premier lancement d'Airflow qui aurait lieu *dans* ce socle. C'est le risque le plus
-  élevé des trois options.
-- **Ce que l'option prouve** : c'est la lecture la plus forte de « en production ».
-- **Ce qu'un jury pourrait objecter** : « Pourquoi un cluster élastique pour un traitement
-  mensuel ? » La saisonnalité de 1 à 6, qui justifie Kubernetes et le HPA, porte sur les
-  requêtes de l'API pendant la campagne de vœux, pas sur le pipeline. Le pipeline tourne
-  selon sa cadence (une fois par an, par mois, par jour) et n'a aucun pic concurrent à
-  absorber.
-
-### 2. Airflow sur une instance Scaleway dédiée, provisionnée par le même Terraform
-
-- **Coût** :
-  - si l'instance tourne en permanence : DEV1-L + IPv4 + 60 Go de stockage bloc ≈ 31,27
-    + 3,6 + 5,7 ≈ **40 € HT par mois** ;
-  - pour une séance de tournage de 6 heures : ≈ 0,26 + 0,03 + 0,05 ≈ **0,35 €** ;
-  - si l'instance reste allumée pendant toute la préparation, du 18 au 29 septembre
-    (≈ 288 h) : ≈ **16 €**.
-- **Choix du DEV1-L plutôt que du DEV1-M** : 4 Go correspondent exactement au plancher
-  documenté pour Airflow seul, sans laisser de place à MLflow ni à la tâche Spark.
-  DEV1-XL (12 Go) reste le repli si la mesure du pic Spark l'exige.
-- **Mise en œuvre** :
-  - un fichier Terraform de plus : instance, IPv4, groupe de sécurité, rattachement au
-    réseau privé existant ;
-  - un fichier d'initialisation qui installe Docker ;
-  - une surcouche Compose qui remplace le mode `standalone` (SQLite, une tâche à la
-    fois) par `LocalExecutor` sur le PostgreSQL déjà présent dans la pile ;
-  - la correction de l'image Airflow (Java et `[spark]`).
-
-  Ces pièces sont toutes connues, sans mécanisme nouveau à inventer. J'estime le travail
-  à un ou deux jours ; c'est une estimation, pas une mesure.
-- **Ce que l'option prouve** : une infrastructure provisionnée par du code, chez le
-  fournisseur de production, qui télécharge les données réelles depuis leurs sources
-  publiques et les traite selon leur cadence réelle. Et c'est la même chaîne que la pile
-  locale, ce qui tient la promesse du dossier.
-- **Ce qu'un jury pourrait objecter** : « La documentation d'Airflow dit que Docker
-  Compose n'est pas conçu pour la production. » Ma réponse est dans la section
-  Conséquences.
-
-### 3. Airflow local, filmé, en définissant « production » par les données et la cadence
-
-- **Coût** : nul. **Mise en œuvre** : finir la pile locale déjà en cours.
-- **Ce que l'option prouve** : le mécanisme de reprise, le blocage et l'idempotence, sur
-  données réelles.
-- **Ce qu'un jury pourrait objecter** : « C'est votre ordinateur, pas la production. »
-  L'argument sémantique se défend, mais il se retourne contre moi pour deux raisons.
-  D'abord, le dossier promet la même chaîne provisionnée par Terraform, donc la vidéo le
-  contredirait. Ensuite, les critères 2.3 et 2.10 exigent déjà une infrastructure
-  déployée : si la vidéo du pipeline est la seule à se tourner hors du cloud, le jury
-  remarquera l'asymétrie et me demandera pourquoi.
+Tarifs Scaleway relevés le 2026-09-15 : instance DEV1-M (3 vCPU, 4 Go)
+0,0202 €/h (≈14,74 €/mois), DEV1-L (4 vCPU, 8 Go) 0,04284 €/h
+(≈31,27 €/mois), IPv4 flexible 0,005 €/h, stockage bloc 0,000130 €/Go. La
+documentation Airflow 2.9.3 demande au moins 4 Go de mémoire pour sa pile
+Compose de référence. Sur le cluster Kapsule, la mémoire déjà réservée (API
+au pic + monitoring) atteint 2 368 Mi sur une capacité brute de 8 192 Mi ; y
+ajouter les 4 Go d'Airflow porte le total à 6 464 Mi, 79 % de la capacité
+brute, avant même le pic de la tâche Spark. Deux chiffres restent inconnus
+et je ne les invente pas : le pic mémoire réel de l'agrégation Sirene, et la
+mémoire que Kapsule réserve au système sur chaque nœud — à mesurer au
+premier lancement.
 
 ## Décision
 
-**Option 2.** En production, Airflow tourne sur une instance Scaleway dédiée de type
-**DEV1-L**, provisionnée par le Terraform d'`edumatch-cicd` sur le réseau privé du
-cluster. Elle y exécute la pile Compose du dépôt dans une configuration de production :
+En production, Airflow tourne sur une instance Scaleway dédiée de type
+DEV1-L, provisionnée par le même Terraform, sur le réseau privé du cluster :
+exécuteur `LocalExecutor`, base de métadonnées PostgreSQL, image tirée du
+registre privé et étiquetée par l'empreinte du commit, aucune interface
+exposée publiquement (accès par tunnel SSH). Coût : environ 40 €/mois si
+l'instance tourne en permanence, environ 0,35 € pour une séance de tournage
+de 6 heures.
 
-- l'exécuteur `LocalExecutor` ;
-- une base de métadonnées PostgreSQL ;
-- une image tirée du registre privé et étiquetée par l'empreinte du commit ;
-- aucune interface exposée publiquement.
+## Alternatives écartées
 
-Les alternatives sont écartées pour les raisons suivantes :
-
-- **Kapsule (option 1)** : 6 464 Mi réservés sur 8 192 Mi bruts avant même le pic de la
-  tâche Spark. Le partage de données entre pods de tâches est impossible sur un stockage
-  bloc `ReadWriteOnce` sans réécrire les entrées-sorties. Et le risque n'est pas
-  compatible avec l'échéance du 24 septembre. Kubernetes reste le bon choix pour l'API,
-  dont la charge est élastique, et un mauvais choix pour un traitement périodique
-  mono-machine.
-- **Local (option 3)** : l'option coûte 0 € mais contredit le dossier et laisse le
-  critère 3.12 à la merci d'une lecture stricte de « en production ». L'écart de coût
-  avec l'option 2 est de l'ordre de 0,35 € par séance de tournage. Il ne justifie pas ce
-  risque.
+- Airflow sur le cluster Kapsule (chart Helm ou manifestes) : 79 % de la
+  capacité brute du pool réservée avant même le pic Spark, et le partage de
+  données entre pods de tâches est impossible sur un stockage bloc
+  `ReadWriteOnce` sans réécrire toutes les entrées-sorties vers le stockage
+  objet — plusieurs jours de travail sur un socle jamais appliqué,
+  incompatible avec l'échéance du 24 septembre. Kubernetes reste le bon
+  choix pour l'API, dont la charge est élastique (rapport de 1 à 6 pendant
+  la campagne), pas pour un traitement périodique mono-machine.
+- Airflow local, filmé, en redéfinissant « production » par les données et
+  la cadence : coût nul mais contredit la promesse du dossier, et laisse le
+  critère 3.12 à la merci d'une lecture stricte de « en production » —
+  l'écart de coût avec l'instance dédiée (0,35 € par séance) ne justifie
+  pas ce risque.
 
 ## Conséquences
 
-- **Deux plans d'exécution, chacun à sa place.** Kapsule sert l'API, dont la charge suit
-  la campagne de vœux avec un rapport de 1 à 6. L'instance dédiée exécute le pipeline,
-  dont la charge suit la cadence de publication des sources. Le diagramme C4 de niveau 2
-  doit montrer les deux, sinon le dossier ne décrirait pas l'infrastructure réelle.
-- **Ce que j'assume de « Docker Compose en production ».** La mise en garde de la
-  documentation vise le fichier de démarrage rapide : SQLite, mots de passe par défaut,
-  interface ouverte. Je n'utilise aucun de ces trois éléments en production :
-  - la base de métadonnées est PostgreSQL ;
-  - les secrets passent par l'environnement ;
-  - l'interface n'est joignable que par un tunnel SSH, et le groupe de sécurité
-    n'autorise en entrée que le port 22, depuis ma seule adresse.
+Deux plans d'exécution, chacun à sa place : Kapsule sert l'API dont la
+charge suit la campagne de vœux, l'instance dédiée exécute le pipeline dont
+la charge suit la cadence de publication des sources — le C4 de niveau 2
+doit montrer les deux. Ce que j'assume de « Docker Compose en production » :
+la mise en garde de la documentation vise le démarrage rapide (SQLite, mots
+de passe par défaut, interface ouverte), aucun des trois n'est présent ici.
+Ce que je ne revendique pas : la haute disponibilité de l'ordonnanceur — une
+instance arrêtée retarde une exécution mensuelle, ça n'interrompt aucun
+service pour un utilisateur. L'infrastructure reste éphémère, détruite après
+le tournage. Le monitoring du pipeline (critère 3.7) n'est pas couvert par
+cette décision, c'est un point ouvert. La reprise n'étant pas gérée par le
+mécanisme natif d'Airflow, la vidéo doit ouvrir le journal de la tâche pour
+la montrer.
 
-  Ce que je ne revendique pas : la haute disponibilité de l'ordonnanceur. Une instance
-  arrêtée, c'est une exécution mensuelle retardée, pas un service interrompu pour un
-  utilisateur. Aucun conseiller n'attend ce traitement en direct.
-- **L'infrastructure reste éphémère**, avec la même règle de coût que le cluster :
-  `airflow_active = false` et `terraform apply` après le tournage suppriment l'instance.
-  Les données se retéléchargent depuis leurs sources publiques, et c'est justement ce
-  que la vidéo montre.
-- **Le monitoring du pipeline (critère 3.7) n'est pas traité par cette décision.**
-  L'instance n'est pas collectée par le Prometheus du cluster. C'est un point ouvert, à
-  arbitrer séparément.
-- **La reprise n'est pas visible dans le graphe d'Airflow.** La décision de reprendre est
-  prise dans le code, pas par le mécanisme natif d'Airflow. La tâche ne passe donc pas
-  par l'état `up_for_retry`. **La vidéo doit ouvrir le journal de la tâche** pour montrer
-  « tentative 1/3 … nouvelle tentative dans 60 s ». Sinon, la reprise ne se voit pas à
-  l'écran.
+La panne se filme en trois temps : une coupure réseau pendant l'ingestion
+Sirene (`iptables REJECT` sur le trafic sortant des conteneurs, rétabli
+avant la fin des 60 s de temporisation, deuxième tentative qui retélécharge
+depuis le début le fichier interrompu) ; un contrôle qualité bloquant
+(retrait contrôlé d'une colonne de la liste blanche sur le dernier
+millésime, les tâches en aval passent en `upstream_failed`, restauration
+vérifiée par SHA-256) ; une vérification d'idempotence (relance du même DAG,
+comparaison du contenu des sorties avant et après).
 
-## Comment la panne sera montrée dans cet environnement
-
-**1. Panne transitoire : coupure réseau pendant une ingestion.** Je déclenche le DAG
-`edumatch_sirene` sur un dossier `raw/sirene` vide. Pendant le téléchargement, que le
-journal de progression rend visible, je coupe le trafic sortant des conteneurs depuis
-l'hôte :
-
-```bash
-sudo iptables -I DOCKER-USER -p tcp --dport 443 -j REJECT --reject-with tcp-reset
-```
-
-- **Pourquoi `REJECT` et pas `DROP`.** Avec `DROP`, les paquets disparaissent sans
-  réponse : la connexion resterait suspendue jusqu'au délai de lecture du connecteur, soit
-  20 minutes (`DELAI_ATTENTE_SECONDES_SIRENE`). Avec `REJECT`, la connexion est
-  réinitialisée immédiatement.
-- **Pourquoi la chaîne `DOCKER-USER`.** Elle ne filtre que le trafic des conteneurs, donc
-  la connexion SSH de tournage n'est pas coupée.
-- **Ce qui s'affiche.** Le journal de la tâche montre l'échec transitoire et la
-  temporisation de 60 s.
-- **Le rétablissement.** Je rétablis le réseau avant la fin de ces 60 s :
-
-  ```bash
-  sudo iptables -D DOCKER-USER -p tcp --dport 443 -j REJECT --reject-with tcp-reset
-  ```
-
-  La deuxième tentative saute les fichiers déjà intacts, vérifiés contre le manifeste
-  SHA-256. Elle retélécharge **depuis le début** le fichier interrompu : le connecteur ne
-  reprend pas par plage d'octets, et le fichier `.part` est supprimé. La tâche finit en
-  succès.
-- **Variante.** Si je laisse la coupure au-delà des trois tentatives, soit 180 s
-  cumulées, l'erreur `ErreurRepriseEpuisee` s'affiche, la tâche échoue et les tâches en
-  aval passent en `upstream_failed`. Après avoir rétabli le réseau, j'utilise « Clear » :
-  la chaîne repart sans retélécharger ce qui est déjà intact.
-- **À vérifier en répétition, avant de filmer.** Une réinitialisation en plein flux doit
-  lever une sous-classe de `requests.RequestException`, pour être traduite en
-  `ErreurReseauSirene` (transitoire). Si ce n'est pas le cas, c'est un défaut du
-  connecteur, à corriger, pas à contourner.
-
-**2. Arrêt définitif : contrôle qualité bloquant.** Je rejoue en production le scénario
-du test d'intégration `test_panne_qualite_arrete_la_chaine_avant_la_transformation` :
-
-- **Injection.** Un script d'injection contrôlée sauvegarde le millésime Parcoursup le
-  plus récent, puis en retire une colonne de la liste blanche.
-- **Ce qui s'affiche.** Dans le DAG `edumatch_parcoursup`, `controler_qualite` échoue au
-  premier essai, sans aucune reprise. `transformer_silver`, `construire_gold`,
-  `construire_variables` et `detecter_derive` passent en `upstream_failed`, et la date de
-  modification de `interim/parcoursup/silver.parquet` ne bouge pas.
-- **Restauration.** Le script remet le fichier d'origine en place, puis vérifie que son
-  SHA-256 est identique au manifeste. La chaîne se relance ensuite jusqu'au bout.
-- **Ce que j'annonce à l'écran.** Il s'agit d'une injection volontaire. La modification
-  de `raw/` ne dure que la démonstration et elle est vérifiée réversible octet pour
-  octet.
-
-**3. Idempotence.** Après une exécution réussie, je relance le même DAG sans rien
-changer :
-
-- l'ingestion journalise que chaque fichier est déjà présent et intact, et le manifeste
-  est inchangé ;
-- un script compare le **contenu** des sorties (`silver.parquet`,
-  `fait_admission.parquet`, `variables.parquet`, agrégat Sirene) avant et après
-  l'exécution, avec la même égalité de tables que le test d'intégration. Je ne compare
-  pas les empreintes binaires : je n'ai pas vérifié qu'un fichier Parquet réécrit reste
-  identique octet pour octet.
-
-## Ce qui reste à construire
-
-Dans **`edumatch-cicd`**, une fois terminée la correction en cours sur ce dépôt :
-
-1. `terraform/airflow.tf` :
-   - `scaleway_instance_ip.airflow` ;
-   - `scaleway_instance_security_group.airflow` : entrée refusée par défaut, TCP 22
-     accepté depuis `var.cidr_operateur` seulement, sortie ouverte, `stateful = true` ;
-   - `scaleway_instance_server.airflow` : `type = var.type_instance_airflow`, image
-     Ubuntu LTS dont le libellé est à confirmer par `scw instance image list`, volume
-     racine de `var.taille_volume_airflow_go`, groupe de sécurité, IP, rattachement à
-     `scaleway_vpc_private_network.edumatch`, `user_data` d'initialisation.
-
-   Toutes ces ressources portent `count = var.airflow_active ? 1 : 0`.
-2. `terraform/cloud-init/airflow.yaml` : installation de Docker Engine et du plugin
-   Compose, création du répertoire `/srv/edumatch/data`. **Aucun secret dans ce
-   fichier** : les données d'initialisation d'une instance sont lisibles dans ses
-   métadonnées. La connexion au registre se fait par SSH, avec la clé lue depuis
-   l'environnement.
-3. `terraform/variables.tf` :
-   - `type_instance_airflow`, par défaut `DEV1-L`, avec le prix relevé en description ;
-   - `cidr_operateur`, sans valeur par défaut, donc obligatoire ;
-   - `airflow_active`, par défaut `false` ;
-   - `taille_volume_airflow_go`, par défaut `60`.
-4. `terraform/outputs.tf` : `airflow_ip_publique` et `airflow_commande_tunnel`
-   (`ssh -L 8080:127.0.0.1:8080 …`).
-5. `.github/workflows/build-images.yml` : construction et publication de l'image
-   `edumatch-airflow`, étiquetée par l'empreinte courte du commit, comme `serve` et
-   `train`.
-6. `README.md` et `terraform/README.md` : la séquence provisionner, déployer, tourner,
-   détruire propre à l'instance, et son coût.
-
-Dans **`edumatch-ia`** :
-
-7. `docker/Dockerfile.airflow` — **fait, selon une prescription différente de celle
-   écrite ici** (voir l'amendement du 2026-09-15). La recommandation initiale était :
-   - ~~installer une machine virtuelle Java headless compatible avec Spark 3.5~~ ;
-   - ~~installer `.[spark]` avec le fichier de contraintes qu'Airflow publie pour
-     2.9.3~~ ;
-   - copier `pipelines/` dans le dossier des DAG, pour que l'image embarque ses DAG au
-     lieu de les monter depuis l'hôte : le graphe qui tourne en production est alors
-     celui du commit étiqueté.
-
-   J'ai essayé les deux premiers points, puis je les ai abandonnés : ils cassent le cœur
-   d'Airflow. Le troisième est fait, et je l'ai complété par la copie de `configs/` et
-   l'ajout de `libgomp1`.
-8. `docker-compose.prod.yml`, une surcouche du fichier existant :
-   - les services `airflow-init` (`airflow db migrate`, puis création du compte
-     administrateur depuis l'environnement), `airflow-scheduler` et `airflow-webserver`,
-     avec `AIRFLOW__CORE__EXECUTOR=LocalExecutor` ;
-   - une connexion SQLAlchemy vers une base `airflow`, distincte de celle de MLflow ;
-   - l'image `${EDUMATCH_AIRFLOW_IMAGE}` plutôt qu'une construction sur place ;
-   - `restart: unless-stopped` ;
-   - des ports liés à `127.0.0.1` uniquement, sans aucun port PostgreSQL publié ;
-   - des données sur `/srv/edumatch/data`.
-9. `docker/postgres/init-airflow.sql` : création de la base et de l'utilisateur
-   `airflow`.
-10. `.env.example` : `AIRFLOW__CORE__FERNET_KEY`, `AIRFLOW__WEBSERVER__SECRET_KEY`, les
-    identifiants d'administration d'Airflow et `EDUMATCH_AIRFLOW_IMAGE`, avec des valeurs
-    factices.
-11. `scripts/demo_panne_qualite.sh` (injection et restauration, avec contrôle SHA-256
-    contre le manifeste) et `scripts/verifier_idempotence.py` (comparaison du contenu des
-    sorties avant et après).
-12. `Makefile` : cibles `demo-panne-qualite`, `demo-restaurer-qualite` et
-    `verifier-idempotence`.
-13. `README.md` : l'arborescence mise à jour avec ces fichiers.
-14. `docs/sous-docs-projets/03-pipeline/orchestration.md` et le guide de tournage : la
-    vidéo se tourne sur l'instance, plus en local.
-
-**Mesures à faire au premier lancement, avant de filmer** :
-
-- le pic mémoire de `agreger_sirene` avec le moteur `local` (Polars), retenu en
-  production par l'amendement, mesuré par `docker stats` : au-delà d'environ 6 Go, je
-  passe à DEV1-XL ;
-- la durée réelle du téléchargement Sirene sur l'instance ;
-- ~~la vérification que l'import de `pyspark` échouait bien sans la correction 7~~ :
-  faite avant l'instance, sur l'image elle-même (voir l'amendement).
-
-## Ce qui ferait reconsidérer
-
-- **Une tâche dont le pic mémoire dépasse 12 Go** (la plus grande instance DEV1), ou la
-  fusion des fichiers Sirene déjà identifiée comme seuil par l'ADR 0016 : le calcul
-  n'est alors plus mono-machine, et l'agrégat part vers un Spark réellement distribué.
-  C'est ce chemin, et non la machine d'orchestration, qui passerait sur un cluster.
-- **Une exigence de fraîcheur des données contractuelle et inférieure à la journée**, ou
-  plusieurs personnes qui exploitent le pipeline : la haute disponibilité de
-  l'ordonnanceur devient alors un besoin, et le chart Helm sur Kubernetes, avec une base
-  managée, en est la réponse standard.
-- **Un cluster Kapsule qui cesse d'être éphémère** et tourne en permanence avec de la
-  marge mesurée : y loger Airflow coûterait alors moins qu'une instance à part, à
-  condition que les entrées-sorties aient d'abord migré vers le stockage objet.
+Je reviendrais sur ce choix si une tâche dépassait 12 Go de pic mémoire ou
+si les fichiers Sirene devaient fusionner (seuil déjà posé par l'ADR 0016) —
+l'agrégat partirait alors vers un Spark réellement distribué, pas la
+machine d'orchestration. Je reviendrais aussi sur ce choix si une exigence
+de fraîcheur inférieure à la journée apparaissait, ou si plusieurs personnes
+devaient exploiter le pipeline en parallèle.
 
 ## Amendement du 2026-09-15 — l'agrégat Sirene tourne en Polars en production
 
-### Ce que l'exécution a montré
+En construisant l'image Airflow avec un environnement Java et l'extra
+`[spark]`, comme prescrit initialement, j'ai confirmé le défaut déduit dans
+le contexte : l'image de base ne contient ni Java ni PySpark. Mais la
+correction elle-même casse Airflow : le paquet du projet exige
+`sqlalchemy>=2.0`, alors qu'Airflow 2.9.3 est construit pour SQLAlchemy 1.4 —
+avec le fichier de contraintes d'Airflow, l'installation est impossible ;
+sans lui, `airflow dags list` échoue sur un modèle interne écrit pour
+SQLAlchemy 1.4. Le paquet du projet et Airflow ne peuvent pas partager le
+même environnement Python — je ne l'avais pas vérifié avant d'écrire la
+recommandation initiale.
 
-La correction 7 recommandait d'ajouter à l'image Airflow un JRE (environnement
-d'exécution Java) sans interface et l'extra `[spark]`, parce que `configs/prod.yaml`
-fixait `execution.moteur_volume: cluster`. J'ai construit l'image et je l'ai lancée. Deux
-essais successifs ont infirmé cette recommandation :
+Je corrige donc `configs/prod.yaml` : le moteur de l'agrégat Sirene passe de
+`cluster` à `local` (Polars) en production. L'image Airflow n'embarque ni
+Java ni `[spark]`, mais ajoute `libgomp1` (sans quoi `import lightgbm`
+échoue), et embarque directement ses DAG et sa configuration plutôt que de
+les monter depuis l'hôte. Vérifié sur l'image, sans aucun montage : elle
+tourne sous l'utilisateur `airflow`, `import lightgbm` réussit, les quatre
+DAG s'affichent sans erreur d'import.
 
-1. **Le défaut déduit dans le contexte est confirmé.** L'image de base
-   `apache/airflow:2.9.3` ne contient ni Java (`java: command not found`) ni PySpark
-   (`ModuleNotFoundError: No module named 'pyspark'`). Le DAG `edumatch_sirene` aurait
-   bien échoué en production.
-2. **La correction prescrite construit l'image, mais casse Airflow lui-même.** Le paquet
-   `edumatch` exige `sqlalchemy>=2.0` et `pandas>=2.2` (`pyproject.toml`). Or Airflow
-   2.9.3 est construit pour SQLAlchemy 1.4. Avec le fichier de contraintes qu'Airflow
-   publie pour sa version, l'installation est impossible : ce fichier force
-   `pandas==2.1.4`, en conflit direct (`ResolutionImpossible`). Sans ce fichier, pip monte
-   SQLAlchemy en version 2, et `airflow dags list` échoue sur `MappedAnnotationError` dans
-   `TaskInstance`, un modèle interne d'Airflow écrit pour SQLAlchemy 1.4.
+Ce n'est pas un recul : l'ADR 0016 concluait déjà que Polars reste le
+chemin de production réel tant que le calcul tient sur un nœud (18,2 s
+contre 87,0 s pour Spark, résultat identique) ; `configs/prod.yaml`
+contredisait cette conclusion sans que personne ne l'ait relevé. Le critère
+2.4 reste prouvé : le job Spark est écrit, testé, sélectionnable par
+configuration — ce que je revendique, c'est la capacité de basculer, pas une
+exécution permanente. La décision de fond (instance dédiée, pas Kapsule) ne
+change pas : sans JVM ni exécuteurs Spark, la marge mémoire de l'instance
+augmente plutôt qu'elle ne diminue.
 
-Ma recommandation initiale supposait que le paquet du projet et Airflow pouvaient
-partager le même environnement Python. Ce n'est pas le cas. Je ne l'avais pas vérifié
-avant de l'écrire.
-
-### Ce qui change
-
-- **`configs/prod.yaml` passe de `moteur_volume: cluster` à `moteur_volume: local`.**
-  En production, la tâche `agreger_sirene` passe désormais par Polars.
-- **L'image Airflow n'embarque ni JRE ni `[spark]`.** Elle installe le paquet sans extra.
-- **`libgomp1` est ajouté à l'image.** C'est la bibliothèque d'exécution OpenMP (calcul
-  parallèle en mémoire partagée) dont LightGBM a besoin au chargement. Sans elle,
-  `import lightgbm` échouait (`libgomp.so.1: cannot open shared object file`), et avec
-  lui toutes les tâches qui touchent au modèle.
-- **L'image embarque ses DAG et sa configuration** : `pipelines/` est copié dans
-  `/opt/airflow/dags`, et `configs/` dans `/opt/airflow/project/configs`. En production,
-  l'image se suffit à elle-même, sans montage. Le paquet trouve ses fichiers YAML par un
-  chemin relatif à son propre fichier (`config.py` : `parents[2] / "configs"`) : ils
-  doivent donc se trouver à côté de `src/`. La variable
-  `PYTHONPATH=/opt/airflow/src:/opt/airflow/project/src` fixe l'ordre : en
-  développement, le code monté l'emporte s'il est présent ; sinon, c'est la copie
-  embarquée qui sert.
-
-**Vérifications faites sur l'image, sans aucun montage de volume** :
-
-- elle tourne sous l'utilisateur `airflow` ;
-- `import lightgbm` réussit ;
-- `airflow dags list-import-errors` ne renvoie rien ;
-- `airflow dags list` affiche les quatre DAG (`edumatch_parcoursup`, `edumatch_sirene`,
-  `edumatch_referentiels`, `edumatch_audit_purge`).
-
-J'insiste sur la condition « sans montage ». Lors d'un premier essai, le dossier des DAG
-était monté mais arrivait vide dans le conteneur : une vérification faite dans ces
-conditions ne prouve rien.
-
-### Pourquoi ce changement est cohérent, et pas un recul
-
-L'ADR 0016 concluait déjà que Polars reste le chemin de production réel tant que le
-calcul tient sur un nœud : 18,2 s contre 87,0 s pour Spark sur `StockEtablissement`,
-pour un résultat identique. En fixant `cluster` en production, `configs/prod.yaml`
-contredisait cette conclusion, et ni la configuration ni cet ADR ne l'avaient relevé. Je
-corrige ce désaccord en même temps que le défaut d'image, au lieu de le laisser de côté.
-
-Le critère 2.4 du bloc 2 (structures adaptées au volume) reste prouvé. Le job Spark est
-écrit et testé : `test_executer_moteur_cluster_ecrit_le_meme_resultat` compare les deux
-moteurs sur le même échantillon. On peut le sélectionner par la configuration. Ce que je
-revendique, c'est la capacité de basculer, pas une exécution permanente de Spark.
-
-### Ce qui ne change pas
-
-- **La décision de fond** : en production, Airflow tourne sur une instance DEV1-L
-  dédiée, pas sur Kapsule. Les raisons qui ont fait retenir l'option 2 ne dépendaient
-  pas du moteur de l'agrégat. Sans machine virtuelle Java ni exécuteurs Spark, la marge
-  mémoire de l'instance augmente plutôt qu'elle ne diminue. Le pic de la tâche en Polars
-  reste toutefois à mesurer (voir « Mesures à faire »).
-- **Les trois démonstrations de panne** restent valables telles qu'elles sont décrites
-  dans la section « Comment la panne sera montrée » :
-  - la coupure réseau porte sur l'ingestion Sirene, en amont de l'agrégat ;
-  - le blocage qualité porte sur Parcoursup ;
-  - la vérification d'idempotence compare le contenu de l'agrégat Sirene, quel que soit
-    le moteur qui l'a produit.
-- **Le seuil qui ferait reconsidérer le moteur**, celui de l'ADR 0016 : la fusion de
-  plusieurs fichiers Sirene, ou un calcul dont le travail intermédiaire ne tient plus
-  dans la mémoire d'un nœud.
-
-### La voie écartée, et à quelle condition elle revient
-
-Une autre voie réglerait le conflit de versions sans compromis : isoler PySpark dans un
-environnement Python séparé de celui d'Airflow, c'est-à-dire un second environnement
-virtuel invoqué par `ExternalPythonOperator`. Je l'écarte aujourd'hui, pour deux raisons :
-
-- elle impose de réécrire la tâche d'agrégation dans `pipelines/edumatch_pipeline.py` ;
-- elle oblige à maintenir deux jeux de dépendances dans l'image, pour un moteur que le
-  volume actuel ne demande pas.
-
-Elle devient la bonne réponse le jour où le seuil de l'ADR 0016 est franchi et où Spark
-doit tourner sous l'ordonnanceur. Une autre piste serait de monter Airflow vers une
-version compatible avec SQLAlchemy 2, mais je ne l'ai pas évaluée.
-
-### Ce qui reste à construire, mis à jour
-
-Le point 7 est fait. Les points 1 à 6 et 8 à 14 sont inchangés. S'y ajoute un contrôle
-à faire au premier lancement sur l'instance : relancer `airflow dags list-import-errors`
-et `airflow dags list` sur l'image tirée du registre, pour vérifier que ce que j'ai
-constaté en local vaut aussi pour l'image publiée par `build-images.yml`.
+J'ai écarté une autre voie, isoler PySpark dans un environnement Python
+séparé via `ExternalPythonOperator` : elle impose de réécrire la tâche
+d'agrégation et de maintenir deux jeux de dépendances pour un moteur que le
+volume actuel ne demande pas. Elle redevient la bonne réponse le jour où le
+seuil de l'ADR 0016 est franchi.

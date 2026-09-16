@@ -37,7 +37,7 @@ score = affinité  ×  accessibilité  ×  débouchés
 Multiplicatif : un terme nul supprime la recommandation.
 
 Un seul composant demande un modèle : **l'accessibilité**. Les deux autres
-sont des règles et des dénombrements — pas d'opacité là où elle n'apporte
+sont des règles et des dénombrements, pas d'opacité là où elle n'apporte
 rien.
 
 ---
@@ -48,7 +48,7 @@ rien.
 |---|---|---|
 | Parcoursup (MESR) | 104 274 formation-années, 118 colonnes en 2025, 82 Mo | Licence Ouverte v2.0 |
 | Sirene (INSEE) | 43 896 818 établissements, 6,44 Go compressés (stock 01/08/2026) | Licence Ouverte v2.0 |
-| ONISEP / IDÉO | 5 869 formations, 1 534 métiers | **ODbL** — partage à l'identique |
+| ONISEP / IDÉO | 5 869 formations, 1 534 métiers | **ODbL**, partage à l'identique |
 | RNCP (France Compétences) | 30 484 fiches, dont 7 000 actives | Licence Ouverte v2.0 |
 | France Travail (table ROME↔NAF) | référentiel de correspondance | Licence Ouverte v2.0 |
 
@@ -62,7 +62,7 @@ Chaque chiffre se reproduit par une commande (`scripts/verifier_sources.sh`).
   re-téléchargement
 - **Bronze → silver → gold** (`raw` → `interim` → `processed`)
 - Entrepôt en étoile (dbt) : grain à la maille cellule
-  `(session, formation, type de bac, boursier)` — **440 030 lignes**,
+  `(session, formation, type de bac, boursier)` : **440 030 lignes**,
   26 nœuds dbt, tous verts
 - Détail complet : `02-architecture/c4-contexte.md`,
   `c4-conteneurs.md`, `modele-etoile.md`
@@ -90,7 +90,7 @@ développement.
 
 - Contrôles bloquants (Pandera) : schéma, complétude, cohérence, fraîcheur
 - Démontré, pas affirmé : `python -m edumatch.quality.run` sur les données
-  réelles → **code de sortie 1** — 5 établissements Sirene portent une date
+  réelles → **code de sortie 1** : 5 établissements Sirene portent une date
   de création en 2054 à 5015, bloqués ; 10 613 immatriculations anticipées
   légitimes, seulement averties
 - Le DAG d'orchestration porte cette même chaîne, avec reprise sur erreur
@@ -109,7 +109,7 @@ précédente.
 | ECE, validation 2024 | **0,0030** | 0,0141 |
 | ECE, **test 2025** | 0,0371 | **0,0322** |
 
-**Le modèle bat la baseline en validation. Il la perd en test — en
+**Le modèle bat la baseline en validation. Il la perd en test, en
 précision comme en calibration.** Résultat rapporté tel quel, il n'a pas
 été atténué.
 
@@ -142,7 +142,7 @@ TreeSHAP, valeurs de Shapley exactes. Axiome d'efficacité vérifié à
 | Filière | 8,4 % |
 | Département | 7,5 % |
 
-Précalcul complet sur 440 030 cellules : 8,3 minutes, 99,8 Mo — l'API lit
+Précalcul complet sur 440 030 cellules : 8,3 minutes, 99,8 Mo. L'API lit
 un précalcul, elle ne recalcule jamais SHAP en direct.
 
 ---
@@ -157,8 +157,8 @@ Il sert uniquement à l'audit, a posteriori.
 - Sur les formations à plus de 80 % de candidates : ratio d'impact
   disparate **0,76**, sous le seuil légal des quatre cinquièmes (0,80),
   même s'il améliore le 0,63 de la baseline
-- Sur la calibration par groupe — définition d'équité retenue **avant**
-  la mesure — le modèle sur-annonce sur ce groupe (ECE 0,066 contre
+- Sur la calibration par groupe (définition d'équité retenue **avant**
+  la mesure), le modèle sur-annonce sur ce groupe (ECE 0,066 contre
   0,032-0,034 ailleurs) : la baseline y est mieux calibrée
 
 Retirer les substituts ne répare pas l'équité (+0,0006 de MAE, ratio
@@ -175,14 +175,14 @@ AIPD, Model Card (format Mitchell), correspondance AI Act, tenues à jour.
 mesures ne pointent pas toutes dans la même direction :
 
 - **Défavorable** à la restitution de l'estimation du modèle appris à des
-  candidats réels — il échoue au test de nécessité : une règle sans
+  candidats réels : il échoue au test de nécessité, une règle sans
   apprentissage, déjà construite, fait mieux sur la session la plus
   récente
 - **Favorable sous réserves** au reste du dispositif : affinité, écran de
   supervision, journalisation, purge
 - **Favorable sans réserve** à l'exploitation en environnement de
   démonstration et d'évaluation, sans restitution à des candidats mineurs
-  réels — le périmètre de cette certification
+  réels, le périmètre de cette certification
 
 Cinq motifs de blocage documentés avant toute mise en service réelle
 (contrôle d'accès absent, notice candidat absente, entre autres).
@@ -194,11 +194,11 @@ Cinq motifs de blocage documentés avant toute mise en service réelle
 - API FastAPI, 6 routeurs (`matching`, `explain`, `feedback`, `assistant`,
   `ecran`, `health`)
 - Écran conseiller : écartement d'une recommandation **bloqué côté client
-  et côté serveur** tant qu'aucun motif n'est saisi — contrôle humain
+  et côté serveur** tant qu'aucun motif n'est saisi : contrôle humain
   effectif, pas cosmétique
 - Journalisation article 12 : trois paliers de conservation (12 / 36 mois
   puis agrégats), purge testée et idempotente
-- Assistant RAG réécrit, jamais repris de l'ancien prototype — citation
+- Assistant RAG réécrit, jamais repris de l'ancien prototype : citation
   garantie par construction
 
 ---
@@ -221,7 +221,7 @@ Cinq motifs de blocage documentés avant toute mise en service réelle
 
 - Le modèle appris ne bat pas encore sa baseline sur la session la plus
   récente : je ne le déploierais pas en l'état face à de vrais candidats
-- Le terme débouchés ne couvre que 1,4 % du catalogue — la chaîne de
+- Le terme débouchés ne couvre que 1,4 % du catalogue : la chaîne de
   nomenclatures NAF↔ROME↔formation ne relie aucune formation Parcoursup
   par identifiant
 - Prochaine étape écrite avant la mesure : un modèle réentraîné qui passe

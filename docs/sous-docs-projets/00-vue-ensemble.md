@@ -1,7 +1,7 @@
 # EduMatch-IA — vue d'ensemble
 
-> Cette page décrit **l'état réel du dépôt**, pas les intentions.
-> Ce qui est prévu mais non construit est dans [`reste-a-faire.md`](reste-a-faire.md).
+Cette page décrit l'état réel du dépôt, pas les intentions. Ce qui est
+prévu mais non construit est listé dans [`avancement.md`](avancement.md).
 
 ## Le système
 
@@ -14,24 +14,25 @@ score = affinité  ×  accessibilité  ×  débouchés
 
 | Terme | Question | Source | Nature |
 |---|---|---|---|
-| **Affinité** | Cela correspond-il aux centres d'intérêt ? | Requête | Règles, aucun apprentissage |
-| **Accessibilité** | Une chance d'être admis ? | Parcoursup ×8 | **LightGBM + SHAP** |
-| **Débouchés** | Cela mène-t-il à un emploi atteignable ? | Sirene | Agrégats, aucun apprentissage |
+| Affinité | Cela correspond-il aux centres d'intérêt ? | Requête | Règles, aucun apprentissage |
+| Accessibilité | Une chance d'être admis ? | Parcoursup ×8 | LightGBM + SHAP |
+| Débouchés | Cela mène-t-il à un emploi atteignable ? | Sirene | Agrégats, aucun apprentissage |
 
-Multiplicatif : si un terme s'annule, la recommandation disparaît.
+Le score est multiplicatif : si un terme s'annule, la recommandation
+disparaît.
 
 ## État d'avancement
 
-**39 étapes sur 46 sont validées.** L'ingestion, la qualité, l'entrepôt en
+**42 étapes sur 46 sont validées.** L'ingestion, la qualité, l'entrepôt en
 étoile, l'agrégat Sirene, la chaîne de nomenclatures, le modèle
 (entraînement, calibration, explicabilité, équité, ablation), le service
-(score, API, écran de supervision, assistant documentaire), le DAG Airflow et
-la détection de dérive sont construits et testés. La gouvernance (registres,
-AIPD, Model Card, correspondance AI Act, plan de gouvernance et risques) est
-complète. Restent la conteneurisation, l'infrastructure Terraform et
-Kubernetes, le monitoring, la panne filmée, les trois vidéos et la relecture
-finale — voir [`reste-a-faire.md`](reste-a-faire.md) pour le détail et
-[`avancement.md`](avancement.md) pour le journal étape par étape.
+(score, API, écran de supervision, assistant documentaire), le DAG Airflow
+et la détection de dérive sont construits et testés. La gouvernance
+(registres, AIPD, Model Card, correspondance AI Act, plan de gouvernance
+et risques) est complète. Restent la conteneurisation, l'infrastructure
+Terraform et Kubernetes, le monitoring, la panne filmée, les trois vidéos
+et la relecture finale. Détail étape par étape dans
+[`avancement.md`](avancement.md).
 
 | Bloc | Avancement |
 |---|---|
@@ -40,18 +41,17 @@ finale — voir [`reste-a-faire.md`](reste-a-faire.md) pour le détail et
 | 3 — Pipeline | connecteurs, contrôles qualité bloquants, dbt bronze→silver→gold, agrégat Sirene, chaîne NAF↔ROME↔formation, DAG Airflow avec reprise et blocage qualité testés, détection de dérive sans Evidently (ADR 0018) ; panne filmée à faire |
 | 4 — Déploiement | modèle entraîné, évalué, expliqué (SHAP), audité pour l'équité et l'ablation ; score à trois termes, API, écran de supervision, assistant RAG en service ; réentraînement et évaluation dans le DAG Airflow, derrière une porte de promotion qui refuse aujourd'hui de publier ; une version enregistrée au registre de modèles, sans stade ni alias ; CI/CD et monitoring de production à construire |
 
-**Point à connaître avant toute présentation du bloc 4** : l'analyse d'impact
-(`05-gouvernance/aipd.md`) rend un avis scindé, pas favorable sans réserve. Le
-test de nécessité, refait sur les mesures d'équité ventilées, montre que le
-modèle appris est battu par la règle de dénombrement simple dans 23 des 27
-sous-populations auditées. L'avis est **défavorable à la restitution du terme
-appris à des candidats réels** en l'état, favorable au reste du dispositif
-sous réserves, favorable sans réserve à une démonstration encadrée. Ce n'est
-pas une réserve mineure à minimiser : c'est le résultat qui doit être
-présenté tel quel devant le jury, avec l'AIPD et la Model Card
+**À savoir avant toute présentation du bloc 4** : l'analyse d'impact
+(`05-gouvernance/aipd.md`) rend un avis scindé. Le test de nécessité,
+refait sur les mesures d'équité ventilées, montre que le modèle appris est
+battu par la règle de dénombrement simple dans 23 des 27 sous-populations
+auditées. L'avis est défavorable à la restitution du terme appris à des
+candidats réels en l'état, favorable au reste du dispositif sous réserves,
+favorable sans réserve à une démonstration encadrée. C'est le résultat à
+présenter tel quel devant le jury, avec l'AIPD et la Model Card
 (`05-gouvernance/model-card.md`) qui le documentent.
 
-Dernière évaluation du jury : *aucune*. Lancer `/jury`.
+Dernière évaluation du jury : aucune. Lancer `/jury`.
 
 ## Démarrage
 
@@ -78,7 +78,6 @@ make up
 | `05-gouvernance/` | Registres, AIPD, [`model-card.md`](05-gouvernance/model-card.md), risques, [`ai-act.md`](05-gouvernance/ai-act.md) |
 | `06-service/` | Score à trois termes, API, journalisation et purge, écran conseiller, assistant documentaire |
 | `adr/` | Une décision d'architecture par fichier |
-| `jury/` | Les évaluations successives du jury |
 
 ---
 *Mise à jour : 2026-09-15, commit `30ace9e`.*

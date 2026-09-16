@@ -5,15 +5,13 @@ et 2), 2.6 (conteneurisation et orchestration) et 2.9 (documentation
 d'architecture accessible) · **Amont** : [`c4-contexte.md`](c4-contexte.md) ·
 **Complément** : [diagramme du pipeline](../03-pipeline/diagramme-pipeline.md)
 
-Un « conteneur » au sens C4 est une **unité déployable ou un magasin de
-données** : un processus qui tourne, un fichier que l'on lit. Ce n'est pas
+Un « conteneur » au sens C4 est une unité déployable ou un magasin de
+données : un processus qui tourne, un fichier que l'on lit. Ce n'est pas
 forcément un conteneur Docker, même si ici la plupart en sont.
 
-> **Vérifié avant d'être dessiné.** Chaque boîte ci-dessous correspond à un
-> fichier ou un service que j'ai ouvert dans le dépôt le 2026-09-15. Ce qui est
-> prévu et non construit porte `(prévu)` dans son libellé et un contour
-> pointillé — les deux, pour que la distinction ne dépende ni de la couleur ni
-> du rendu.
+Chaque boîte correspond à un fichier ou un service ouvert dans le dépôt le
+2026-09-15. Ce qui est prévu et non construit porte `(prévu)` dans son
+libellé et un contour pointillé.
 
 ---
 
@@ -121,13 +119,11 @@ flowchart TB
 | **Infrastructure** | Terraform, Kubernetes managé | — | **Prévu, non construit** |
 | **Observabilité** | Prometheus, Grafana | — | **Prévu, non construit** |
 
-Ce que ce tableau dit sans ambiguïté : **le système fonctionne aujourd'hui en
-local, en conteneurs, et il n'est pas déployé.** Le fichier
-`docker-compose.yml` décrit cinq services et leurs dépendances de démarrage ;
-aucun registre de conteneurs distant ne reçoit d'image, aucune ressource cloud
-n'existe. Je préfère l'écrire que le laisser deviner : un jury qui ouvre le
-dépôt le constate en dix secondes, et l'écart entre le dossier et le dépôt est
-exactement ce qui invalide un bloc.
+Ce que ce tableau dit sans ambiguïté : le système fonctionne aujourd'hui en
+local, en conteneurs, et il n'est pas déployé. Le fichier `docker-compose.yml`
+décrit cinq services et leurs dépendances de démarrage ; aucun registre de
+conteneurs distant ne reçoit d'image, aucune ressource cloud n'existe. Je
+préfère l'écrire que le laisser deviner.
 
 ---
 
@@ -135,90 +131,86 @@ exactement ce qui invalide un bloc.
 
 ### 1. Aucun serveur de base de données pour l'entrepôt
 
-PostgreSQL apparaît sur le diagramme, mais **uniquement comme base de
-métadonnées de MLflow**. L'entrepôt en étoile, lui, est un fichier DuckDB pour
-la couche silver et des fichiers Parquet pour la couche gold.
+PostgreSQL apparaît sur le diagramme, mais uniquement comme base de
+métadonnées de MLflow. L'entrepôt en étoile est un fichier DuckDB pour
+silver et des fichiers Parquet pour gold.
 
-C'est un arbitrage de proportionnalité, pas une facilité. La couche gold pèse
-quelques mébioctets pour 440 030 lignes de faits : y poser un serveur
-relationnel, sa haute disponibilité et son exploitation coûterait une
-complexité qu'aucun chiffre n'exige. DuckDB lit du Parquet en place, sans
-serveur, sans processus à surveiller. Le seuil qui me ferait changer :
-plusieurs lecteurs concurrents ayant besoin d'écrire, ou une couche gold
-devenant trop grande pour un poste — ni l'un ni l'autre n'est le cas.
+C'est un arbitrage de proportionnalité. La couche gold pèse quelques
+mébioctets pour 440 030 lignes de faits : y poser un serveur relationnel
+coûterait une complexité qu'aucun chiffre n'exige. DuckDB lit du Parquet en
+place, sans serveur, sans processus à surveiller. Ce qui me ferait changer
+d'avis : plusieurs lecteurs concurrents ayant besoin d'écrire, ou une couche
+gold devenant trop grande pour un poste — ni l'un ni l'autre n'est le cas.
 
 → [ADR 0015](../adr/0015-modele-en-etoile-grain-et-scd2.md), et
 [`modele-etoile.md`](modele-etoile.md) pour le grain et les dimensions.
 
-### 2. Polars et Spark coexistent, et la configuration tranche à l'exécution
+### 2. Polars et Spark coexistent, la configuration tranche à l'exécution
 
-Le diagramme montre une seule « chaîne de traitement » parce qu'il n'y a qu'un
-paquet Python — mais l'agrégat Sirene y existe en deux moteurs, qui partagent
-un module unique de définitions (grain, colonnes, règles). Le commutateur est
+Le diagramme montre une seule « chaîne de traitement » car il n'y a qu'un
+paquet Python, mais l'agrégat Sirene existe en deux moteurs, qui partagent un
+module unique de définitions (grain, colonnes, règles). Le commutateur est
 `execution.moteur_volume` : `local` exécute Polars, `cluster` exécute Spark.
 
-Pourquoi les deux ? Parce que la mesure et la trajectoire disent deux choses
-différentes. Sur le stock des établissements — 43 896 818 lignes, 54 colonnes,
-réduites à 9 colonnes projetées — Polars met 18,2 s là où Spark en met 87,0 s
-pour un résultat identique : la machine virtuelle Java et le brassage entre
-exécuteurs locaux coûtent plus qu'ils ne rapportent tant que le calcul tient
-sur un nœud. Mais le fichier historique des établissements, déjà retenu comme
-source, compte à lui seul 95 865 102 lignes, et le stock est republié chaque
-mois. Écrire Spark maintenant, c'est garder la porte de sortie ouverte et la
+Pourquoi les deux ? Sur le stock des établissements — 43 896 818 lignes, 54
+colonnes, réduites à 9 colonnes projetées — Polars met 18,2 s là où Spark en
+met 87,0 s pour un résultat identique : la machine virtuelle Java et le
+brassage entre exécuteurs locaux coûtent plus qu'ils ne rapportent tant que
+le calcul tient sur un nœud. Mais le fichier historique des établissements
+compte à lui seul 95 865 102 lignes, et le stock est republié chaque mois.
+Écrire Spark maintenant, c'est garder la porte de sortie ouverte et la
 prouver testée plutôt que promise.
 
 → [ADR 0016](../adr/0016-polars-en-execution-courante-spark-branche-en-mode-cluster.md),
 [ADR 0002](../adr/0002-pas-de-databricks.md) pour le refus de Databricks.
 
-### 3. L'API ne s'entraîne jamais, et cette dépendance est explicite
+### 3. L'API ne s'entraîne jamais
 
 Le service de matching lit des artefacts précalculés : le catalogue de
 prédictions et le précalcul SHAP par cellule. Il ne charge pas LightGBM pour
-inférer à la volée, et il ne recalcule pas les valeurs de Shapley par requête.
+inférer à la volée, et ne recalcule pas les valeurs de Shapley par requête.
 
 La raison est un budget de latence : une explication SHAP calculée en ligne
-coûte un temps sans rapport avec l'objectif de service que je me suis fixé
-(p95 à 300 ms, valeur posée dans `configs/base.yaml` — un objectif, que je ne
-présente pas comme une mesure en production tant qu'aucune production n'existe).
-Précalculer déplace le coût du service vers le lot, où il est absorbable.
+coûte un temps sans rapport avec l'objectif de service fixé (p95 à 300 ms,
+posé dans `configs/base.yaml` — un objectif, pas une mesure en production
+tant qu'aucune production n'existe). Précalculer déplace le coût du service
+vers le lot, où il est absorbable.
 
 La contrepartie est assumée : le service ne sait expliquer que des cellules
-déjà calculées. Le montage le rend visible plutôt que fragile — le service
-d'entraînement doit s'être **terminé avec succès** avant que l'API démarre
-(`service_completed_successfully` dans `docker-compose.yml`), et non
-simplement avoir démarré.
+déjà calculées. Le service d'entraînement doit s'être terminé avec succès
+avant que l'API démarre (`service_completed_successfully` dans
+`docker-compose.yml`), pas simplement avoir démarré.
 
 ### 4. La reprise est décidée en Python, pas par le mécanisme natif
 
 Les tâches Airflow sont déclarées avec `retries=0`. Ce n'est pas un oubli :
-c'est le code du projet qui décide de retenter, à partir d'un vocabulaire
-d'erreur explicite — transitoire contre définitive. Un retry natif retenterait
+le code du projet décide de retenter, à partir d'un vocabulaire d'erreur
+explicite, transitoire contre définitive. Un retry natif retenterait
 aveuglément n'importe quelle exception, y compris un schéma cassé ou un
-contrôle qualité en échec, c'est-à-dire précisément les cas où retenter ne
-répare rien et masque la panne. La temporisation croissante (60 s puis 120 s,
-trois tentatives au total) est en configuration, pas dans le code.
+contrôle qualité en échec — les cas où retenter ne répare rien et masque la
+panne. La temporisation croissante (60 s puis 120 s, trois tentatives) est
+en configuration, pas dans le code.
 
 → [ADR 0006](../adr/0006-vocabulaire-commun-erreur-transitoire-definitive.md).
 
 ### 5. Toute la configuration passe par un seul point d'entrée typé
 
-Aucun chemin, aucun seuil, aucune URL de fichier n'est écrit dans le code : un
-fichier `configs/base.yaml` commun, surchargé par environnement, chargé et
-validé par `src/edumatch/config.py`. Les secrets ne passent que par
-l'environnement. C'est ce qui rend vraie la phrase « la même chaîne s'exécute
-en local et ailleurs » : seule la couche de configuration change.
+Aucun chemin, aucun seuil, aucune URL de fichier n'est écrit dans le code :
+un fichier `configs/base.yaml` commun, surchargé par environnement, chargé
+et validé par `src/edumatch/config.py`. Les secrets ne passent que par
+l'environnement. C'est ce qui rend vraie la phrase « la même chaîne
+s'exécute en local et ailleurs » : seule la couche de configuration change.
 
 → [ADR 0003](../adr/0003-configuration-centralisee.md).
 
 ### 6. Les journaux de service sont un conteneur à part entière
 
 Le journal d'inférence n'est pas un fichier de trace technique : c'est
-l'obligation de journalisation du règlement sur l'IA (article 12), et sa durée
-de conservation est bornée par paliers — pseudonymisation à 12 mois, agrégation
-à 36 mois. C'est un DAG dédié qui applique la purge, et une commande permet de
-la simuler avant de l'appliquer. Un magasin de données soumis à une obligation
-de destruction mérite sa boîte sur le diagramme ; le noyer dans « les fichiers
-de l'API » aurait fait disparaître la contrainte.
+l'obligation de journalisation du règlement sur l'IA (article 12), avec une
+durée de conservation bornée par paliers (pseudonymisation à 12 mois,
+agrégation à 36 mois). Un DAG dédié applique la purge, et une commande
+permet de la simuler avant de l'appliquer. Un magasin soumis à une
+obligation de destruction mérite sa boîte sur le diagramme.
 
 ---
 
@@ -235,8 +227,8 @@ de l'API » aurait fait disparaître la contrainte.
 | Service → journaux | Système de fichiers, ajout en fin de fichier | Écriture | Par requête |
 | Orchestrateur → journaux | Système de fichiers | Réécriture par purge | Quotidienne |
 
-Le montage local monte la couche gold **en lecture seule** dans le service.
-Ce n'est pas décoratif : c'est le moindre privilège appliqué au seul conteneur
+Le montage local monte la couche gold en lecture seule dans le service. Ce
+n'est pas décoratif : c'est le moindre privilège appliqué au seul conteneur
 exposé au réseau. S'il était compromis, il ne pourrait pas corrompre les
 données qui alimentent le modèle.
 
@@ -245,13 +237,10 @@ données qui alimentent le modèle.
 ## Ce que je n'ai pas dessiné, et pourquoi
 
 - **Le niveau 3 (composants) pour tous les conteneurs.** Le modèle C4 le
-  réserve aux endroits réellement complexes. Ici, le seul qui le mériterait est
-  la chaîne de traitement, et son détail existe déjà sous une autre forme, plus
-  utile : le [diagramme du pipeline](../03-pipeline/diagramme-pipeline.md) et
-  le lignage généré par dbt.
-- **Une topologie cloud.** Il n'y en a pas encore. Dessiner des sous-réseaux et
-  des groupes de sécurité qui n'existent pas serait exactement l'erreur que ces
-  diagrammes doivent éviter.
+  réserve aux endroits réellement complexes. Ici, le seul qui le mériterait
+  est la chaîne de traitement, déjà détaillée autrement : le [diagramme du
+  pipeline](../03-pipeline/diagramme-pipeline.md) et le lignage dbt.
+- **Une topologie cloud.** Il n'y en a pas encore.
 - **Le détail des quatre DAG.** Il est dans le diagramme du pipeline, à sa
   place.
 

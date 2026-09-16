@@ -1,25 +1,20 @@
-# Évaluation — matière établie à ce jour
+# Évaluation — protocole, baseline, entraînement, calibration
 
-Ce document sera complété en E23 (`models/evaluate.py`, MAE pondérée, courbe
-de calibration, ECE). Ce qui suit est ce que l'analyse exploratoire du label
-(E09) et l'analyse de stabilité inter-millésimes (E12) imposent déjà au
-protocole, avant l'écriture du code d'évaluation et avant celle du split
-(E22).
+Bloc 4.3 (protocole temporel, sans fuite), 4.4 (baseline), 4.5 (métriques et
+calibration), 4.6 (courbe d'apprentissage).
 
 Sources : `notebooks/01-jgk-eda-label.ipynb`,
-`notebooks/04-jgk-eda-stabilite-millesimes.ipynb`. Définition et bornage du
-label : `01-donnees/label.md` et l'ADR 0009. Révision du protocole :
-l'ADR 0012.
+`notebooks/04-jgk-eda-stabilite-millesimes.ipynb`. Label :
+`01-donnees/label.md`, ADR 0009. Split : ADR 0012.
 
-## Le protocole temporel révisé (critère 4.3)
+## Le protocole temporel
 
-**Le numérateur du label ventilé par type de baccalauréat n'existe qu'à
-partir de la session 2020** (`prop_tot_{bg|bt|bp}[_brs]`, vérifié absent en
-2018 et 2019 sur le fichier source). Le label n'est donc calculable que sur
-**six sessions**, et non huit. Un protocole qui aurait inclus 2018-2019 dans
-l'entraînement aurait placé deux sessions sans cible réelle dans le jeu
-d'apprentissage — invalidant le critère 4.2 (cible observée, non simulée)
-pour ces deux sessions.
+Le numérateur du label ventilé par type de baccalauréat
+(`prop_tot_{bg|bt|bp}[_brs]`) n'existe qu'à partir de la session 2020,
+vérifié absent en 2018 et 2019 sur le fichier source. Le label n'est donc
+calculable que sur six sessions, pas huit. Inclure 2018-2019 dans
+l'entraînement aurait mis deux sessions sans cible réelle dans le jeu
+d'apprentissage, ce qui viole le critère 4.2 (cible observée, pas simulée).
 
 **Split retenu** :
 
@@ -30,50 +25,45 @@ pour ces deux sessions.
 | Test | 2025 | 77 159 |
 | **Total exploitable** | **2020-2025** | **440 030** |
 
-Le split reste strictement temporel (invariant : aucune information
-postérieure à la session d'entraînement n'y entre) — mais borné aux six
-sessions où le label existe réellement, et non aux huit sessions du fichier
-brut.
+Le split est strictement temporel : aucune information postérieure à la
+session d'entraînement n'y entre. C'est ce qu'on appelle une fuite de
+données — utiliser, même indirectement, une information qui n'existait pas
+encore au moment de la décision prédite. Ici le split est borné aux six
+sessions où le label existe réellement.
 
-## Trois réserves écrites avant tout résultat de modèle
+## Trois réserves posées avant tout résultat
 
-Ces réserves sont posées **avant** l'entraînement (E22), pour qu'un résultat
-favorable ou défavorable ne soit pas interprété à tort comme une performance
-ou une faiblesse du modèle alors qu'il tient à la donnée elle-même.
+Je les écris avant l'entraînement pour qu'un résultat bon ou mauvais ne soit
+pas attribué à tort au modèle alors qu'il tient à la donnée.
 
-1. **Mentions écartées ou signalées pour 2020-2021.** La part de mentions
-   très bien passe de 7,4 % à 11,8 % en 2020 (modification du barème
-   d'examen cette année-là), et le retour à la normale est lent (encore
-   29,8 % de sans-mention en 2021, contre 43,4 % avant 2020). Toute variable
-   dérivée des mentions est contaminée pour ces deux sessions d'entraînement
-   — à exclure, ou à signaler explicitement si conservée.
-2. **Métriques ventilées par statut de boursier.** La part de vœux boursiers
-   connaît une rupture en 2019-2020 (12,5 % → 16,3 %) puis retombe à 13,8 %
-   en 2025 — proche du niveau d'avant 2020, mais après quatre sessions de
-   stabilité à 16,3 %. Les cellules `_brs` du jeu de test 2025 ne décrivent
-   donc pas tout à fait la même population que celles de l'entraînement
-   2020-2023. Une métrique agrégée masquerait cet écart : la calibration et
-   l'erreur doivent être rapportées séparément pour les cellules boursières.
+1. **Mentions faussées en 2020-2021.** La part de mentions très bien passe
+   de 7,4 % à 11,8 % en 2020 (changement de barème d'examen), et le retour à
+   la normale est lent (29,8 % de sans-mention en 2021, contre 43,4 % avant
+   2020). Toute variable dérivée des mentions est contaminée pour ces deux
+   sessions d'entraînement.
+2. **Métriques par statut de boursier.** La part de vœux boursiers passe de
+   12,5 % à 16,3 % en 2019-2020, puis retombe à 13,8 % en 2025. Les cellules
+   boursières du test 2025 ne décrivent donc pas tout à fait la même
+   population que celles de l'entraînement. La calibration et l'erreur sont
+   rapportées séparément pour ces cellules.
 3. **Dégradation attendue entre validation (2024) et test (2025), à ne pas
-   imputer d'emblée au modèle.** Le taux agrégé baisse d'une session à
-   l'autre pendant que la moyenne des taux par formation continue de monter
-   jusqu'en 2024 avant de refléchir en 2025 (0,522 → 0,534 → 0,522, mesuré
-   sur trois sessions) — la cible elle-même n'est pas stationnaire (E12). Une
-   perte de performance sur le test doit d'abord être confrontée à ce
-   mouvement de la cible avant d'être attribuée à un défaut du modèle.
+   imputer d'emblée au modèle.** La moyenne des taux par formation monte
+   jusqu'en 2024 puis redescend en 2025 (0,522 → 0,534 → 0,522) : la cible
+   elle-même n'est pas stable dans le temps. Une perte de performance sur le
+   test doit d'abord être confrontée à ce mouvement avant d'être attribuée
+   au modèle.
 
-**La session 2020 est conservée dans l'entraînement**, malgré la rupture sur
-les mentions : l'anomalie porte sur des variables candidates, pas sur la
-cible elle-même (tension médiane 11,8 vœux par place, alignée sur les autres
-sessions ; masses aux bornes du label dans la norme observée les autres
-années). L'écarter aurait réduit le jeu d'entraînement d'un quart sans
-fondement mesuré sur le label.
+La session 2020 est conservée dans l'entraînement malgré la rupture sur les
+mentions : l'anomalie porte sur des variables candidates, pas sur la cible
+(tension médiane 11,8 vœux par place, alignée sur les autres sessions).
+L'écarter aurait réduit le jeu d'entraînement d'un quart sans raison mesurée
+sur le label.
 
 ## Ce que la distribution du label impose
 
-Le taux d'admission par cellule, une fois borné à 1, n'est pas distribué
-normalement. Il est étalé sur tout l'intervalle [0, 1], avec deux masses non
-négligeables aux bornes :
+Le taux d'admission par cellule n'est pas distribué normalement. Il est
+étalé sur tout l'intervalle [0, 1], avec deux masses non négligeables aux
+bornes :
 
 | Cellule | Taux nul | Taux à 1 |
 |---|---:|---:|
@@ -81,56 +71,45 @@ négligeables aux bornes :
 | Bac technologique | 12,9 % | 11,8 % |
 | Bac professionnel | 21,6 % (2 779 formations) | 13,1 % |
 
-Ces masses ne sont pas du bruit à lisser : une formation très sélective qui
-n'admet aucun bachelier professionnel produit un vrai zéro, une formation en
-tension nulle qui accepte tous les vœux produit un vrai un. Le décalage entre
-moyenne et médiane (0,522 contre 0,498 pour le bac général, l'écart se creusant
-pour le professionnel) confirme l'asymétrie.
+Ces masses ne sont pas du bruit : une formation très sélective qui n'admet
+aucun bachelier professionnel produit un vrai zéro, une formation en tension
+nulle produit un vrai un.
 
-## Conséquences pour le choix des métriques
+Conséquences pour les métriques :
 
 - **Erreur absolue moyenne pondérée** par l'effectif de la cellule, plutôt
-  qu'une erreur quadratique. Une cible bornée avec masses aux extrêmes rend
-  l'erreur quadratique moins lisible et plus sensible aux cellules à faible
-  effectif, déjà traitées par la pondération (ADR 0009) plutôt que par
-  exclusion.
-- **La calibration doit être vérifiée explicitement**, pas seulement
-  l'erreur moyenne. Un modèle peut afficher une bonne erreur moyenne tout en
-  plaçant mal les valeurs extrêmes — précisément celles qui intéressent un
-  candidat qui veut savoir s'il a une chance réelle ou aucune.
-- **La comparaison entre types de bac ne se résume pas à une moyenne unique**
-  par filière : la progression bac général → technologique → professionnel
-  est le cœur de l'enjeu d'équité du projet (E26), à quantifier avant de
-  conclure sur le modèle.
+  qu'une erreur quadratique, moins lisible sur une cible bornée avec masses
+  aux extrêmes et plus sensible aux cellules à faible effectif (déjà
+  traitées par la pondération, ADR 0009).
+- **La calibration doit être vérifiée explicitement.** Un modèle bien
+  calibré est un modèle dont les probabilités annoncées correspondent aux
+  fréquences réellement observées : s'il annonce 60 % de chances
+  d'admission, environ 60 % des cellules concernées doivent effectivement
+  être admises. Un modèle peut avoir une bonne erreur moyenne tout en
+  plaçant mal les cas extrêmes, ceux qui intéressent le plus un candidat.
+- **La comparaison entre types de bac** ne se résume pas à une moyenne
+  unique : la progression bac général → technologique → professionnel est le
+  cœur de l'enjeu d'équité du projet (`equite.md`).
 
-## La baseline (E21) : le plancher mesuré avant d'entraîner
+## La baseline : le plancher mesuré avant d'entraîner
 
-`src/edumatch/models/baseline.py` ne contient aucun paramètre appris : il
-applique une règle fixe à la table de variables produite en E20 et note le
-résultat. C'est la référence à laquelle le modèle appris (E22-E23) devra se
-comparer.
+`src/edumatch/models/baseline.py` n'a aucun paramètre appris : il applique
+une règle fixe et note le résultat. C'est la référence que le modèle appris
+doit battre.
 
-**La règle retenue par `configs/base.yaml`** (`taux_session_precedente`) :
-pour une cellule `(formation, type de baccalauréat, boursier)` à la session
-N, je prédis le taux observé de cette même cellule à la session N-1. Elle
-réutilise `features.label.calculer_taux` — même bornage à 1, même traitement
-du dénominateur nul — pour que la baseline et la cible qu'elle prédit soient
-définies de façon rigoureusement identique.
+**Règle retenue** (`configs/base.yaml`, `taux_session_precedente`) : pour une
+cellule à la session N, je prédis le taux observé de cette même cellule à la
+session N-1. Elle réutilise `features.label.calculer_taux`, avec le même
+bornage et le même traitement du dénominateur nul que le label lui-même.
 
-**Pourquoi une baseline sans paramètre peut légitimement toucher le jeu de
-test.** La règle qui interdit de regarder deux fois le test protège contre
-l'ajustement implicite : comparer plusieurs variantes d'un modèle appris sur
-le test, puis retenir la meilleure, revient à entraîner sur le test sans le
-dire. Une règle qui n'a rien à ajuster n'a rien à sur-ajuster — son score sur
-le test est précisément le chiffre que le modèle appris devra battre à la
-fin, et le mesurer maintenant plutôt qu'après coup rend la comparaison
-honnête. Ce qui resterait interdit : comparer ici plusieurs variantes du
-futur modèle LightGBM sur ce même jeu de test pour en choisir une.
+Une baseline sans paramètre peut légitimement toucher le jeu de test parce
+qu'elle n'a rien à ajuster : ce qui est interdit, c'est de comparer
+plusieurs variantes d'un modèle appris sur le test et de retenir la
+meilleure — ça revient à entraîner sur le test sans le dire.
 
-### Résultat, par session et par périmètre agrégé
+### Résultat, par session
 
-MAE pondérée par l'effectif de la cellule (ADR 0009), mesurée sur les
-440 030 cellules réelles (E20) :
+MAE pondérée par l'effectif de la cellule, sur les 440 030 cellules réelles :
 
 | Périmètre | Couverture | MAE pondérée | MAE brute |
 |---|---:|---:|---:|
@@ -144,151 +123,133 @@ MAE pondérée par l'effectif de la cellule (ADR 0009), mesurée sur les
 | validation + test, repli inclus | 100 % | **0,0713** | 0,1477 |
 
 J'ai recalculé ces chiffres indépendamment du code livré et je retrouve les
-mêmes valeurs — c'est cette double vérification, et non la seule lecture du
-code, qui rend le chiffre défendable.
+mêmes valeurs.
 
-**Le plancher est haut, et c'est une information sur le problème, pas un
-embarras.** Reconduire simplement le taux de l'an dernier prédit à ±6,6
-points en moyenne pondérée sur validation + test : la cible est fortement
+**Le plancher est haut, et c'est une information sur le problème.**
+Reconduire simplement le taux de l'an dernier prédit à ±6,6 points en
+moyenne pondérée sur validation + test : la cible est fortement
 auto-corrélée d'une session à l'autre. Une baseline difficile à battre
-signifie que le signal utile qu'un modèle appris peut ajouter est plus étroit
-qu'il n'y paraît — c'est précisément ce que l'étape suivante doit mesurer
-honnêtement plutôt que suggérer implicitement qu'un modèle appris fait
-toujours mieux qu'une règle simple.
+signifie que la marge de progression pour un modèle appris est plus étroite
+qu'il n'y paraît.
 
-### Le plancher retenu est le meilleur de trois règles triviales, pas la première venue
-
-Deux règles plus naïves, mesurées à côté, toutes deux en fenêtre expansive
-(la moyenne ne porte jamais sur la session cible ni sur une session future,
-même exigence anti-fuite que le split lui-même, ADR 0012) :
+Deux règles plus naïves, mesurées à côté, en fenêtre expansive (la moyenne
+ne porte jamais sur la session cible ni sur une session future) :
 
 | Règle | MAE pondérée, validation + test |
 |---|---:|
-| Moyenne pondérée par groupe `(type de bac, boursier)` | 0,2098 |
+| Moyenne pondérée par groupe (type de bac, boursier) | 0,2098 |
 | Moyenne globale, sans distinction de groupe | 0,2124 |
 
 Le taux de la session précédente les bat d'un facteur proche de trois : la
-persistance d'une cellule à l'autre porte beaucoup plus d'information que la
-seule appartenance à un groupe large. C'est ce comparatif, et non la seule
-intuition que « l'an dernier » est une bonne référence, qui justifie de
-retenir cette règle comme plancher officiel.
+persistance d'une cellule porte beaucoup plus d'information que la seule
+appartenance à un groupe large.
 
 ### Le seuil posé avant d'entraîner
 
-Pour justifier d'exister, le modèle appris (E22-E23) doit descendre
-**nettement sous 0,0664** de MAE pondérée sur le périmètre validation + test
-à couverture comparable (92,6 %), et sous **0,0713** à couverture complète
-(100 %, repli inclus). Poser ce seuil maintenant, avant de voir le résultat
-de l'entraînement, est ce qui rend la comparaison à venir honnête : un seuil
-choisi après coup se plie toujours au résultat qu'on veut montrer.
+Pour justifier d'exister, le modèle appris doit descendre nettement sous
+0,0664 de MAE pondérée sur validation + test à couverture comparable
+(92,6 %), et sous 0,0713 à couverture complète (100 %, repli inclus). Poser
+ce seuil maintenant, avant de voir le résultat de l'entraînement, rend la
+comparaison honnête.
 
-### Deux limites déclarées, mesurées plutôt que masquées
+### Deux limites déclarées
 
-1. **La session 2020 n'est prédictible par aucune baseline temporelle.**
-   Couverture nulle, mesurée et vérifiée par un test dédié
-   (`test_premiere_session_de_la_fenetre_labellisee_n_a_aucun_score`) :
-   aucune session antérieure ne porte le numérateur du label ventilé par
-   type de baccalauréat (ADR 0012). Ce n'est pas un défaut du code, c'est une
-   propriété du protocole temporel lui-même.
-2. **Les cellules sans antécédent reçoivent un repli par moyenne de groupe
-   en fenêtre expansive** — jamais une moyenne calculée sur tout
-   l'entraînement, qui aurait utilisé des labels postérieurs à la session
-   prédite. Le score est donné avec et sans ce repli (lignes « validation +
-   test » et « validation + test, repli inclus » du tableau ci-dessus) :
-   la couverture passe de 92,6 % à 100 %, et la MAE pondérée se dégrade de
-   0,0664 à 0,0713, ce qui chiffre exactement le coût du repli plutôt que de
-   le laisser implicite.
+1. **La session 2020 n'est prédictible par aucune baseline temporelle**
+   (couverture 0 %, vérifié par `test_premiere_session_de_la_fenetre_labellisee_n_a_aucun_score`) :
+   aucune session antérieure ne porte le numérateur ventilé par type de bac.
+   C'est une propriété du protocole, pas un défaut du code.
+2. **Les cellules sans antécédent reçoivent un repli par moyenne de groupe**
+   en fenêtre expansive, jamais une moyenne calculée sur tout
+   l'entraînement (qui utiliserait des labels postérieurs à la session
+   prédite). Avec ce repli la couverture passe de 92,6 % à 100 %, et la MAE
+   pondérée se dégrade de 0,0664 à 0,0713 : c'est le coût exact du repli.
 
-## E22 — l'entraînement, résultat mitigé et rapporté tel quel
+## L'entraînement : résultat mitigé
 
-`src/edumatch/models/train.py` sépare la table de variables (E20) selon le
-split ci-dessus, entraîne un LightGBM pondéré par l'effectif de la cellule
-(ADR 0009), et arrête ses hyperparamètres sur la seule MAE pondérée de
-validation — le test 2025 n'est touché qu'une fois, à la fin, avec les
-hyperparamètres déjà figés.
+`src/edumatch/models/train.py` sépare la table de variables selon le split
+ci-dessus, entraîne un LightGBM pondéré par l'effectif de la cellule, et
+arrête ses hyperparamètres sur la seule MAE pondérée de validation — le test
+2025 n'est touché qu'une fois, à la fin.
 
-MAE pondérée, comparée au plancher **à couverture égale** (100 % des
-cellules, plancher avec repli de l'E21) :
+MAE pondérée, comparée au plancher à couverture égale (100 %, plancher avec
+repli) :
 
-| Périmètre | Modèle | Plancher (E21, à couverture égale) | Verdict |
+| Périmètre | Modèle | Plancher (à couverture égale) | Verdict |
 |---|---:|---:|---|
 | Validation 2024 | **0,0690** | 0,0727 | le modèle passe devant |
 | Test 2025 | **0,0758** | 0,0701 | le modèle reste derrière |
 
-Le résultat est mitigé et se lit comme tel : en validation le modèle bat le
-plancher, en test il perd contre une règle qui ne suppose rien. Donner le
-taux de la session précédente comme variable explicite plutôt que comme seul
-concurrent réduit l'écart en test de moitié (0,0119 à 0,0057) sans le
-combler — cette variable arrive première en importance de gain, avec un gain
-sept fois supérieur à la deuxième. L'hypothèse testée était qu'un ensemble
-d'arbres n'apprend pas nativement un quotient ; la donner explicitement le
-confirme en partie.
+Le résultat est mitigé : en validation le modèle bat le plancher, en test il
+perd contre une règle qui ne suppose rien. Donner le taux de la session
+précédente comme variable explicite plutôt que de laisser le modèle
+apprendre ce quotient seul réduit l'écart en test de moitié (de 0,0119 à
+0,0057) sans le combler ; cette variable arrive première en importance de
+gain, avec un gain sept fois supérieur à la deuxième. Un ensemble d'arbres
+n'apprend pas naturellement un quotient — le donner explicitement confirme
+en partie cette hypothèse.
 
-**Une erreur de méthode a été trouvée et corrigée dans le code, pas
-seulement commentée.** La première mesure comparait le modèle — qui prédit
-les 77 159 cellules de test — à un plancher qui n'en couvrait que 92,9 %,
-jugé sur son seul sous-ensemble facile, ce qui exagérait l'écart en sa
-faveur. La comparaison à couverture égale fait désormais partie du rapport
-d'entraînement produit par `train.py`, et les chiffres du plancher sont
-réenregistrés à chaque exécution : refaire cette erreur suppose de la voir.
+Une erreur de méthode a été trouvée et corrigée dans le code : la première
+mesure comparait le modèle (qui prédit les 77 159 cellules de test) à un
+plancher qui n'en couvrait que 92,9 %, jugé sur son seul sous-ensemble
+facile, ce qui exagérait l'écart en sa faveur. La comparaison à couverture
+égale fait maintenant partie du rapport d'entraînement.
 
-**Ce qui reste n'est pas un défaut d'apprentissage, c'est un défaut de
-généralisation temporelle** : le modèle capte des régularités de 2020-2023
-qui ne se reconduisent pas en 2025, là où une règle qui ne suppose rien
-encaisse mieux la dérive — cohérent avec la non-stationnarité de la cible
-déjà mesurée en E12 (la moyenne des taux par formation remonte jusqu'en 2024
-avant de refléchir en 2025).
+Ce qui reste n'est pas un défaut d'apprentissage, c'est un défaut de
+généralisation temporelle : le modèle capte des régularités de 2020-2023 qui
+ne se reconduisent pas en 2025, là où une règle qui ne suppose rien encaisse
+mieux la dérive — cohérent avec la non-stationnarité de la cible déjà
+observée (la moyenne des taux par formation remonte jusqu'en 2024 avant de
+redescendre en 2025).
 
-## E23 — calibration : le modèle perd sur les deux tableaux en test
+## Calibration : le modèle perd sur les deux tableaux en test
 
 `src/edumatch/models/evaluate.py` calcule l'erreur de calibration attendue
-(ECE), pondérée par l'effectif, sur 10 tranches de taux prédit
-(`modele.n_tranches_calibration`).
+(ECE), pondérée par l'effectif, sur 10 tranches de taux prédit. L'ECE mesure
+l'écart moyen entre le taux annoncé et le taux réellement observé dans
+chaque tranche : plus il est bas, mieux le modèle est calibré.
 
 | Périmètre | ECE modèle | ECE plancher | Verdict |
 |---|---:|---:|---|
 | Validation 2024 | **0,0030** | 0,0141 | dix fois mieux que le plancher |
 | Test 2025 | **0,0371** | 0,0322 | la calibration s'effondre, pire que le plancher |
 
-En validation le modèle est remarquablement bien calibré. En test, il
-devient sur-confiant sur toute la plage médiane des probabilités : il annonce
-0,55 quand la réalité observée est 0,49. Il reste bien calibré aux extrêmes.
-**Le modèle perd donc sur les deux tableaux en test, précision et
-calibration, sans qu'aucun des deux ne rattrape l'autre.** Ventilée par
-filière, son erreur reste systématiquement supérieure à celle du plancher,
-l'écart se creusant pour le bac professionnel.
+En validation le modèle est très bien calibré. En test, il devient
+sur-confiant sur toute la plage médiane : il annonce 0,55 quand la réalité
+observée est 0,49. Il reste bien calibré aux extrêmes. Le modèle perd donc
+sur les deux tableaux en test, précision et calibration, sans qu'aucun des
+deux ne rattrape l'autre. Ventilée par filière, son erreur reste
+systématiquement supérieure à celle du plancher, l'écart se creusant pour le
+bac professionnel.
 
-## E24 — courbe d'apprentissage : ce n'est pas un manque de données
+## Courbe d'apprentissage : ce n'est pas un manque de données
 
 `src/edumatch/models/courbe_apprentissage.py` mesure la MAE pondérée de
 validation à 10, 25, 50 et 100 % du volume d'entraînement. L'échantillonnage
-est stratifié **par session**, pas par recul de la fenêtre temporelle — pour
-ne pas mélanger l'effet du volume disponible et celui de la proximité
-temporelle avec la session cible, deux causes que la question posée par
-cette étape doit distinguer.
+est stratifié par session, pas par recul de la fenêtre temporelle, pour ne
+pas mélanger l'effet du volume et celui de la proximité temporelle avec la
+session cible.
 
 | Volume | 10 % | 25 % | 50 % | 100 % |
 |---|---:|---:|---:|---:|
 | MAE validation | 0,0758 | 0,0723 | 0,0705 | **0,0698** |
 
-L'écart entre entraînement et validation se referme de 0,0164 à 0,0039, et le
-gain marginal se divise par deux à chaque doublement du volume (0,0035 puis
-0,0018 puis 0,0007) : le modèle a déjà extrait presque tout ce que la fenêtre
-2020-2023 peut lui apprendre.
+L'écart entre entraînement et validation se referme de 0,0164 à 0,0039, et
+le gain marginal se divise par deux à chaque doublement du volume (0,0035
+puis 0,0018 puis 0,0007) : le modèle a déjà extrait presque tout ce que la
+fenêtre 2020-2023 peut lui apprendre.
 
-**Conclusion convergente, établie deux fois par deux chemins différents**
-(la dégradation en test d'un côté, la courbe d'apprentissage de l'autre) :
-ce n'est pas un manque de données, c'est une dérive temporelle. Chercher plus
-de volume ne comblerait pas l'écart mesuré en test, et la fenêtre labellisée
-est de toute façon bornée à six sessions (ADR 0012). La réponse relève de la
-surveillance de dérive et du réentraînement régulier (E33-E34), pas de la
+Deux chemins différents (la dégradation en test, et cette courbe) mènent à
+la même conclusion : ce n'est pas un manque de données, c'est une dérive
+temporelle. Plus de volume ne comblerait pas l'écart mesuré en test, et la
+fenêtre labellisée est de toute façon bornée à six sessions. La réponse
+relève de la surveillance de dérive et du réentraînement régulier, pas de la
 collecte.
 
-## Ce qui reste à faire (E27)
+## Ce qui reste à faire
 
 - Ablation : apport mesuré de chaque source, dont Sirene — voir
-  `reste-a-faire.md` pour un obstacle déjà identifié sur la chaîne de
+  `ablation.md` pour un obstacle déjà identifié sur la chaîne de
   nomenclatures.
 
 ---
-*Mise à jour : 2026-08-30, commits `7a70366` (E22), `3c7d08c` (E23-E24).*
+*Mise à jour : 2026-08-30, commits `7a70366` (entraînement), `3c7d08c` (calibration et courbe d'apprentissage).*

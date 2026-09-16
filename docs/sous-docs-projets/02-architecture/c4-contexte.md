@@ -4,15 +4,13 @@
 et 2) et 2.9 (documentation d'architecture accessible) · **Suite** :
 [`c4-conteneurs.md`](c4-conteneurs.md)
 
-Ce document répond à une seule question : **à quoi sert EduMatch-IA, pour qui,
-et de quoi dépend-il ?** Il se lit sans connaître le projet. L'intérieur du
-système est au niveau 2 ; il n'apparaît pas ici, volontairement.
+Ce document répond à une question : à quoi sert EduMatch-IA, pour qui, et de
+quoi dépend-il ? Il se lit sans connaître le projet. L'intérieur du système
+est au niveau 2, il n'apparaît pas ici.
 
-> **La règle que je me suis imposée sur ces diagrammes** : ils décrivent le
-> dépôt tel qu'il est aujourd'hui, pas une cible. Tout élément non construit
-> porte la mention `(prévu)` dans son libellé — pas seulement une couleur, pour
-> qu'un lecteur en noir et blanc ne s'y trompe pas. J'ai vérifié chaque brique
-> dans le dépôt avant de la dessiner.
+Ces diagrammes décrivent le dépôt tel qu'il est aujourd'hui, pas une cible.
+Tout élément non construit porte la mention `(prévu)` dans son libellé, pas
+seulement une couleur, pour qu'un lecteur en noir et blanc ne s'y trompe pas.
 
 ---
 
@@ -61,57 +59,53 @@ flowchart TB
 
 ---
 
-## Ce que le diagramme dit, et qu'il faut lire explicitement
+## Ce que le diagramme dit
 
-### Le conseiller est le seul utilisateur, et c'est une décision de conformité
+### Le conseiller est le seul utilisateur
 
 Le candidat n'a pas d'accès. Ce n'est pas un manque de temps : le système
 produit un profilage qui porte sur des mineurs, et le règlement européen sur
 l'IA impose un contrôle humain effectif (article 14) sur un usage que son
-annexe III classe à haut risque — l'accès à l'éducation. Interposer un
-professionnel qui peut **écarter une recommandation en motivant son écart**
-est ce qui rend ce contrôle réel plutôt que déclaratif : le motif est
-enregistré, il devient une trace vérifiable.
+annexe III classe à haut risque, l'accès à l'éducation. Interposer un
+professionnel qui peut écarter une recommandation en motivant son écart rend
+ce contrôle réel : le motif est enregistré, il devient une trace vérifiable.
 
-Conséquence assumée : aucune décision n'est prise par le système. Il classe et
-il explique. L'article 22 du RGPD, qui encadre la décision entièrement
-automatisée, n'est donc pas la base du dispositif — c'est le sens du « le
-système propose » inscrit dans la boîte du conseiller.
+Aucune décision n'est donc prise par le système, il classe et il explique.
+L'article 22 du RGPD, qui encadre la décision entièrement automatisée, n'est
+pas la base du dispositif — d'où « le système propose » dans la boîte du
+conseiller.
 
 ### Cinq producteurs, pas quatre
 
-Le projet a longtemps été présenté avec quatre sources. Il en compte cinq
-aujourd'hui : **France Travail** s'est ajouté en construisant la chaîne
-NAF ↔ ROME ↔ formation, parce qu'il porte la seule table publique reliant
-directement un code ROME à la nomenclature NAF (ADR 0017). Le diagramme dit
-cinq, parce que le dépôt en ingère cinq — un connecteur par producteur dans
+Le projet a longtemps compté quatre sources. Il en compte cinq aujourd'hui :
+**France Travail** s'est ajouté en construisant la chaîne NAF ↔ ROME ↔
+formation, car il porte la seule table publique reliant directement un code
+ROME à la NAF (ADR 0017). Un connecteur par producteur dans
 `src/edumatch/ingestion/`.
 
-### Deux régimes de licence, qui ne se confondent pas
+### Deux régimes de licence
 
-Quatre sources sont sous Licence Ouverte v2.0. **IDÉO est sous ODbL**, qui
+Quatre sources sont sous Licence Ouverte v2.0. IDÉO est sous **ODbL**, qui
 impose le partage à l'identique de toute base dérivée redistribuée, et une
-attribution portant le producteur et la date de la donnée réutilisée. C'est la
-raison pour laquelle l'assistant documentaire rattache une citation à **chaque
-ligne** indexée, et non au fichier entier. La distinction est portée jusque
-dans la configuration : un champ `licence` par jeu dans `configs/base.yaml`.
+attribution portant le producteur et la date de la donnée réutilisée. C'est
+pour ça que l'assistant documentaire rattache une citation à chaque ligne
+indexée, et non au fichier entier. La distinction est aussi dans la
+configuration : un champ `licence` par jeu dans `configs/base.yaml`.
 
-### Le modèle de langage est optionnel, et son absence est visible
+### Le modèle de langage est optionnel
 
 L'assistant documentaire répond en mode extractif : recherche par similarité
-sur le corpus IDÉO, restitution des passages avec leurs sources. Une clé d'API
-activerait en plus une reformulation, contrainte par une instruction qui lui
-interdit d'ajouter quoi que ce soit hors des extraits fournis. Sans clé, le
-client de génération vaut `None` et le mode extractif s'exécute seul. Le trait
-pointillé du diagramme dit exactement cela : une dépendance réelle mais
-facultative, dont l'absence est un comportement documenté et testé, pas un
-plantage ni un silence.
+sur le corpus IDÉO, restitution des passages avec leurs sources. Une clé
+d'API activerait en plus une reformulation, contrainte par une instruction
+qui lui interdit d'ajouter quoi que ce soit hors des extraits fournis. Sans
+clé, le client de génération vaut `None` et le mode extractif s'exécute
+seul — un comportement documenté et testé, pas un plantage ni un silence.
 
-### Les cadences ne sont pas les mêmes, et l'architecture en tient compte
+### Les cadences ne sont pas les mêmes
 
-Parcoursup publie une campagne par an, Sirene republie son stock chaque mois,
-les référentiels sont republiés chaque jour. Le système n'a donc pas une
-horloge mais quatre — le détail est dans le [diagramme du
+Parcoursup publie une campagne par an, Sirene republie son stock chaque
+mois, les référentiels sont republiés chaque jour. Le système a donc quatre
+horloges, pas une : détail dans le [diagramme du
 pipeline](../03-pipeline/diagramme-pipeline.md).
 
 ---
@@ -128,12 +122,12 @@ pipeline](../03-pipeline/diagramme-pipeline.md).
 
 ---
 
-## Ce que ce niveau ne montre pas, volontairement
+## Ce que ce niveau ne montre pas
 
-- **L'intérieur du système** : c'est l'objet du niveau 2.
-- **L'hébergement** : aucune infrastructure cloud n'est déployée à ce jour. Le
-  système s'exécute en conteneurs sur un poste. L'écrire ici reviendrait à
-  dessiner une cible ; le niveau 2 le dit sans détour, à sa place.
+- **L'intérieur du système** : objet du niveau 2.
+- **L'hébergement** : aucune infrastructure cloud n'est déployée à ce jour, le
+  système s'exécute en conteneurs sur un poste. Le niveau 2 le dit sans
+  détour, à sa place.
 - **Les rôles de gouvernance** (responsable de traitement, délégué à la
   protection des données) : ils relèvent du plan de gouvernance, pas d'un
   diagramme de contexte logiciel.
