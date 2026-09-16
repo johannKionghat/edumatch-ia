@@ -1,0 +1,92 @@
+# Image de service (E29, E35) : sert l'API FastAPI (/health, /matching, /explain, /feedback,
+# écran conseiller). Destinée à tourner comme Deployment Kubernetes (E37, Scaleway Kapsule) :
+# plusieurs réplicas identiques et interchangeables, aucun état local, arrêt propre sur SIGTERM
+# (Uvicorn le gère nativement, rien à ajouter ici).
+#
+# Construction multi-étages : l'étage `builder` installe les dépendances Python dans un
+# préfixe dédié (/install) ; l'étage `runtime` ne recopie que ce préfixe et le code — jamais
+# pip, jamais le cache de résolution de dépendances. Une image qui embarque l'outillage de
+# construction est une surface d'attaque inutile en production, et pèse pour rien.
+
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+# pyproject.toml seul d'abord : le code source change à chaque commit, les dépendances
+# beaucoup plus rarement — Docker ne réinstalle les dépendances que si ce fichier change.
+COPY pyproject.toml ./
+COPY src ./src
+
+# Préfixe dédié plutôt que le site-packages système : ce dossier est recopié tel quel dans
+# l'étage final. Aucun extra installé : l'API ne charge jamais spark, airflow, ni rag au
+# démarrage (rag est chargé paresseusement, seulement si MISTRAL_API_KEY est renseignée —
+# voir src/edumatch/rag/generation.py) ; les inclure gonflerait l'image sans usage réel.
+RUN pip install --no-cache-dir --prefix=/install .
+
+FROM python:3.11-slim AS runtime
+
+# Empreinte du commit qui a produit cette image, reçue au build (jamais devinée dans l'image) :
+# `docker build --build-arg GIT_SHA=$(git rev-parse --short HEAD) -t <registre>/edumatch-serve:$(git
+# rev-parse --short HEAD) ...`. Le tag lui-même porte déjà ce hash (jamais `latest` en
+# production, voir docker-compose.yml et les workflows du dépôt CI/CD) ; ce LABEL le rend aussi
+# lisible sans recalculer le tag, par `docker inspect` ou par l'orchestrateur.
+ARG GIT_SHA=inconnu
+LABEL org.opencontainers.image.revision=${GIT_SHA} \
+      org.opencontainers.image.title="edumatch-serve"
+
+# Utilisateur non-root, uid/gid fixes : si une faille de l'API ou d'une dépendance est
+# exploitée, l'attaquant obtient ces droits, pas root — il ne peut ni écrire hors de /app, ni
+# installer de paquet. L'uid fixe (10001) permet au `securityContext` du pod Kubernetes de
+# l'exiger explicitement (`runAsNonRoot: true`, `runAsUser: 10001`) sans dépendre de ce que
+# l'image choisit par défaut.
+RUN groupadd --gid 10001 edumatch \
+    && useradd --uid 10001 --gid edumatch --no-create-home --shell /usr/sbin/nologin edumatch
+
+# `libgomp1` : la roue Linux de LightGBM est compilée avec OpenMP et charge `libgomp.so.1` par
+# `ctypes` au premier `import lightgbm` — absente de `python:3.11-slim` (image minimale), son
+# absence fait échouer le démarrage du processus avec `OSError: libgomp.so.1: cannot open
+# shared object file`, reproduit en lançant réellement ce conteneur avant d'écrire cette ligne.
+# Seule dépendance système nécessaire : aucun compilateur, `--no-install-recommends` et le
+# nettoyage de la liste des paquets APT évitent d'alourdir l'image pour rien.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /install /usr/local
+COPY src ./src
+COPY configs ./configs
+
+# `data/` n'est jamais copiée ici (voir .dockerignore) : jusqu'à 4,6 Go de sources brutes non
+# versionnées, qui changent plus vite qu'une image ne doit être reconstruite. Deux artefacts
+# sont attendus en volume monté, au chemin dérivé de EDUMATCH_DATA_ROOT (variable
+# d'environnement, donc un point de montage Kubernetes sans changement de code) :
+#   - data/processed/matching/catalogue_predictions.parquet (produit par Dockerfile.train,
+#     lu par api/state.py) : sans lui, l'API entraîne le modèle au démarrage — dette
+#     documentée dans api/state.py, traitée pour l'usage courant, pas pour le rechargement à
+#     chaud d'un modèle pendant que le processus tourne ;
+#   - data/processed/explicabilite/explications_locales.parquet (E25, precalcul SHAP).
+# `docker-compose.yml` illustre ce montage en local.
+
+ENV PYTHONPATH=/app/src \
+    PYTHONUNBUFFERED=1 \
+    EDUMATCH_ENV=prod
+
+USER edumatch
+
+EXPOSE 8000
+
+# La sonde interroge /health (src/edumatch/api/routes/health.py), volontairement sans
+# dépendance lourde : elle répond dès que le processus a démarré, avant même que le catalogue
+# de prédictions ou le précalcul SHAP soient chargés. C'est la sonde `liveness` — elle dit
+# « le processus n'a pas planté », pas « il est prêt à servir /matching » (503 tant que l'état
+# n'est pas construit) : les confondre provoquerait des redémarrages en boucle le temps du
+# chargement, exactement ce que le docstring de health.py met en garde.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health', timeout=3)" || exit 1
+
+# uvicorn en processus direct (PID 1) : il reçoit et gère lui-même SIGTERM (arrêt propre,
+# requêtes en cours terminées avant de quitter) — pas de wrapper shell qui l'empêcherait de
+# recevoir le signal envoyé par l'orchestrateur à l'arrêt d'un pod.
+CMD ["uvicorn", "edumatch.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

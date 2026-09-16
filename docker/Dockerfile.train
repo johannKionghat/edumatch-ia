@@ -1,0 +1,64 @@
+# Image d'entraînement (E22, E35) : exécute `python -m edumatch.models.train` jusqu'au bout,
+# puis quitte. Séparée de l'image de service parce qu'elle n'a ni le même cycle de vie (un
+# Job Kubernetes qui se termine, pas un Deployment qui reste vivant) ni tout à fait les mêmes
+# dépendances d'usage (elle écrit dans MLflow et sur `processed_dir`, elle ne sert jamais de
+# requête HTTP) — la confondre avec l'image de service ferait porter le poids de chacune sur
+# l'autre pour rien.
+
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+COPY pyproject.toml ./
+COPY src ./src
+
+# Mêmes dépendances de base que l'image de service (lightgbm, mlflow, shap, pandas...) : cette
+# image ne charge aucun extra — spark et airflow servent d'autres étapes du pipeline
+# (E17, E33), pas l'entraînement du modèle lui-même.
+RUN pip install --no-cache-dir --prefix=/install .
+
+FROM python:3.11-slim AS runtime
+
+ARG GIT_SHA=inconnu
+LABEL org.opencontainers.image.revision=${GIT_SHA} \
+      org.opencontainers.image.title="edumatch-train"
+
+# Même politique non-root que l'image de service, pour la même raison : limiter ce qu'un code
+# tiers (une dépendance compromise, par exemple) peut atteindre s'il s'exécute dans ce
+# conteneur.
+RUN groupadd --gid 10001 edumatch \
+    && useradd --uid 10001 --gid edumatch --no-create-home --shell /usr/sbin/nologin edumatch
+
+# `libgomp1` : même nécessité que `docker/Dockerfile.serve`, ici encore plus directe —
+# `edumatch.models.train` importe `lightgbm` dès sa première ligne. Absente de
+# `python:3.11-slim`, reproduite en conteneur réel avant d'ajouter cette ligne
+# (`OSError: libgomp.so.1: cannot open shared object file`).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /install /usr/local
+COPY src ./src
+COPY configs ./configs
+
+# `data/` en volume monté, jamais copiée (voir .dockerignore et Dockerfile.serve) : ce
+# conteneur lit `data/processed/*.parquet` (la table de variables, E20) et écrit deux
+# artefacts au même volume — `data/processed/matching/catalogue_predictions.parquet`
+# (models/train.exporter_catalogue_predictions, lu par l'image de service) et l'exécution
+# MLflow (paramètres, métriques, modèle), pointée par MLFLOW_TRACKING_URI, jamais en dur ici.
+
+ENV PYTHONPATH=/app/src \
+    PYTHONUNBUFFERED=1 \
+    EDUMATCH_ENV=prod
+
+USER edumatch
+
+# Pas de HEALTHCHECK ici, et ce n'est pas un oubli : cette image exécute un travail par lots
+# qui se termine (succès ou échec), pas un processus qui reste vivant pour répondre à des
+# requêtes. Un HEALTHCHECK suppose un service interrogé périodiquement ; un travail par lots a
+# un code de sortie, et c'est ce code que l'orchestrateur (Airflow via KubernetesPodOperator,
+# ou un Job Kubernetes, E37) surveille pour décider d'une reprise — pas une sonde HTTP qui
+# n'aurait personne à qui répondre.
+CMD ["python", "-m", "edumatch.models.train"]

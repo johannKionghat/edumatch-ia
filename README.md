@@ -31,19 +31,30 @@ disparaît. **Un seul composant est appris.**
 ```bash
 cp .env.example .env          # puis renseigner les valeurs
 make install                  # installe le paquet et les dépendances
-make up                       # PostgreSQL + MLflow + Airflow
-make data                     # télécharge et prépare les données
-make test                     # vérifie que tout fonctionne
-make api                      # lance l'API
+make data                     # télécharge et prépare les données (hors conteneur, une fois)
+```
+
+### La pile locale (conteneurs, E35)
+
+Une seule commande lève PostgreSQL, MLflow, Airflow (avec les quatre DAG
+réellement importés — voir `docker/Dockerfile.airflow`), un entraînement
+unique, puis l'API — sans que l'API ne réentraîne elle-même au démarrage
+(voir `src/edumatch/api/state.py`) :
+
+```bash
+make up               # construit les images et lève toute la pile
+make verifier-pile     # interroge chaque sonde, affiche un état lisible
+make down              # arrête tout, supprime les volumes
 ```
 
 `make` seul affiche toutes les commandes disponibles.
 
-| Service | Adresse |
-|---|---|
-| API | http://localhost:8000/docs |
-| MLflow | http://localhost:5000 |
-| Airflow | http://localhost:8080 |
+| Service | Adresse | Rôle |
+|---|---|---|
+| API | http://localhost:8000/docs | Matching, explicabilité, écran conseiller |
+| MLflow | http://localhost:5000 | Suivi d'expériences, registre de modèles |
+| Airflow | http://localhost:8080 | Orchestration des quatre DAG (E33) |
+| PostgreSQL | localhost:5432 | Backend MLflow |
 
 ---
 
@@ -83,7 +94,7 @@ edumatch-ia/
 ├── pipelines/                 DAG Airflow
 ├── models/                    artefacts locaux — le registre MLflow fait foi
 ├── configs/                   YAML par environnement : dev, staging, prod
-├── docker/                    Dockerfile.train, Dockerfile.serve
+├── docker/                    Dockerfile.train, Dockerfile.serve, Dockerfile.airflow
 ├── reports/figures/           figures pour le dossier et la soutenance
 ├── docs/sous-docs-projets/    documentation projet et dossier de certification
 │

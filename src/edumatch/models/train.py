@@ -64,6 +64,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import lightgbm as lgb
 import numpy as np
@@ -418,6 +419,66 @@ class ResultatEntrainement:
     moyenne_groupe: pd.Series
 
 
+# ─── L'artefact que sert l'API, sans jamais réentraîner (E29, E35) ─────────
+#
+# Colonnes du catalogue de la session courante retenues pour le matching :
+# les six colonnes requises par `matching.score.recommander`
+# (`COLONNES_CATALOGUE_REQUISES`, sans `taux_predit` qui est ajoutée à part)
+# plus les deux dimensions de la cellule (`type_bac`, `boursier`), nécessaires
+# pour filtrer le catalogue au profil déclaré par le candidat avant de
+# scorer. Définie ici, à l'endroit qui produit la prédiction, et importée
+# par `api/state.py` plutôt que dupliquée : les deux doivent porter
+# exactement les mêmes colonnes.
+COLONNES_CATALOGUE: tuple[str, ...] = (
+    "cod_aff_form",
+    "fili",
+    "fil_lib_voe_acc",
+    "form_lib_voe_acc",
+    "dep",
+    "type_bac",
+    "boursier",
+)
+
+# Sous-dossier et nom de fichier de l'artefact, sous `processed_dir` (donc
+# sous `EDUMATCH_DATA_ROOT`, déjà configurable par variable d'environnement) :
+# même convention que le précalcul SHAP (`models/explain.py`,
+# `SOUS_DOSSIER_PRECALCUL`), pour qu'un même mécanisme de volume monté serve
+# les deux artefacts que l'API attend au démarrage.
+SOUS_DOSSIER_CATALOGUE_PREDICTIONS = "matching"
+NOM_FICHIER_CATALOGUE_PREDICTIONS = "catalogue_predictions.parquet"
+
+
+def construire_catalogue_predictions(resultat: ResultatEntrainement) -> pd.DataFrame:
+    """Le catalogue de la session de test, prédictions incluses — exactement ce que l'API sert
+    sur `/matching`, jamais recalculé à la requête (voir `api/state.py`)."""
+    index_test = resultat.jeu_test.X.index
+    catalogue = resultat.table.loc[index_test, list(COLONNES_CATALOGUE)].copy().reset_index(drop=True)
+    catalogue["cod_aff_form"] = catalogue["cod_aff_form"].astype(str)
+    catalogue["type_bac"] = catalogue["type_bac"].astype(str)
+    catalogue["boursier"] = catalogue["boursier"].astype(bool)
+    catalogue["taux_predit"] = resultat.prediction_test
+    return catalogue
+
+
+def exporter_catalogue_predictions(resultat: ResultatEntrainement, settings: Settings) -> Path:
+    """Écrit l'artefact que l'API charge au démarrage (E29, E35) : sans lui, `construire_etat_matching`
+    retombe sur un entraînement complet — acceptable en développement, pas en production, où cet
+    artefact est produit par `make train` (ou `docker/Dockerfile.train`) et monté en volume au
+    même chemin (`processed_dir`, dérivé de `EDUMATCH_DATA_ROOT`) que l'API lit.
+
+    Écriture atomique (fichier `.part` renommé à la fin, convention du dépôt, voir
+    `rules/structure-projet.md` §2) : un lecteur concurrent ne peut jamais observer un fichier
+    tronqué."""
+    catalogue = construire_catalogue_predictions(resultat)
+    dossier = settings.processed_dir / SOUS_DOSSIER_CATALOGUE_PREDICTIONS
+    dossier.mkdir(parents=True, exist_ok=True)
+    chemin_final = dossier / NOM_FICHIER_CATALOGUE_PREDICTIONS
+    chemin_provisoire = chemin_final.with_name(chemin_final.name + ".part")
+    catalogue.to_parquet(chemin_provisoire, index=False)
+    chemin_provisoire.replace(chemin_final)
+    return chemin_final
+
+
 def entrainer_et_evaluer(settings: Settings | None = None) -> ResultatEntrainement:
     """Charge la table de variables, entraîne le modèle et l'évalue selon le protocole (E22).
 
@@ -486,9 +547,17 @@ def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, Rappo
 
 
 def main() -> int:
+    """Point d'entrée de `make train` et de `docker/Dockerfile.train` (E22, E35).
+
+    Exporte aussi le catalogue de prédictions (`exporter_catalogue_predictions`) : c'est cet
+    artefact, monté en volume au même chemin par l'image de service, qui évite à l'API de
+    réentraîner le modèle à chaque démarrage de processus (voir `api/state.py`)."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    _, rapport = executer()
-    LOGGER.info("Entraînement (E22) terminé.\n%s", rapport.resume())
+    settings = get_settings()
+    resultat = entrainer_et_evaluer(settings)
+    LOGGER.info("Entraînement (E22) terminé.\n%s", resultat.rapport.resume())
+    chemin = exporter_catalogue_predictions(resultat, settings)
+    LOGGER.info("Catalogue de prédictions exporté vers %s : l'API le charge au démarrage, sans réentraîner.", chemin)
     return 0
 
 

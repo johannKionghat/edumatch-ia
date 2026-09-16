@@ -12,7 +12,16 @@ dependencies = [
     "polars>=1.0",
     "pyarrow>=15.0",
     "requests>=2.32",
-    "sqlalchemy>=2.0",
+    # E35 : plancher réel, pas arbitraire — `sqlalchemy` n'est importé nulle part dans
+    # `src/edumatch` (vérifié : aucune occurrence). Le plancher vient de ce que ses
+    # utilisateurs transitifs exigent réellement : alembic demande `sqlalchemy>=1.4.23`, et
+    # mlflow demande `sqlalchemy>=1.4.0,<3` (bornes de mlflow sur SQLAlchemy, pas sur mlflow).
+    # `>=2.0` avant cette correction forçait une réinstallation de SQLAlchemy dans
+    # `docker/Dockerfile.airflow` (Airflow 2.9.3 fige 1.4.52) qui casse le cœur d'Airflow —
+    # `airflow.models.taskinstance.TaskInstance` est une classe déclarative écrite pour le
+    # style SQLAlchemy 1.4, et lever à 2.0 fait échouer sa définition dès l'import
+    # (`sqlalchemy.orm.exc.MappedAnnotationError`), reproduit avant cette correction.
+    "sqlalchemy>=1.4.23,<3",
     "psycopg2-binary>=2.9",
     "lightgbm>=4.3",
     "scikit-learn>=1.5",
@@ -21,9 +30,15 @@ dependencies = [
     # (shap l'utilise pour ses propres tracés) ; déclarée ici car evaluate.py
     # l'importe directement.
     "matplotlib>=3.8",
-    "mlflow>=2.14",
+    # Même version mineure que le serveur de `docker-compose.yml` : un client 3.x face à un
+    # serveur 2.x perd l'enregistrement des modèles (404 sur `logged-models`), vérifié.
+    "mlflow>=3.16,<3.17",
     "pandera[pandas]>=0.20,<1.0",
-    "evidently>=0.4",
+    # Pas d'`evidently` : abandonné en E34 (ADR 0018), PSI et KS sont calculés directement
+    # dans `models/derive_stats.py`. Aucun fichier de `src/` ni de `tests/` ne l'importe, et
+    # le laisser déclaré l'installait dans chaque image avec `litestar` et un paquet
+    # `multipart` 2.0.0 qui occupe le nom d'import attendu par FastAPI — constaté dans l'image
+    # de service, où `python-multipart` était de ce fait absent.
     "fastapi>=0.111",
     "uvicorn[standard]>=0.30",
     "pydantic-settings>=2.3",

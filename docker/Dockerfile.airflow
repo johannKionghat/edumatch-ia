@@ -1,0 +1,95 @@
+# Image du planificateur Airflow (E33, E35) : `apache/airflow:2.9.3` complétée avec le paquet
+# du projet. Sans elle, `pipelines/edumatch_pipeline.py` ne s'importe pas dans le conteneur
+# `airflow` de `docker-compose.yml` — l'image de base ne contient ni `edumatch` ni ses
+# dépendances (pandas, lightgbm, mlflow...) — et aucun des quatre DAG (E33) n'apparaît dans
+# l'interface. C'est exactement la lacune déclarée à l'étape précédente ; ce fichier la comble.
+#
+# ⚠️ Ni JRE, ni extra `[spark]`, volontairement — deux essais réels, dans l'ordre, avant cette
+# décision (ADR 0016, ADR 0019) :
+#
+# 1. `configs/prod.yaml` fixait `execution.moteur_volume: cluster`, qui fait passer la tâche
+#    `agreger_sirene` (`spark/run_sirene_agregats.py`) par PySpark. L'image de base seule ne
+#    l'a jamais permis :
+#      docker run --rm apache/airflow:2.9.3 bash -lc "java -version; python -c 'import pyspark'"
+#      -> bash: java: command not found
+#      -> ModuleNotFoundError: No module named 'pyspark'
+# 2. Une première correction a ajouté un JRE headless et `pip install .[spark]`. Elle
+#    construit, mais casse Airflow lui-même : `edumatch-ia` exige `sqlalchemy>=2.0` et
+#    `pandas>=2.2` (`pyproject.toml`), qui ne coexistent pas avec les versions qu'Airflow 2.9.3
+#    installe (SQLAlchemy 1.4, pandas 2.1.4) — le fichier de contraintes qu'Airflow publie pour
+#    sa version force lui-même `pandas==2.1.4`, en conflit direct (`pip install` :
+#    `ResolutionImpossible`). Sans lui, `pip` réajuste SQLAlchemy à la version que ce dépôt
+#    demande, et **le cœur d'Airflow ne démarre plus** :
+#      docker run --rm ... edumatch-airflow bash -lc "airflow dags list"
+#      -> sqlalchemy.orm.exc.MappedAnnotationError: ... TaskInstance ...
+#         (les annotations de modèle d'Airflow 2.9.3 supposent SQLAlchemy 1.4)
+#    Reproduit avant d'écrire ces lignes : pas une hypothèse.
+#
+# **Décision retenue : le moteur local (Polars), pas Spark, pour la tâche `agreger_sirene` en
+# production.** ADR 0016 l'avait déjà conclu indépendamment de ce défaut : sur le volume actuel
+# de `StockEtablissement` (43,9 M lignes), Polars traite l'agrégat en 18,2 s contre 87,0 s pour
+# Spark, à résultat identique — « Polars reste le chemin de production réel » tant que le calcul
+# tient sur un seul nœud. `configs/prod.yaml` déclarait `cluster` malgré cette conclusion : un
+# désaccord non détecté, corrigé avec ce défaut plutôt que laissé de côté. Le job Spark reste
+# écrit, testé (`test_executer_moteur_cluster_ecrit_le_meme_resultat`) et sélectionnable — c'est
+# lui qui prouve le critère 2.4 du bloc 2 (structures adaptées au volume), pas son exécution
+# permanente. Le seuil qui ferait reconsidérer : la fusion de plusieurs fichiers Sirene, ou tout
+# calcul qui ne tient plus dans la mémoire d'un poste — voir ADR 0016 pour le détail.
+#
+# Isoler PySpark dans un environnement Python séparé de celui d'Airflow (un second venv, invoqué
+# par `ExternalPythonOperator`) réglerait le conflit sans ce compromis, si le seuil ci-dessus
+# était franchi : hors périmètre de cette correction, qui porte l'image telle qu'elle sert
+# aujourd'hui, pas une réécriture de `pipelines/edumatch_pipeline.py`.
+#
+# Étage unique, pas de construction multi-étages : contrairement aux images de service et
+# d'entraînement, celle-ci part d'une image déjà volumineuse (Airflow et ses propres
+# dépendances) — séparer un étage de build n'économiserait presque rien ici, et compliquerait
+# la correspondance avec les contraintes de versions qu'Airflow impose déjà à son propre
+# environnement Python.
+FROM apache/airflow:2.9.3
+
+# L'image officielle tourne déjà en non-root (utilisateur `airflow`, uid 50000) : aucune
+# instruction supplémentaire n'est nécessaire pour ce critère, contrairement aux deux images
+# construites depuis `python:3.11-slim` où cet utilisateur n'existe pas par défaut.
+USER root
+# `libgomp1` : bibliothèque d'exécution OpenMP dont LightGBM a besoin à l'import. Absente de
+# l'image de base, elle faisait échouer `import lightgbm` (`libgomp.so.1: cannot open shared
+# object file`), donc toute tâche qui touche au modèle. Constaté en lançant l'image.
+RUN apt-get update  && apt-get install -y --no-install-recommends libgomp1  && rm -rf /var/lib/apt/lists/*
+COPY pyproject.toml /opt/airflow/project/pyproject.toml
+COPY src /opt/airflow/project/src
+# Configuration et DAG embarqués : l'image doit se suffire à elle-même en production
+# (ADR 0019), sans dépendre d'un montage de volume. Le paquet trouve ses YAML par un chemin
+# relatif à son propre fichier (`config.py` : `parents[2] / "configs"`) : ils doivent donc
+# vivre à côté de `src/`, dans `/opt/airflow/project/configs`.
+COPY configs /opt/airflow/project/configs
+COPY pipelines /opt/airflow/dags
+RUN chown -R airflow: /opt/airflow/project /opt/airflow/dags
+
+USER airflow
+
+# `pip install .` sans extra : `[airflow]` réinstallerait `apache-airflow`, déjà celui de
+# l'image de base ; `[spark]` casse le cœur d'Airflow, voir l'avertissement ci-dessus. Seules
+# les dépendances de base du paquet (pandas, lightgbm, mlflow, pyyaml, pydantic-settings...)
+# sont ajoutées ici — ce sont elles que `orchestration/taches.py` importe transitivement pour
+# que le graphe s'assemble, et elles seules n'ont pas produit de conflit à la construction.
+# Vérifié sur l'image elle-même, sans aucun montage de volume : `import lightgbm` réussit,
+# `airflow dags list-import-errors` ne renvoie rien, et `airflow dags list` affiche les quatre
+# DAG (`edumatch_parcoursup`, `edumatch_sirene`, `edumatch_referentiels`, `edumatch_audit_purge`).
+# Risque résiduel assumé et documenté : une dépendance transitive partagée (PyYAML,
+# SQLAlchemy...) peut tout de même être réajustée par cette installation. Si l'interface
+# Airflow échoue à charger un DAG après un changement de dépendance dans `pyproject.toml`, la
+# piste à vérifier en premier est un conflit de version — reconstruire l'image et relancer
+# `airflow dags list-import-errors` avant de chercher plus loin.
+#
+# Isolation de construction laissée active (pas de `--no-build-isolation`) : l'environnement
+# Python de l'image Airflow ne porte pas `wheel`, et pip échoue alors avec `error: invalid
+# command 'bdist_wheel'` — reproduit en construisant cette image. L'isolation télécharge son
+# propre `setuptools`/`wheel` dans un environnement temporaire pour construire la roue,
+# exactement comme le font déjà `docker/Dockerfile.serve` et `docker/Dockerfile.train`.
+RUN pip install --no-cache-dir /opt/airflow/project
+
+# Deux emplacements, dans cet ordre : le code monté par `docker-compose.yml` en développement
+# (`./src` → `/opt/airflow/src`) l'emporte quand il est présent ; sinon, la copie embarquée.
+# Dans les deux cas, la configuration est trouvée à côté du code.
+ENV PYTHONPATH=/opt/airflow/src:/opt/airflow/project/src

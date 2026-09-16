@@ -2,12 +2,25 @@
 herite_de: base.yaml
 
 execution:
-  moteur_volume: cluster
+  # `local` (Polars), pas `cluster` (Spark) : ADR 0016 conclut déjà que Polars reste « le
+  # chemin de production réel » tant que le calcul tient sur un seul nœud (18,2 s contre
+  # 87,0 s pour Spark sur le volume actuel de StockEtablissement) — Spark existe, est testé
+  # et produit le même résultat, mais n'est pas le chemin réellement emprunté aujourd'hui,
+  # y compris en prod. `cluster` ici était un désaccord non détecté avec cette décision :
+  # corrigé en même temps qu'un défaut trouvé à l'exécution (ADR 0019, `docker/Dockerfile.airflow`)
+  # — installer PySpark dans l'environnement Airflow 2.9.3 casse son propre cœur (SQLAlchemy
+  # 2.0, exigé par `sqlalchemy>=2.0` de ce paquet, brise `airflow.models.taskinstance` construit
+  # pour SQLAlchemy 1.4), reproduit avant cette correction. Voir le seuil de bascule dans l'ADR.
+  moteur_volume: local
   niveau_journal: WARNING
 
 api:
   replicas: 2
   autoscaling:
     min: 2
-    max: 12                          # saisonnalité : rapport 1 à 6
-    cible_cpu_pourcent: 70
+    # Alignés sur le HPA réellement appliqué (edumatch-cicd, k8s/base/hpa.yaml),
+    # qui fait foi : plancher 2 pour la disponibilité, plafond 6 pour la demande
+    # (rapport de charge 1 à 6 de la saisonnalité), pool de nœuds dimensionné
+    # pour six pods. Ce bloc avait dérivé (12 et 70 %) sans que rien ne le lise.
+    max: 6
+    cible_cpu_pourcent: 60

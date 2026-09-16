@@ -1,0 +1,61 @@
+# Ce qui ne doit jamais entrer dans une image (E35).
+#
+# Deux raisons distinctes se mélangent ici : la taille (une image qui
+# embarque data/ dépasserait 4,6 Go pour un service qui n'en a pas besoin
+# au démarrage — .env, credentials*.json, *.pem : une fois copié dans une
+# couche puis supprimé dans une couche suivante, le secret reste lisible
+# dans l'historique de l'image, `docker history` ou un simple `docker save`
+# suffisent à le retrouver. La seule protection est de ne jamais le copier.
+
+# ─── Secrets — jamais dans une couche, même supprimés ensuite ──────────
+.env
+*.env
+!.env.example
+*adminsdk*.json
+credentials*.json
+*.pem
+*.key
+kubeconfig
+
+# ─── Données — jusqu'à 4,6 Go, non versionnées, montées en volume ──────
+data/
+!data/samples/
+
+# ─── Artefacts locaux — le registre MLflow fait foi, pas ce dossier ────
+models/
+mlruns/
+mlartifacts/
+mlflow.db
+mlflow.db-*
+
+# ─── Contrôle de version et outillage hors dépôt ────────────────────────
+.git/
+.github/
+
+# ─── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ─── Notebooks, dbt, documentation, rapports ────────────────────────────
+.ipynb_checkpoints/
+notebooks/
+src/edumatch/transform/dbt/target/
+src/edumatch/transform/dbt/dbt_packages/
+logs/
+docs/
+reports/
+
+# ─── Tests — pas de valeur dans une image de service ou d'entraînement ──
+tests/
+
+.dockerignore
+docker-compose.yml
+README.md

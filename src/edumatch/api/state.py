@@ -1,21 +1,35 @@
 """État du service de matching et d'explicabilité (E29) : construit une fois au démarrage de
 l'API, jamais recalculé par requête.
 
-## Pourquoi un entraînement au démarrage, et pas un modèle chargé depuis un registre
+## Pourquoi un artefact précalculé, et pas un modèle chargé à chaque démarrage
 
-`models/train.entrainer_et_evaluer` (E22) est aujourd'hui la seule voie du
-dépôt qui produit à la fois un modèle entraîné et la table de variables
-alignée sur ses prédictions : E22 écrit un artefact dans le registre MLflow,
-mais rien ne le relit ailleurs dans ce dépôt. `construire_etat_matching`
-s'appuie donc sur un entraînement complet exécuté une seule fois, au démarrage
-du processus API — jamais par requête, ce qui règle la latence — plutôt que
-d'ajouter un chargeur de registre non éprouvé pour cette seule étape.
+Aucune route de l'API n'a besoin de l'objet modèle lui-même : `/matching`
+(`api/routes/matching.py`) ne consulte que `EtatMatching.catalogue`, déjà
+muni de sa colonne `taux_predit` ; `/explain` lit un fichier SHAP précalculé
+(voir plus bas). Le modèle n'existe donc que pour produire, une fois, ce
+catalogue — exactement ce que fait déjà `make explain` pour le SHAP.
 
-**Dette assumée, écrite plutôt que masquée** : un déploiement qui redémarre
-souvent ré-entraîne à chaque fois. La suite naturelle est un chargeur
-`mlflow.lightgbm.load_model` pointé sur la dernière version enregistrée du
-registre ; hors périmètre de l'étape E29, qui porte la mise à disposition du
-score par une API, pas la gestion du cycle de vie du modèle.
+`construire_etat_matching` cherche d'abord l'artefact que
+`models.train.exporter_catalogue_predictions` écrit à la fin de `make train`
+(ou de `docker/Dockerfile.train`) : `processed_dir/matching/catalogue_predictions.parquet`,
+sous `EDUMATCH_DATA_ROOT` (déjà configurable par variable d'environnement,
+donc montable en volume Kubernetes sans changement de code). Trouvé, il est
+simplement lu — quelques dizaines de millisecondes pour 77 159 lignes,
+contre les minutes d'un entraînement complet.
+
+**Ce que ça règle, ce que ça ne règle pas** : un déploiement qui redémarre
+souvent — un pod recréé par le `HorizontalPodAutoscaler`, un retour arrière —
+ne réentraîne plus rien tant que l'artefact est monté. La dette qui demeure
+est en amont : rien ne recharge cet artefact *pendant* que l'API tourne si un
+nouvel entraînement le remplace ; un redémarrage du pod reste nécessaire.
+Cela reste hors périmètre de E29/E35, qui portent la mise à disposition du
+score, pas le rechargement à chaud d'un modèle vivant.
+
+**Le repli qui subsiste, volontairement** : si l'artefact est absent —
+poste de développement qui n'a encore jamais lancé `make train` — la
+fonction retombe sur un entraînement complet, journalisé en
+avertissement plutôt que masqué. C'est le seul cas où l'API entraîne encore
+au démarrage, et il est explicite.
 
 ## Le terme de débouchés : jamais un zéro silencieux si son infrastructure manque
 
@@ -62,24 +76,9 @@ from edumatch.matching.debouches import (
 )
 from edumatch.models import train
 from edumatch.models.explain import NOM_FICHIER_PRECALCUL, SOUS_DOSSIER_PRECALCUL
+from edumatch.models.train import COLONNES_CATALOGUE
 
 LOGGER = logging.getLogger(__name__)
-
-# Colonnes du catalogue de la session courante retenues pour le matching :
-# les six colonnes requises par `matching.score.recommander`
-# (`COLONNES_CATALOGUE_REQUISES`, sans `taux_predit` qui est ajoutée à part)
-# plus les deux dimensions de la cellule (`type_bac`, `boursier`), nécessaires
-# pour filtrer le catalogue au profil déclaré par le candidat avant de
-# scorer — `recommander` lui-même ne filtre jamais sur ces deux colonnes.
-COLONNES_CATALOGUE: tuple[str, ...] = (
-    "cod_aff_form",
-    "fili",
-    "fil_lib_voe_acc",
-    "form_lib_voe_acc",
-    "dep",
-    "type_bac",
-    "boursier",
-)
 
 
 class ErreurEtatAPI(RuntimeError):
@@ -158,18 +157,36 @@ def _construire_artefacts_debouches(
     return artefacts, True, None
 
 
-def construire_etat_matching(settings: Settings | None = None) -> EtatMatching:
-    """Entraîne le modèle (E22), construit le catalogue de la session courante et les
-    artefacts de débouchés (E28). Coûteux — appelé une seule fois, au démarrage."""
-    settings = settings or get_settings()
-    resultat = train.entrainer_et_evaluer(settings)
+def _chemin_catalogue_predictions(settings: Settings) -> Path:
+    return settings.processed_dir / train.SOUS_DOSSIER_CATALOGUE_PREDICTIONS / train.NOM_FICHIER_CATALOGUE_PREDICTIONS
 
-    index_test = resultat.jeu_test.X.index
-    catalogue = resultat.table.loc[index_test, list(COLONNES_CATALOGUE)].copy().reset_index(drop=True)
-    catalogue["cod_aff_form"] = catalogue["cod_aff_form"].astype(str)
-    catalogue["type_bac"] = catalogue["type_bac"].astype(str)
-    catalogue["boursier"] = catalogue["boursier"].astype(bool)
-    catalogue["taux_predit"] = resultat.prediction_test
+
+def _charger_catalogue_predictions(settings: Settings) -> pd.DataFrame:
+    """Le catalogue de la session de test, prédictions incluses — lu depuis l'artefact
+    précalculé par `make train` si présent, sinon entraîné à la volée (voir le docstring du
+    module pour ce que ce repli signifie et pourquoi il est journalisé, pas masqué)."""
+    chemin = _chemin_catalogue_predictions(settings)
+    if chemin.exists():
+        LOGGER.info("Catalogue de prédictions chargé depuis l'artefact précalculé %s : aucun réentraînement.", chemin)
+        catalogue = pd.read_parquet(chemin)
+        catalogue["cod_aff_form"] = catalogue["cod_aff_form"].astype(str)
+        catalogue["type_bac"] = catalogue["type_bac"].astype(str)
+        catalogue["boursier"] = catalogue["boursier"].astype(bool)
+        return catalogue
+    LOGGER.warning(
+        "Artefact %s introuvable : entraînement complet au démarrage (poste de développement "
+        "sans `make train` préalable ; en production, cet artefact est produit par "
+        "`docker/Dockerfile.train` et monté en volume — voir docker-compose.yml).",
+        chemin,
+    )
+    resultat = train.entrainer_et_evaluer(settings)
+    return train.construire_catalogue_predictions(resultat)
+
+
+def construire_etat_matching(settings: Settings | None = None) -> EtatMatching:
+    """Charge le catalogue de la session courante (déjà prédit, voir ci-dessus) et construit les
+    artefacts de débouchés (E28). Appelé une seule fois, au démarrage du processus."""
+    settings = settings or get_settings()
 
     sessions_test = settings.modele.split.test
     if len(sessions_test) != 1:
@@ -178,6 +195,7 @@ def construire_etat_matching(settings: Settings | None = None) -> EtatMatching:
             "l'API suppose une session de test unique (ADR 0012)."
         )
 
+    catalogue = _charger_catalogue_predictions(settings)
     artefacts, disponible, motif = _construire_artefacts_debouches(catalogue, settings)
 
     return EtatMatching(

@@ -106,7 +106,8 @@ def test_argument_explicite_coherent_avec_edumatch_env_fonctionne(
     monkeypatch.setenv("EDUMATCH_ENV", "prod")
     settings = load_settings("prod")
     assert settings.env == "prod"
-    assert settings.execution.moteur_volume == "cluster"
+    # Polars en production (ADR 0016 et 0019) : Spark reste sélectionnable, pas par défaut.
+    assert settings.execution.moteur_volume == "local"
 def test_type_invalide_leve_validationerror(configs_dir_isole: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Un learning_rate hors bornes (]0, 1]) doit être rejeté, avec le champ nommé."""
     monkeypatch.setenv("EDUMATCH_MODELE__HYPERPARAMETRES__LEARNING_RATE", "3.5")

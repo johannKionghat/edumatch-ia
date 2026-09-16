@@ -32,9 +32,12 @@ def test_chargement_nominal_environnement_dev_reel() -> None:
 
 def test_chargement_nominal_prod() -> None:
     settings = load_settings("prod")
-    assert settings.execution.moteur_volume == "cluster"
+    # Polars en production (ADR 0016 et 0019) : Spark reste sélectionnable, pas par défaut.
+    assert settings.execution.moteur_volume == "local"
     assert settings.api.autoscaling is not None
-    assert settings.api.autoscaling.max == 12
+    # Aligné sur le HPA appliqué : plafond 6, plancher 2.
+    assert settings.api.autoscaling.max == 6
+    assert settings.api.autoscaling.min == 2
 
 
 def test_get_settings_est_mis_en_cache(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -226,10 +226,17 @@ def test_executer_source_absente_leve(tmp_path: Path) -> None:
 
 
 def test_executer_moteur_cluster_ecrit_le_meme_resultat(tmp_path: Path) -> None:
-    """`execution.moteur_volume: cluster` (prod) passe par Spark et produit le même agrégat que Polars."""
+    """Le moteur `cluster` passe par Spark et produit le même agrégat que Polars.
+
+    Le moteur est forcé explicitement : depuis que la production s'exécute en
+    `local` (Polars, ADR 0016 et 0019), s'appuyer sur la configuration `prod`
+    ferait tourner Polars deux fois et « prouverait » l'égalité sans jamais
+    exécuter Spark.
+    """
     pytest.importorskip("pyspark")
     base = load_settings("prod")
-    settings = base.model_copy(update={"data_root": tmp_path})
+    execution = base.execution.model_copy(update={"moteur_volume": "cluster"})
+    settings = base.model_copy(update={"data_root": tmp_path, "execution": execution})
     assert settings.execution.moteur_volume == "cluster"
     dossier_raw = settings.raw_dir / "sirene"
     dossier_raw.mkdir(parents=True)

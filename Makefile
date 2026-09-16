@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier assistant-exemple test lint fmt docs clean
+.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier assistant-exemple test lint fmt docs clean
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -11,8 +11,22 @@ help:  ## Affiche cette aide
 install:  ## Installe le paquet et ses dépendances de développement
 	pip install -e ".[dev,rag]"
 
-up:  ## Démarre PostgreSQL, MLflow et Airflow
-	docker compose up -d
+# Séquence complète de la pile locale (E35) : lever, vérifier, arrêter.
+#   1. make up             -> construit les images et démarre PostgreSQL, MLflow, Airflow,
+#                              un entraînement unique (train), puis l'API
+#   2. make verifier-pile  -> interroge chaque sonde, affiche un état lisible
+#   3. make down           -> arrête tout et supprime les volumes
+up:  ## Démarre la pile complète : PostgreSQL, MLflow, Airflow (DAG chargés), entraînement puis API
+	# Les deux sous-dossiers d'écriture de l'API (journal d'audit article 12, écran conseiller)
+	# doivent exister et être ouverts en écriture à l'utilisateur non-root du conteneur (uid
+	# 10001, voir docker/Dockerfile.serve) AVANT le montage : sinon Docker crée le point de
+	# montage appartenant à root sur un hôte Linux, et l'écriture échouerait quand même.
+	mkdir -p data/processed/audit data/processed/supervision
+	chmod -R 0777 data/processed/audit data/processed/supervision
+	docker compose up -d --build
+
+verifier-pile:  ## Interroge la sonde de chaque brique (api, mlflow, airflow, postgres, train) — état lisible
+	bash scripts/verifier_pile.sh
 
 down:  ## Arrête tout et supprime les volumes
 	docker compose down -v

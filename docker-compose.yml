@@ -1,40 +1,86 @@
+# Pile locale complète (E33, E35) : `make up` (ou `docker compose up -d`) lève PostgreSQL,
+# MLflow, Airflow (avec les quatre DAG réellement importés), un entraînement unique, puis
+# l'API — sans jamais réentraîner au démarrage de l'API elle-même (voir le service `train`
+# ci-dessous et src/edumatch/api/state.py). `make verifier-pile` interroge chaque sonde et
+# affiche un état lisible. `make down` arrête tout et supprime les volumes.
+#
+# Ce fichier sert la démonstration locale, pas la production : les images sont construites
+# sur place (`build:`), taguées implicitement par Compose (`edumatch-<service>:latest` en
+# interne, jamais poussé nulle part). En production (E37, Scaleway Kapsule), les mêmes
+# `docker/Dockerfile.*` sont construits par la CI, tagués par l'empreinte courte du commit et
+# poussés vers le registre de conteneurs Scaleway — jamais `latest` dans ce cas-là, voir
+# `docker/Dockerfile.serve` et le dépôt CI/CD pour l'automatisation.
+#
+# Secrets : aucun n'est en dur ici. Chaque valeur vient de l'environnement (`${VARIABLE:-repli}`)
+# — le repli n'est qu'une commodité de démonstration locale, jamais une valeur utilisable en
+# production. `.env.example` liste toutes les variables avec des valeurs factices ; le fichier
+# `.env` réel n'est jamais versionné (voir .gitignore).
+
 name: edumatch
 
 services:
+  # Base relationnelle du backend MLflow (registre d'expériences et de modèles, E22).
+  # Port 5432 exposé uniquement pour l'inspection locale (`psql`) ; les autres services
+  # l'atteignent par le nom de service `postgres`, jamais par `localhost`.
   postgres:
     image: postgres:16
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-edumatch}
       POSTGRES_USER: ${POSTGRES_USER:-edumatch}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changez_moi}
     ports: ["5432:5432"]
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]  # état de la base, survit à `down` sans `-v`
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edumatch}"]
       interval: 5s
       retries: 10
 
+  # Suivi d'expériences et registre de modèles (E22, critère 4.10). Interface sur le port 5000.
+  # `--default-artifact-root /mlartifacts` : les artefacts (modèle LightGBM sérialisé) vivent
+  # dans le volume `mlartifacts`, jamais dans l'image ni sur l'hôte hors volume nommé.
+  # Registre d'expériences. Deux défauts prouvés à l'exécution, et corrigés ensemble :
+  # 1. `--default-artifact-root /mlartifacts` faisait recevoir au client un chemin local à SON
+  #    propre conteneur : `PermissionError` sur `/mlartifacts`, aucun artefact n'arrivait au
+  #    serveur. Désormais `--serve-artifacts` : le client reçoit `mlflow-artifacts:/…` et envoie
+  #    ses fichiers par HTTP, sans volume partagé.
+  # 2. Serveur 2.14.1 face à un client 3.x : le suivi passait, mais `log_model` échouait
+  #    (`/api/2.0/mlflow/logged-models` → 404, API absente du serveur 2.x). Serveur aligné sur
+  #    la version du client, épinglée dans `pyproject.toml`.
+  # MLflow 3 refuse les en-têtes `Host` non déclarés (protection contre le rebinding DNS) :
+  # `--allowed-hosts` liste le nom du service et l'accès local, sans désactiver la protection
+  # — un hôte non déclaré reste rejeté en 403, vérifié.
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.14.1
+    image: ghcr.io/mlflow/mlflow:v3.16.0
     command: >
       sh -c "pip install psycopg2-binary &&
              mlflow server --host 0.0.0.0 --port 5000
-             --backend-store-uri postgresql://${POSTGRES_USER:-edumatch}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-edumatch}
-             --default-artifact-root /mlartifacts"
+             --backend-store-uri postgresql://${POSTGRES_USER:-edumatch}:${POSTGRES_PASSWORD:-changez_moi}@postgres:5432/${POSTGRES_DB:-edumatch}
+             --serve-artifacts --artifacts-destination /mlartifacts
+             --allowed-hosts mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1:5000"
     ports: ["5000:5000"]
     volumes: ["mlartifacts:/mlartifacts"]
     depends_on:
       postgres: { condition: service_healthy }
+    healthcheck:
+      # `mlflow` n'embarque ni curl ni wget (image minimale) : `urllib`, dans la bibliothèque
+      # standard de l'interpréteur déjà présent pour faire tourner le serveur, suffit.
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5000', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
-  # Image de base uniquement : elle ne contient ni le paquet `edumatch` ni ses
-  # dépendances (pandas, lightgbm, pydantic-settings...). Une image dédiée,
-  # construite sur `apache/airflow:2.9.3` avec `pip install -e .[airflow]`,
-  # reste à faire (E35, `docker/`) pour que le planificateur puisse réellement
-  # importer `pipelines/edumatch_pipeline.py`. Déclaré ici comme lacune
-  # assumée, pas masqué.
+  # Planificateur Airflow (E33), construit depuis docker/Dockerfile.airflow — c'est cette
+  # construction qui installe le paquet `edumatch` et ses dépendances par-dessus l'image
+  # officielle : sans elle, aucun des quatre DAG de `pipelines/edumatch_pipeline.py` ne
+  # s'importe et l'interface (port 8080) les afficherait en erreur. `command: standalone`
+  # démarre planificateur, serveur web et base SQLite embarquée dans un seul processus —
+  # suffisant pour une démonstration locale, pas pour la production (E37 y substitue une base
+  # dédiée et des réplicas).
   airflow:
-    image: apache/airflow:2.9.3
-    command: standalone
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.airflow
     environment:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       PYTHONPATH: /opt/airflow/src
@@ -44,16 +90,79 @@ services:
       POSTGRES_PORT: "5432"
       POSTGRES_DB: ${POSTGRES_DB:-edumatch}
       POSTGRES_USER: ${POSTGRES_USER:-edumatch}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changez_moi}
       MLFLOW_TRACKING_URI: http://mlflow:5000
-    ports: ["8080:8080"]
+    ports: ["8080:8080"]  # interface Airflow — les quatre DAG doivent y apparaître chargés
     volumes:
+      # DAG, code et configuration montés en lecture : modifier un fichier sur l'hôte se
+      # reflète sans reconstruire l'image, pratique en développement.
       - "./pipelines:/opt/airflow/dags"
       - "./src:/opt/airflow/src"
       - "./configs:/opt/airflow/configs"
+      # Données montées, jamais copiées dans l'image (voir .dockerignore) : c'est le même
+      # volume que `train` et `api` utilisent, pour que les trois voient les mêmes fichiers.
       - "./data:/opt/airflow/data"
     depends_on:
       postgres: { condition: service_healthy }
+    healthcheck:
+      # Route de vivacité native d'Airflow 2.9 (curl est présent dans l'image officielle).
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s  # le serveur web Airflow met du temps à répondre au premier démarrage
+
+  # Entraînement unique (E22), exécuté une fois au lever de la pile : c'est lui qui produit
+  # `data/processed/matching/catalogue_predictions.parquet`, l'artefact que l'API charge au
+  # démarrage pour ne jamais réentraîner elle-même (voir src/edumatch/api/state.py). Un
+  # service qui se termine (code de sortie 0), pas un service qui reste vivant — Compose
+  # l'affiche `exited (0)` dans `docker compose ps`, c'est attendu.
+  train:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.train
+      args:
+        GIT_SHA: ${GIT_SHA:-dev-local}
+    environment:
+      EDUMATCH_ENV: ${EDUMATCH_ENV:-prod}
+      EDUMATCH_DATA_ROOT: /app/data
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - "./data:/app/data"  # lit la table de variables (E20), écrit l'artefact de prédictions
+    depends_on:
+      mlflow: { condition: service_healthy }
+
+  # API de matching (E29) — sert aussi l'écran conseiller sous `/` (E31, fichiers statiques de
+  # src/edumatch/api/static/). Ne démarre qu'une fois `train` terminé avec succès
+  # (`service_completed_successfully`, pas seulement démarré) : c'est cette dépendance qui
+  # garantit que l'artefact de prédictions existe avant que l'API ne le cherche — sans elle,
+  # elle retomberait sur son repli documenté (entraînement complet au démarrage).
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.serve
+      args:
+        GIT_SHA: ${GIT_SHA:-dev-local}
+    environment:
+      EDUMATCH_ENV: ${EDUMATCH_ENV:-prod}
+      EDUMATCH_DATA_ROOT: /app/data
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports: ["8000:8000"]  # /health, /matching, /explain, /feedback, écran conseiller sur `/`
+    volumes:
+      # `/app/data` en lecture seule par défaut : l'API ne doit jamais modifier les artefacts
+      # précalculés (catalogue de prédictions, précalcul SHAP). Deux sous-dossiers dérogent,
+      # remontés par des montages plus spécifiques qui l'emportent sur le montage parent en
+      # lecture seule : `api/audit.py` (journal article 12) et `api/feedback_store.py` (écran
+      # conseiller, E31) y écrivent en fonctionnement — sans ces deux exceptions, ces deux
+      # écritures échoueraient (répertoire en lecture seule) et l'appelant ne verrait qu'un 500
+      # opaque, la cause réelle restant dans les seuls journaux du conteneur. Moindre privilège :
+      # on écrit large en lecture, étroit en écriture, plutôt que de retirer `:ro` en bloc.
+      - "./data:/app/data:ro"
+      - "./data/processed/audit:/app/data/processed/audit"
+      - "./data/processed/supervision:/app/data/processed/supervision"
+    depends_on:
+      train: { condition: service_completed_successfully }
+      mlflow: { condition: service_healthy }
 
 volumes:
   pgdata:

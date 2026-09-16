@@ -21,7 +21,7 @@ pas d'évaluation automatisée de la qualité des réponses (RAGAS ou
 ## Hors périmètre de la détection de dérive
 
 Cette brique n'entre dans le périmètre d'aucune surveillance de dérive
-(`edumatch.models`, Evidently, E34) : elle ne sert aucune prédiction du
+(`edumatch.models`, PSI et KS, E34) : elle ne sert aucune prédiction du
 modèle appris, elle indexe un référentiel public et restitue des extraits
 cités. Rien ici n'est comparé à une distribution de référence.
 
