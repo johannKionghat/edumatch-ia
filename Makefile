@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier assistant-exemple test lint fmt docs clean
+.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier assistant-exemple test lint fmt docs clean up-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -30,6 +30,31 @@ verifier-pile:  ## Interroge la sonde de chaque brique (api, mlflow, airflow, po
 
 down:  ## Arrête tout et supprime les volumes
 	docker compose down -v
+
+# ─── Production Airflow — instance dédiée (E33, ADR 0019) ─────────────
+# À exécuter SUR L'INSTANCE Scaleway provisionnée par terraform/airflow.tf
+# (edumatch-cicd), jamais sur le poste de développement : ces cibles
+# supposent /srv/edumatch/data déjà monté (voir le cloud-init de l'instance)
+# et un .env positionné avec les variables listées dans .env.example, section
+# « Airflow en production ». Voir docs/sous-docs-projets/03-pipeline/
+# orchestration.md pour la séquence complète, panne comprise.
+up-prod:  ## Démarre la pile Airflow de production (LocalExecutor, PostgreSQL dédié, image du registre)
+	docker compose -f docker-compose.prod.yml up -d
+
+down-prod:  ## Arrête la pile Airflow de production (conserve les volumes de données)
+	docker compose -f docker-compose.prod.yml down
+
+demo-panne-qualite:  ## Panne filmée (3.12) : injecte un contrôle qualité bloquant sur le millésime Parcoursup le plus récent
+	bash scripts/demo_panne_qualite.sh declencher
+
+demo-restaurer-qualite:  ## Restaure l'injection ci-dessus, vérifiée par empreinte SHA-256 contre le manifeste
+	bash scripts/demo_panne_qualite.sh restaurer
+
+verifier-idempotence-capturer:  ## Idempotence (3.6), étape 1 : capture l'état courant des sorties avant de rejouer le pipeline
+	PYTHONPATH=src python scripts/verifier_idempotence.py capturer
+
+verifier-idempotence-comparer:  ## Idempotence (3.6), étape 2 : compare le CONTENU des sorties après le second passage
+	PYTHONPATH=src python scripts/verifier_idempotence.py comparer
 
 config:  ## Affiche la configuration résolue pour EDUMATCH_ENV (secrets masqués)
 	# SecretStr masque déjà ces champs par défaut dans son repr ; le pop()

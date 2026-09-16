@@ -1,0 +1,176 @@
+# Pile de production de l'orchestrateur (E33, E35, ADR 0019 amendé) — l'instance
+# Scaleway DEV1-L dédiée à Airflow, PAS le cluster Kapsule qui héberge l'API. Voir
+# `docs/sous-docs-projets/adr/0019-airflow-en-production-sur-instance-dediee.md`
+# pour l'arbitrage complet et `docs/sous-docs-projets/03-pipeline/orchestration.md`
+# pour le mode d'emploi de démonstration.
+#
+# Différences volontaires avec `docker-compose.yml` (pile de développement) :
+#   - aucune construction d'image sur place (`build:`) : l'image
+#     ${EDUMATCH_AIRFLOW_IMAGE} est tirée du registre privé, étiquetée par
+#     l'empreinte du commit qui l'a produite (voir `docker/Dockerfile.airflow`) —
+#     c'est le graphe de ce commit-là qui tourne, jamais un DAG monté depuis un
+#     poste de développement ;
+#   - `LocalExecutor`, pas `standalone` (une tâche à la fois sur SQLite) : les
+#     quatre DAG peuvent s'exécuter en parallèle, sur une base PostgreSQL
+#     persistante et DÉDIÉE à Airflow — distincte de celle qui sert de backend
+#     MLflow sur le cluster Kapsule, hébergée sur une autre machine ;
+#   - aucun port autre que 22 (SSH, hors de ce fichier, géré par le groupe de
+#     sécurité Terraform) n'est ouvert sur l'interface réseau publique : chaque
+#     port ici est lié explicitement à `127.0.0.1`, donc seul un tunnel SSH
+#     (`ssh -L 8080:127.0.0.1:8080 …`, voir `terraform/outputs.tf` côté
+#     edumatch-cicd) permet d'atteindre l'interface web — jamais une exposition
+#     directe ;
+#   - `restart: unless-stopped` sur les services durables : un redémarrage de
+#     l'instance (maintenance Scaleway, panne) doit relever la pile seule, sans
+#     intervention manuelle — cohérent avec l'absence de haute disponibilité
+#     assumée par l'ADR 0019 (« une instance arrêtée, c'est une exécution
+#     mensuelle retardée, pas un service interrompu ») ;
+#   - ni `mlflow`, ni `train`, ni `api` : cette instance ne fait tourner QUE
+#     l'orchestrateur du pipeline de données. Le modèle et le service de
+#     matching vivent sur le cluster Kapsule (`edumatch-cicd/k8s/`), une
+#     infrastructure distincte pour une charge distincte (ADR 0019,
+#     « Deux plans d'exécution, chacun à sa place »).
+#
+# Secrets : aucun n'est en dur ici. Chaque valeur vient de l'environnement
+# (`${VARIABLE:?message}` — la syntaxe `:?` fait échouer `docker compose` tout de
+# suite, avec un message clair, si la variable est absente, plutôt que de
+# démarrer Airflow avec une clé de chiffrement ou un mot de passe vide). Le
+# fichier `.env` réel de l'instance n'est jamais versionné ; `.env.example`
+# liste toutes les variables nouvelles avec des valeurs factices.
+
+name: edumatch-airflow-prod
+
+x-airflow-commun: &airflow-commun
+  image: ${EDUMATCH_AIRFLOW_IMAGE:?renseigner EDUMATCH_AIRFLOW_IMAGE (image du registre, étiquetée par l'empreinte du commit)}
+  environment: &airflow-environnement
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    # Base de métadonnées Airflow — dédiée, distincte du backend MLflow qui
+    # tourne sur une autre machine (cluster Kapsule). `postgres`, ci-dessous,
+    # ne sert QUE cet usage.
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: >-
+      postgresql+psycopg2://${AIRFLOW_DB_USER:-airflow}:${AIRFLOW_DB_PASSWORD:?renseigner AIRFLOW_DB_PASSWORD}@postgres:5432/${AIRFLOW_DB_NAME:-airflow}
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:?renseigner AIRFLOW__CORE__FERNET_KEY}
+    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY:?renseigner AIRFLOW__WEBSERVER__SECRET_KEY}
+    # Le paquet edumatch, importé par `pipelines/edumatch_pipeline.py`, lit sa
+    # propre configuration (`configs/prod.yaml`, embarquée dans l'image, voir
+    # `docker/Dockerfile.airflow`) via ces deux variables — jamais de chemin
+    # ni d'environnement en dur dans le code.
+    EDUMATCH_ENV: prod
+    EDUMATCH_DATA_ROOT: /opt/airflow/data
+  volumes:
+    # Les données vivent sur le volume Scaleway monté par l'opérateur sous
+    # /srv/edumatch/data (voir terraform/airflow.tf et son cloud-init, côté
+    # edumatch-cicd) : raw/, interim/, processed/, external/ — le même
+    # arbitrage bronze/silver/gold que la pile locale, sur un disque qui
+    # survit indépendamment du cycle de vie de cette pile applicative.
+    - "/srv/edumatch/data:/opt/airflow/data"
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  # Base de métadonnées Airflow. Jamais publiée : ni `airflow-scheduler` ni
+  # `airflow-webserver` n'y accèdent autrement que par le réseau interne de
+  # Compose (nom de service `postgres`), et aucun opérateur humain n'a besoin
+  # d'un accès direct pour les opérations courantes — un `docker compose exec
+  # postgres psql` suffit en cas de diagnostic, sans ouvrir de port.
+  postgres:
+    image: postgres:16
+    environment:
+      # Un compte administrateur générique (`postgres`, mot de passe fourni
+      # par l'environnement) plutôt que POSTGRES_USER=airflow directement :
+      # `docker/postgres/init-airflow.sql`, exécuté une seule fois par l'image
+      # officielle au premier démarrage sur un volume vierge
+      # (docker-entrypoint-initdb.d), crée alors explicitement le rôle et la
+      # base `airflow` avec le mot de passe applicatif — la création de cette
+      # base dédiée est ainsi un fichier versionné et lisible, pas seulement
+      # un effet de bord implicite d'une variable d'environnement.
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?renseigner POSTGRES_ADMIN_PASSWORD}
+      # Variables lues par le script d'initialisation lui-même (voir
+      # docker/postgres/init-airflow.sql) : psql les résout via `\getenv`.
+      AIRFLOW_DB_NAME: ${AIRFLOW_DB_NAME:-airflow}
+      AIRFLOW_DB_USER: ${AIRFLOW_DB_USER:-airflow}
+      AIRFLOW_DB_PASSWORD: ${AIRFLOW_DB_PASSWORD:?renseigner AIRFLOW_DB_PASSWORD}
+    volumes:
+      - "/srv/edumatch/data/postgres-airflow:/var/lib/postgresql/data"
+      - "./docker/postgres/init-airflow.sql:/docker-entrypoint-initdb.d/init-airflow.sql:ro"
+    # Aucun port publié, pas même sur 127.0.0.1 : rien en dehors des deux
+    # services Airflow ci-dessous n'a besoin d'atteindre cette base.
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Migration du schéma de métadonnées et création du compte d'administration,
+  # une fois. Ce service se termine (code de sortie 0) au lieu de rester vivant
+  # — `docker compose ps` l'affiche `exited (0)`, c'est attendu, exactement
+  # comme le service `train` de la pile de développement. Les variables
+  # `_AIRFLOW_DB_MIGRATE` et `_AIRFLOW_WWW_USER_CREATE` sont celles que le
+  # point d'entrée officiel de l'image `apache/airflow` (`/entrypoint`)
+  # reconnaît nativement : c'est le mécanisme documenté par le
+  # `docker-compose.yaml` de démarrage rapide officiel d'Airflow, pas un script
+  # réécrit ici.
+  airflow-init:
+    <<: *airflow-commun
+    environment:
+      <<: *airflow-environnement
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USERNAME:-admin}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:?renseigner AIRFLOW_ADMIN_PASSWORD}
+      _AIRFLOW_WWW_USER_FIRSTNAME: Edumatch
+      _AIRFLOW_WWW_USER_LASTNAME: Admin
+      _AIRFLOW_WWW_USER_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@edumatch.invalid}
+    command: ["version"]
+    restart: "no"
+
+  # Planificateur — exécute les quatre DAG selon leur cadence
+  # (`orchestration.planification`, configs/base.yaml). Pas d'interface réseau :
+  # sa supervision passe par ses journaux (`docker compose logs -f
+  # airflow-scheduler`), consultés depuis le tunnel SSH ou directement sur
+  # l'instance — c'est précisément ce journal qu'il faut ouvrir pour voir une
+  # reprise, puisque `retries: 0` empêche l'état `up_for_retry` de l'interface
+  # de jamais apparaître (voir orchestration.md, section « Où regarder la
+  # reprise »).
+  airflow-scheduler:
+    <<: *airflow-commun
+    command: ["scheduler"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname \"$$(hostname)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Serveur web — seule interface de cette pile, et seulement pour un
+  # opérateur humain via tunnel SSH (voir l'en-tête de ce fichier). Le port
+  # est lié à `127.0.0.1:8080` explicitement : sans ce préfixe, Compose le
+  # publierait sur toutes les interfaces réseau de l'instance, y compris son
+  # IP publique — exactement ce que le groupe de sécurité Terraform interdit
+  # déjà en amont, mais qui ne doit pas reposer sur ce seul filet.
+  airflow-webserver:
+    <<: *airflow-commun
+    command: ["webserver"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
