@@ -88,7 +88,10 @@ def _construire_operateur(dag: DAG, id_tache: str, fonction) -> PythonOperator:
 
 with DAG(
     dag_id="edumatch_parcoursup",
-    description="Ingestion, qualité, étoile, variables et dérive Parcoursup (E05, E14-E16, E20, E34).",
+    description=(
+        "Ingestion, qualité, étoile, variables, dérive, réentraînement et évaluation "
+        "Parcoursup (E05, E14-E16, E20, E22-E23, E33, E34)."
+    ),
     schedule=_PLANIFICATION.parcoursup,
     start_date=DATE_DEPART,
     catchup=False,
@@ -107,7 +110,19 @@ with DAG(
         dag_parcoursup, "construire_variables", taches.construire_variables
     )
     t_derive = _construire_operateur(dag_parcoursup, "detecter_derive", taches.detecter_derive)
+    # Le réentraînement (E22) et son évaluation (E23) ferment la chaîne annuelle : ils ne
+    # démarrent que si `controler_qualite` est passé (blocage qualité en amont, hérité de
+    # la même `trigger_rule` que les tâches qui précèdent), et seulement après la dérive
+    # (E34), lue en diagnostic avant de rejouer un entraînement sur les mêmes données. La
+    # publication de l'artefact est elle-même conditionnelle : voir
+    # `orchestration.promotion`, qui refuse de remplacer le modèle déjà servi tant que le
+    # réentraînement ne bat pas le plancher E21 en test.
+    t_reentrainement = _construire_operateur(
+        dag_parcoursup, "reentrainer_modele", taches.reentrainer_modele
+    )
+    t_evaluation = _construire_operateur(dag_parcoursup, "evaluer_modele", taches.evaluer_modele)
     t_ingestion >> t_qualite >> t_silver >> t_gold >> t_variables >> t_derive
+    t_derive >> t_reentrainement >> t_evaluation
 
 
 with DAG(

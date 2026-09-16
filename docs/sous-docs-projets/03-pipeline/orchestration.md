@@ -3,7 +3,8 @@
 **Étape** : E33 (graphe), amendement ADR 0019 (instance dédiée) · **Blocs
 servis** : 3, critères 3.1 (système par lots adapté), 3.3 (automatisation sans
 intervention manuelle), 3.4 (reprise sur erreur), 3.6 (idempotence), 3.12
-(vidéo du pipeline, panne et reprise) · **Code** :
+(vidéo du pipeline, panne et reprise) ; et 4, critère 4.12 (réentraînement
+automatique et reproductible) · **Code** :
 `pipelines/edumatch_pipeline.py`, `src/edumatch/orchestration/`,
 `docker-compose.prod.yml`, `scripts/demo_panne_qualite.sh`,
 `scripts/verifier_idempotence.py` · **Amont** :
@@ -12,7 +13,9 @@ intervention manuelle), 3.4 (reprise sur erreur), 3.6 (idempotence), 3.12
 
 Ce document répond à une question précise : **où tourne Airflow en
 production, et comment le prouver devant la caméra ?** Le graphe lui-même —
-quatre DAG, onze tâches — est déjà décrit dans
+quatre DAG, treize tâches (`src/edumatch/orchestration/taches.py`), en
+comptant les deux qui ferment désormais la chaîne annuelle Parcoursup
+(réentraînement, évaluation) — est déjà décrit dans
 [`diagramme-pipeline.md`](diagramme-pipeline.md) ; ce qui suit porte
 l'infrastructure qui l'exécute réellement et la procédure de démonstration.
 
@@ -22,7 +25,7 @@ l'infrastructure qui l'exécute réellement et la procédure de démonstration.
 
 | DAG | Cadence | Tâches, dans l'ordre |
 |---|---|---|
-| `edumatch_parcoursup` | `@yearly` | `ingerer_parcoursup` → `controler_qualite` → `transformer_silver` → `construire_gold` → `construire_variables` → `detecter_derive` |
+| `edumatch_parcoursup` | `@yearly` | `ingerer_parcoursup` → `controler_qualite` → `transformer_silver` → `construire_gold` → `construire_variables` → `detecter_derive` → `reentrainer_modele` → `evaluer_modele` |
 | `edumatch_sirene` | `@monthly` | `ingerer_sirene` → `controler_qualite` → `agreger_sirene` |
 | `edumatch_referentiels` | `@daily` | `ingerer_referentiels` → `controler_qualite` → `reconcilier_naf_rome` |
 | `edumatch_audit_purge` | `@daily` | `purger_audit` |
@@ -114,6 +117,14 @@ d'`ErreurDefinitive` — c'est cette classification, pas un test supplémentaire
 dans le graphe, qui fait qu'un contrôle qualité en échec n'est jamais
 retenté : retenter un schéma cassé ne le répare pas.
 
+Les erreurs que peuvent lever `reentrainer_modele` et `evaluer_modele`
+(`ErreurEntrainement`, `ErreurBaseline` — table de variables absente ou
+colonne hors liste blanche) n'héritent pas d'`ErreurTransitoire` : elles
+traversent donc `executer_avec_reprise` sans être retentées, exactement le
+comportement voulu pour une cause qui ne se résorbe jamais en rejouant à
+l'identique — `make features` (E20) doit d'abord avoir produit une table
+conforme.
+
 ### Où regarder la reprise, puisqu'elle ne se voit pas dans l'interface
 
 Avec `retries=0`, une tâche Airflow **ne passe jamais** par l'état
@@ -147,6 +158,71 @@ l'exécution de tout ce qui suit dans le DAG, sans code supplémentaire écrit
 pour cela. Le détail des quatre familles de contrôle (schéma, complétude,
 cohérence, fraîcheur) et de la frontière entre bloquer et avertir est dans
 [`qualite.md`](qualite.md).
+
+---
+
+## Le réentraînement automatique, et la porte qui refuse de publier un modèle qui perd
+
+`reentrainer_modele` et `evaluer_modele` ferment la chaîne annuelle
+`edumatch_parcoursup`, après `detecter_derive` (E34) et derrière le même
+`controler_qualite` que les tâches qui précèdent : une donnée cassée bloque
+la construction des variables (`trigger_rule: all_success`), donc empêche
+mécaniquement tout réentraînement sur une table non conforme, sans code
+supplémentaire pour cela — c'est le même mécanisme que celui décrit plus haut
+pour le blocage qualité.
+
+`reentrainer_modele` appelle `models.train.entrainer_et_evaluer` (E22, même
+protocole que `make train` : split strictement temporel, arrêt anticipé sur
+la seule validation, test 2025 touché une seule fois) puis délègue la
+décision de publication à `orchestration.promotion.promouvoir_si_meilleur` :
+
+- **Le seuil retenu** : le modèle n'est publié — c'est-à-dire que
+  `catalogue_predictions.parquet`, l'artefact que l'API charge au démarrage
+  (`api/state.py`), n'est réécrit — que si sa MAE pondérée de test est
+  **strictement inférieure** à celle du plancher E21
+  (`session_precedente_avec_repli`), comparés à couverture égale (100 %).
+  Aucune marge de tolérance n'est ajoutée : un progrès nul ou négatif ne
+  justifie pas de remplacer un artefact déjà servi.
+- **Ce que ce seuil referme, mesuré sur ce dépôt** : avec la configuration
+  retenue (`taux_session_precedente` inclus comme variable), le modèle vaut
+  0,0758 de MAE pondérée en test contre 0,0701 pour le plancher — il **perd**
+  contre la règle triviale, un défaut de généralisation temporelle documenté
+  dans `models/train.py`. Publier ce résultat automatiquement, chaque année,
+  remplacerait un plancher qui fonctionne par un modèle qui fait strictement
+  pire. La porte s'applique donc dès la première exécution planifiée, pas
+  seulement pour un hypothétique futur réentraînement qui régresserait.
+- **Un refus n'est pas une panne** : `reentrainer_modele` ne lève jamais sur
+  un refus de promotion, il journalise le verdict au niveau ERREUR (pour
+  rester visible en supervision, critère 3.7) et se termine normalement — la
+  comparaison au plancher est un résultat attendu de l'entraînement, pas un
+  état à faire échouer artificiellement. `evaluer_modele`, en aval, rejoue le
+  même entraînement (même `random_state`, même split) pour produire la
+  calibration et la ventilation par type de baccalauréat (E23) ; il ne
+  conditionne ni ne bloque la publication, déjà tranchée en amont.
+- **Idempotence** : `entrainer_et_evaluer` fixe `random_state=42`, et la
+  publication, quand elle a lieu, écrase l'artefact par remplacement atomique
+  (fichier `.part` renommé à la fin) — rejouer `reentrainer_modele` sur les
+  mêmes données reproduit exactement la même décision, jamais un doublon ni
+  un fichier partiel. Prouvé par
+  `tests/unit/test_orchestration_promotion.py::test_promouvoir_est_idempotent_rejouer_sur_le_meme_resultat_donne_la_meme_decision`.
+
+**Le seuil qui ferait reconsidérer cette porte** : si un futur réentraînement
+bat le plancher de très peu (par exemple 0,0699 contre 0,0701) et que ce gain
+s'avère instable d'une exécution à l'autre — bruit d'échantillonnage plutôt
+que progrès réel — c'est alors une marge de tolérance, documentée et mesurée
+sur plusieurs exécutions, qui se justifierait. Pas avant : au moment
+d'écrire cette page, l'écart va dans le mauvais sens, et toute tolérance
+ajoutée aujourd'hui ne ferait qu'autoriser une dégradation supplémentaire
+avant de la détecter.
+
+**Alternative écartée** : combiner l'appel à `entrainer_et_evaluer` et la
+décision de promotion en deux tâches Airflow distinctes, pour respecter à la
+lettre la règle « une tâche fait une chose ». Écartée parce que le seul moyen
+de faire transiter le résultat (le modèle LightGBM, les jeux de
+validation/test) d'une tâche Airflow à l'autre est XCom, qui sérialise sur
+disque — coûteux et fragile pour un objet contenant un modèle entraîné. La
+porte de promotion reste un choix de publication d'un même entraînement, pas
+une étape métier séparée : elle ne réentraîne rien elle-même.
 
 ---
 
@@ -242,9 +318,24 @@ production.
 - **Le détail des quatre familles de contrôle qualité** est dans
   [`qualite.md`](qualite.md) ; **le contrat anti-fuite** entre gold et les
   variables est décrit dans [`diagramme-pipeline.md`](diagramme-pipeline.md).
+- **`scripts/verifier_idempotence.py` ne compare pas encore
+  `catalogue_predictions.parquet`** (l'artefact publié par
+  `reentrainer_modele`) : il couvre `silver.parquet`, `fait_admission.parquet`,
+  `variables.parquet` et l'agrégat Sirene. L'idempotence du réentraînement est
+  démontrée séparément, au niveau de la porte de promotion elle-même
+  (`tests/unit/test_orchestration_promotion.py`), pas encore par ce script de
+  production — un point ouvert, à combler avant la démonstration filmée si
+  elle doit couvrir le réentraînement.
+- **Le diagramme du pipeline** (`diagramme-pipeline.md`) compte encore onze
+  tâches (§ « Vue d'ensemble ») : il reste à le porter à treize avec les deux
+  tâches de réentraînement et d'évaluation ajoutées ici à
+  `edumatch_parcoursup`.
 
 ---
-*Étape E33 / amendement ADR 0019 · vérifié le 2026-09-16 contre
-`pipelines/edumatch_pipeline.py`, `src/edumatch/orchestration/reprise.py`,
-`docker-compose.prod.yml`, `docker/postgres/init-airflow.sql`,
-`scripts/demo_panne_qualite.sh` et `scripts/verifier_idempotence.py`.*
+*Étape E33 / amendement ADR 0019, complétée par le réentraînement automatique
+(E22, E23) et sa porte de promotion (E33, critères 3.3 et 4.12) · vérifié le
+2026-09-16 contre `pipelines/edumatch_pipeline.py`,
+`src/edumatch/orchestration/reprise.py`,
+`src/edumatch/orchestration/promotion.py`, `docker-compose.prod.yml`,
+`docker/postgres/init-airflow.sql`, `scripts/demo_panne_qualite.sh` et
+`scripts/verifier_idempotence.py`.*

@@ -52,7 +52,7 @@ def test_quatre_dag_sont_definis(module_pipeline) -> None:
     assert module_pipeline.dag_audit_purge.dag_id == "edumatch_audit_purge"
 
 
-def test_dag_parcoursup_enchaine_les_six_etapes_dans_l_ordre(module_pipeline) -> None:
+def test_dag_parcoursup_enchaine_les_huit_etapes_dans_l_ordre(module_pipeline) -> None:
     dag = module_pipeline.dag_parcoursup
     assert _ids_taches(dag) == {
         "ingerer_parcoursup",
@@ -61,6 +61,8 @@ def test_dag_parcoursup_enchaine_les_six_etapes_dans_l_ordre(module_pipeline) ->
         "construire_gold",
         "construire_variables",
         "detecter_derive",
+        "reentrainer_modele",
+        "evaluer_modele",
     }
     def aval(id_tache: str) -> list[str]:
         return [t.task_id for t in dag.get_task(id_tache).downstream_list]
@@ -70,7 +72,30 @@ def test_dag_parcoursup_enchaine_les_six_etapes_dans_l_ordre(module_pipeline) ->
     assert aval("transformer_silver") == ["construire_gold"]
     assert aval("construire_gold") == ["construire_variables"]
     assert aval("construire_variables") == ["detecter_derive"]
-    assert dag.get_task("detecter_derive").downstream_list == []
+    assert aval("detecter_derive") == ["reentrainer_modele"]
+    assert aval("reentrainer_modele") == ["evaluer_modele"]
+    assert dag.get_task("evaluer_modele").downstream_list == []
+
+
+def test_dag_parcoursup_le_reentrainement_depend_transitivement_du_controle_qualite(
+    module_pipeline,
+) -> None:
+    """Le blocage qualité (E14) doit couvrir le réentraînement : `trigger_rule` par défaut
+    (`all_success`) empêche `reentrainer_modele` de s'exécuter si `controler_qualite` a
+    échoué, sans code supplémentaire ici — c'est ce que ce test vérifie au niveau du
+    graphe plutôt que de le supposer."""
+    dag = module_pipeline.dag_parcoursup
+    amont_reentrainement = {t.task_id for t in dag.get_task("reentrainer_modele").upstream_list}
+    # Pas nécessairement direct : c'est la fermeture transitive qui doit inclure la qualité.
+    ancetres = set()
+    a_visiter = list(amont_reentrainement)
+    while a_visiter:
+        tache_id = a_visiter.pop()
+        if tache_id in ancetres:
+            continue
+        ancetres.add(tache_id)
+        a_visiter.extend(t.task_id for t in dag.get_task(tache_id).upstream_list)
+    assert "controler_qualite" in ancetres
 
 
 def test_dag_sirene_enchaine_ingestion_qualite_agregat(module_pipeline) -> None:

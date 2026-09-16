@@ -12,6 +12,14 @@ Une tâche fait une chose : chacune ne fait qu'un seul appel au module métier,
 jamais deux étapes combinées, pour que son échec reste isolé et que sa
 reprise (`orchestration/reprise.py`) rejoue exactement le grain qui a
 échoué — jamais plus, jamais moins.
+
+Une exception assumée : `reentrainer_modele` enchaîne `models.train.entrainer_et_evaluer`
+et `orchestration.promotion.promouvoir_si_meilleur`. Les séparer en deux tâches Airflow
+obligerait à faire transiter le modèle entraîné et ses jeux de validation/test par XCom
+(le mécanisme d'échange entre tâches Airflow, qui sérialise sur disque) pour que la
+seconde tâche puisse comparer au plancher — coûteux et fragile pour un objet qui contient
+un modèle LightGBM. La porte de promotion reste ici un choix de publication d'un même
+entraînement, pas une étape métier séparée : elle ne réentraîne rien.
 """
 
 from __future__ import annotations
@@ -24,6 +32,9 @@ from edumatch.config import Settings, get_settings
 from edumatch.features import build as features_build
 from edumatch.ingestion import parcoursup, referentiels, sirene
 from edumatch.models import derive as models_derive
+from edumatch.models import evaluate as models_evaluate
+from edumatch.models import train as models_train
+from edumatch.orchestration import promotion as models_promotion
 from edumatch.quality import run as quality_run
 from edumatch.quality._diagnostic import RapportControle
 from edumatch.referentiel import naf_rome_formation
@@ -120,6 +131,41 @@ def detecter_derive(settings: Settings | None = None) -> models_derive.RapportDe
     if rapport.reentrainement_recommande:
         LOGGER.warning("Dérive au-delà du seuil de réentraînement (E34) : %s", rapport.resume())
     return rapport
+
+
+def reentrainer_modele(settings: Settings | None = None) -> models_promotion.RapportPromotion:
+    """Réentraîne le modèle d'accessibilité et ne publie l'artefact que s'il bat le plancher (E22, E33).
+
+    Appelle `models.train.entrainer_et_evaluer` — même protocole que `make train` : split
+    strictement temporel, arrêt anticipé sur la seule validation, test 2025 touché une
+    seule fois — puis délègue la décision de publication à
+    `orchestration.promotion.promouvoir_si_meilleur`. Cette tâche ne lève jamais sur un
+    refus de promotion (voir le docstring de `promotion.py`) : la comparaison au plancher
+    est un résultat attendu de l'entraînement, pas une panne du graphe.
+
+    Idempotente par construction : `entrainer_et_evaluer` fixe `random_state`, et la
+    publication (si elle a lieu) écrase l'artefact par remplacement atomique — rejouer
+    cette tâche sur les mêmes données produit la même décision et, si elle est promue, un
+    fichier identique.
+    """
+    settings = settings or get_settings()
+    resultat = models_train.entrainer_et_evaluer(settings)
+    return models_promotion.promouvoir_si_meilleur(resultat, settings)
+
+
+def evaluer_modele(settings: Settings | None = None) -> models_evaluate.RapportEvaluation:
+    """Évalue le modèle réentraîné : calibration, ECE, ventilation par type de baccalauréat (E23).
+
+    Rejoue le même protocole que `reentrainer_modele` (`models.evaluate.executer` appelle
+    lui-même `models.train.entrainer_et_evaluer`, même random_state, même split) pour
+    produire un diagnostic que la seule MAE de `reentrainer_modele` ne donne pas — voir le
+    docstring de `models/evaluate.py`. N'a aucune incidence sur la publication de
+    l'artefact, décidée uniquement par `reentrainer_modele` : cette tâche ne fait que
+    décrire, sous des angles supplémentaires, un entraînement déjà rejoué, et ne bloque
+    jamais le graphe.
+    """
+    settings = settings or get_settings()
+    return models_evaluate.executer(settings)
 
 
 def purger_audit(settings: Settings | None = None) -> Any:
