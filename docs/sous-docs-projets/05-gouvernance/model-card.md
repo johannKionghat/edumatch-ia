@@ -19,7 +19,7 @@ Model Reporting*).
 | | |
 |---|---|
 | **Nom** | EduMatch-IA — terme d'accessibilité |
-| **Version** | issue du commit d'entraînement `102cca9`, hyperparamètres figés par `configs/base.yaml` (`modele.hyperparametres`) |
+| **Version** | issue du commit d'entraînement `7a70366`, hyperparamètres figés par `configs/base.yaml` (`modele.hyperparametres`) |
 | **Date** | entraîné le 2026-08-30 ; audité en équité et en explicabilité le 2026-08-30 ; dérive mesurée le 2026-09-01 |
 | **Type** | Régression de gradient boosté sur arbres — LightGBM, `LGBMRegressor` |
 | **Sortie** | Un taux d'admission estimé dans [0, 1] pour une **cellule** `(formation, session, type de baccalauréat, statut de boursier)` — écrêté à l'intervalle par `matching/score.py::borner_accessibilite` |

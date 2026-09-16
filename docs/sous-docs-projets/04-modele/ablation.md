@@ -6,7 +6,7 @@ déclare la seule mesure que je ne peux pas encore faire : l'apport de
 Sirene.
 
 Source : `src/edumatch/models/ablation.py`. Le raisonnement complet est
-porté par le corps du commit `3c1036f` ; ce document le reprend sous une
+porté par le corps du commit `dc5eadc` ; ce document le reprend sous une
 forme consultable, sans rien y ajouter qui ne s'y trouve déjà.
 
 ## Le protocole
@@ -169,4 +169,4 @@ nomenclatures. Le point est reporté dans `reste-a-faire.md`.
 - Je n'ai pas mesuré l'apport de Sirene, pour la raison exposée ci-dessus.
 
 ---
-*Mise à jour : 2026-08-31, commit `3c1036f`.*
+*Mise à jour : 2026-08-31, commit `dc5eadc`.*

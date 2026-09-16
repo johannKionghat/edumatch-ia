@@ -106,4 +106,4 @@ de fraîcheur, sur la même cadence de republication mensuelle. Reporté dans la
 feuille de route.
 
 ---
-*Dernière mise à jour : 2026-08-29 · commit `b166378`*
+*Dernière mise à jour : 2026-08-29 · commit `fb86e87`*

@@ -2,12 +2,12 @@
 
 **Critère servi** : Bloc 1, 1.3 et 1.6 · Bloc 3, 3.10 · Bloc 4, 4.7 ·
 **Source** : `src/edumatch/api/audit.py`, `src/edumatch/api/audit_purge.py` ·
-**Commit** : `121c23c` · **Dernière revue** : 2026-09-01.
+**Commit** : `44c49be` · **Dernière revue** : 2026-09-01.
 
 Complète le registre des traitements tenu par la gouvernance
 (`05-gouvernance/registre-traitements.md`, T5) : ce document décrit ce qui
 a été construit pour exécuter la durée de conservation que le registre
-décide. Le raisonnement complet est porté par le corps du commit `121c23c` ;
+décide. Le raisonnement complet est porté par le corps du commit `44c49be` ;
 ce document le reprend sous forme consultable.
 
 ## Le point qui comptait
@@ -76,4 +76,4 @@ bouge — l'idempotence n'est pas supposée, elle est démontrée.
 
 ---
 
-*Dernière mise à jour : 2026-09-01, commit `121c23c`.*
+*Dernière mise à jour : 2026-09-01, commit `44c49be`.*

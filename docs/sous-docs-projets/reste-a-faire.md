@@ -16,7 +16,7 @@ sans montage — mais la pile locale complète (service, entraînement,
 orchestration, registre d'expériences) n'a pas pu être levée de bout en bout
 sur ce poste de développement, voir le point ouvert dédié. Une revue de
 sécurité de l'API a par ailleurs durci E29 et E31 le même jour (commit
-`f7687ae`) sans créer d'étape nouvelle — voir le point ouvert dédié plus
+`b3e8bba`) sans créer d'étape nouvelle — voir le point ouvert dédié plus
 bas. Ce qui suit liste ce qui reste précisément, sans ambiguïté avec ce qui
 est déjà fait.
 
@@ -94,11 +94,11 @@ posées.*
 - [x] `docker/` — trois images (service, entraînement, orchestration),
       construction multi-étages, utilisateur non-root, sonde de santé sur le
       service, étiquette par empreinte de commit (E35, 2026-09-16, commit
-      `04c9a90`). Vérifié sans montage : imports applicatifs et les quatre
+      `60a0b5a`). Vérifié sans montage : imports applicatifs et les quatre
       DAG se chargent. **La pile locale complète n'a pas été levée de bout
       en bout** — voir le point ouvert dédié
 - [x] Terraform — cluster, base, stockage objet, réseau *(dépôt 2,
-      `edumatch-cicd`, E37, 2026-09-15, commit `5ef5ff3`)*. Écrit et
+      `edumatch-cicd`, E37, 2026-09-15)*. Écrit et
       vérifié en lecture — **jamais appliqué sur un compte Scaleway réel**,
       voir le point ouvert dédié
 - [x] Manifestes Kubernetes, dont le HPA *(dépôt 2, même commit)* —
@@ -111,10 +111,10 @@ posées.*
       bornes (2 pour la disponibilité, 6 pour le rapport de charge mesuré
       entre le pic de la période des vœux et le creux estival), `replicas`
       retiré du déploiement, `PodDisruptionBudget` (`minAvailable: 1`) et
-      anti-affinité souple ajoutés. Correction commitée dans le second dépôt
-      sous `4e23b85`. Même réserve
+      anti-affinité souple ajoutés. Correction commitée dans le second dépôt.
+      Même réserve
       qu'avant sur le reste : rien n'a tourné sur un cluster
-- [x] Prometheus et Grafana *(dépôt 2, E38, 2026-09-15, commit `71b2d19`)* —
+- [x] Prometheus et Grafana *(dépôt 2, E38, 2026-09-15)* —
       cinq alertes, chacune avec une action. Même réserve, et l'API
       n'expose pas encore `/metrics` — voir le point ouvert dédié
 - [ ] Vidéo de l'infrastructure en production
@@ -191,7 +191,7 @@ posées.*
       routeurs, explication lue depuis le précalcul SHAP (jamais recalculée
       en direct), dégradation explicite si Sirene manque, réponse 422 sur
       catalogue trop grand — `06-service/api.md`. **Durci le 2026-09-16**
-      (commit `f7687ae`) : authentification de `/feedback`, limitation de
+      (commit `b3e8bba`) : authentification de `/feedback`, limitation de
       débit, en-têtes de sécurité, métriques — voir le point ouvert dédié
 - [x] `api/audit.py` — journalisation article 12 et `api/audit_purge.py` —
       purge exécutable (E30, 2026-09-01). Trois paliers testés, idempotents.
@@ -205,8 +205,7 @@ posées.*
 - [x] `rag/` — assistant réécrit, non repris du MVP (E32, 2026-09-01). 7 403
       documents, TF-IDF, citation garantie par construction —
       `06-service/assistant-rag.md`
-- [ ] CI/CD — trois workflows *(dépôt 2, `edumatch-cicd`, E36, 2026-09-15,
-      commit `a8e61f2`)*. Écrits, YAML valide — **aucun n'a encore tourné
+- [ ] CI/CD — trois workflows *(dépôt 2, `edumatch-cicd`, E36, 2026-09-15)*. Écrits, YAML valide — **aucun n'a encore tourné
       sur la forge**, 🟡 en cours, pas validé — voir le point ouvert dédié
 - [x] Détection de dérive — PSI et KS implémentés directement dans
       `models/derive.py` et `derive_stats.py`, seuil documenté en ADR (E34,
@@ -350,7 +349,7 @@ s'oublier avant la construction des variables (E20) et l'entraînement (E22).
 
 - [x] **✅ RÉSOLU — l'incohérence de chiffre d'équité entre l'analyse
       exploratoire et l'audit du modèle est réconciliée** (constatée en E11,
-      réconciliée le 2026-09-15 en écrivant l'AIPD, E41, commit `7dbb482`).
+      réconciliée le 2026-09-15 en écrivant l'AIPD, E41, commit `30ace9e`).
       Même métrique, même session 2025, seul le filtre différait : avec un
       plancher de trente vœux par sexe (celui de l'E11), 83,79 % des 11 099
       formations qui l'atteignent présentent un écart inférieur à 5 points ;
@@ -488,7 +487,7 @@ c'est ce point précis qui reste ouvert, pas la conception.
       le journal d'inférence (T5) — les deux traces ne se corrèlent pas
       aujourd'hui. La durée décidée (12 mois, alignée sur T5) reste une
       intention pour ce journal précis.
-- [x] ✅ **RÉSOLU au 2026-09-16, commit `f7687ae`** — l'identifiant du
+- [x] ✅ **RÉSOLU au 2026-09-16, commit `b3e8bba`** — l'identifiant du
       conseiller, saisi sur l'écran de supervision, était déclaratif et non
       vérifié (E31). Une revue de sécurité a introduit une authentification
       HTTP Basic sur `POST /feedback` : l'identifiant journalisé dérive
@@ -500,7 +499,7 @@ c'est ce point précis qui reste ouvert, pas la conception.
       vérifier que le contrôle humain (article 14) n'est pas une façade,
       reste à construire.
 
-## Points ouverts issus du durcissement de sécurité de l'API (2026-09-16, commit `f7687ae`)
+## Points ouverts issus du durcissement de sécurité de l'API (2026-09-16, commit `b3e8bba`)
 
 Ce durcissement lève le motif A de l'analyse d'impact (identifiant de
 conseiller non imputable) sans clore les autres. Ce qui reste ouvert,

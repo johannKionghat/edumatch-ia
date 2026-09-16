@@ -2,7 +2,7 @@
 
 **Critère servi** : Bloc 4, 4.1 (algorithme adapté au cahier des charges) ·
 **Source** : `src/edumatch/rag/` (`corpus.py`, `index.py`, `assistant.py`,
-`generation.py`) · **Commit** : `b56ec9f` · **Dernière revue** :
+`generation.py`) · **Commit** : `9fd0e5c` · **Dernière revue** :
 2026-09-01.
 
 Réécrit pour ce projet, jamais repris de l'ancien prototype d'orientation
@@ -66,4 +66,4 @@ explicitement, pour qu'un lecteur ne l'y cherche pas.
 
 ---
 
-*Dernière mise à jour : 2026-09-01, commit `b56ec9f`.*
+*Dernière mise à jour : 2026-09-01, commit `9fd0e5c`.*

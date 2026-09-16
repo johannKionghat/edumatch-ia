@@ -28,8 +28,8 @@ deux dépôts de code distincts.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E01 | Architecture et dépôt local | ✅ validée | 2026-08-24 | `e0713ed` |
-| E02 | Dépôts distants et protection de `main` | ✅ validée | 2026-08-26 | `86cc89b` |
+| E01 | Architecture et dépôt local | ✅ validée | 2026-08-24 | `eaabe30` |
+| E02 | Dépôts distants et protection de `main` | ✅ validée | 2026-08-26 | `e431722` |
 
 **E01 — ce qui a été vérifié**
 `git check-ignore` sur des chemins réels : `data/raw/*.csv`, `*adminsdk*.json` et
@@ -60,12 +60,12 @@ de tests **et** de contenu.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E03 | Vérification des sources sur data.gouv | ✅ validée | 2026-08-26 | `17a3228` |
-| E04 | Configuration centralisée `config.py` | ✅ validée | 2026-08-28 | `c0726b0` |
-| E05 | Connecteur Parcoursup | ✅ validée | 2026-08-28 | `144ee20` |
-| E06 | Connecteur Sirene | ✅ validée | 2026-08-28 | `04efa8e` |
-| E07 | Connecteur référentiels | ✅ validée | 2026-08-29 | `22bf61d` |
-| E08 | Échantillons versionnés | ✅ validée | 2026-08-29 | `f6ecd6c` |
+| E03 | Vérification des sources sur data.gouv | ✅ validée | 2026-08-26 | `5bf5e23` |
+| E04 | Configuration centralisée `config.py` | ✅ validée | 2026-08-28 | `e534fc9` |
+| E05 | Connecteur Parcoursup | ✅ validée | 2026-08-28 | `f5e6704` |
+| E06 | Connecteur Sirene | ✅ validée | 2026-08-28 | `7babe1c` |
+| E07 | Connecteur référentiels | ✅ validée | 2026-08-29 | `1f7acf6` |
+| E08 | Échantillons versionnés | ✅ validée | 2026-08-29 | `e0255e4` |
 
 **E03 — ce qui a été vérifié**
 - 4 sources interrogées par API de métadonnées (pas de téléchargement des gros
@@ -375,11 +375,11 @@ l'échantillon.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E09 | EDA — label et distributions | ✅ validée | 2026-08-29 | `7bcd5ef` |
-| E10 | EDA — écarts et sélectivité | ✅ validée | 2026-08-29 | `4f4bdc9` |
-| E11 | EDA — équité et substituts | ✅ validée | 2026-08-29 | `cbf9be2` |
-| E12 | EDA — stabilité inter-millésimes | ✅ validée | 2026-08-29 | `be2787c` |
-| E13 | Décision de variables (ADR) | ✅ validée | 2026-08-29 | `f7c1449` |
+| E09 | EDA — label et distributions | ✅ validée | 2026-08-29 | `a929446` |
+| E10 | EDA — écarts et sélectivité | ✅ validée | 2026-08-29 | `f91cf45` |
+| E11 | EDA — équité et substituts | ✅ validée | 2026-08-29 | `0997e1a` |
+| E12 | EDA — stabilité inter-millésimes | ✅ validée | 2026-08-29 | `f672040` |
+| E13 | Décision de variables (ADR) | ✅ validée | 2026-08-29 | `c3f6e43` |
 
 **E09 — ce qui a été vérifié**
 - `notebooks/01-jgk-eda-label.ipynb` (34 cellules, dont 20 de commentaire,
@@ -616,13 +616,13 @@ décalage d'une session pour le reste. Clôture la phase exploratoire.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E14 | Contrôles qualité bloquants | ✅ validée | 2026-08-29 | `b166378` |
-| E15 | dbt — bronze vers silver | ✅ validée | 2026-08-29 | `95248e6` |
-| E16 | dbt — modèle en étoile | ✅ validée | 2026-08-30 | `cae2485` |
-| E17 | Job Spark Sirene | ✅ validée | 2026-08-30 | `8ebe613` |
-| E18 | Table NAF ↔ ROME ↔ formation | ✅ validée | 2026-08-30 | `2439d26` |
-| E19 | Calcul du label | ✅ validée | 2026-08-30 | `8376639` |
-| E20 | Construction des variables | ✅ validée | 2026-08-30 | `a5ae188` |
+| E14 | Contrôles qualité bloquants | ✅ validée | 2026-08-29 | `fb86e87` |
+| E15 | dbt — bronze vers silver | ✅ validée | 2026-08-29 | `447f5dc` |
+| E16 | dbt — modèle en étoile | ✅ validée | 2026-08-30 | `e15fbb3` |
+| E17 | Job Spark Sirene | ✅ validée | 2026-08-30 | `fb62bd4` |
+| E18 | Table NAF ↔ ROME ↔ formation | ✅ validée | 2026-08-30 | `364c104` |
+| E19 | Calcul du label | ✅ validée | 2026-08-30 | `2400569` |
+| E20 | Construction des variables | ✅ validée | 2026-08-30 | `e34f22a` |
 
 **E14 — ce qui a été vérifié**
 - `src/edumatch/quality/` : vocabulaire commun (`_diagnostic.py` —
@@ -964,7 +964,7 @@ arbitrage.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E21 | Baseline | ✅ validée | 2026-08-30 | `2b4c409` |
+| E21 | Baseline | ✅ validée | 2026-08-30 | `666c7e9` |
 
 **E21 — ce qui a été vérifié**
 - `src/edumatch/models/baseline.py` mesure quatre variantes, sans aucun
@@ -1009,12 +1009,12 @@ avant l'entraînement du modèle.
 n'introduisent aucun arbitrage de modélisation, seulement une mesure. Le
 détail complet (tableau par session, comparatif des trois règles, le seuil
 posé pour l'étape suivante) est dans `04-modele/evaluation.md`.
-| E22 | Entraînement LightGBM | ✅ validée | 2026-08-30 | `102cca9` |
-| E23 | Évaluation et calibration | ✅ validée | 2026-08-30 | `a7d3aff` |
-| E24 | Courbe d'apprentissage | ✅ validée | 2026-08-30 | `a7d3aff` |
-| E25 | Explicabilité SHAP | ✅ validée | 2026-08-30 | `b64e665` |
-| E26 | Audit d'équité | ✅ validée | 2026-08-30 | `b64e665` |
-| E27 | Ablation | ✅ validée | 2026-08-31 | `3c1036f` |
+| E22 | Entraînement LightGBM | ✅ validée | 2026-08-30 | `7a70366` |
+| E23 | Évaluation et calibration | ✅ validée | 2026-08-30 | `3c7d08c` |
+| E24 | Courbe d'apprentissage | ✅ validée | 2026-08-30 | `3c7d08c` |
+| E25 | Explicabilité SHAP | ✅ validée | 2026-08-30 | `e8417bb` |
+| E26 | Audit d'équité | ✅ validée | 2026-08-30 | `e8417bb` |
+| E27 | Ablation | ✅ validée | 2026-08-31 | `dc5eadc` |
 
 **E22 — ce qui a été vérifié**
 - `src/edumatch/models/train.py` sépare la table de variables (E20) selon le
@@ -1178,11 +1178,11 @@ complet : `04-modele/ablation.md`.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E28 | Score à trois termes | ✅ validée | 2026-09-01 | `53d1bdd` |
-| E29 | API | ✅ validée | 2026-09-01 | `0b61e25` |
-| E30 | Journalisation article 12 | ✅ validée | 2026-09-01 | `121c23c` |
-| E31 | Écran conseiller RGAA | ✅ validée | 2026-09-01 | `bbebefd` |
-| E32 | Assistant RAG réécrit | ✅ validée | 2026-09-01 | `b56ec9f` |
+| E28 | Score à trois termes | ✅ validée | 2026-09-01 | `8b88b2a` |
+| E29 | API | ✅ validée | 2026-09-01 | `bcf0a81` |
+| E30 | Journalisation article 12 | ✅ validée | 2026-09-01 | `44c49be` |
+| E31 | Écran conseiller RGAA | ✅ validée | 2026-09-01 | `a732aed` |
+| E32 | Assistant RAG réécrit | ✅ validée | 2026-09-01 | `9fd0e5c` |
 
 **E28 — ce qui a été vérifié**
 - `src/edumatch/matching/score.py` combine affinité (règles), accessibilité
@@ -1303,7 +1303,7 @@ Détail complet : `06-service/assistant-rag.md`.
 **Suite de tests à l'issue de la phase 5** : 668 tests verts
 (`python -m pytest -q`).
 
-**2026-09-16 — durcissement de sécurité de E29 et E31 (commit `f7687ae`)**
+**2026-09-16 — durcissement de sécurité de E29 et E31 (commit `b3e8bba`)**
 
 Une revue de sécurité a porté sur l'API (E29) et l'écran conseiller (E31),
 déjà validées. Elle ne crée pas d'étape nouvelle du plan d'exécution du
@@ -1340,12 +1340,12 @@ après échecs répétés, pas de transport strict) est reporté dans
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E33 | DAG Airflow | ✅ validée | 2026-09-01 | `09d107a` |
-| E34 | Détection de dérive | ✅ validée | 2026-09-01 | `c1af7a4` |
-| E35 | Conteneurisation | ✅ validée | 2026-09-16 | `04c9a90` |
-| E36 | CI/CD | 🟡 en cours | 2026-09-15 | `a8e61f2` *(edumatch-cicd)* |
-| E37 | Infrastructure Terraform et Kubernetes | ✅ validée | 2026-09-15 | `5ef5ff3` *(edumatch-cicd)* |
-| E38 | Monitoring et SLO | ✅ validée | 2026-09-15 | `71b2d19` *(edumatch-cicd)* |
+| E33 | DAG Airflow | ✅ validée | 2026-09-01 | `b54d621` |
+| E34 | Détection de dérive | ✅ validée | 2026-09-01 | `c65cbf1` |
+| E35 | Conteneurisation | ✅ validée | 2026-09-16 | `60a0b5a` |
+| E36 | CI/CD | 🟡 en cours | 2026-09-15 | *dépôt `edumatch-cicd`* |
+| E37 | Infrastructure Terraform et Kubernetes | ✅ validée | 2026-09-15 | *dépôt `edumatch-cicd`* |
+| E38 | Monitoring et SLO | ✅ validée | 2026-09-15 | *dépôt `edumatch-cicd`* |
 | E39 | Panne provoquée et reprise, filmée | ⬜ | | |
 
 **E33 — ce qui a été vérifié**
@@ -1529,7 +1529,7 @@ inédit à cette étape.
 **E36 — ce qui a été vérifié**
 - Le second dépôt du projet, `edumatch-cicd`, porte trois workflows
   d'intégration continue — `ci.yml`, `build-images.yml`, `deploy.yml` —
-  commités le 2026-09-15 (`a8e61f2`)
+  commités le 2026-09-15 dans `edumatch-cicd`
 - Les trois volets attendus par le critère de l'étape sont couverts par le
   YAML lui-même, syntaxiquement valide : lint et tests sur chaque poussée et
   chaque demande de fusion, construction des deux images taguées par
@@ -1556,7 +1556,7 @@ plutôt que `latest`).
 - `edumatch-cicd/terraform/` (cluster Kapsule Scaleway, pool de nœuds
   autoscale, réseau privé, registre privé, stockage objet) et
   `edumatch-cicd/k8s/base/` (namespace, déploiement, service, HPA, politique
-  réseau, compte de service), commités le 2026-09-15 (`5ef5ff3`)
+  réseau, compte de service), commités le 2026-09-15 dans `edumatch-cicd`
 - Le critère de l'étape — `requests`/`limits` définis, HPA configuré — est
   vérifié en lisant les fichiers eux-mêmes : `k8s/base/deployment.yaml` porte
   des `requests` et des `limits` sur les deux conteneurs (initialisation :
@@ -1578,9 +1578,9 @@ plutôt que `latest`).
   déploiement, qui ne fixe plus qu'une valeur de départ à la création
   initiale. Un `PodDisruptionBudget` (`minAvailable: 1`) et une anti-affinité
   souple entre pods ont été ajoutés à cette occasion. Correction commitée dans le
-  second dépôt sous `4e23b85`
+  second dépôt
 - **Ce qui reste non prouvé** : rien de tout cela n'a été appliqué sur un
-  cluster réel — le corps du commit `5ef5ff3` le dit lui-même. Le critère 2.3
+  cluster réel — la documentation du second dépôt le dit elle-même. Le critère 2.3
   du bloc 2 (« infrastructure déployée : cluster de calcul, serveurs ») reste
   donc non prouvé tant qu'un `terraform apply` n'a pas tourné sur un compte
   Scaleway réel et qu'une capture ne le démontre pas
@@ -1598,7 +1598,7 @@ lever la contradiction avec le déploiement, voir ci-dessus.
 
 **E38 — ce qui a été vérifié**
 - `edumatch-cicd/monitoring/` (Prometheus, Alertmanager, Grafana, SLO
-  déclaré), commité le 2026-09-15 (`71b2d19`)
+  déclaré), commité le 2026-09-15 dans `edumatch-cicd`
 - Le critère de l'étape — alertes actionnables — est vérifié en lisant
   `monitoring/prometheus/alerts.yaml` : les cinq règles déclarées (latence
   p95 élevée, taux d'erreur 5xx élevé, aucun réplica disponible, plafond du
@@ -1627,11 +1627,11 @@ dans le corps du commit du second dépôt.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E40 | Registres traitements et sources | ✅ validée | 2026-09-15 | `7dbb482` (amorcée le 2026-08-30, `5162c9e`) |
-| E41 | AIPD | ✅ validée | 2026-09-15 | `7dbb482` |
-| E42 | Model Card | ✅ validée | 2026-09-15 | `7dbb482` |
-| E43 | Correspondance AI Act | ✅ validée | 2026-09-15 | `7dbb482` |
-| E44 | Plan de gouvernance et risques | ✅ validée | 2026-09-15 | `7dbb482` (amorcée le 2026-08-30, `5162c9e`) |
+| E40 | Registres traitements et sources | ✅ validée | 2026-09-15 | `30ace9e` (amorcée le 2026-08-30, `f431a16`) |
+| E41 | AIPD | ✅ validée | 2026-09-15 | `30ace9e` |
+| E42 | Model Card | ✅ validée | 2026-09-15 | `30ace9e` |
+| E43 | Correspondance AI Act | ✅ validée | 2026-09-15 | `30ace9e` |
+| E44 | Plan de gouvernance et risques | ✅ validée | 2026-09-15 | `30ace9e` (amorcée le 2026-08-30, `f431a16`) |
 
 **E40 — ce qui a été vérifié**
 - `05-gouvernance/registre-traitements.md` (408 lignes) : huit traitements
@@ -1644,7 +1644,7 @@ dans le corps du commit du second dépôt.
   sources (Parcoursup, Sirene, RNCP en Licence Ouverte v2.0 ; ONISEP/IDÉO en
   ODbL) et leurs implications, dont le partage à l'identique qui se
   déclenchera à l'exposition du terme débouchés
-- Complété le 2026-09-15 (`7dbb482`) : cinq motifs de blocage à la mise en
+- Complété le 2026-09-15 (`30ace9e`) : cinq motifs de blocage à la mise en
   service remplacent les quatre motifs initiaux du 30 août, dont
   **l'absence d'authentification sur un écran qui expose des données de
   candidats** — motif nouveau, pas maintenu par précaution mais mesuré
@@ -1725,7 +1725,7 @@ est actée dans `05-gouvernance/aipd.md` lui-même, pas dans `adr/`.
 
 | # | Étape | État | Date | Commit |
 |---|---|---|---|---|
-| E45 | Diagrammes C4 et les 3 vidéos | 🟡 en cours | 2026-09-15 (volet diagrammes) | `9781652` |
+| E45 | Diagrammes C4 et les 3 vidéos | 🟡 en cours | 2026-09-15 (volet diagrammes) | `3f0a949` |
 | E46 | Cohérence dossier ↔ dépôt, slides, répétition | ⬜ | | |
 
 **E45 — ce qui a été vérifié, partiel**
@@ -1759,7 +1759,7 @@ d'exécution du projet.
 
 - **Le registre de modèles n'est plus vide.** `src/edumatch/models/registre.py`
   (`make register-model`) enregistre la version `edumatch-accessibilite` v1,
-  liée à l'exécution `678b04627c4945a69c4856c325d7493b` et au commit `5162c9e`,
+  liée à l'exécution `678b04627c4945a69c4856c325d7493b` et au commit `f431a16`,
   avec un tag `statut_evaluation` qui déclare en clair qu'elle ne bat pas le
   plancher E21 en test. **Aucun stade ni alias posé** : rien ne fait de cette
   version celle qui sert `/matching` — promouvoir un modèle qui perd contre la

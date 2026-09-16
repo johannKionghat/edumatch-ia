@@ -173,4 +173,4 @@ que les tests existants sont discriminants.
   le jeu produit à ce stade.
 
 ---
-*Mise à jour : 2026-08-30 (E20), commit `a5ae188`.*
+*Mise à jour : 2026-08-30 (E20), commit `e34f22a`.*

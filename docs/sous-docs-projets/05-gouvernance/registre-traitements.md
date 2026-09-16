@@ -267,7 +267,7 @@ dérive du concept sur une cible qui bouge d'une session à l'autre.
 
 **Ce qui rend la durée vérifiable et non déclarative** : la purge doit être
 une tâche exécutable, avec journal d'exécution — pas une procédure écrite
-dans un document. **C'est fait (E30, commit `121c23c`)** :
+dans un document. **C'est fait (E30, commit `44c49be`)** :
 `src/edumatch/api/audit_purge.py` exécute les trois paliers, en mode
 simulation par défaut, en mode réel sur option explicite, idempotent
 (rejouer la purge à la même date ne change rien), et chaque passage

@@ -1,6 +1,6 @@
 # Échantillons versionnés — `data/samples/`
 
-**Dernière mise à jour** : 2026-08-29 (E08). Commit `f6ecd6c`.
+**Dernière mise à jour** : 2026-08-29 (E08). Commit `e0255e4`.
 
 `data/samples/` est la seule exception versionnée de `data/` (voir
 `.gitignore`) : quelques centaines de lignes par source, suffisantes pour que

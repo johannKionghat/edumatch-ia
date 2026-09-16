@@ -843,7 +843,7 @@ para("CI/CD. Trois workflows GitHub Actions sont écrits dans le second dépôt 
      "avec MLflow est en service (cinq exécutions tracées, paramètres et métriques), et le "
      "registre de modèles porte désormais une version : `edumatch-accessibilite` v1, enregistrée "
      "par `src/edumatch/models/registre.py` (`make register-model`) depuis l'exécution "
-     "`678b04627c4945a69c4856c325d7493b` (commit `5162c9e`). **Cette version ne porte aucun stade "
+     "`678b04627c4945a69c4856c325d7493b` (commit `f431a16`). **Cette version ne porte aucun stade "
      "ni alias** : l'étiquette `statut_evaluation` posée sur la version déclare en clair qu'elle "
      "ne bat pas le plancher en test, conformément aux mêmes chiffres que la section précédente. "
      "Deux dépôts de code distincts existent, sans recouvrement : la solution IA "

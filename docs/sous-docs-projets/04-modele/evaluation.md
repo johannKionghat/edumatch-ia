@@ -291,4 +291,4 @@ collecte.
   nomenclatures.
 
 ---
-*Mise à jour : 2026-08-30, commits `102cca9` (E22), `a7d3aff` (E23-E24).*
+*Mise à jour : 2026-08-30, commits `7a70366` (E22), `3c7d08c` (E23-E24).*

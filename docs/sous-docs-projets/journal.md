@@ -21,7 +21,7 @@ Format :
 documentation. D'une part le registre de modèles n'est plus vide :
 `src/edumatch/models/registre.py` enregistre la version
 `edumatch-accessibilite` v1, liée à l'exécution
-`678b04627c4945a69c4856c325d7493b` et au commit `5162c9e`, sans stade ni
+`678b04627c4945a69c4856c325d7493b` et au commit `f431a16`, sans stade ni
 alias, avec un tag qui déclare qu'elle ne bat pas le plancher. D'autre part
 le DAG Airflow annuel `edumatch_parcoursup` compte désormais huit tâches :
 `reentrainer_modele` puis `evaluer_modele` le ferment, derrière une porte de
@@ -55,8 +55,8 @@ deux sont des points ouverts, pas des blocages de cette mise à jour.
 
 ## 2026-09-01 — Phase 5 close : score, API, journalisation, écran conseiller, assistant
 
-**Fait** : E28 à E32 validées, cinq commits (`53d1bdd`, `0b61e25`,
-`121c23c`, `bbebefd`, `b56ec9f`). Score multiplicatif à trois termes, avec
+**Fait** : E28 à E32 validées, cinq commits (`8b88b2a`, `bcf0a81`,
+`44c49be`, `a732aed`, `9fd0e5c`). Score multiplicatif à trois termes, avec
 la couverture du terme débouchés mesurée et déclarée à 1,4 % plutôt que
 supposée ; API à 6 routes qui lit le précalcul SHAP et ne le recalcule
 jamais en direct ; journal d'inférence article 12 doté d'une purge

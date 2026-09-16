@@ -1,7 +1,7 @@
 # Résultats de l'audit RGAA — écran conseiller (E31, critère 4.18)
 
 **Date de l'audit** : 2026-09-16
-**Commit audité** : `60ec389` (`60ec3894b80f8b15f93be9e554a5c35c0d27d2e9`)
+**Commit audité** : `1a9a0e6` (`1a9a0e6b732f63af1d05c9217fe3d2b87cc2659d`)
 **Environnement** : API lancée en local par `uvicorn edumatch.api.main:app`, port 8010
 (le port 8000 par défaut de `make api` était déjà occupé par un conteneur `fastapi_app`
 d'un autre projet sur ce poste — non modifié, non arrêté). Authentification HTTP Basic
@@ -280,5 +280,5 @@ avec un lecteur d'écran, absente de cet environnement.
 
 | Date | Commit | Navigateur / outils | Écarts constatés | Statut |
 |---|---|---|---|---|
-| 2026-09-16 | `60ec389` | HeadlessChrome 153.0.0.0, Lighthouse 13.4.1, axe-core 4.13.0 (Puppeteer) | 2 non-conformités (lien d'évitement sans focus programmatique — majeur ; message d'erreur 422 non informatif — mineur) ; section « lecteur d'écran » entièrement non vérifiée | Audit outillé et parcours clavier/zoom/couleur réalisés ; lecteur d'écran humain restant à faire |
+| 2026-09-16 | `1a9a0e6` | HeadlessChrome 153.0.0.0, Lighthouse 13.4.1, axe-core 4.13.0 (Puppeteer) | 2 non-conformités (lien d'évitement sans focus programmatique — majeur ; message d'erreur 422 non informatif — mineur) ; section « lecteur d'écran » entièrement non vérifiée | Audit outillé et parcours clavier/zoom/couleur réalisés ; lecteur d'écran humain restant à faire |
 | 2026-09-16 (re-vérification, non commitée à ce stade) | — (correction en cours, non encore commitée) | même environnement, mêmes scripts `clavier-zoom-check.mjs` et `axe-check.mjs`, inchangés | 0 non-conformité restante sur les deux points corrigés ; 0 violation axe-core sur les trois états ; section « lecteur d'écran » toujours entièrement non vérifiée | Corrections vérifiées en conditions réelles ; lecteur d'écran humain restant à faire |

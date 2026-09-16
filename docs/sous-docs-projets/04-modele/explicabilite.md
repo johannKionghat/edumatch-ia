@@ -107,4 +107,4 @@ traitement entre groupes sur les prédictions réelles. Détail chiffré :
 `04-modele/equite.md`.
 
 ---
-*Mise à jour : 2026-08-30, commit `b64e665`.*
+*Mise à jour : 2026-08-30, commit `e8417bb`.*

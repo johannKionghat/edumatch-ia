@@ -81,4 +81,4 @@ make up
 | `jury/` | Les évaluations successives du jury |
 
 ---
-*Mise à jour : 2026-09-15, commit `7dbb482`.*
+*Mise à jour : 2026-09-15, commit `30ace9e`.*

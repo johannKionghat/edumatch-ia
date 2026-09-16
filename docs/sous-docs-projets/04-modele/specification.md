@@ -165,4 +165,4 @@ n'appartient à deux catégories à la fois. Les quatre contrôles ont été
 vérifiés par mutation, pas par relecture.
 
 ---
-*Mise à jour : 2026-08-30 (E20, ajout du renvoi vers `variables.md`), commit `a5ae188`.*
+*Mise à jour : 2026-08-30 (E20, ajout du renvoi vers `variables.md`), commit `e34f22a`.*

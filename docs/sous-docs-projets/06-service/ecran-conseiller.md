@@ -4,7 +4,7 @@
 règlement sur l'IA) et **4.18** (accessibilité RGAA) · **Source** :
 `src/edumatch/api/static/` (`index.html`, `app.js`, `style.css`),
 `src/edumatch/api/routes/ecran.py`, `src/edumatch/api/auth.py` ·
-**Commit** : `bbebefd`, durci par `f7687ae` ·
+**Commit** : `a732aed`, durci par `b3e8bba` ·
 **Dernière revue** : 2026-09-16.
 
 Voir, comprendre, écarter avec motif — les trois actions que l'écran rend
@@ -36,7 +36,7 @@ horodatée — voir `journalisation-purge.md` pour ce que devient cette trace
 (T6 de la gouvernance) et ce qui n'est pas encore construit sur sa purge.
 
 **L'identifiant du conseiller n'est plus déclaratif** (revue de sécurité du
-2026-09-16, commit `f7687ae`) : jusqu'à cette date, `/feedback` acceptait un
+2026-09-16, commit `b3e8bba`) : jusqu'à cette date, `/feedback` acceptait un
 identifiant saisi librement dans le corps de la requête, ce qui permettait
 d'imputer un écartement à un conseiller qui ne l'avait jamais décidé — une
 trace de contrôle humain non imputable ne prouve rien au sens de l'article
@@ -91,7 +91,7 @@ zoom, comportement d'un lecteur d'écran, parcours clavier de bout en bout,
 perception effective par une personne daltonienne, temps de réponse
 perçu — fait l'objet d'une procédure d'audit manuel écrite point par
 point : **`reports/e31-audit-rgaa-procedure.md`**. Cette procédure a été
-déroulée le 2026-09-16, sur le commit `60ec389`, avec Chrome (Lighthouse
+déroulée le 2026-09-16, sur le commit `1a9a0e6`, avec Chrome (Lighthouse
 100/100 en accessibilité, 0 violation axe-core sur les trois états réels
 de l'écran — vide, résultats, panneau d'explication) et un parcours clavier
 et de redimensionnement scripté : voir **`reports/e31-audit-rgaa-resultats.md`**
@@ -143,4 +143,4 @@ absente de l'environnement où cet audit a été mené.
 
 ---
 
-*Dernière mise à jour : 2026-09-16, commit `f7687ae`.*
+*Dernière mise à jour : 2026-09-16, commit `b3e8bba`.*

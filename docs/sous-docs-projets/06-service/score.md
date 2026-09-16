@@ -3,7 +3,7 @@
 **Critère servi** : Bloc 4, 4.1 (algorithme adapté), 4.16 (ablation, apport
 Sirene) · **Source** : `src/edumatch/matching/score.py`,
 `affinite.py`, `debouches.py`, `agregat_sirene_debouches.py` ·
-**Commit** : `53d1bdd` · **Dernière revue** : 2026-09-01.
+**Commit** : `8b88b2a` · **Dernière revue** : 2026-09-01.
 
 ```
 score = affinité  ×  accessibilité  ×  débouchés
@@ -121,4 +121,4 @@ du module et par test. Il ne sert qu'à l'audit d'équité a posteriori
   `code_nsf` IDÉO avec `fili`) resterait à mesurer avant de conclure
   qu'aucune amélioration de couverture n'est possible.
 
-*Dernière mise à jour : 2026-09-01, commit `53d1bdd`.*
+*Dernière mise à jour : 2026-09-01, commit `8b88b2a`.*

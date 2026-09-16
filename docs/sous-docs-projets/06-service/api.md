@@ -3,7 +3,7 @@
 **Critère servi** : Bloc 4, 4.7 (intégration API, erreurs, sécurité) ·
 **Source** : `src/edumatch/api/main.py`, `routes/`, `schemas.py`,
 `deps.py`, `state.py`, `errors.py`, `auth.py`, `rate_limit.py`,
-`security_headers.py` · **Commit** : `0b61e25`, durci par `f7687ae` ·
+`security_headers.py` · **Commit** : `bcf0a81`, durci par `b3e8bba` ·
 **Dernière revue** : 2026-09-16.
 
 FastAPI, 6 routeurs montés : `health`, `matching`, `explain`, `feedback`,
@@ -11,7 +11,7 @@ FastAPI, 6 routeurs montés : `health`, `matching`, `explain`, `feedback`,
 puis 668 après E30-E32, puis 732 (un ignoré) après le durcissement de
 sécurité décrit ci-dessous (`python -m pytest -q`).
 
-## Durcissement de sécurité (2026-09-16, commit `f7687ae`)
+## Durcissement de sécurité (2026-09-16, commit `b3e8bba`)
 
 Une revue de sécurité a porté sur cette étape et sur l'écran conseiller
 (E31). Elle a trouvé qu'un identifiant de conseiller déclaré librement dans
@@ -147,4 +147,4 @@ formations à un conseiller sans le lui dire.
 
 ---
 
-*Dernière mise à jour : 2026-09-16, commit `f7687ae`.*
+*Dernière mise à jour : 2026-09-16, commit `b3e8bba`.*
