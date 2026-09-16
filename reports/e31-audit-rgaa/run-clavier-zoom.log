@@ -1,0 +1,14 @@
+[clavier] premier_tab = {"tag":"A","id":null,"name":null,"type":null,"texte":"Aller au contenu principal","classe":"lien-evitement","outlineWidth":"3px","outlineStyle":"solid","outlineColor":"rgb(209, 123, 0)","boxShadow":"none"}
+[clavier] premier_focus_visible = true
+[clavier] lien_evitement_deplace_focus_dans_main = true
+[clavier] sequence_tabulation_formulaire = ["A","A","A","champ-conseiller","type_bac","boursier","champ-type-formation","champ-domaine","champ-departement","champ-top-n","BUTTON","BODY"]
+[clavier] tous_les_focus_de_la_sequence_visibles = false
+[clavier] shift_tab_fonctionne = true
+[formulaires] departement_mal_forme_message = "Département visé : le format saisi ne correspond pas à celui attendu."
+[formulaires] departement_mal_forme_sans_trace_technique = true
+[formulaires] focus_apres_soumission_erreur = {"tag":"BUTTON","id":null,"name":null,"type":"submit","texte":"Rechercher","classe":null,"outlineWidth":"3px","outlineStyle":"solid","outlineColor":"rgb(209, 123, 0)","boxShadow":"none"}
+[formulaires] ecartement_sans_motif_message = "Un écartement doit être motivé (article 14) : indiquez le motif."
+[formulaires] focus_deplace_vers_champ_motif = true
+[zoom] viewport_640_debordement_horizontal = false
+[zoom] viewport_320_mesures = {"scrollWidth":320,"clientWidth":320}
+[zoom] viewport_320_debordement_horizontal = false

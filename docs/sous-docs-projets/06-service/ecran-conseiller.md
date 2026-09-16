@@ -90,14 +90,45 @@ supprimé sans remplacement visible, absence d'`innerHTML`.
 zoom, comportement d'un lecteur d'écran, parcours clavier de bout en bout,
 perception effective par une personne daltonienne, temps de réponse
 perçu — fait l'objet d'une procédure d'audit manuel écrite point par
-point : **`reports/e31-audit-rgaa-procedure.md`**. Cette procédure n'a pas
-encore été déroulée dans un navigateur réel — reporté dans
-`reste-a-faire.md`.
+point : **`reports/e31-audit-rgaa-procedure.md`**. Cette procédure a été
+déroulée le 2026-09-16, sur le commit `60ec389`, avec Chrome (Lighthouse
+100/100 en accessibilité, 0 violation axe-core sur les trois états réels
+de l'écran — vide, résultats, panneau d'explication) et un parcours clavier
+et de redimensionnement scripté : voir **`reports/e31-audit-rgaa-resultats.md`**
+pour le détail point par point. Deux non-conformités réelles en sont
+ressorties, et **toutes les deux ont été corrigées et revérifiées en direct
+le même jour** (section de re-vérification datée dans le rapport) :
+
+- le lien d'évitement posait le défilement mais pas le focus clavier dans
+  `<main>` (majeur, `tabindex` manquant) — corrigé par `tabindex="-1"` sur
+  `<main id="contenu-principal">`, la même technique que celle déjà en place
+  sur `#explication` ;
+- le message d'une erreur de validation 422 s'affichait comme
+  « Erreur 422. » sans indication exploitable (mineur, le tableau d'erreurs
+  Pydantic v2 n'était pas traité côté client, seul le cas `detail` en chaîne
+  l'était) — `lireDetailErreur` (`app.js`) construit désormais un message par
+  champ fautif (ex. « Département visé : le format saisi ne correspond pas à
+  celui attendu. »), sans jamais reprendre le message brut de Pydantic ni
+  exposer de trace technique.
+
+**La section « lecteur d'écran » de la procédure reste entièrement
+non déroulée** : elle exige une personne humaine avec NVDA ou VoiceOver,
+absente de l'environnement où cet audit a été mené.
 
 ## Limites déclarées
 
-1. **L'audit manuel RGAA reste à dérouler** dans un vrai navigateur, avec
-   lecteur d'écran (voir la procédure référencée ci-dessus).
+1. **L'audit manuel RGAA a été déroulé dans un vrai navigateur pour tout ce
+   qui ne demande pas de lecteur d'écran** (clavier, zoom, redimensionnement,
+   simulation de daltonisme, outils automatisés) — voir
+   `reports/e31-audit-rgaa-resultats.md`. Les deux non-conformités qui en
+   étaient ressorties (lien d'évitement sans focus programmatique, message
+   d'erreur 422 non informatif) ✅ **ont été corrigées et revérifiées en
+   conditions réelles** (parcours clavier scripté et audit axe-core rejoués
+   sur les trois états, 0 violation) — voir la section de re-vérification
+   datée du rapport. **La vérification au lecteur d'écran (NVDA ou
+   VoiceOver) n'a pas été faite**, faute d'un tel outil dans l'environnement
+   où cet audit a été mené — elle reste entièrement à dérouler par une
+   personne humaine.
 2. **Le tableau de bord du taux d'écartement** destiné au déployeur reste
    à construire.
 3. **L'authentification ne couvre que `/feedback`** — `/matching` et
