@@ -14,6 +14,7 @@ modifiée par ce test, seule cette exécution jetable l'ignore.
 
 from __future__ import annotations
 
+import math
 import shutil
 from pathlib import Path
 
@@ -22,6 +23,7 @@ import pytest
 from edumatch.config import Settings, load_settings
 from edumatch.features import build
 from edumatch.models import fairness
+from edumatch.models.train import ErreurEntrainement
 from edumatch.transform import run, run_etoile
 
 
@@ -88,7 +90,7 @@ def test_executer_teste_les_substituts_du_genre(
     rapport = fairness.executer(settings_avec_variables, dossier_figures=tmp_path / "figures")
     assert set(rapport.correlations_substituts) == set(fairness.COLONNES_SUBSTITUTS_TESTEES)
     for valeur in rapport.correlations_substituts.values():
-        assert 0.0 <= valeur <= 1.0 or valeur != valeur  # `eta_carre` peut renvoyer NaN si un substitut est constant
+        assert 0.0 <= valeur <= 1.0 or math.isnan(valeur)  # `eta_carre` : NaN si un substitut est constant
 
 
 def test_executer_ecrit_les_figures_hors_du_depot(
@@ -117,5 +119,5 @@ def test_executer_ne_journalise_pas_dans_mlflow_sans_tracking_uri(
 def test_source_silver_absente_leve_une_erreur_explicite(tmp_path: Path) -> None:
     base = load_settings("prod")
     settings = base.model_copy(update={"data_root": tmp_path})
-    with pytest.raises(Exception):  # ErreurEntrainement (table de variables absente), levée avant même la silver
+    with pytest.raises(ErreurEntrainement):  # table de variables absente, levée avant même la silver
         fairness.executer(settings, dossier_figures=tmp_path / "figures")

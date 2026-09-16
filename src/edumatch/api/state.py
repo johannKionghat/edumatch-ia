@@ -76,7 +76,6 @@ from edumatch.matching.debouches import (
 )
 from edumatch.models import train
 from edumatch.models.explain import NOM_FICHIER_PRECALCUL, SOUS_DOSSIER_PRECALCUL
-from edumatch.models.train import COLONNES_CATALOGUE
 
 LOGGER = logging.getLogger(__name__)
 

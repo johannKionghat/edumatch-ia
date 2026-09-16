@@ -22,7 +22,7 @@ import logging
 import threading
 import uuid
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ class JournalFeedback:
     ) -> EnregistrementFeedback:
         enregistrement = EnregistrementFeedback(
             identifiant_feedback=str(uuid.uuid4()),
-            horodatage=datetime.now(timezone.utc).isoformat(),
+            horodatage=datetime.now(UTC).isoformat(),
             session=session,
             identifiant_formation=identifiant_formation,
             type_bac=type_bac,

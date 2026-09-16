@@ -57,7 +57,7 @@ def test_nombre_de_colonnes_incorrect_bloque(tmp_path: Path) -> None:
 def test_colonne_ancre_incomplete_bloque(tmp_path: Path) -> None:
     colonnes = [f"c{i}" for i in range(16)]
     colonnes[4] = "libelle formation principal"
-    lignes = [{c: "x" for c in colonnes} for _ in range(100)]
+    lignes = [dict.fromkeys(colonnes, "x") for _ in range(100)]
     for ligne in lignes[:5]:
         ligne["libelle formation principal"] = ""
     chemin = tmp_path / "formations.csv"

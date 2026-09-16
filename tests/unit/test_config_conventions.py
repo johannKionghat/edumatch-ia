@@ -15,7 +15,6 @@ import yaml
 
 from edumatch.config import CONFIGS_DIR, PROJECT_ROOT
 
-
 # ─── Aucun littéral métier en dur dans config.py ─────────────────────────────
 #
 # Portée assumée de ce contrôle, et de sa limite, avant le code lui-même :

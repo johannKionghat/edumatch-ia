@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Self
 
 import pytest
 import requests
@@ -27,7 +28,7 @@ from edumatch.ingestion.referentiels import (
     telecharger_tous_ideo,
 )
 
-CONTENU_CSV_UTF8 = '"code";"libellé"\n"A01";"formation générale"\n'.encode("utf-8")
+CONTENU_CSV_UTF8 = '"code";"libellé"\n"A01";"formation générale"\n'.encode()
 
 
 class _ReponseFactice:
@@ -40,13 +41,12 @@ class _ReponseFactice:
     def raise_for_status(self) -> None:
         return None
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002 - signature imposée par requests
-        for bloc in self._blocs:
-            yield bloc
+    def iter_content(self, chunk_size: int):
+        yield from self._blocs
         if self._erreur is not None:
             raise self._erreur
 
-    def __enter__(self) -> "_ReponseFactice":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -61,7 +61,7 @@ class SessionFactice:
         self.erreur_en_cours_de_flux = erreur_en_cours_de_flux
         self.appels = 0
 
-    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseFactice:  # noqa: ARG002
+    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseFactice:
         self.appels += 1
         return _ReponseFactice([self.contenu], self.erreur_en_cours_de_flux)
 
@@ -70,10 +70,10 @@ class _ReponseErreurHttp:
     def raise_for_status(self) -> None:
         raise requests.exceptions.HTTPError("404 Client Error: Not Found")
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002
+    def iter_content(self, chunk_size: int):
         yield b""
 
-    def __enter__(self) -> "_ReponseErreurHttp":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -81,7 +81,7 @@ class _ReponseErreurHttp:
 
 
 class SessionErreurHttp:
-    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseErreurHttp:  # noqa: ARG002
+    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseErreurHttp:
         return _ReponseErreurHttp()
 
 
@@ -214,7 +214,7 @@ def test_verifier_encodage_ne_detecte_pas_un_fichier_utf8_declare_a_tort_en_lati
     connaître son contenu attendu.
     """
     chemin = tmp_path / "export.csv"
-    chemin.write_bytes("comptabilité".encode("utf-8"))
+    chemin.write_bytes("comptabilité".encode())
 
     verifier_encodage(chemin, "latin-1", "test")  # ne lève rien : mojibake silencieux
 

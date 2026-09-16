@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -173,7 +173,7 @@ def telecharger_ideo(
         "encodage": config_jeu.encodage,
         "delimiteur": config_jeu.delimiteur,
         "licence": config_jeu.licence,
-        "date_telechargement": datetime.now(timezone.utc).isoformat(),
+        "date_telechargement": datetime.now(UTC).isoformat(),
         "taille_octets": taille_octets,
         "empreinte_sha256": empreinte,
     }

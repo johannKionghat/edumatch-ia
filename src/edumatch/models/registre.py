@@ -102,7 +102,7 @@ class RapportEnregistrement:
         return "\n".join(lignes)
 
 
-def _dernier_run_entrainement(client: "mlflow.tracking.MlflowClient", settings: Settings):  # noqa: F821
+def _dernier_run_entrainement(client: mlflow.tracking.MlflowClient, settings: Settings):  # noqa: F821
     """La dernière exécution `FINISHED` de `models.train` pour la variante active de la configuration."""
     experience = client.get_experiment_by_name(NOM_EXPERIENCE_MLFLOW)
     if experience is None:

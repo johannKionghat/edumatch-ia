@@ -20,7 +20,11 @@ from dataclasses import dataclass
 
 from edumatch.config import Settings, get_settings
 from edumatch.rag.corpus import Document, charger_corpus_depuis_settings
-from edumatch.rag.generation import ClientGeneration, ErreurGeneration, client_generation_depuis_settings
+from edumatch.rag.generation import (
+    ClientGeneration,
+    ErreurGeneration,
+    client_generation_depuis_settings,
+)
 from edumatch.rag.index import IndexDocumentaire, construire_index, rechercher
 
 LOGGER = logging.getLogger(__name__)

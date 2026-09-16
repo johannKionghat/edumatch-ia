@@ -6,7 +6,7 @@ voir le docstring de `api/audit_purge.py`.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -14,7 +14,7 @@ import pytest
 from edumatch.api.audit_purge import chemins_audit, purger
 from edumatch.config import Settings, load_settings
 
-MAINTENANT = datetime(2026, 8, 30, tzinfo=timezone.utc)
+MAINTENANT = datetime(2026, 8, 30, tzinfo=UTC)
 DELAI_PSEUDO_JOURS = 10
 DELAI_AGREGATION_JOURS = 30
 
@@ -239,7 +239,7 @@ def _horodatage_au_palier_pseudonymisation() -> datetime:
     """Un horodatage relatif au moment réel de l'exécution (`main()` n'accepte pas de date
     injectée : il utilise l'heure système, comme un vrai déclenchement planifié) — jamais une
     date calendaire fixe, qui se déréglerait avec le temps."""
-    return datetime.now(timezone.utc) - timedelta(days=DELAI_PSEUDO_JOURS + 1)
+    return datetime.now(UTC) - timedelta(days=DELAI_PSEUDO_JOURS + 1)
 
 
 def test_cli_simule_par_defaut(settings: Settings, monkeypatch: pytest.MonkeyPatch, capsys) -> None:

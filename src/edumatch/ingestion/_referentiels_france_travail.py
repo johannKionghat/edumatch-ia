@@ -40,7 +40,7 @@ from __future__ import annotations
 import logging
 import zipfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -199,7 +199,7 @@ def telecharger(
         "source": "france_travail",
         "url": ressource.url,
         "titre_ressource": ressource.titre,
-        "date_telechargement": datetime.now(timezone.utc).isoformat(),
+        "date_telechargement": datetime.now(UTC).isoformat(),
         "licence": config.licence,
         "taille_octets": taille_octets,
         "empreinte_sha256": empreinte,

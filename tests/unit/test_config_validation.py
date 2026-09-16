@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from _config_fixtures import BASE_YAML
 from pydantic import ValidationError
 
 from edumatch.config import (
@@ -19,7 +20,6 @@ from edumatch.config import (
     load_settings,
 )
 
-from _config_fixtures import BASE_YAML
 
 def test_variable_environnement_data_root(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     chemin_force = tmp_path / "donnees-edumatch"

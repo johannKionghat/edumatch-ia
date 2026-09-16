@@ -15,20 +15,20 @@ import pytest
 
 from edumatch.config import VariablesConfig
 from edumatch.models import train as train_module
+from edumatch.models.jeux import preparer_matrice
 from edumatch.models.train import (
     COLONNE_A_ANTECEDENT,
     COLONNE_TAUX_PRECEDENT,
     COLONNES_DERIVEES,
     COLONNES_NON_FEATURES,
     ErreurEntrainement,
+    JeuDonnees,
     ajouter_taux_precedent,
     classement_importance,
     colonnes_features,
     evaluer_sur_perimetre,
-    preparer_matrice,
     score_baseline_couverture_egale,
 )
-from edumatch.models.train import JeuDonnees
 
 # ─── colonnes_features : la défense anti-fuite de ce module ────────────────
 

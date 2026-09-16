@@ -13,6 +13,7 @@ import io
 import json
 import zipfile
 from pathlib import Path
+from typing import Self
 
 import pytest
 import requests
@@ -80,10 +81,10 @@ class _ReponseFlux:
         if self._statut_en_erreur:
             raise requests.exceptions.HTTPError("500 Server Error")
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002
+    def iter_content(self, chunk_size: int):
         yield self._contenu
 
-    def __enter__(self) -> "_ReponseFlux":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -105,7 +106,7 @@ class SessionFactice:
         self.appels_catalogue = 0
         self.appels_xlsx = 0
 
-    def get(self, url: str, stream: bool = False, timeout: float | None = None):  # noqa: ARG002
+    def get(self, url: str, stream: bool = False, timeout: float | None = None):
         if url == URL_CATALOGUE:
             self.appels_catalogue += 1
             return _ReponseJson(self.catalogue, statut_en_erreur=self.catalogue_en_erreur)

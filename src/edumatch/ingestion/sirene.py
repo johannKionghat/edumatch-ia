@@ -23,10 +23,10 @@ retient un délai plus long, propre au poids réel de ces fichiers.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable
 
 import requests
 
@@ -343,7 +343,7 @@ def _entree_manifeste(ressource: RessourceCatalogue, taille_octets: int, emprein
         "fichier": ressource.fichier,
         "url": ressource.url,
         "date_publication_stock": ressource.date_publication,
-        "date_telechargement": datetime.now(timezone.utc).isoformat(),
+        "date_telechargement": datetime.now(UTC).isoformat(),
         "taille_octets": taille_octets,
         "empreinte_sha256": empreinte,
     }

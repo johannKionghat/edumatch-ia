@@ -59,16 +59,17 @@ from __future__ import annotations
 import logging
 import sys
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 
 import matplotlib
 
 matplotlib.use("Agg")  # aucun serveur d'affichage sur les postes de calcul et en CI
-import matplotlib.pyplot as plt  # noqa: E402 — après matplotlib.use, comme documenté ci-dessus
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from edumatch.config import DeriveConfig, PROJECT_ROOT, Settings, get_settings
+from edumatch.config import PROJECT_ROOT, DeriveConfig, Settings, get_settings
 from edumatch.models import derive_stats, train
 from edumatch.models.jeux import extraire_jeu
 
@@ -303,7 +304,7 @@ def _predictions_par_session(modele: object, table: pd.DataFrame, colonnes: list
 
 def _paires_consecutives(table: pd.DataFrame) -> list[tuple[int, int]]:
     sessions = sorted(int(session) for session in table["session"].unique())
-    return list(zip(sessions[:-1], sessions[1:]))
+    return list(pairwise(sessions))
 
 
 def _derive_variables(

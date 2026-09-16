@@ -50,7 +50,7 @@ import subprocess
 import threading
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -120,7 +120,7 @@ class JournalAudit:
     ) -> EnregistrementAudit:
         enregistrement = EnregistrementAudit(
             identifiant_audit=str(uuid.uuid4()),
-            horodatage=datetime.now(timezone.utc).isoformat(),
+            horodatage=datetime.now(UTC).isoformat(),
             identifiant_execution=str(uuid.uuid4()),
             version_modele=version_modele,
             empreinte_commit=resoudre_empreinte_commit(),

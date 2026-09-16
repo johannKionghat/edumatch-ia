@@ -279,5 +279,5 @@ def classement_importance(modele: object, colonnes: list[str]) -> list[tuple[str
     direction de l'effet ni sur les interactions entre variables.
     """
     importances = modele.booster_.feature_importance(importance_type="gain")
-    paires = list(zip(colonnes, (float(v) for v in importances)))
+    paires = list(zip(colonnes, (float(v) for v in importances), strict=False))
     return sorted(paires, key=lambda paire: paire[1], reverse=True)

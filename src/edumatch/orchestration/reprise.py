@@ -21,8 +21,9 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 from edumatch.config import Settings
 from edumatch.ingestion._flux import ErreurTransitoire

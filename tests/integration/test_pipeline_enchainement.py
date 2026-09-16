@@ -20,7 +20,7 @@ from __future__ import annotations
 import csv
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -33,7 +33,7 @@ from edumatch.quality._diagnostic import ErreurQualiteBloquante
 
 
 def _horodatage() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # ─── Idempotence de l'enchaînement silver -> gold -> variables ─────────────
@@ -124,7 +124,7 @@ def _installer_referentiels_valides(racine: Path) -> None:
             "url": "https://exemple.test",
             "date_telechargement": _horodatage(),
         }
-    jour = datetime.now(timezone.utc).date().isoformat()
+    jour = datetime.now(UTC).date().isoformat()
     shutil.copy(
         Path("data/samples/referentiels/rncp/rncp_echantillon.csv"),
         destination / "rncp" / f"rncp_{jour}.csv",
@@ -158,7 +158,7 @@ def _corrompre_millesime_le_plus_recent(racine: Path, millesime: int) -> None:
     chemin = racine / "raw" / "parcoursup" / f"parcoursup_{millesime}.csv"
     with chemin.open("r", encoding="utf-8-sig", newline="") as flux:
         lignes = list(csv.DictReader(flux, delimiter=";"))
-    colonnes = [c for c in lignes[0].keys() if c != "fili"] if lignes else []
+    colonnes = [c for c in lignes[0] if c != "fili"] if lignes else []
     with chemin.open("w", encoding="utf-8-sig", newline="") as flux:
         ecrivain = csv.DictWriter(flux, fieldnames=colonnes, delimiter=";", extrasaction="ignore")
         ecrivain.writeheader()

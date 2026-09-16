@@ -34,10 +34,11 @@ import json
 import logging
 import os
 import time
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import IO, Callable, Iterator
+from typing import IO
 
 import requests
 
@@ -299,7 +300,7 @@ def _mettre_en_quarantaine(chemin: Path, erreur: Exception) -> None:
     fautif à un emplacement stable pour analyse a posteriori — un opérateur
     qui consulte les journaux retrouve immédiatement le fichier incriminé.
     """
-    horodatage = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    horodatage = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     chemin_quarantaine = chemin.with_name(f"{chemin.name}.corrompu-{horodatage}")
     try:
         os.replace(chemin, chemin_quarantaine)

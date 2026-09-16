@@ -173,9 +173,11 @@ class RapportEtoile:
 
     def resume(self) -> str:
         lignes = [
-            f"{self.lignes_fait_totales} cellules exploitables (fait_admission), "
-            f"{self.nombre_formations} formations ({self.nombre_versions_formation} versions SCD2), "
-            f"{self.nombre_territoires} territoires.",
+            (
+                f"{self.lignes_fait_totales} cellules exploitables (fait_admission), "
+                f"{self.nombre_formations} formations ({self.nombre_versions_formation} versions SCD2), "
+                f"{self.nombre_territoires} territoires."
+            ),
         ]
         for session in sorted(self.lignes_fait_par_session):
             lignes.append(f"  session {session} : {self.lignes_fait_par_session[session]} cellules")

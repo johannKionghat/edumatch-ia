@@ -20,6 +20,7 @@ import pytest
 from edumatch.config import Settings, load_settings
 from edumatch.features import build
 from edumatch.models import ablation, fairness
+from edumatch.models.train import ErreurEntrainement
 from edumatch.transform import run, run_etoile
 
 NOMS_VARIANTES_ATTENDUS = (
@@ -171,5 +172,5 @@ def test_executer_ne_journalise_pas_dans_mlflow_sans_tracking_uri(
 def test_source_gold_absente_leve_une_erreur_explicite(tmp_path: Path) -> None:
     base = load_settings("prod")
     settings = base.model_copy(update={"data_root": tmp_path})
-    with pytest.raises(Exception):  # la table de variables (E20) est absente : train.entrainer_et_evaluer lève
+    with pytest.raises(ErreurEntrainement):  # table de variables (E20) absente
         ablation.executer(settings)

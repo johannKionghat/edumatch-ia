@@ -84,7 +84,7 @@ def test_assistant_non_initialise_repond_503(monkeypatch: pytest.MonkeyPatch) ->
     `/explain` (voir `api/deps.py`). `construire_assistant` est ici forcé en échec plutôt que de
     dépendre de l'état réel de `data/external/` sur le poste d'exécution, qui varie selon que
     E18 a déjà été joué ou non."""
-    import edumatch.api.deps as deps
+    from edumatch.api import deps
 
     def _echoue(settings: object) -> None:
         raise deps.ErreurCorpusRag("référentiel IDÉO introuvable (simulation de test)")

@@ -7,9 +7,17 @@ from pathlib import Path
 
 import pytest
 
-from edumatch.api.state import ErreurEtatAPI, _artefacts_debouches_indisponibles, construire_etat_explicabilite
+from edumatch.api.state import (
+    ErreurEtatAPI,
+    _artefacts_debouches_indisponibles,
+    construire_etat_explicabilite,
+)
 from edumatch.config import Settings, get_settings
-from edumatch.matching.debouches import STATUT_INDISPONIBLE_CHAINE_ROMPUE, VALEUR_NEUTRE, calculer_terme_debouches
+from edumatch.matching.debouches import (
+    STATUT_INDISPONIBLE_CHAINE_ROMPUE,
+    VALEUR_NEUTRE,
+    calculer_terme_debouches,
+)
 
 
 def test_artefacts_debouches_indisponibles_donne_un_statut_explicite_pas_un_zero() -> None:

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Self
 
 import pytest
 import requests
@@ -38,13 +39,12 @@ class _ReponseFactice:
     def raise_for_status(self) -> None:
         return None
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002 - signature imposée par requests
-        for bloc in self._blocs:
-            yield bloc
+    def iter_content(self, chunk_size: int):
+        yield from self._blocs
         if self._erreur is not None:
             raise self._erreur
 
-    def __enter__(self) -> "_ReponseFactice":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -63,7 +63,7 @@ class SessionFactice:
         self.erreur_en_cours_de_flux = erreur_en_cours_de_flux
         self.appels = 0
 
-    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseFactice:  # noqa: ARG002
+    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseFactice:
         self.appels += 1
         return _ReponseFactice([self.contenu], self.erreur_en_cours_de_flux)
 
@@ -177,10 +177,10 @@ class _ReponseErreurHttp:
     def raise_for_status(self) -> None:
         raise requests.exceptions.HTTPError("404 Client Error: Not Found")
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002 - signature imposée par requests
+    def iter_content(self, chunk_size: int):
         yield b""  # jamais atteint : raise_for_status lève avant
 
-    def __enter__(self) -> "_ReponseErreurHttp":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -190,7 +190,7 @@ class _ReponseErreurHttp:
 class SessionErreurHttp:
     """Session factice dont chaque appel renvoie une réponse en erreur HTTP."""
 
-    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseErreurHttp:  # noqa: ARG002
+    def get(self, url: str, stream: bool = True, timeout: float | None = None) -> _ReponseErreurHttp:
         return _ReponseErreurHttp()
 
 

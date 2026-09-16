@@ -105,7 +105,7 @@ def test_une_ligne_avec_deux_categories_exploitables_produit_deux_cellules() -> 
     silver = _silver([{"cod_aff_form": "1", "nb_voe_pp_bt": 5, "prop_tot_bt": 4}])
     etoile = construire_etoile(silver)
     assert len(etoile.fait_admission) == 2
-    assert set(etoile.rapport.lignes_fait_par_session[2025] for _ in [0]) == {2}
+    assert {etoile.rapport.lignes_fait_par_session[2025]} == {2}
 
 
 def test_grain_fait_admission_est_session_formation_profil() -> None:
@@ -202,7 +202,7 @@ def test_session_sans_cellule_exploitable_est_marquee_indisponible() -> None:
     )
     base = base_exploitable(silver)
     dim_session = construire_dim_session(silver, base)
-    disponibilite = dict(zip(dim_session["session"], dim_session["label_disponible"]))
+    disponibilite = dict(zip(dim_session["session"], dim_session["label_disponible"], strict=False))
     assert disponibilite == {2019: False, 2025: True}
 
 
@@ -271,7 +271,7 @@ def test_ville_manquante_reste_un_territoire_distinct_par_departement() -> None:
 def test_dim_profil_candidat_a_six_lignes_fixes() -> None:
     dim = construire_dim_profil_candidat()
     assert len(dim) == 6
-    assert set(zip(dim["type_bac"], dim["boursier"])) == {
+    assert set(zip(dim["type_bac"], dim["boursier"], strict=False)) == {
         ("bg", False),
         ("bg", True),
         ("bt", False),

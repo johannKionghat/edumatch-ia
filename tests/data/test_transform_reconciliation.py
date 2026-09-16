@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from conftest import LIGNE_VALIDE, _ecrire_csv
+
 from edumatch.config import Settings, load_settings
 from edumatch.transform.reconciliation import (
     COLONNE_CLE,

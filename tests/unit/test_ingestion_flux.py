@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+from typing import Self
 
 import pytest
 import requests
@@ -22,7 +23,6 @@ from edumatch.ingestion._flux import (
     session_http,
     telecharger_en_flux,
 )
-
 
 # ─── Écriture atomique ────────────────────────────────────────────────────────
 
@@ -59,10 +59,9 @@ def test_ecriture_atomique_en_mode_texte_ecrit_en_utf8_meme_sans_lencoder_de_la_
 def test_ecriture_atomique_ne_laisse_aucun_fichier_apres_une_exception(tmp_path: Path) -> None:
     chemin = tmp_path / "fichier.txt"
 
-    with pytest.raises(ValueError):
-        with ecriture_atomique(chemin, mode="w") as flux:
-            flux.write("partiel")
-            raise ValueError("panne simulée en cours d'écriture")
+    with pytest.raises(ValueError), ecriture_atomique(chemin, mode="w") as flux:
+        flux.write("partiel")
+        raise ValueError("panne simulée en cours d'écriture")
 
     assert not chemin.exists()
     assert not chemin.with_suffix(chemin.suffix + ".part").exists()
@@ -143,10 +142,10 @@ class _ReponseFluxFactice:
     def raise_for_status(self) -> None:
         return None
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002 - signature imposée par requests
+    def iter_content(self, chunk_size: int):
         yield from self._blocs
 
-    def __enter__(self) -> "_ReponseFluxFactice":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -159,7 +158,7 @@ class _SessionTelechargementFactice:
     def __init__(self, blocs: list[bytes]) -> None:
         self._blocs = blocs
 
-    def get(self, url: str, stream: bool = True, timeout: float | None = None):  # noqa: ARG002
+    def get(self, url: str, stream: bool = True, timeout: float | None = None):
         return _ReponseFluxFactice(self._blocs)
 
 

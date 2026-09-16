@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -214,7 +214,7 @@ def telecharger_millesime(
         "millesime": millesime,
         "identifiant": identifiant,
         "url": url,
-        "date_telechargement": datetime.now(timezone.utc).isoformat(),
+        "date_telechargement": datetime.now(UTC).isoformat(),
         "taille_octets": taille_octets,
         "empreinte_sha256": empreinte,
     }

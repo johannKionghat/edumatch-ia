@@ -63,7 +63,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")  # aucun serveur d'affichage sur les postes de calcul et en CI
-import matplotlib.pyplot as plt  # noqa: E402 — après matplotlib.use, comme documenté ci-dessus
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
@@ -71,7 +71,12 @@ import pyarrow.parquet as pq
 from edumatch.config import PROJECT_ROOT, Settings, get_settings
 from edumatch.features.label import calculer_taux
 from edumatch.models import train
-from edumatch.models.metrics import calibration, mae_non_ponderee, mae_ponderee, predictions_baseline_couverture_egale
+from edumatch.models.metrics import (
+    calibration,
+    mae_non_ponderee,
+    mae_ponderee,
+    predictions_baseline_couverture_egale,
+)
 from edumatch.models.train import COLONNE_TAUX_PRECEDENT
 
 LOGGER = logging.getLogger(__name__)
@@ -358,14 +363,22 @@ class RatioImpactDisparate:
     def groupes_sous_le_seuil_modele(self) -> list[str]:
         """Un ratio `NaN` (aucune sélection nulle part sur ce périmètre) n'est jamais compté comme sous le seuil :
         il est indéfini, pas mauvais — voir `_ratios_relatifs_au_maximum`."""
-        return [groupe for groupe, ratio in self.ratios_modele.items() if ratio == ratio and ratio < self.seuil]
+        return [
+            groupe
+            for groupe, ratio in self.ratios_modele.items()
+            if not np.isnan(ratio) and ratio < self.seuil
+        ]
 
     def groupes_sous_le_seuil_baseline(self) -> list[str]:
-        return [groupe for groupe, ratio in self.ratios_baseline.items() if ratio == ratio and ratio < self.seuil]
+        return [
+            groupe
+            for groupe, ratio in self.ratios_baseline.items()
+            if not np.isnan(ratio) and ratio < self.seuil
+        ]
 
     @staticmethod
     def _marque(ratio: float, seuil: float) -> str:
-        if ratio != ratio:  # NaN : aucune sélection positive dans aucun groupe fiable de cette dimension
+        if np.isnan(ratio):  # aucune sélection positive dans aucun groupe fiable de cette dimension
             return "INDÉFINI (aucune sélection)"
         return "OK" if ratio >= seuil else "SOUS LE SEUIL"
 
@@ -463,7 +476,7 @@ def calculer_correlations_substituts(table_audit: pd.DataFrame, colonnes: tuple[
 def _tracer_impact_disparate(ratios: dict[str, RatioImpactDisparate], destination: Path) -> Path:
     """Un sous-graphique par dimension : le ratio d'impact disparate de chaque groupe, modèle et baseline."""
     figure, axes = plt.subplots(2, 2, figsize=(13, 10))
-    for axe, (nom_dimension, ratio) in zip(axes.ravel(), ratios.items()):
+    for axe, (nom_dimension, ratio) in zip(axes.ravel(), ratios.items(), strict=False):
         groupes = sorted(ratio.ratios_modele)
         positions = np.arange(len(groupes))
         largeur = 0.35
@@ -560,9 +573,13 @@ class RapportEquite:
             f"Définition d'équité retenue : {DEFINITION_EQUITE_RETENUE} (voir l'argumentaire du module).",
             "",
             "Écart d'admission observé entre sexes, à l'intérieur d'une même formation, test 2025 :",
-            f"  écart médian = {self.ecart_admission_genre_median:+.4f}  "
-            f"part des formations à moins de 5 points d'écart = {self.part_formations_ecart_genre_sous_5_points:.1%}  "
-            f"({self.n_formations_indeterminees_genre} formation(s) sans candidature des deux sexes, exclue(s))",
+            (
+                f"  écart médian = {self.ecart_admission_genre_median:+.4f}  "
+                f"part des formations à moins de 5 points d'écart = "
+                f"{self.part_formations_ecart_genre_sous_5_points:.1%}  "
+                f"({self.n_formations_indeterminees_genre} formation(s) sans candidature "
+                f"des deux sexes, exclue(s))"
+            ),
             "",
             "Ventilation de l'erreur et de la sélection par dimension :",
         ]

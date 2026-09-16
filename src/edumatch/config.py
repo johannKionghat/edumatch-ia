@@ -89,7 +89,7 @@ class ParcoursupConfig(_Strict):
     delimiteur: str
 
     @model_validator(mode="after")
-    def _identifiants_couvrent_les_millesimes(self) -> "ParcoursupConfig":
+    def _identifiants_couvrent_les_millesimes(self) -> ParcoursupConfig:
         """Chaque millésime déclaré doit avoir son identifiant (l'inverse est toléré, cas de dev.yaml)."""
         manquants = set(self.millesimes) - set(self.identifiants)
         if manquants:
@@ -259,7 +259,7 @@ class SplitConfig(_Strict):
     test: list[int] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def _millesimes_disjoints(self) -> "SplitConfig":
+    def _millesimes_disjoints(self) -> SplitConfig:
         """Empêche la fuite de données : aucun millésime dans deux jeux à la fois.
 
         Le split est temporel (invariant du projet) : entraînement, validation
@@ -352,7 +352,7 @@ class VariablesConfig(_Strict):
         )
 
     @model_validator(mode="after")
-    def _aucune_colonne_dans_deux_categories(self) -> "VariablesConfig":
+    def _aucune_colonne_dans_deux_categories(self) -> VariablesConfig:
         """Une colonne a un sort et un seul : retenue, décalée, sous réserve, ou exclue.
 
         Sans cette vérification, une colonne pourrait figurer à la fois dans
@@ -629,7 +629,7 @@ class AutoscalingConfig(_Strict):
     cible_cpu_pourcent: int = Field(ge=1, le=100)
 
     @model_validator(mode="after")
-    def _bornes_coherentes(self) -> "AutoscalingConfig":
+    def _bornes_coherentes(self) -> AutoscalingConfig:
         if self.min > self.max:
             raise ValueError("api.autoscaling.min doit être inférieur ou égal à api.autoscaling.max")
         return self
@@ -665,7 +665,7 @@ class AuditConfig(_Strict):
     delai_agregation_jours: int = Field(ge=1)
 
     @model_validator(mode="after")
-    def _paliers_croissants(self) -> "AuditConfig":
+    def _paliers_croissants(self) -> AuditConfig:
         if self.delai_agregation_jours <= self.delai_pseudonymisation_jours:
             raise ValueError(
                 "api.audit.delai_agregation_jours doit être strictement supérieur à "

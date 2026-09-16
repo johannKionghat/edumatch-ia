@@ -8,7 +8,6 @@ construit depuis les huit échantillons versionnés, jusqu'au précalcul SHAP co
 from __future__ import annotations
 
 import shutil
-from pathlib import Path
 
 import pandas as pd
 import pytest

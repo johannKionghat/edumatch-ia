@@ -11,7 +11,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from _config_fixtures import BASE_YAML, DEV_YAML
 
 __all__ = ["BASE_YAML", "DEV_YAML", "configs_dir_isole"]

@@ -21,7 +21,7 @@ gravité :
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from edumatch.quality._diagnostic import Anomalie, Gravite
 
@@ -30,7 +30,7 @@ def _analyser_date(valeur: str) -> datetime:
     """Lève `ValueError` si `valeur` n'est pas une date ISO 8601 exploitable."""
     horodatage = datetime.fromisoformat(valeur)
     if horodatage.tzinfo is None:
-        horodatage = horodatage.replace(tzinfo=timezone.utc)
+        horodatage = horodatage.replace(tzinfo=UTC)
     return horodatage
 
 
@@ -53,7 +53,7 @@ def controler_fraicheur(
         maintenant: horodatage de référence, injectable pour les tests.
             À défaut, l'heure réelle (UTC).
     """
-    reference = maintenant or datetime.now(timezone.utc)
+    reference = maintenant or datetime.now(UTC)
     anomalies: list[Anomalie] = []
     for identifiant, valeur in dates.items():
         anomalie = _controler_une_entree(source, identifiant, valeur, age_max_jours, reference)

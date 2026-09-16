@@ -74,7 +74,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pyarrow as pa
@@ -275,7 +275,7 @@ def generer_echantillons_sirene(settings: Settings) -> list[EchantillonResultat]
 def _ecrire_manifeste(settings: Settings, resultats: list[EchantillonResultat]) -> Path:
     """Consigne provenance, méthode et licence de chaque échantillon — le lignage de `data/samples/`."""
     manifeste = {
-        "date_generation": datetime.now(timezone.utc).isoformat(),
+        "date_generation": datetime.now(UTC).isoformat(),
         "methode": "echantillonnage systematique a pas fixe, sans graine aleatoire",
         "echantillons": [
             {

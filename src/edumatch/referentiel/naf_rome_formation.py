@@ -383,12 +383,16 @@ def mesurer_couverture(
         ),
     ]
     manques = [
-        "Aucune formation Parcoursup (dim_formation) n'est reliée à cette chaîne : aucun des "
-        "huit millésimes ne porte de code RNCP, NSF ou ROME. Seul un appariement textuel des "
-        "libellés serait possible, non arbitré ici (voir le docstring du module).",
-        "La correspondance ROME/NAF n'est qu'au niveau division (2 chiffres) : le rattachement "
-        "à un établissement Sirene (sous-classe, 5 caractères) perd la granularité fine de "
-        "l'activité.",
+        (
+            "Aucune formation Parcoursup (dim_formation) n'est reliée à cette chaîne : aucun des "
+            "huit millésimes ne porte de code RNCP, NSF ou ROME. Seul un appariement textuel des "
+            "libellés serait possible, non arbitré ici (voir le docstring du module)."
+        ),
+        (
+            "La correspondance ROME/NAF n'est qu'au niveau division (2 chiffres) : le rattachement "
+            "à un établissement Sirene (sous-classe, 5 caractères) perd la granularité fine de "
+            "l'activité."
+        ),
     ]
     LOGGER.info("Couverture NAF/ROME/formation : %d code(s) ROME rattachés en sortie.", n_rome_finaux)
     return RapportCouverture(maillons=maillons, manques_declares=manques)

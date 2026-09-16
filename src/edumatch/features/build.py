@@ -112,8 +112,10 @@ class RapportVariables:
 
     def resume(self) -> str:
         lignes = [
-            f"{self.lignes} cellules, {self.nombre_variables} variables, "
-            f"{self.cellules_sans_antecedent} cellule(s) sans antécédent décalé (session N-1).",
+            (
+                f"{self.lignes} cellules, {self.nombre_variables} variables, "
+                f"{self.cellules_sans_antecedent} cellule(s) sans antécédent décalé (session N-1)."
+            ),
         ]
         for session in sorted(self.cellules_par_session):
             lignes.append(f"  session {session} : {self.cellules_par_session[session]} cellules")

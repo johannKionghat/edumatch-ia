@@ -161,7 +161,7 @@ def test_colonne_attendue_absente_leve_erreur_de_contrat(tmp_path: Path, config_
 def test_ligne_sans_aucun_champ_textuel_est_ignoree(tmp_path: Path, config_jeux: dict[str, IdeoJeuConfig]) -> None:
     dossier = tmp_path / "ideo"
     dossier.mkdir()
-    ligne_vide = {colonne: "" for colonne in LIGNE_FORMATION_VALIDE}
+    ligne_vide = dict.fromkeys(LIGNE_FORMATION_VALIDE, "")
     _ecrire_csv(dossier / "formations.csv", [ligne_vide, dict(LIGNE_FORMATION_VALIDE)])
     documents = charger_corpus(dossier, config_jeux, ("formations",))
     assert len(documents) == 1

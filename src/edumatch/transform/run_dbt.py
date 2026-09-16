@@ -68,7 +68,7 @@ def _executer_dbt(*commande: str, settings: Settings) -> None:
         "--profiles-dir",
         str(DOSSIER_DBT),
     ]
-    resultat = subprocess.run(arguments, env=_environnement(settings), cwd=DOSSIER_DBT)
+    resultat = subprocess.run(arguments, env=_environnement(settings), cwd=DOSSIER_DBT, check=False)
     if resultat.returncode != 0:
         raise ErreurDbt(f"dbt {' '.join(commande)} a échoué (code {resultat.returncode}).")
 

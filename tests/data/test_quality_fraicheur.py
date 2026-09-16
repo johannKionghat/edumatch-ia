@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from edumatch.quality._diagnostic import Gravite
 from edumatch.quality._fraicheur import controler_fraicheur
 
-MAINTENANT = datetime(2026, 8, 29, tzinfo=timezone.utc)
+MAINTENANT = datetime(2026, 8, 29, tzinfo=UTC)
 
 
 def test_entree_absente_bloque() -> None:

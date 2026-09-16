@@ -82,10 +82,13 @@ from edumatch.models.jeux import (
     chemin_table_variables,
     evaluer_sur_perimetre,
     extraire_jeu,
-    preparer_matrice,
     scores_par_session,
 )
-from edumatch.models.metrics import ScoreSession, classement_importance, score_baseline_couverture_egale
+from edumatch.models.metrics import (
+    ScoreSession,
+    classement_importance,
+    score_baseline_couverture_egale,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -189,8 +192,10 @@ class RapportEntrainement:
 
     def resume(self) -> str:
         lignes = [
-            f"Entraînement terminé en {self.duree_secondes:.1f} s, "
-            f"{self.meilleure_iteration} arbres retenus (arrêt anticipé sur la validation).",
+            (
+                f"Entraînement terminé en {self.duree_secondes:.1f} s, "
+                f"{self.meilleure_iteration} arbres retenus (arrêt anticipé sur la validation)."
+            ),
             f"  {self.scores_validation.resume()}  (choix des hyperparamètres et du nombre d'arbres)",
             f"  {self.scores_test.resume()}  (touché une seule fois, à la fin)",
             f"  {self.baseline_validation.resume()}  (plancher E21, à couverture égale)",

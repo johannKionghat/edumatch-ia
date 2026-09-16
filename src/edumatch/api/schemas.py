@@ -182,7 +182,7 @@ class RequeteFeedback(BaseModel):
     motif: str | None = Field(default=None, max_length=1000)
 
     @model_validator(mode="after")
-    def _motif_obligatoire_si_ecartee(self) -> "RequeteFeedback":
+    def _motif_obligatoire_si_ecartee(self) -> RequeteFeedback:
         """R6 (`risques.md`) : un écartement doit être motivé, sans quoi le contrôle humain
         n'est qu'une façade — voir le docstring de `feedback_store.py`."""
         if self.decision == "ecartee" and not (self.motif and self.motif.strip()):

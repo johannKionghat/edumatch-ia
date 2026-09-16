@@ -30,7 +30,7 @@ def _en_tete_basic(identifiant: str, mot_de_passe: str) -> dict[str, str]:
     """Construit l'en-tête `Authorization: Basic ...` à la main plutôt que de dépendre du
     paramètre `auth=` du client de test : les versions de `TestClient` diffèrent sur ce point
     selon la version de starlette installée, l'en-tête HTTP lui-même est stable partout."""
-    jeton = base64.b64encode(f"{identifiant}:{mot_de_passe}".encode("utf-8")).decode("ascii")
+    jeton = base64.b64encode(f"{identifiant}:{mot_de_passe}".encode()).decode("ascii")
     return {"Authorization": f"Basic {jeton}"}
 
 

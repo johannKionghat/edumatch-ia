@@ -27,7 +27,6 @@ import sys
 import textwrap
 from pathlib import Path
 
-
 # ─── 1. Le test qui aurait détecté la panne ──────────────────────────────────
 
 
@@ -125,6 +124,7 @@ def _executer_dans_sous_processus(script: str) -> subprocess.CompletedProcess[st
         capture_output=True,
         text=True,
         timeout=60,
+        check=False,
     )
 
 

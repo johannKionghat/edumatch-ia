@@ -47,9 +47,9 @@ classées, pour que ces deux étapes n'aient plus à lire un CSV brut.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping
 
 import pandas as pd
 import pyarrow as pa
@@ -105,8 +105,10 @@ class RapportReconciliation:
     def resume(self) -> str:
         """Une restitution lisible en une poignée de lignes, pour le journal."""
         lignes = [
-            f"{self.lignes_totales} lignes sur {len(self.lignes_par_session)} session(s), "
-            f"{self.nombre_colonnes_harmonisees} colonnes harmonisées.",
+            (
+                f"{self.lignes_totales} lignes sur {len(self.lignes_par_session)} session(s), "
+                f"{self.nombre_colonnes_harmonisees} colonnes harmonisées."
+            ),
         ]
         for session in sorted(self.lignes_par_session):
             detail = [f"{self.lignes_par_session[session]} lignes"]

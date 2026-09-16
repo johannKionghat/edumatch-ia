@@ -8,8 +8,6 @@ ce module ne fait que lire des fichiers déjà sur disque.
 
 from __future__ import annotations
 
-import io
-import zipfile
 from pathlib import Path
 
 import openpyxl
@@ -39,14 +37,20 @@ def _ecrire_ideo(chemin: Path) -> None:
     )
     lignes = [
         # une formation avec code RNCP qui trouvera un ROME couvert par la table NAF
-        '"326";"";"BTS";"brevet de technicien supérieur";"BTS comptabilité et gestion";"CG";'
-        '"2 ans";"III";"38506";"";"";"";"";"";"";""\n',
+        (
+            '"326";"";"BTS";"brevet de technicien supérieur";"BTS comptabilité et gestion";"CG";'
+            '"2 ans";"III";"38506";"";"";"";"";"";"";""\n'
+        ),
         # une formation avec code RNCP dont la fiche n'existe pas dans l'export ROME (orpheline)
-        '"326";"";"BTS";"brevet de technicien supérieur";"formation orpheline";"OR";'
-        '"2 ans";"III";"99999";"";"";"";"";"";"";""\n',
+        (
+            '"326";"";"BTS";"brevet de technicien supérieur";"formation orpheline";"OR";'
+            '"2 ans";"III";"99999";"";"";"";"";"";"";""\n'
+        ),
         # une formation sans code RNCP du tout
-        '"326";"";"CAP";"certificat d\'aptitude professionnelle";"CAP sans RNCP";"NR";'
-        '"2 ans";"V";"";"";"";"";"";"";"";""\n',
+        (
+            '"326";"";"CAP";"certificat d\'aptitude professionnelle";"CAP sans RNCP";"NR";'
+            '"2 ans";"V";"";"";"";"";"";"";"";""\n'
+        ),
     ]
     chemin.write_text("﻿" + entete + "".join(lignes), encoding="utf-8")
 
@@ -141,7 +145,7 @@ def test_charger_etat_rncp_convertit_actif_en_booleen(sources) -> None:
     df = charger_etat_rncp(sources["rncp_standard"])
 
     assert df.columns == ["code_rncp", "rncp_actif"]
-    par_code = dict(zip(df["code_rncp"].to_list(), df["rncp_actif"].to_list()))
+    par_code = dict(zip(df["code_rncp"].to_list(), df["rncp_actif"].to_list(), strict=False))
     assert par_code == {"38506": False, "99999": True}
 
 

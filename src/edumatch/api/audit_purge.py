@@ -43,7 +43,7 @@ import logging
 import os
 from collections import Counter
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -155,7 +155,7 @@ def purger(
     à l'insu de qui l'invoque (voir le docstring du module). L'exécution réelle est un choix
     explicite de l'appelant, jamais un défaut.
     """
-    maintenant = maintenant or datetime.now(timezone.utc)
+    maintenant = maintenant or datetime.now(UTC)
     delai_pseudonymisation = timedelta(days=settings.api.audit.delai_pseudonymisation_jours)
     delai_agregation = timedelta(days=settings.api.audit.delai_agregation_jours)
     chemins = chemins_audit(settings)

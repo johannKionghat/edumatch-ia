@@ -16,6 +16,7 @@ from __future__ import annotations
 import io
 import zipfile
 from pathlib import Path
+from typing import Self
 
 import pytest
 
@@ -28,11 +29,11 @@ URL_ZIP_RNCP = "https://exemple.test/export-fiches-csv-2026-08-29.zip"
 URL_CATALOGUE_FT = "https://exemple.test/api/1/datasets/58da857388ee384902e505f5/"
 URL_XLSX_FT = "https://exemple.test/rome-arborescence-des-secteurs-naf.xlsx"
 
-CONTENU_IDEO_UTF8 = '"code";"libellé"\n"A01";"formation générale"\n'.encode("utf-8")
+CONTENU_IDEO_UTF8 = '"code";"libellé"\n"A01";"formation générale"\n'.encode()
 NOM_CSV_STANDARD = "export_fiches_CSV_Standard_2026_08_29.csv"
 NOM_CSV_ROME = "export_fiches_CSV_Rome_2026_08_29.csv"
-CONTENU_RNCP_UTF8 = '"Id_Fiche";"Intitule"\n"RNCP1";"Assistant(e) en comptabilité"\n'.encode("utf-8")
-CONTENU_ROME_UTF8 = '"Numero_Fiche";"Codes_Rome_Code"\n"RNCP1";"M1607"\n'.encode("utf-8")
+CONTENU_RNCP_UTF8 = '"Id_Fiche";"Intitule"\n"RNCP1";"Assistant(e) en comptabilité"\n'.encode()
+CONTENU_ROME_UTF8 = b'"Numero_Fiche";"Codes_Rome_Code"\n"RNCP1";"M1607"\n'
 
 
 def _contenu_xlsx_minimal() -> bytes:
@@ -90,10 +91,10 @@ class _ReponseFluxIdeo:
     def raise_for_status(self) -> None:
         return None
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002 - signature imposée par requests
+    def iter_content(self, chunk_size: int):
         yield self._contenu
 
-    def __enter__(self) -> "_ReponseFluxIdeo":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -136,7 +137,7 @@ class SessionFacticeCombinee:
     def __init__(self) -> None:
         self.urls_appelees: list[str] = []
 
-    def get(self, url: str, stream: bool = False, timeout: float | None = None):  # noqa: ARG002
+    def get(self, url: str, stream: bool = False, timeout: float | None = None):
         self.urls_appelees.append(url)
         if url == URL_IDEO_FORMATIONS:
             return _ReponseFluxIdeo(CONTENU_IDEO_UTF8)

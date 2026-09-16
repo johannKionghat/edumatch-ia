@@ -46,7 +46,7 @@ d'écrire ces contrôles :
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -107,7 +107,7 @@ class _Compteur:
 
     def __init__(self) -> None:
         self.total = 0
-        self.non_vides: dict[str, int] = {c: 0 for c in COLONNES_UTILES}
+        self.non_vides: dict[str, int] = dict.fromkeys(COLONNES_UTILES, 0)
         self.siret_non_conformes = 0
         self.etats_invalides = 0
         self.caracteres_invalides = 0
@@ -141,7 +141,9 @@ class _Compteur:
         )
 
         dates = pd.to_datetime(trame["dateCreationEtablissement"], errors="coerce")
-        aujourdhui = pd.Timestamp(date.today())
+        # `datetime.now(UTC).date()` plutôt que `date.today()` : indépendant du fuseau du
+        # serveur d'exécution — sans effet pratique ici vu l'horizon de 5 ans, mais déterministe.
+        aujourdhui = pd.Timestamp(datetime.now(UTC).date())
         horizon = aujourdhui + pd.DateOffset(years=HORIZON_ANTICIPATION_ANS)
         futures = dates > aujourdhui
         self.dates_futures_proches += int((futures & (dates <= horizon)).sum())

@@ -30,7 +30,6 @@ from edumatch.matching.score import (
     recommander,
 )
 
-
 # ─── borner_accessibilite ────────────────────────────────────────────────
 
 

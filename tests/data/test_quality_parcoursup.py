@@ -11,8 +11,8 @@ import copy
 from pathlib import Path
 
 import pytest
-
 from conftest import LIGNE_VALIDE, _ecrire_csv
+
 from edumatch.config import Settings, load_settings
 from edumatch.quality import parcoursup as qp
 from edumatch.quality._diagnostic import Gravite

@@ -12,11 +12,10 @@ from pathlib import Path
 
 import pytest
 import yaml
+from _config_fixtures import BASE_YAML
 from pydantic import ValidationError
 
 from edumatch.config import ConfigurationError, get_settings, load_settings
-
-from _config_fixtures import BASE_YAML
 
 # ─── Chargement nominal ──────────────────────────────────────────────────────
 

@@ -16,7 +16,6 @@ from edumatch.models.derive_stats import (
     psi_numerique,
 )
 
-
 # ─── est_categorielle ────────────────────────────────────────────────────────
 
 

@@ -17,20 +17,29 @@ import polars as pl
 import pytest
 from fastapi.testclient import TestClient
 
-from edumatch.api.deps import get_etat_explicabilite, get_etat_matching, get_journal_audit, get_journal_feedback
+from edumatch.api.audit import JournalAudit
+from edumatch.api.deps import (
+    get_etat_explicabilite,
+    get_etat_matching,
+    get_journal_audit,
+    get_journal_feedback,
+)
 from edumatch.api.feedback_store import JournalFeedback
 from edumatch.api.main import create_app
-from edumatch.api.audit import JournalAudit
 from edumatch.api.state import EtatExplicabilite, EtatMatching
 from edumatch.config import get_settings
-from edumatch.matching.debouches import ArtefactsDebouches, RapportCorrespondanceFormation, RapportKAnonymat
+from edumatch.matching.debouches import (
+    ArtefactsDebouches,
+    RapportCorrespondanceFormation,
+    RapportKAnonymat,
+)
 
 IDENTIFIANT_TEST = "conseiller-test"
 MOT_DE_PASSE_TEST = "mot-de-passe-test"
 
 
 def _en_tete_basic(identifiant: str, mot_de_passe: str) -> dict[str, str]:
-    jeton = base64.b64encode(f"{identifiant}:{mot_de_passe}".encode("utf-8")).decode("ascii")
+    jeton = base64.b64encode(f"{identifiant}:{mot_de_passe}".encode()).decode("ascii")
     return {"Authorization": f"Basic {jeton}"}
 
 DOSSIER_STATIQUE = Path(__file__).resolve().parents[2] / "src" / "edumatch" / "api" / "static"

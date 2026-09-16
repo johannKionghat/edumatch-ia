@@ -11,8 +11,6 @@ répond en erreur. Aucun accès réseau : la session HTTP reste remplacée par
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from edumatch.ingestion import sirene
@@ -39,7 +37,7 @@ class _SessionInstable(SessionFactice):
         super().__init__(**kwargs)
         self._echecs_restants = echecs_avant_succes
 
-    def get(self, url: str, stream: bool = False, timeout: float | None = None):  # noqa: ARG002
+    def get(self, url: str, stream: bool = False, timeout: float | None = None):
         if not stream and self._echecs_restants > 0:
             self._echecs_restants -= 1
             self.appels_catalogue += 1

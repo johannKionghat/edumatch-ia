@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -44,7 +45,7 @@ def test_hierarchie_des_titres_ne_saute_aucun_niveau() -> None:
     """RGAA 9.1 : l'ordre des `h1`-`h6` doit être respecté, sans saut (un `h3` ne doit jamais
     suivre un `h1` sans `h2` intermédiaire)."""
     niveaux = [int(n) for n in re.findall(r"<h([1-6])[ >]", HTML)]
-    for precedent, suivant in zip(niveaux, niveaux[1:]):
+    for precedent, suivant in pairwise(niveaux):
         assert suivant <= precedent + 1, f"saut de {precedent} à {suivant} dans la hiérarchie des titres"
 
 
@@ -209,6 +210,7 @@ def test_app_js_est_syntaxiquement_valide() -> None:
         ["node", "--check", str(DOSSIER_STATIQUE / "app.js")],
         capture_output=True,
         text=True,
+        check=False,
     )
     if resultat.returncode != 0 and "not found" in (resultat.stderr or "").lower():
         pytest.skip("node indisponible dans cet environnement : vérification manuelle requise avant déploiement")
@@ -254,7 +256,7 @@ def _executer_lire_detail_erreur(detail: object) -> str:
         "sandbox.lireDetailErreur(reponse).then((msg) => process.stdout.write(msg));\n"
     )
     resultat = subprocess.run(
-        ["node", "-e", script], capture_output=True, text=True, encoding="utf-8"
+        ["node", "-e", script], capture_output=True, text=True, encoding="utf-8", check=False
     )
     if resultat.returncode != 0 and "not found" in (resultat.stderr or "").lower():
         pytest.skip("node indisponible dans cet environnement : vérification manuelle requise avant déploiement")

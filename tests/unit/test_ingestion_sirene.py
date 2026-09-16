@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import Self
 
 import pytest
 import requests
@@ -76,13 +77,12 @@ class _ReponseFlux:
     def raise_for_status(self) -> None:
         return None
 
-    def iter_content(self, chunk_size: int):  # noqa: ARG002 - signature imposée par requests
-        for bloc in self._blocs:
-            yield bloc
+    def iter_content(self, chunk_size: int):
+        yield from self._blocs
         if self._erreur is not None:
             raise self._erreur
 
-    def __enter__(self) -> "_ReponseFlux":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_args: object) -> bool:
@@ -112,7 +112,7 @@ class SessionFactice:
         self.appels_catalogue = 0
         self.appels_fichier = 0
 
-    def get(self, url: str, stream: bool = False, timeout: float | None = None):  # noqa: ARG002
+    def get(self, url: str, stream: bool = False, timeout: float | None = None):
         if stream:
             self.appels_fichier += 1
             return _ReponseFlux([self.contenu_fichier], self.erreur_en_cours_de_flux)
@@ -311,17 +311,17 @@ def test_ressource_hors_manifeste_directement_construite_leve_erreur_http(settin
     """Une ressource résolue « à la main » (sans passer par le catalogue), dont l'URL renvoie une erreur HTTP."""
 
     class SessionErreurHttp:
-        def get(self, url: str, stream: bool = False, timeout: float | None = None):  # noqa: ARG002
+        def get(self, url: str, stream: bool = False, timeout: float | None = None):
             return _ReponseHttpEnErreur()
 
     class _ReponseHttpEnErreur:
         def raise_for_status(self) -> None:
             raise requests.exceptions.HTTPError("500 Server Error")
 
-        def iter_content(self, chunk_size: int):  # noqa: ARG002
+        def iter_content(self, chunk_size: int):
             yield b""
 
-        def __enter__(self) -> "_ReponseHttpEnErreur":
+        def __enter__(self) -> Self:
             return self
 
         def __exit__(self, *_args: object) -> bool:

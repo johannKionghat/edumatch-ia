@@ -33,7 +33,7 @@ import logging
 import re
 import zipfile
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -309,7 +309,7 @@ def _telecharger_membre(
         "url": ressource.url,
         "date_publication": ressource.date_publication,
         "date_publication_jour": ressource.date_publication_jour,
-        "date_telechargement": datetime.now(timezone.utc).isoformat(),
+        "date_telechargement": datetime.now(UTC).isoformat(),
         "encodage": config.encodage,
         "delimiteur": config.delimiteur,
         "licence": config.licence,

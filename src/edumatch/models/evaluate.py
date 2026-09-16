@@ -40,7 +40,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")  # aucun serveur d'affichage sur les postes de calcul et en CI
-import matplotlib.pyplot as plt  # noqa: E402 — après matplotlib.use, comme documenté ci-dessus
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 

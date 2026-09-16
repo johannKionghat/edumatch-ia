@@ -34,7 +34,7 @@ from edumatch.ingestion.referentiels import (
 )
 
 NOM_CSV_STANDARD = "export_fiches_CSV_Standard_2026_08_29.csv"
-CONTENU_CSV_UTF8 = '"Id_Fiche";"Intitule"\n"RNCP1";"Assistant(e) en comptabilité"\n'.encode("utf-8")
+CONTENU_CSV_UTF8 = '"Id_Fiche";"Intitule"\n"RNCP1";"Assistant(e) en comptabilité"\n'.encode()
 
 
 def _zip_avec(nom_membre: str, contenu: bytes) -> bytes:
@@ -45,9 +45,7 @@ def _zip_avec(nom_membre: str, contenu: bytes) -> bytes:
 
 
 NOM_CSV_ROME = "export_fiches_CSV_Rome_2026_08_29.csv"
-CONTENU_ROME_UTF8 = '"Numero_Fiche";"Codes_Rome_Code";"Codes_Rome_Libelle"\n"RNCP1";"M1607";"Secrétariat"\n'.encode(
-    "utf-8"
-)
+CONTENU_ROME_UTF8 = '"Numero_Fiche";"Codes_Rome_Code";"Codes_Rome_Libelle"\n"RNCP1";"M1607";"Secrétariat"\n'.encode()
 
 
 def _zip_avec_deux_membres(membres: dict[str, bytes]) -> bytes:
@@ -125,7 +123,7 @@ class SessionFactice:
         self.appels_catalogue = 0
         self.appels_zip = 0
 
-    def get(self, url: str, timeout: float | None = None):  # noqa: ARG002
+    def get(self, url: str, timeout: float | None = None):
         if url == URL_CATALOGUE:
             self.appels_catalogue += 1
             return _ReponseJson(self.catalogue, statut_en_erreur=self.catalogue_en_erreur)

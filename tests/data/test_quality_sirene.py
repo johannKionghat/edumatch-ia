@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pyarrow as pa
@@ -118,7 +118,7 @@ def test_format_naf_depend_de_la_nomenclature(
 
 def test_date_creation_proche_du_futur_avertit_sans_bloquer(tmp_path: Path) -> None:
     ligne = _ligne_valide()
-    ligne["dateCreationEtablissement"] = date.today() + timedelta(days=90)
+    ligne["dateCreationEtablissement"] = datetime.now(UTC).date() + timedelta(days=90)
     chemin = tmp_path / "StockEtablissement.parquet"
     _ecrire_parquet(chemin, [ligne])
     rapport = qsirene.controler_fichier(chemin, 0.99)

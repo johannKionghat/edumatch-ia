@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -38,7 +38,7 @@ LIGNE_PARCOURSUP_VALIDE = {
 
 
 def _horodatage() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _ecrire_parcoursup(chemin: Path, ligne: dict[str, str]) -> None:
@@ -102,7 +102,7 @@ def _installer_referentiels(racine: Path) -> None:
         source = Path(f"data/samples/referentiels/ideo/{jeu}.csv")
         shutil.copy(source, destination / "ideo" / f"{jeu}.csv")
         manifeste[f"ideo:{jeu}"] = {"url": "https://exemple.test", "date_telechargement": _horodatage()}
-    jour = datetime.now(timezone.utc).date().isoformat()
+    jour = datetime.now(UTC).date().isoformat()
     shutil.copy(
         Path("data/samples/referentiels/rncp/rncp_echantillon.csv"),
         destination / "rncp" / f"rncp_{jour}.csv",

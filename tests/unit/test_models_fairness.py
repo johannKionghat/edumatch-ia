@@ -16,12 +16,12 @@ from edumatch.models.fairness import (
     CATEGORIE_GENRE_MINORITAIRE,
     CATEGORIE_GENRE_MIXTE,
     ErreurAuditEquite,
+    VentilationGroupe,
+    calculer_correlations_substituts,
     classer_composition_genre,
     eta_carre,
     ratio_impact_disparate_dimension,
-    calculer_correlations_substituts,
     ventiler_dimension,
-    VentilationGroupe,
 )
 
 # ─── classer_composition_genre ──────────────────────────────────────────────

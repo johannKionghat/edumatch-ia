@@ -72,19 +72,14 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")  # aucun serveur d'affichage sur les postes de calcul et en CI
-import matplotlib.pyplot as plt  # noqa: E402 — après matplotlib.use, comme documenté ci-dessus
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from edumatch.config import PROJECT_ROOT, Settings, get_settings
 from edumatch.features.label import poids_effectif
+from edumatch.models.jeux import JeuDonnees, preparer_matrice
 from edumatch.models.metrics import mae_ponderee
-from edumatch.models.train import (
-    JeuDonnees,
-    charger_table,
-    entrainer_modele,
-    preparer_jeux,
-    preparer_matrice,
-)
+from edumatch.models.train import charger_table, entrainer_modele, preparer_jeux
 
 LOGGER = logging.getLogger(__name__)
 

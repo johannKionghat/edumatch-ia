@@ -30,7 +30,11 @@ import pytest
 from edumatch.config import Settings, load_settings
 from edumatch.spark import run_sirene_agregats
 from edumatch.spark.definitions import COLONNES_PROJECTION, FiltresSirene
-from edumatch.spark.sirene_agregats_polars import NOM_FICHIER_SORTIE, agreger_polars, ecrire_agregats
+from edumatch.spark.sirene_agregats_polars import (
+    NOM_FICHIER_SORTIE,
+    agreger_polars,
+    ecrire_agregats,
+)
 
 CHEMIN_ECHANTILLON = Path("data/samples/sirene/StockEtablissement.parquet")
 FILTRES = FiltresSirene(etat_actif="A", valeur_employeur="O", filtrer_employeur=True)
@@ -275,7 +279,7 @@ def test_executer_manifeste_sans_date_leve(tmp_path: Path) -> None:
 
 @pytest.fixture(scope="module")
 def spark_session():
-    pyspark = pytest.importorskip("pyspark")
+    pytest.importorskip("pyspark")
     from edumatch.spark.sirene_agregats import construire_session
 
     session = construire_session("test-sirene-agregats")

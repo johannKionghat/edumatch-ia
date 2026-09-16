@@ -14,7 +14,12 @@ import pandas as pd
 import pytest
 
 from edumatch.config import get_settings
-from edumatch.models.jeux import ErreurJeuxDonnees, chemin_table_variables, extraire_jeu, scores_par_session
+from edumatch.models.jeux import (
+    ErreurJeuxDonnees,
+    chemin_table_variables,
+    extraire_jeu,
+    scores_par_session,
+)
 
 
 def test_extraire_jeu_leve_si_aucune_cellule_pour_les_sessions_demandees() -> None:

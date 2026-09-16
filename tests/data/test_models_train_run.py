@@ -14,7 +14,6 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 from edumatch.config import Settings, load_settings
@@ -71,7 +70,7 @@ def test_le_genre_ne_figure_jamais_parmi_les_colonnes_utilisees(settings_avec_va
 
 def test_predictions_sont_dans_lintervalle_du_label(settings_avec_variables: Settings) -> None:
     """Le modèle peut sortir de [0, 1] (un arbre ne connaît pas la borne du label) : mesuré, pas supposé."""
-    modele, rapport = train.executer(settings_avec_variables)
+    _, rapport = train.executer(settings_avec_variables)
     # Les scores sont déjà calculés sur des prédictions réelles : si l'entraînement
     # n'a produit aucune valeur aberrante extrême, les MAE restent dans un ordre
     # de grandeur raisonnable pour un taux borné à 1.

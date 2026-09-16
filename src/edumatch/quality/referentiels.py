@@ -249,8 +249,11 @@ def _controler_dates_rncp(nom_fichier: str, lignes: list[dict]) -> list[Anomalie
 
 
 def _date_rncp(valeur: str) -> datetime | None:
+    """Ne sert qu'à vérifier que `valeur` est une date calendaire JJ/MM/AAAA valide :
+    le résultat n'est jamais comparé ni combiné à un autre instant, donc l'absence de
+    fuseau ne pose pas de risque réel ici."""
     try:
-        return datetime.strptime(valeur, "%d/%m/%Y")
+        return datetime.strptime(valeur, "%d/%m/%Y")  # noqa: DTZ007
     except ValueError:
         return None
 

@@ -16,7 +16,11 @@ from edumatch.api.audit import JournalAudit
 from edumatch.api.deps import get_etat_matching, get_journal_audit
 from edumatch.api.main import create_app
 from edumatch.api.state import EtatMatching
-from edumatch.matching.debouches import ArtefactsDebouches, RapportCorrespondanceFormation, RapportKAnonymat
+from edumatch.matching.debouches import (
+    ArtefactsDebouches,
+    RapportCorrespondanceFormation,
+    RapportKAnonymat,
+)
 
 
 def _catalogue() -> pd.DataFrame:

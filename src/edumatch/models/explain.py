@@ -66,13 +66,14 @@ import lightgbm as lgb
 import matplotlib
 
 matplotlib.use("Agg")  # aucun serveur d'affichage sur les postes de calcul et en CI
-import matplotlib.pyplot as plt  # noqa: E402 — après matplotlib.use, comme documenté ci-dessus
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
-import shap  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import shap
 
-from edumatch.config import PROJECT_ROOT, Settings, get_settings  # noqa: E402
-from edumatch.models import train  # noqa: E402
+from edumatch.config import PROJECT_ROOT, Settings, get_settings
+from edumatch.models import train
+from edumatch.models.jeux import preparer_matrice
 
 LOGGER = logging.getLogger(__name__)
 
@@ -137,9 +138,11 @@ class ExempleLocal:
 
     def resume(self) -> str:
         lignes = [
-            f"Cellule {self.cod_aff_form} — session {self.session}, "
-            f"bac {self.type_bac}{' boursier' if self.boursier else ''}, "
-            f"effectif={self.effectif:.0f} vœux",
+            (
+                f"Cellule {self.cod_aff_form} — session {self.session}, "
+                f"bac {self.type_bac}{' boursier' if self.boursier else ''}, "
+                f"effectif={self.effectif:.0f} vœux"
+            ),
             f"  Valeur de base (moyenne sur le jeu d'entraînement) : {self.valeur_base:.3f}",
             f"  Prédiction : {self.prediction:.3f}  —  Taux observé : {self.taux_observe:.3f}",
             "  Ce qui explique l'écart à la valeur de base, par ordre d'importance :",
@@ -263,7 +266,7 @@ def importance_globale(
     total = moyenne_ponderee.sum()
     paires = [
         ContributionVariable(nom=nom, importance=float(valeur), part=float(valeur) / total if total > 0 else 0.0)
-        for nom, valeur in zip(colonnes, moyenne_ponderee)
+        for nom, valeur in zip(colonnes, moyenne_ponderee, strict=False)
     ]
     return sorted(paires, key=lambda contribution: contribution.importance, reverse=True)
 
@@ -431,7 +434,7 @@ def executer(
     dossier_precalcul = dossier_precalcul or (settings.processed_dir / SOUS_DOSSIER_PRECALCUL)
 
     resultat = train.entrainer_et_evaluer(settings)
-    matrice_complete = train.preparer_matrice(resultat.table, resultat.colonnes)
+    matrice_complete = preparer_matrice(resultat.table, resultat.colonnes)
     poids_complet = resultat.table["effectif"].astype("float64")
 
     explainer = construire_explainer(resultat.modele)

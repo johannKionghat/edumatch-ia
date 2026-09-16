@@ -12,11 +12,16 @@ from __future__ import annotations
 import sys
 import types
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
 from edumatch.config import load_settings
-from edumatch.rag.generation import ClientGenerationMistral, ErreurGeneration, client_generation_depuis_settings
+from edumatch.rag.generation import (
+    ClientGenerationMistral,
+    ErreurGeneration,
+    client_generation_depuis_settings,
+)
 
 
 def test_sans_cle_le_client_est_none(configs_dir_isole: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -86,7 +91,7 @@ def test_generer_avec_paquet_present_et_reponse_valide_retourne_le_texte(
         message = Message()
 
     class Reponse:
-        choices = [Choix()]
+        choices: ClassVar = [Choix()]
 
     monkeypatch.setitem(sys.modules, "mistralai", _fausse_mistralai(lambda **_: Reponse()))
     client = ClientGenerationMistral(cle_api="cle-factice-de-test", modele="mistral-small-latest")

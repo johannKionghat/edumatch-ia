@@ -12,7 +12,6 @@ principe que `tests/data/test_variables_reference.py` pour l'ADR 0013.
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 import yaml
 

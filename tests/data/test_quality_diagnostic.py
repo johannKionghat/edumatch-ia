@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from edumatch.ingestion._flux import ErreurDefinitive
 from edumatch.quality._diagnostic import (
     Anomalie,
     ErreurQualiteBloquante,
@@ -11,7 +12,6 @@ from edumatch.quality._diagnostic import (
     RapportControle,
     fusionner,
 )
-from edumatch.ingestion._flux import ErreurDefinitive
 
 
 def test_rapport_sans_anomalie_n_est_pas_bloquant() -> None:

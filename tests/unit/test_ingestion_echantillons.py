@@ -9,7 +9,6 @@ sources.
 
 from __future__ import annotations
 
-import csv
 import json
 from pathlib import Path
 
@@ -26,13 +25,8 @@ from edumatch.ingestion.echantillons import (
     _indices_systematiques,
     _lire_csv,
     _provenance_parcoursup,
-    generer_echantillon_parcoursup,
-    generer_echantillon_rncp,
-    generer_echantillons_ideo,
-    generer_echantillons_sirene,
     generer_tous_les_echantillons,
 )
-
 
 # ─── _indices_systematiques : le cœur du déterminisme ────────────────────────
 
@@ -140,7 +134,7 @@ def test_lire_csv_respecte_les_champs_multilignes_entre_guillemets(tmp_path: Pat
 
 def test_lire_csv_utf8_sig_retire_le_bom(tmp_path: Path) -> None:
     chemin = tmp_path / "avec_bom.csv"
-    chemin.write_bytes("﻿session;cod_uai\n1;A\n".encode("utf-8"))
+    chemin.write_bytes("﻿session;cod_uai\n1;A\n".encode())
 
     entete, _ = _lire_csv(chemin, "utf-8-sig", ";")
 
@@ -161,7 +155,7 @@ def settings_synthetiques(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Se
 
     # Parcoursup : deux millésimes, BOM sur l'un des deux comme la vraie source.
     (racine / "raw" / "parcoursup" / "parcoursup_2024.csv").write_bytes(
-        "﻿session;cod_uai;capa_fin\n2024;A1;10\n2024;A2;20\n2024;A3;30\n".encode("utf-8")
+        "﻿session;cod_uai;capa_fin\n2024;A1;10\n2024;A2;20\n2024;A3;30\n".encode()
     )
     (racine / "raw" / "parcoursup" / "parcoursup_2025.csv").write_text(
         "session;cod_uai;capa_fin;nouvelle_colonne\n2025;A1;10;x\n2025;A2;20;y\n", encoding="utf-8"
@@ -193,7 +187,7 @@ def settings_synthetiques(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Se
 
     # IDÉO : un seul jeu, "formations", avec BOM.
     (racine / "external" / "referentiels" / "ideo" / "formations.csv").write_bytes(
-        "﻿\"code NSF\";\"libellé\"\n\"310\";\"commerce\"\n\"320\";\"informatique\"\n".encode("utf-8")
+        "﻿\"code NSF\";\"libellé\"\n\"310\";\"commerce\"\n\"320\";\"informatique\"\n".encode()
     )
 
     # RNCP : un export, avec un champ multi-lignes.
