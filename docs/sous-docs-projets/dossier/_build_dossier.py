@@ -102,6 +102,11 @@ para("EduMatch est une jeune entreprise EdTech basée en Île-de-France, en phas
      "(levée seed de 350 000 euros). Elle édite une plateforme d'orientation scolaire en "
      "B2B2C : les clients sont des établissements (lycées, collèges, CFA, organismes de "
      "formation), les utilisateurs finaux des élèves et des personnes en reconversion.")
+para("Le cas d'usage traité ici est une seule fonctionnalité de cette plateforme : le "
+     "matching entre des lycéens de terminale et les formations proposées sur Parcoursup. "
+     "Le modèle est appris sur les données Parcoursup, qui ne décrivent que l'accès des "
+     "lycéens à l'enseignement supérieur. Les collégiens, les étudiants et les personnes en "
+     "reconversion ne sont pas concernés par ce cas d'usage.", bold=True)
 para("Le secteur combine deux contraintes fortes : il s'appuie sur des données publiques "
      "(Parcoursup, Sirene, référentiels de formations et de métiers), et il est sensible, car "
      "le public compte des mineurs et un système qui influence l'accès à une formation est "
@@ -187,7 +192,7 @@ bullets([
     "Performance et fraîcheur : recommandation en temps interactif, sources mises à jour à des "
     "rythmes très différents (annuel, mensuel, continu).",
     "Budget : structure de coûts d'une startup en amorçage, à surveiller côté inférence.",
-    "Conformité : données de mineurs et d'adultes ; le profilage relève de l'article 22 (base "
+    "Conformité : données de lycéens, majoritairement mineurs (17-18 ans) ; le profilage relève de l'article 22 (base "
     "légale, consentement, minimisation, transparence, analyse d'impact) et de l'AI Act "
     "(explicabilité, non-discrimination), plus le respect des licences (section 3).",
 ])
@@ -198,12 +203,14 @@ table([
     ["Cheffe de projet agile", "Pilote le backlog et les sprints."],
     ["Architecte IA", "Conçoit l'architecture, arbitre les choix, pilote la gouvernance et la "
                       "mise en production."],
-    ["DPO", "Garant RGPD : mineurs et adultes, licéité des données publiques réutilisées."],
+    ["DPO", "Garant RGPD : lycéens majoritairement mineurs, licéité des données publiques "
+            "réutilisées."],
     ["Équipe de développement", "Met en œuvre les pipelines, le moteur et le RAG."],
     ["Conseillers d'orientation", "Superviseurs humains : revoient, contextualisent, peuvent "
                                   "écarter une recommandation."],
-    ["Établissements et utilisateurs", "Lycées, CFA, organismes de formation ; élèves, "
-                                       "étudiants, personnes en reconversion."],
+    ["Établissements et utilisateurs", "Pour ce cas d'usage : lycées clients et leurs "
+                                       "élèves de terminale. Les autres publics de la "
+                                       "plateforme sont hors périmètre."],
     ["Fournisseurs de données", "MESR (Parcoursup), INSEE (Sirene), France Compétences, "
                                "ONISEP, IDEO."],
     ["Référent accessibilité", "Conformité RGAA pour les personnes en situation de handicap."],
@@ -291,7 +298,7 @@ d.add_page_break()
 # 4. BLOC 1
 # =====================================================================
 h("4. Bloc 1 - Gouvernance des données", 1)
-para("Ce que le projet impose : données de mineurs et d'adultes, plusieurs sources publiques "
+para("Ce que le projet impose : données de lycéens majoritairement mineurs, plusieurs sources publiques "
      "sous des licences différentes, plusieurs parties prenantes, une conformité AI Act non "
      "triviale.", italic=True)
 para("Le plan de gouvernance est écrit et versionné : classification des données (publiques, "

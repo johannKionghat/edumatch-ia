@@ -9,7 +9,9 @@ EduMatch est une jeune entreprise EdTech d'Île-de-France, en phase
 d'amorçage (levée seed de 350 000 euros). Elle édite une plateforme
 d'orientation en B2B2C. Ses clients sont des établissements : lycées,
 collèges, CFA, organismes de formation. Ses utilisateurs finaux sont des
-élèves et des personnes en reconversion. En tant qu'architecte IA, je pilote
+élèves et des personnes en reconversion. Le cas d'usage couvert ici est le
+matching entre lycéens de terminale et formations Parcoursup : les autres
+publics de la plateforme en sont exclus. En tant qu'architecte IA, je pilote
 la gouvernance des données : ce document décrit celle que je conçois et
 préconise pour l'entreprise.
 
@@ -71,7 +73,7 @@ d'EduMatch. Le détail des périmètres de décision est dans
 | Partie prenante | Place dans la gouvernance |
 |---|---|
 | Établissements clients | Déployeurs au sens de l'AI Act (art. 26) ; responsables de traitement pour l'exploitation (T4 à T7) |
-| Élèves, personnes en reconversion | Personnes concernées : information, droits, contestation |
+| Lycéens de terminale, majoritairement 17-18 ans | Personnes concernées : information, droits, contestation |
 | Fournisseurs de données : MESR, INSEE, France Compétences, ONISEP | Titulaires des droits ; leurs licences fixent les conditions de réutilisation (`registre-sources.md`) |
 
 ### 2.2 Le partage fournisseur / déployeur

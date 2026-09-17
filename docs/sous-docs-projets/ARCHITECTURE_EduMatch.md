@@ -11,8 +11,8 @@ décrit ici est rattaché à un bloc du dossier de certification (RNCP 38777).
                           ┌─────────────────────────────┐
    Sources publiques      │          EDUMATCH           │      Utilisateurs
                           │                             │
- Parcoursup (MESR) ──────▶│  Pipeline ELT + Entrepôt    │◀───── Candidats (élèves,
- 8 millésimes, 82 Mo      │  Modèle d'accessibilité     │       étudiants, reconversion)
+ Parcoursup (MESR) ──────▶│  Pipeline ELT + Entrepôt    │◀───── Lycéens de terminale
+ 8 millésimes, 82 Mo      │  Modèle d'accessibilité     │       (candidats Parcoursup)
                           │  Score à 3 termes           │
  Sirene (INSEE) ─────────▶│  API de matching            │◀───── Conseillers d'orientation
  43,9 M étab., 4,6 Go Pq  │  Écran de supervision       │       (contrôle humain, art. 14)
