@@ -30,7 +30,7 @@
         <h2 id="score">Le score à trois termes</h2>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
   A[Affinité<br/>règles sur la requête] --> S[Score]
   B[Accessibilité<br/>modèle LightGBM] --> S
   C[Débouchés<br/>agrégats Sirene] --> S
@@ -149,7 +149,7 @@ flowchart LR
         </div>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
   C[Clair<br/>0 à 12 mois] -->|jeton neuf, original jeté| P[Pseudonymisé<br/>12 à 36 mois]
   P -->|plus aucune ligne| Ag[Agrégats<br/>au-delà de 36 mois]
 </pre>

@@ -172,7 +172,7 @@ flowchart TD
         <h3 id="escalade">L'escalade</h3>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
     A[Conseiller d'un établissement<br/>ou Data Steward<br/>détecte un écart] --> B[Architecte IA<br/>ou Data Owner]
     B -->|écart de conformité| C[DPO]
     B -->|écart technique| D[Responsable sécurité]
@@ -187,7 +187,7 @@ flowchart LR
         <p>J'emploie la convention de fichiers standard. La correspondance avec l'architecture en médaillon est : <code>raw</code> = bronze, <code>interim</code> = silver, <code>processed</code> = gold.</p>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
     S1[Parcoursup<br/>MESR] --> R
     S2[Sirene<br/>INSEE] --> R
     S3[ONISEP, RNCP,<br/>France Travail] --> X

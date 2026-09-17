@@ -31,95 +31,25 @@
         <p>Le chemin d'une donnée va du producteur public à l'écran du conseiller en trois couches — bronze, silver, gold — puis vers le modèle et le service. Deux points sont bloquants : le contrôle qualité juste après l'ingestion, et le contrat anti-fuite entre gold et la table de variables.</p>
         <div class="diagram">
 <pre class="mermaid">
-flowchart TB
-    subgraph PROD["Producteurs publics"]
-        direction LR
-        P1["MESR<br/>Parcoursup"]
-        P2["INSEE<br/>Sirene"]
-        P3["ONISEP · France Compétences<br/>France Travail"]
-    end
-
-    subgraph BRONZE["BRONZE — data/raw · immuable"]
-        direction LR
-        B1[("Exports Parcoursup<br/>8 millésimes, CSV")]
-        B2[("Stock Sirene<br/>Parquet")]
-        B3[("Référentiels<br/>CSV, XLSX")]
-    end
-
-    Q1{{"STOP — contrôles qualité<br/>schéma · complétude · cohérence · fraîcheur<br/>par source"}}
-
-    subgraph SILVER["SILVER — data/interim · réconcilié"]
-        S1[("8 millésimes harmonisés<br/>fichier DuckDB, via dbt")]
-    end
-
-    subgraph GOLD["GOLD — data/processed · prêt à modéliser"]
-        direction TB
-        G1[("Étoile : 1 table de faits<br/>+ 4 dimensions<br/>Parquet")]
-        G2[("Agrégats Sirene<br/>commune x NAF")]
-        G3[("Chaîne NAF ↔ ROME ↔ formation<br/>couverture mesurée")]
-        G4[("Table de variables<br/>+ label + pondération")]
-    end
-
-    Q2{{"STOP — contrat anti-fuite<br/>liste blanche des colonnes<br/>de la session prédite ;<br/>tout le reste décalé d'une session"}}
-
-    subgraph MODELE["Modèle"]
-        direction TB
-        M0["Baseline<br/>taux de la session précédente"]
-        M1["Entraînement LightGBM<br/>split temporel strict"]
-        M2["Évaluation, calibration,<br/>équité, ablation"]
-        M3["Précalcul TreeSHAP<br/>par cellule"]
-        M4["Dérive<br/>PSI médian, seuil 0,20"]
-    end
-
-    subgraph SERVICE["Service"]
-        direction TB
-        SC["Score à trois termes<br/>affinité x accessibilité x débouchés"]
-        API["Service de matching<br/>+ écran conseiller"]
-        JOURNAL[("Journal d'inférence<br/>article 12, purge par paliers")]
-    end
-
-    MLFLOW["Registre d'expériences<br/>paramètres, métriques, empreinte du commit"]
-
-    P1 --> B1
-    P2 --> B2
-    P3 --> B3
-    B1 --> Q1
-    B2 --> Q1
-    B3 --> Q1
-    Q1 -->|"conforme"| S1
-    Q1 -->|"conforme"| G2
-    Q1 -->|"conforme"| G3
-    Q1 -.->|"non conforme : la chaîne s'arrête ici"| ARRET["Échec de tâche<br/>diagnostic écrit, aucune reprise :<br/>un schéma cassé ne se répare pas<br/>en retentant"]
-    S1 --> G1
-    G1 --> Q2
-    Q2 --> G4
-    G4 --> M0
-    G4 --> M1
-    M0 --> M2
-    M1 --> M2
-    M1 --> M3
-    G4 --> M4
-    M1 --> MLFLOW
-    M2 --> MLFLOW
-    M1 --> SC
-    G2 --> SC
-    G3 --> SC
-    M3 --> API
-    SC --> API
-    API --> JOURNAL
-
-    classDef bronze fill:#8c6239,stroke:#5e4126,color:#fff
-    classDef silver fill:#9aa0a6,stroke:#6b7075,color:#fff
-    classDef gold fill:#c99700,stroke:#8f6c00,color:#fff
-    classDef stop fill:#c0392b,stroke:#8b271c,color:#fff
-    classDef calcul fill:#438dd5,stroke:#2e6295,color:#fff
-    classDef externe fill:#8a8a8a,stroke:#5c5c5c,color:#fff
-    class B1,B2,B3 bronze
-    class S1 silver
-    class G1,G2,G3,G4 gold
-    class Q1,Q2,ARRET stop
-    class M0,M1,M2,M3,M4,SC,API,MLFLOW,JOURNAL calcul
-    class P1,P2,P3 externe
+flowchart TD
+    PROD["Producteurs publics<br/>MESR · INSEE · ONISEP<br/>France Compétences · France Travail"]
+    BRONZE[("BRONZE · data/raw<br/>exports bruts, immuables")]
+    Q1{{"STOP 1 · contrôles qualité<br/>schéma · complétude · cohérence · fraîcheur"}}
+    ARRET["Échec de tâche<br/>diagnostic écrit, aucune reprise"]
+    SILVER[("SILVER · data/interim<br/>8 millésimes harmonisés, DuckDB")]
+    GOLD[("GOLD · data/processed<br/>étoile · agrégats Sirene<br/>chaîne NAF ↔ ROME ↔ formation")]
+    Q2{{"STOP 2 · contrat anti-fuite<br/>liste blanche de la session prédite"}}
+    VAR[("Table de variables<br/>label + pondération")]
+    MOD["Modèle<br/>baseline · LightGBM · évaluation<br/>équité · SHAP · dérive"]
+    ML["Registre d'expériences<br/>MLflow"]
+    SRV["Service<br/>score à trois termes · API · écran"]
+    JRN[("Journal d'inférence<br/>article 12, purge par paliers")]
+    PROD --> BRONZE --> Q1
+    Q1 -.->|non conforme| ARRET
+    Q1 -->|conforme| SILVER --> GOLD --> Q2 --> VAR --> MOD
+    MOD --> ML
+    MOD -->|prédictions, précalcul SHAP| SRV
+    SRV --> JRN
 </pre>
         </div>
 
@@ -362,7 +292,7 @@ echo $?</code></pre>
         <p>Cette étape relie une formation du référentiel ONISEP (IDÉO) à une activité économique (code NAF), pour préparer le terme « débouchés » du score de matching. Aucune table officielle ne relie directement un code NAF à une formation : la chaîne assemble trois sources publiques, chacune vérifiée séparément.</p>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
   A["Formation IDÉO<br/>code RNCP"] -->|"code RNCP"| B["Fiche RNCP<br/>export quotidien"]
   B -->|"export ROME de l'archive RNCP"| C["Code(s) ROME"]
   C -->|"table France Travail ROME/NAF"| D["Division NAF"]
