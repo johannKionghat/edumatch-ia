@@ -3,9 +3,9 @@
 **Critère servi** : Bloc 1, 1.3 (et 1.6 pour la conformité) ·
 **Dernière revue** : 2026-09-15 · **Article de référence** : RGPD art. 30.
 
-Ce registre distingue ce qui existe aujourd'hui dans le dépôt (T1 à T3,
+Ce registre distingue ce qui existe aujourd'hui dans le dépôt (T1 à T7,
 vérifiables par un fichier) de ce qui est spécifié et pas encore construit
-(T4 à T8). La colonne « statut » évite de décrire une intention au présent.
+(T8). La colonne « statut » évite de décrire une intention au présent.
 
 ---
 
@@ -232,8 +232,9 @@ même terme que T5 est prévue.
 
 **Deux manques**, portés en motifs opposables (`aipd.md` §8.4) : la purge de
 ce journal n'existe pas, faute d'identifiant commun avec T5 (motif B) ;
-l'identifiant du conseiller est déclaratif, sans authentification, la trace
-n'est imputable à personne (motif A).
+l'enregistrement d'une décision exige une authentification HTTP Basic
+(`api/auth.py`), mais sur un compte conseiller partagé, non nominatif : la
+trace n'est imputable à aucune personne identifiée (motif A).
 
 ---
 
@@ -297,9 +298,10 @@ ne fait pas. Coût connu et accepté.
 - **L3**, aucune notice d'information n'est rédigée pour les candidats.
   L'interface existe mais s'adresse au conseiller : la notice reste à
   produire, en français simple, affichée avant la saisie. Motif C.
-- **L4**, aucune authentification ne protège l'écran qui expose les
-  caractéristiques d'un candidat, l'identifiant du conseiller est déclaratif :
-  lacune de sécurité et de traçabilité. Motif A.
+- **L4**, l'écran qui expose les caractéristiques d'un candidat et `/matching`
+  restent ouverts ; l'enregistrement d'une décision est authentifié, mais sur
+  un compte partagé non nominatif : lacune de sécurité et de traçabilité.
+  Motif A.
 - **L5**, aucun dispositif d'exercice des droits (T8), aucune procédure de
   notification de violation, aucun contrat de sous-traitance pour T7. Trois
   réserves non bloquantes prises isolément, mais qui le deviennent au premier

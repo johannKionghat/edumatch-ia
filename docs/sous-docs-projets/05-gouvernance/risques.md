@@ -21,7 +21,7 @@ marqués « organisation ».
 
 | # | Risque | Nature | G | V | Niveau | Réduit à | Statut |
 |---|---|---|:-:|:-:|---|---|---|
-| R1 | Violation de données personnelles | Personnes | 3 | 3 | Élevé | Faible | Aggravé le 2026-09-15 : l'écran expose des données sans authentification |
+| R1 | Violation de données personnelles | Personnes | 3 | 3 | Élevé | Faible | Aggravé le 2026-09-15 ; au 2026-09-17, écran et `/matching` ouverts, décision authentifiée sur un compte partagé |
 | R2 | Ré-identification par l'agrégat territorial | Personnes | 2 | 4 | Élevé | Faible | Traité, k = 5 et filtre de diffusion appliqués au point de restitution |
 | R3 | Discrimination indirecte par variable substitut | Personnes | 4 | 3 | Élevé | Élevé | Mesuré sur les prédictions : impact disparate 0,76, sous le seuil légal. Non résolu |
 | R4 | Boucle de rétroaction sur l'orientation | Personnes | 4 | 2 | Élevé | Modéré | Partiellement instrumenté, non mesuré |
@@ -50,15 +50,18 @@ l'impossibilité pratique de répondre à une opposition sans réécrire
 l'historique du dépôt (T2, T8).
 
 **Aggravation du 2026-09-15** : une quatrième surface est apparue avec l'écran
-conseiller, qui expose les caractéristiques d'un candidat sans authentification
-(identifiant déclaratif). La vraisemblance passe de 1 à 3 et le risque de
+conseiller, qui expose les caractéristiques d'un candidat sans authentification.
+Depuis, l'enregistrement d'une décision exige une authentification HTTP
+Basic, mais l'écran et `/matching` restent ouverts et le compte conseiller
+est partagé. La vraisemblance passe de 1 à 3 et le risque de
 modéré à élevé, car une surface d'accès existe désormais sans contrôle. Motif
 de blocage A de l'analyse d'impact.
 
 **Mesures** : minimisation vérifiée par
-`tests/data/test_echantillons_conformite.py`, authentification du conseiller à
-construire (bloquante), chiffrement au repos et cloisonnement par rôles à
-porter par le code d'infrastructure, procédure de notification de violation à
+`tests/data/test_echantillons_conformite.py`, comptes conseillers individuels
+et restriction d'accès à l'écran à construire (bloquant), cloisonnement écrit
+dans le code d'infrastructure du second dépôt mais non déployé, chiffrement
+en transit non démontré, procédure de notification de violation à
 écrire (72 heures, art. 33), non écrite à ce jour.
 
 ---
@@ -235,8 +238,8 @@ manque l'objet : c'est le biais d'automatisation.
 | Écartement motivé, champ obligatoire | Fait, bloqué côté client et serveur |
 | Horodaté et journalisé | Fait (`api/feedback_store.py`) |
 | Facteurs explicatifs présentés à côté du score | Fait |
-| Taux d'écartement mesuré et affiché au déployeur | Non fait ; un taux nul sur une campagne serait un signal d'alerte, pas un signe de qualité |
-| Identité du superviseur vérifiée | Non fait, identifiant déclaratif |
+| Taux d'écartement mesuré et affiché au déployeur | Partiel : décisions comptées dans Grafana, aucun taux ; un taux nul sur une campagne serait un signal d'alerte, pas un signe de qualité |
+| Identité du superviseur vérifiée | Partiel : authentification sur un compte partagé, non nominative |
 
 **Risque résiduel** : le dispositif existe et est bien conçu, son effectivité
 n'est pas démontrable.
@@ -338,8 +341,8 @@ révocation est écrite dans `plan-gouvernance.md`.
   suppose un processus de gestion des risques continu.
 - Aucun plan de surveillance après commercialisation (art. 72) : la mesure de
   dérive en est l'instrument, pas le plan.
-- L'absence de contrôle d'accès à l'écran conseiller relève de la sécurité
-  technique, portée ici par R1 et par le motif de blocage A de l'AIPD.
+- L'ouverture de l'écran conseiller et le compte partagé relèvent de la
+  sécurité technique, portée ici par R1 et par le motif de blocage A de l'AIPD.
 
 ### Ce qui a changé au 2026-09-15
 
@@ -355,7 +358,7 @@ révocation est écrite dans `plan-gouvernance.md`.
 
 **Trois risques restent décidés et non traités** : R3 (aucun levier
 disponible ne ramène l'impact disparate sous le seuil), R4 (non mesurable
-sans millésime post-déploiement), et le contrôle d'accès porté par R1.
+sans millésime post-déploiement), et la restriction d'accès portée par R1.
 
 ---
 *Étape E44, rédigé le 2026-08-30, révisé le 2026-09-15 après les mesures

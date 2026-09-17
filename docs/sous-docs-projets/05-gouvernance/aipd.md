@@ -155,7 +155,7 @@ entrée, il existe seulement dans les données publiques agrégées pour l'audit
 
 | Risque | Impact potentiel | Vraisemblance | Mesures | Résiduel |
 |---|---|---|---|---|
-| Accès illégitime aux données | Divulgation du statut de boursier et du projet d'orientation d'un mineur | Relevée depuis la v0.9 : l'écran conseiller n'est protégé par aucune authentification | Chiffrement et cloisonnement à porter par l'infrastructure, non écrits ; purge du journal exécutée et planifiée | Élevé tant qu'aucun contrôle d'accès n'est en place, §8.4 motif A |
+| Accès illégitime aux données | Divulgation du statut de boursier et du projet d'orientation d'un mineur | Relevée depuis la v0.9 : l'écran conseiller et `/matching` sont ouverts ; l'enregistrement d'une décision est authentifié, mais sur un compte partagé | Cloisonnement écrit dans le code d'infrastructure du second dépôt (réseau privé, registre et stockage privés, NetworkPolicy), non déployé ; chiffrement en transit non démontré ; purge du journal exécutée et planifiée | Élevé tant que l'accès aux données de candidats n'est ni restreint ni imputable, §8.4 motif A |
 | Modification non désirée | Caractéristique altérée, estimation fausse, conseil faux | Faible | Écriture atomique, empreintes SHA-256, contrôles qualité bloquants, idempotence testée | Faible |
 | Disparition de données | Impossibilité de retracer une recommandation contestée | Faible désormais | Journal d'inférence horodaté, version de modèle et empreinte de commit | Faible pour T5 ; T6 ne se corrèle pas au journal d'inférence, faute d'identifiant commun |
 
@@ -273,13 +273,13 @@ Le risque : qu'un conseiller suive l'outil parce que l'outil est chiffré.
 | Horodaté et journalisé | Oui |
 | Facteurs explicatifs présentés à côté du score | Oui |
 | L'interface dit ce qu'elle ne sait pas | Oui, affiché |
-| Taux d'écartement mesuré et restitué | Non, aucun tableau de bord |
-| Identité du superviseur vérifiée | Non, identifiant déclaratif |
+| Taux d'écartement mesuré et restitué | Partiel : un panneau Grafana compte les décisions sur 24 heures, aucun taux n'est calculé |
+| Identité du superviseur vérifiée | Partiel : authentification HTTP Basic sur l'enregistrement de la décision, compte partagé non nominatif |
 
-Deux manques différents : l'absence de tableau de bord empêche de mesurer
-l'effectivité du contrôle (réserve) ; l'absence d'authentification est plus
-grave, une trace de supervision n'est imputable à personne (motif de blocage
-A).
+Deux manques différents : l'absence de taux d'écartement empêche de mesurer
+l'effectivité du contrôle (réserve) ; le compte partagé est plus grave, une
+trace de supervision n'est imputable à aucune personne identifiée (motif de
+blocage A).
 
 ### 6.5 Information erronée sur les débouchés, tranché
 
@@ -327,7 +327,7 @@ information sur un mineur (avertissement affiché, purge inexistante).
 |---|---|---|
 | 1. Calibration non mesurée | Levé comme motif d'ignorance, mesure défavorable, fonde le motif D | `models/evaluate.py` |
 | 2. Audit d'équité non réalisé | Levé, réalisé sur quatre dimensions | `models/fairness.py`, `04-modele/equite.md` |
-| 3. Aucun dispositif de contrôle humain | Levé sur l'existence, effectivité non mesurable, accès non authentifié | `api/static/`, `routes/feedback.py` |
+| 3. Aucun dispositif de contrôle humain | Levé sur l'existence, effectivité non mesurable, supervision authentifiée sur un compte partagé | `api/static/`, `routes/feedback.py` |
 | 4. Durées sans purge exécutable | Levé pour T5, pas pour T6 | `api/audit_purge.py`, DAG |
 
 ### 8.2 Sur le principe du traitement : favorable
@@ -370,7 +370,7 @@ seul à bloquer une mise en service auprès de candidats réels.
 
 | # | Motif | Rattachement | Ce qui le lève |
 |---|---|---|---|
-| A | Aucun contrôle d'accès sur l'écran exposant des données de candidats, identifiant du conseiller déclaratif, aucune trace imputable | art. 32 RGPD, art. 14 AI Act | Authentification du conseiller, identifiant journalisé |
+| A | Écran et `/matching` ouverts alors qu'ils exposent des données de candidats ; décision authentifiée sur un compte conseiller partagé, donc aucune trace imputable à une personne | art. 32 RGPD, art. 14 AI Act | Comptes conseillers individuels, accès à l'écran et à `/matching` restreint |
 | B | Journal de supervision T6 sans purge, durée écrite (12 mois), faute d'identifiant commun avec T5 | art. 5.1.e | Identifiant de corrélation T5/T6, extension de `audit_purge.py` |
 | C | Aucune notice d'information destinée au candidat | art. 12, 13, 14 RGPD, art. 8 | Notice affichée avant la saisie, pour un lecteur de 17 ans |
 | D | Restitution chiffrée d'une probabilité dont le défaut de calibration est connu, sur-annonce de six points en test | art. 5.1.d, §6.2 | Le double seuil de (a) ci-dessus |
@@ -382,8 +382,9 @@ seul à bloquer une mise en service auprès de candidats réels.
    première demande.
 2. Aucune procédure de notification de violation (art. 33 et 34), elle
    suppose de savoir qui héberge quoi.
-3. Aucun tableau de bord du taux d'écartement, un taux nul est un signal
-   d'alerte, pas un succès.
+3. Suivi partiel de l'écartement : un panneau Grafana compte les décisions,
+   aucun taux n'est calculé ni restitué au déployeur ; un taux nul est un
+   signal d'alerte, pas un succès.
 4. Aucun contrat de sous-traitance (art. 28) pour le fournisseur de modèle de
    langage, pas de mise en service de T7 sans lui.
 5. Pas d'affichage d'intervalle, le score est restitué comme un point.

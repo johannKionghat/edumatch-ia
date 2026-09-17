@@ -205,13 +205,14 @@ peuvent interrompre le fonctionnement.
 | Décider de ne pas utiliser, écarter | `routes/feedback.py`, écartement motivé, bloqué client et serveur | Couvert |
 | Trace de l'intervention | Décision, motif, horodatage, identifiant de conseiller | Couvert sur l'écriture, non corrélé au journal d'inférence |
 | Conscience du biais d'automatisation | Avis d'assistance affiché, consigne sur le champ libre | Couvert |
-| Effectivité démontrable de la supervision | | Non couvert, aucun tableau de bord du taux d'écartement |
-| Imputabilité de la supervision | | Non couvert, identifiant déclaratif, motif de blocage A |
+| Effectivité démontrable de la supervision | Panneau Grafana des décisions `/feedback` sur 24 heures | Partiel, décisions comptées, aucun taux d'écartement calculé |
+| Imputabilité de la supervision | `api/auth.py`, HTTP Basic sur `POST /feedback` | Partiel, compte conseiller partagé non nominatif, motif de blocage A |
 
 Le dispositif de contrôle humain existe et est bien conçu, un vrai progrès.
 L'article 14 demande un contrôle effectif, l'effectivité se démontre par
-deux choses qui manquent : savoir qui a supervisé, et combien de fois la
-supervision a contredit le système.
+deux choses encore incomplètes : savoir quelle personne a supervisé (le
+compte est partagé), et quelle part des recommandations la supervision a
+contredite (les décisions sont comptées, le taux n'est pas calculé).
 
 ### 2.7 Article 15, exactitude, robustesse et cybersécurité
 
@@ -246,8 +247,8 @@ rétroaction, résistance à l'altération.
 | Aucun secret dans le dépôt | `.gitignore`, `.env.example` à valeurs factices, configuration externalisée | Couvert |
 | Prévention de l'injection dans l'interface | Rendu par `textContent` et `createElement`, jamais `innerHTML` | Couvert |
 | Validation des entrées de l'API | Schémas Pydantic, plafonds explicites, erreurs typées | Couvert |
-| Contrôle d'accès | | Non couvert, aucune authentification, motif de blocage actif |
-| Chiffrement au repos et en transit, cloisonnement par rôles | | Non couvert, relève du code d'infrastructure non écrit |
+| Contrôle d'accès | `api/auth.py`, HTTP Basic sur l'enregistrement des décisions | Partiel, compte partagé ; écran et `/matching` ouverts, motif de blocage A |
+| Chiffrement au repos et en transit, cloisonnement par rôles | Code d'infrastructure du second dépôt (`edumatch-cicd/terraform/`, `k8s/`) : réseau privé, registre et stockage privés, NetworkPolicy, conteneurs non root, système de fichiers en lecture seule, aucun jeton de compte de service monté | Partiel, écrit et non déployé ; chiffrement en transit non démontré, aucune terminaison TLS devant le service |
 | Rotation et révocation des secrets | Politique écrite (`plan-gouvernance.md` §5) | Partiel, non outillée |
 | Résistance à l'empoisonnement des données ou du modèle | Contrôles qualité bloquants et empreintes SHA-256 | Partiel, aucun test adverse conduit |
 
@@ -280,7 +281,8 @@ rétroaction, résistance à l'altération.
 
 Cinq obligations non couvertes, qu'un jury trouvera de toute façon : aucune
 information de la personne concernée (ni notice candidat, ni attribution des
-sources), aucun contrôle d'accès donc aucune imputabilité de la supervision,
+sources), un compte conseiller partagé et un écran ouvert donc aucune
+imputabilité de la supervision à une personne,
 aucune purge du journal de supervision, aucun plan de surveillance après
 commercialisation ni journal d'incident, un niveau d'exactitude inférieur à
 celui d'une règle de dénombrement sur la session la plus récente.

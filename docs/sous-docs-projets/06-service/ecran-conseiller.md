@@ -122,7 +122,7 @@ absente de l'environnement où j'ai mené cet audit.
    VoiceOver) n'a pas été faite, faute d'un tel outil dans l'environnement
    audité — elle reste à dérouler par une personne humaine.
 2. **Le tableau de bord du taux d'écartement** destiné au déployeur reste
-   à construire.
+   à construire : Grafana compte les décisions, sans en calculer le taux.
 3. **L'authentification ne couvre que `/feedback`** — `/matching` et
    l'écran restent anonymes, par choix assumé plutôt que par oubli (voir
    ci-dessus).

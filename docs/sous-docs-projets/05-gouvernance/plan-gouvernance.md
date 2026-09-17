@@ -3,7 +3,7 @@
 **Critères servis** : Bloc 1, 1.1 (politiques, classification, règles
 d'usage), 1.2 (rôles et responsabilités), 1.10 (gestion des secrets),
 1.11 (procédure d'audit et de mise à jour) · **Version** : 1.1 ·
-**Date** : 2026-08-30, révisée le 2026-09-15.
+**Date** : 2026-08-30, révisée le 2026-09-15 et le 2026-09-17.
 
 Ce plan décrit la gouvernance de ce dépôt, pas une gouvernance idéale. Chaque
 politique pointe vers un fichier, une commande ou un contrôle automatisé.
@@ -80,7 +80,7 @@ exécutable testée et planifiée, écran de supervision construit.
 
 | Motif | Contenu |
 |---|---|
-| A | Aucun contrôle d'accès à l'écran, identifiant de conseiller déclaratif : un contrôle non imputable ne se démontre pas |
+| A | Supervision non imputable à une personne : l'enregistrement d'une décision (`POST /feedback`) exige une authentification HTTP Basic, mais sur un compte conseiller unique et partagé ; l'écran et `/matching` restent ouverts. Un contrôle non imputable ne se démontre pas |
 | B | Journal de supervision (T6) sans purge exécutable |
 | C | Aucune notice d'information destinée au candidat |
 | D | Restitution d'une probabilité dont le défaut de calibration est mesuré et non corrigé |
@@ -120,7 +120,7 @@ bloquent la mise en service auprès de candidats réels, pas le développement.
 |---|---|
 | Rotation | Clé cloud et clé API du modèle de langage : tous les 90 jours, et au départ de toute personne y ayant eu accès |
 | Révocation | Un secret exposé est révoqué avant d'être remplacé, jamais l'inverse ; retirer le fichier du dépôt ne révoque rien |
-| Détection | Analyse de secrets en intégration continue, non implémentée car la CI n'existe pas encore |
+| Détection | Analyse de secrets en intégration continue, non implémentée : les trois workflows écrits dans le second dépôt (`edumatch-cicd/.github/workflows/`) portent lint, tests, construction et déploiement, aucun n'analyse les secrets |
 | Portée minimale | Une clé par environnement, jamais partagée dev/production |
 
 ## 6. Procédure d'audit
@@ -158,12 +158,12 @@ leur échéance. Un audit sans point en échec est un audit à refaire.
 **Règle de cohérence** : le dépôt fait foi. Si un document déclare un
 composant que le code ne confirme pas, c'est le document qui est corrigé.
 
-## 8. État de mise en œuvre
+## 8. État de mise en œuvre, au 2026-09-17
 
 | Élément | État |
 |---|---|
 | Classification des données | Écrite et appliquée |
-| Rôles et périmètres de décision | Écrits, le superviseur humain n'a pas encore d'outil complet |
+| Rôles et périmètres de décision | Écrits ; le superviseur humain dispose de l'écran de supervision, sa décision est authentifiée mais sur un compte partagé (motif A) |
 | Règles d'usage | 6 des 7 contrôlées automatiquement |
 | Secrets, exclusion et externalisation | En place et vérifiées |
 | Secrets, rotation/révocation/détection | Écrites, non outillées |
@@ -185,4 +185,6 @@ composant que le code ne confirme pas, c'est le document qui est corrigé.
 
 ---
 *Étape E44, rédigé le 2026-08-30, révisé le 2026-09-15 : motifs de blocage
-actualisés, motif D ajouté, état de mise en œuvre repris point par point.*
+actualisés, motif D ajouté, état de mise en œuvre repris point par point.
+Révisé le 2026-09-17 : motif A reformulé après l'authentification de
+`/feedback`, état de l'intégration continue corrigé.*

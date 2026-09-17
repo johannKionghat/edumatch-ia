@@ -52,8 +52,8 @@ Une mention générique « source : données publiques » ne suffit pas, car ell
 omet la date. J'en fais donc un écran « Sources et licences » côté conseiller,
 alimenté par les manifestes (pas par une liste écrite en dur, qui deviendrait
 fausse au stock Sirene suivant) : producteur, intitulé, licence, date du
-fichier utilisé. **Statut au 2026-08-30 : non implémenté**, l'interface
-n'existe pas encore. Inscrit au registre des risques sous R7.
+fichier utilisé. **Statut au 2026-09-17 : non implémenté** : l'écran
+conseiller existe, mais ne porte pas encore cette rubrique (motif E). Inscrit au registre des risques sous R7.
 
 ### ODbL v1.0, S3 (IDÉO / ONISEP)
 
