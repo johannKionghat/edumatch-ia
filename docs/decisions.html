@@ -727,7 +727,7 @@
         </ol>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
   F[fait_admission<br/>440 030 lignes<br/>grain : la cellule]
   DF[dim_formation<br/>SCD 2 · 43 858 versions]
   DT[dim_territoire<br/>SCD 1 · 1 448 lignes]
@@ -838,7 +838,7 @@ flowchart LR
         <p>Le terme « débouchés » du score doit relier une formation à une activité économique, le code NAF de l'agrégat Sirene. Aucune table officielle ne relie directement NAF et formation. NAF décrit l'activité d'un établissement ; ROME (France Travail) décrit un métier ; RNCP relie une certification à un ou plusieurs métiers ROME ; IDÉO (ONISEP) relie une formation à une certification RNCP. Ce sont trois sources publiques, vérifiées séparément : Licence Ouverte v2.0 pour RNCP et France Travail, ODbL pour IDÉO (voir <a href="registres.html">Registres</a>).</p>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
   I[Formation IDÉO<br/>ONISEP] -->|code RNCP · 65,72 %| R[Certification RNCP<br/>France Compétences]
   R -->|codes ROME| M[Métier ROME<br/>France Travail]
   M -->|division NAF| N[Activité NAF<br/>agrégat Sirene]
@@ -976,7 +976,7 @@ flowchart LR
         <p>Coût : environ 40 €/mois si l'instance tourne en permanence, environ 0,35 € pour une séance de tournage de 6 heures.</p>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
   subgraph TF[Scaleway · provisionné par Terraform]
     subgraph K[Cluster Kapsule]
       API[API FastAPI<br/>charge élastique · HPA]

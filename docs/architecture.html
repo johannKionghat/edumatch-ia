@@ -31,35 +31,18 @@
         <p>Trois catégories de personnes entourent le système, et cinq producteurs publics l'alimentent.</p>
         <div class="diagram">
 <pre class="mermaid">
-flowchart TB
-    CONSEILLER["Conseiller d'orientation<br/>[Personne]<br/>Accompagne un lycéen.<br/>Seul utilisateur direct : il décide, le système propose."]
-    CANDIDAT["Lycéen / candidat<br/>[Personne concernée]<br/>N'accède pas au système.<br/>Ses données servent à l'apprendre, agrégées, jamais nominatives."]
-    EXPLOITANT["Exploitant de la solution<br/>[Personne]<br/>Régénère les données, réentraîne, surveille la dérive, purge le journal."]
-
-    SYSTEME["EduMatch-IA<br/>[Système logiciel]<br/>Recommande des formations à un profil de candidat et explique chaque recommandation.<br/>score = affinité x accessibilité x débouchés"]
-
-    subgraph SOURCES["Producteurs de données publiques"]
-        direction TB
-        MESR["Portail de données du MESR<br/>[Système externe]<br/>Parcoursup, 8 millésimes 2018-2025<br/>Licence Ouverte v2.0"]
-        INSEE["Base Sirene — INSEE<br/>[Système externe]<br/>Établissements, stock republié chaque mois<br/>Licence Ouverte v2.0"]
-        ONISEP["ONISEP — IDÉO<br/>[Système externe]<br/>Formations et métiers<br/>ODbL : partage à l'identique"]
-        RNCP["France Compétences — RNCP<br/>[Système externe]<br/>Fiches de certification, RNCP vers ROME<br/>Licence Ouverte v2.0"]
-        FT["France Travail<br/>[Système externe]<br/>Table de correspondance ROME vers NAF<br/>Licence Ouverte v2.0"]
-    end
-
-    MISTRAL["API de modèle de langage<br/>[Système externe — optionnel]<br/>Reformule la réponse de l'assistant.<br/>Sans clé : le mode extractif fonctionne seul."]
-
-    CONSEILLER -->|"consulte, comprend, et écarte une recommandation avec motif"| SYSTEME
-    SYSTEME -->|"recommandations expliquées, jamais une décision automatisée"| CONSEILLER
-    CANDIDAT -.->|"est accompagné par"| CONSEILLER
-    EXPLOITANT -->|"déclenche et surveille les chaînes de traitement"| SYSTEME
-
-    SYSTEME -->|"télécharge les exports CSV, cadence annuelle"| MESR
-    SYSTEME -->|"résout le catalogue, télécharge le stock, cadence mensuelle"| INSEE
-    SYSTEME -->|"télécharge 4 jeux CSV, cadence quotidienne"| ONISEP
-    SYSTEME -->|"télécharge l'export du jour"| RNCP
-    SYSTEME -->|"télécharge la table ROME/NAF"| FT
-    SYSTEME -.->|"reformule un extrait, seulement si clé fournie"| MISTRAL
+flowchart TD
+    CONS["Conseiller d'orientation<br/>seul utilisateur direct"]
+    CAND["Lycéen de terminale<br/>accompagné, sans accès direct"]
+    EXP["Exploitant<br/>données, réentraînement, purge"]
+    SYS["EduMatch-IA<br/>affinité × accessibilité × débouchés"]
+    SRC["Producteurs publics<br/>MESR · INSEE · ONISEP<br/>France Compétences · France Travail"]
+    LLM["API de modèle de langage<br/>optionnelle"]
+    CAND -.->|accompagné par| CONS
+    CONS -->|consulte, écarte avec motif| SYS
+    EXP -->|déclenche, surveille| SYS
+    SYS -->|télécharge les exports| SRC
+    SYS -.->|reformule, si clé fournie| LLM
 </pre>
         </div>
         <p>Le candidat n'a pas d'accès direct : ce n'est pas un manque de temps, mais une conséquence du profilage de mineurs et de l'exigence de contrôle humain effectif de l'article 14 de l'AI Act sur un usage classé à haut risque par son annexe III (l'accès à l'éducation). Interposer un professionnel qui peut écarter une recommandation en motivant son écart rend ce contrôle réel : le motif est enregistré, il devient une trace vérifiable. Aucune décision n'est donc prise par le système — il classe et il explique — et l'article 22 du RGPD sur la décision entièrement automatisée n'est pas la base du dispositif.</p>
@@ -70,74 +53,34 @@ flowchart TB
         <p>Un « conteneur » au sens C4 est une unité déployable ou un magasin de données, pas nécessairement un conteneur Docker au sens strict — ici la plupart en sont. Chaque boîte pleine correspond à un fichier ou un service ouvert dans un des deux dépôts ; le sous-graphe en pointillé regroupe l'industrialisation, écrite dans le second dépôt (<code>edumatch-cicd</code>) et détaillée à la section <a href="#infrastructure">Infrastructure de production</a> — écrite et testée localement, non déployée sur Scaleway à ce jour.</p>
         <div class="diagram tall">
 <pre class="mermaid">
-flowchart TB
-    CONSEILLER["Conseiller d'orientation<br/>[Personne]"]
-    EXPLOITANT["Exploitant<br/>[Personne]"]
-    SOURCES["5 producteurs publics<br/>[Systèmes externes]<br/>MESR, INSEE, ONISEP, France Compétences, France Travail"]
-
-    subgraph SYS["EduMatch-IA"]
-        direction TB
-
-        subgraph SERVICE["Service en ligne"]
-            direction TB
-            ECRAN["Écran conseiller<br/>[HTML, CSS, JavaScript sans cadriciel]<br/>Voir, comprendre, écarter avec motif.<br/>Servi en fichiers statiques par l'API."]
-            API["Service de matching<br/>[FastAPI / Uvicorn, python:3.11-slim]<br/>/matching /explain /feedback /assistant /health<br/>Charge ses artefacts au démarrage, n'entraîne jamais."]
-        end
-
-        subgraph LOT["Traitements par lots"]
-            direction TB
-            AIRFLOW["Orchestrateur<br/>[Airflow 2.9.3, mode standalone]<br/>4 DAG, une cadence par source.<br/>Reprise décidée en Python, pas par le retry natif."]
-            TRAITEMENT["Chaîne de traitement<br/>[Paquet Python edumatch]<br/>Ingestion, qualité (Pandera), dbt + DuckDB, agrégat Sirene, variables, label."]
-            ENTRAINEMENT["Entraînement<br/>[Conteneur d'entraînement]<br/>LightGBM pondéré, SHAP, équité, ablation, dérive.<br/>Exécution unique, se termine en code 0."]
-        end
-
-        subgraph STOCKAGE["Magasins de données"]
-            direction TB
-            RAW[("data/raw — bronze<br/>[CSV, ZIP, Parquet]<br/>Immuable, jamais versionné")]
-            SILVER[("data/interim — silver<br/>[Fichier DuckDB]<br/>8 millésimes réconciliés")]
-            GOLD[("data/processed — gold<br/>[Parquet]<br/>Étoile, variables, précalcul SHAP")]
-            JOURNAUX[("Journaux de service<br/>[JSON Lines]<br/>Journal d'inférence (art. 12) et retours du conseiller")]
-        end
-
-        subgraph SUIVI["Suivi d'expériences"]
-            direction TB
-            MLFLOW["Registre d'expériences<br/>[MLflow 2.14.1]<br/>Paramètres, métriques, artefacts, empreinte du commit"]
-            PG[("Base du registre<br/>[PostgreSQL 16]<br/>Métadonnées MLflow uniquement")]
-        end
-    end
-
-    subgraph CIBLE["Industrialisation — dépôt edumatch-cicd, écrite, non déployée"]
-        direction TB
-        CICD["Chaîne CI/CD<br/>[Dépôt distinct edumatch-cicd]<br/>3 workflows écrits et exécutables, exécution sur GitHub non démontrée"]
-        IAC["Infrastructure<br/>[Terraform + Kubernetes Kapsule]<br/>Écrite, relue ligne à ligne, jamais appliquée (pas de compte Scaleway)"]
-        OBS["Observabilité<br/>[Prometheus + Alertmanager + Grafana]<br/>Manifestes écrits, instrumentation API déjà en place, non déployée"]
-    end
-
-    CONSEILLER -->|"HTTPS"| ECRAN
-    ECRAN -->|"JSON / HTTP"| API
-    EXPLOITANT -->|"déclenche, surveille, port 8080"| AIRFLOW
-    EXPLOITANT -->|"compare les exécutions, port 5000"| MLFLOW
-
-    AIRFLOW -->|"appelle les tâches en processus Python"| TRAITEMENT
-    TRAITEMENT -->|"télécharge"| SOURCES
-    SOURCES -.->|"fichiers bruts"| RAW
-    TRAITEMENT -->|"écrit, écriture atomique"| RAW
-    TRAITEMENT -->|"réconcilie, dbt sur DuckDB"| SILVER
-    SILVER -->|"modèles gold"| GOLD
-    TRAITEMENT -->|"agrégats, variables"| GOLD
-
-    ENTRAINEMENT -->|"lit la table de variables"| GOLD
-    ENTRAINEMENT -->|"enregistre paramètres, métriques, artefacts"| MLFLOW
-    ENTRAINEMENT -->|"écrit prédictions et précalcul SHAP"| GOLD
-    MLFLOW -->|"SQL"| PG
-
-    API -->|"lit en lecture seule"| GOLD
-    API -->|"ajoute une ligne par inférence et par retour"| JOURNAUX
-    AIRFLOW -->|"purge par paliers"| JOURNAUX
-
-    CICD -.->|"construira et déploiera"| API
-    IAC -.->|"hébergera"| SYS
-    OBS -.->|"observera"| API
+flowchart TD
+    SRC["Producteurs publics"]
+    AF["Orchestrateur<br/>Airflow 2.9.3 · 4 DAG"]
+    TR["Chaîne de traitement<br/>ingestion · qualité · dbt · agrégats"]
+    RAW[("Bronze<br/>data/raw")]
+    SIL[("Silver<br/>DuckDB")]
+    GOLD[("Gold<br/>Parquet : étoile, variables, SHAP")]
+    ENT["Entraînement<br/>LightGBM · SHAP · équité · dérive"]
+    ML["MLflow 2.14.1<br/>+ PostgreSQL 16"]
+    API["Service de matching<br/>FastAPI"]
+    ECR["Écran conseiller<br/>HTML · CSS · JS"]
+    JRN[("Journaux<br/>inférence, retours")]
+    CONS["Conseiller"]
+    CICD["Dépôt edumatch-cicd<br/>CI/CD · Terraform · Kubernetes · monitoring<br/>écrit, non déployé"]
+    SRC --> TR
+    AF -->|appelle| TR
+    TR -->|écriture atomique| RAW
+    RAW -->|contrôles bloquants| SIL
+    SIL -->|modèles gold| GOLD
+    GOLD --> ENT
+    ENT -->|exécutions tracées| ML
+    ENT -->|prédictions, précalcul SHAP| GOLD
+    GOLD -->|lecture seule| API
+    API --> ECR
+    ECR --> CONS
+    API -->|une ligne par inférence| JRN
+    AF -.->|purge par paliers| JRN
+    CICD -.->|construira, hébergera, observera| API
 </pre>
         </div>
 
@@ -409,7 +352,7 @@ make transform-lignage</code></pre>
         <h3 id="infra-cible">La cible de déploiement, en un schéma</h3>
         <div class="diagram">
 <pre class="mermaid">
-flowchart LR
+flowchart TD
     DEV["Poussée ou étiquette<br/>sur edumatch-ia"] --> GH["GitHub Actions<br/>edumatch-cicd<br/>ci -> build-images -> deploy"]
     GH -->|"images taguées<br/>par empreinte de commit"| REG[("Registre de conteneurs<br/>Scaleway, privé")]
     REG --> K8S["Cluster Kapsule<br/>pool DEV1-M, 1 à 2 nœuds<br/>Deployment + HPA 2-6 réplicas"]

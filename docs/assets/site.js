@@ -108,12 +108,50 @@
     });
   }
 
+  // Dans un sous-groupe vertical, Mermaid place côte à côte les éléments qui ne
+  // sont pas reliés entre eux. On les enchaîne par des liens invisibles (~~~)
+  // pour qu'ils s'empilent : le schéma se lit en défilant vers le bas.
+  function empilerSousGroupes(source) {
+    if (!/^\s*(flowchart|graph)\s+(TD|TB)\b/m.test(source)) return source;
+    var lignes = source.split("\n");
+    var pile = [];
+    var sortie = [];
+    lignes.forEach(function (ligne) {
+      var sg = ligne.match(/^\s*subgraph\s+([A-Za-z_][\w]*)/);
+      if (sg) {
+        if (pile.length) pile[pile.length - 1].enfants.push(sg[1]);
+        pile.push({ enfants: [], vertical: true });
+        sortie.push(ligne);
+        return;
+      }
+      if (/^\s*direction\s+(LR|RL)\b/.test(ligne) && pile.length) pile[pile.length - 1].vertical = false;
+      if (/^\s*end\s*$/.test(ligne) && pile.length) {
+        var groupe = pile.pop();
+        if (groupe.vertical && groupe.enfants.length > 1) {
+          sortie.push("    " + groupe.enfants.join(" ~~~ "));
+        }
+        sortie.push(ligne);
+        return;
+      }
+      var noeud = ligne.match(/^\s*([A-Za-z_][\w]*)\s*[\[\(\{]/);
+      if (noeud && pile.length && !/--|==|~~~|-\.|\.-/.test(ligne)) pile[pile.length - 1].enfants.push(noeud[1]);
+      sortie.push(ligne);
+    });
+    return sortie.join("\n");
+  }
+
   var sourcesSchemas = [];
   function dessinerSchemas() {
     if (!window.mermaid) return;
     var blocs = document.querySelectorAll("pre.mermaid");
     blocs.forEach(function (b, i) {
-      if (sourcesSchemas[i] === undefined) sourcesSchemas[i] = b.textContent;
+      if (sourcesSchemas[i] === undefined) {
+        // Le navigateur a transformé les <br/> des libellés en éléments : on les
+        // remet en texte avant de lire la source, sinon les retours à la ligne sont perdus.
+        var copie = b.cloneNode(true);
+        copie.querySelectorAll("br").forEach(function (br) { br.replaceWith("<br/>"); });
+        sourcesSchemas[i] = empilerSousGroupes(copie.textContent);
+      }
       b.removeAttribute("data-processed");
       b.textContent = sourcesSchemas[i];
     });
@@ -122,9 +160,9 @@
       theme: themeEffectif() === "dark" ? "dark" : "neutral",
       fontFamily: "IBM Plex Sans, Segoe UI, Arial, sans-serif",
       securityLevel: "antiscript",
-      flowchart: { htmlLabels: true, useMaxWidth: false, nodeSpacing: 40, rankSpacing: 50 },
-      er: { useMaxWidth: false },
-      sequence: { useMaxWidth: false },
+      flowchart: { htmlLabels: true, useMaxWidth: true, nodeSpacing: 30, rankSpacing: 45, padding: 18 },
+      er: { useMaxWidth: true },
+      sequence: { useMaxWidth: true },
     });
     window.mermaid.run({ nodes: blocs });
   }
@@ -135,6 +173,8 @@
     construirePager();
     construireSommaire();
     brancherBoutons();
-    dessinerSchemas();
+    // Les boîtes sont dimensionnées sur la police réelle : on attend qu'elle soit chargée.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(dessinerSchemas);
+    else dessinerSchemas();
   });
 })();
