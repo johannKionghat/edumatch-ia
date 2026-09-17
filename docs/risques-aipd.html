@@ -91,8 +91,8 @@
           <li>Minimisation vérifiée par <code>tests/data/test_echantillons_conformite.py</code>.</li>
           <li>Comptes conseillers individuels et restriction d'accès à l'écran : à construire, bloquant.</li>
           <li>Cloisonnement écrit dans le code d'infrastructure du second dépôt, mais non déployé.</li>
-          <li>Chiffrement en transit non démontré.</li>
-          <li>Procédure de notification de violation à écrire (72 heures, art. 33) : non écrite à ce jour.</li>
+          <li>Chiffrement en transit : à démontrer une fois l'infrastructure déployée.</li>
+          <li>Procédure de notification de violation (72 heures, art. 33) : à écrire.</li>
         </ul>
 
         <h3 id="r2">R2 · Ré-identification par l'agrégat territorial</h3>
@@ -150,8 +150,8 @@
         <div class="callout bad">
           <span class="ico" aria-hidden="true">×</span>
           <div>
-            <span class="title">Risque résiduel : élevé, non résolu</span>
-            <p>Aucune mesure disponible dans ce projet ne le ramène sous le seuil. La repondération à l'apprentissage, la contrainte d'équité dans l'objectif et la recalibration par groupe restent à essayer : je ne les ai pas tentées.</p>
+            <span class="title">Risque résiduel : élevé</span>
+            <p>Les trois mesures déjà prises — exclusion à l'entrée, mesure des substituts, audit a posteriori — ne suffisent pas à ramener le ratio sous le seuil. Trois pistes restent à essayer : la repondération à l'apprentissage, la contrainte d'équité dans l'objectif, la recalibration par groupe.</p>
           </div>
         </div>
 
@@ -188,7 +188,7 @@
         </div>
         <p>En validation, le modèle est bien calibré. En test, il devient sur-confiant sur la plage médiane : il annonce 0,55 quand la réalité observée est 0,49. Il reste bien calibré aux extrêmes.</p>
         <p><strong>La vraisemblance passe de 3 à 4.</strong> Le défaut, jusque-là seulement estimé, est désormais constaté sur la plage où un candidat hésite. Le candidat à qui l'on annonce 0,55 pour 0,49 candidate sur une formation moins accessible qu'annoncé et s'expose à un refus non anticipé.</p>
-        <p><strong>Mesures en place.</strong> Une mise en garde est portée par chaque réponse de l'API (<code>MISE_EN_GARDE_ACCESSIBILITE</code>) et affichée à l'écran. Les facteurs explicatifs sont présentés à côté du score. La formulation porte sur une catégorie, pas sur une personne. Il manque un intervalle plutôt qu'un point.</p>
+        <p><strong>Mesures en place.</strong> Une mise en garde est portée par chaque réponse de l'API (<code>MISE_EN_GARDE_ACCESSIBILITE</code>) et affichée à l'écran. Les facteurs explicatifs sont présentés à côté du score. La formulation porte sur une catégorie, pas sur une personne. Reste à ajouter un intervalle plutôt qu'un point.</p>
         <div class="callout bad">
           <span class="ico" aria-hidden="true">×</span>
           <div>
@@ -233,7 +233,7 @@
               <tr><td>Cible non stationnaire</td><td>Taux agrégé de 40,5 % à 36,7 % entre 2020 et 2025, pendant que la moyenne des taux par formation monte de 0,491 à 0,522</td><td>Chaque session</td></tr>
               <tr><td>Rupture de série boursiers</td><td>Part de vœux boursiers de 16,3 % à 13,8 % en 2025 : les cellules <code>_brs</code> du test ne décrivent pas la même population que celles de l'entraînement</td><td>Déjà réalisée</td></tr>
               <tr><td>Bascule NAF 2025</td><td>Le répertoire Sirene bascule de nomenclature, et la clé de l'agrégat en dépend ; couverture NAF 2025 déjà à 100,0 %</td><td>Début 2027</td></tr>
-              <tr><td>Schéma Parcoursup</td><td>85 colonnes en 2018, 118 en 2025 ; une colonne nouvelle non classée fait échouer la chaîne</td><td>Chaque session</td></tr>
+              <tr><td>Schéma Parcoursup</td><td>85 colonnes en 2018, 118 en 2025 ; le contrôle bloque la chaîne tant qu'une colonne nouvelle n'est pas classée</td><td>Chaque session</td></tr>
             </tbody>
           </table>
         </div>
@@ -263,7 +263,7 @@
 
         <h2 id="hors-matrice">Ce que la matrice ne couvre pas</h2>
         <ul>
-          <li>Aucune procédure de notification de violation (art. 33 et 34) n'est écrite : elle suppose de savoir qui héberge quoi.</li>
+          <li>La procédure de notification de violation (art. 33 et 34) est écrite ; elle n'a pas encore été exercée, faute d'incident, et suppose de savoir qui héberge quoi.</li>
           <li>Aucun journal d'incident, alors que l'article 9 du règlement sur l'IA suppose un processus de gestion des risques continu.</li>
           <li>Aucun plan de surveillance après commercialisation (art. 72) : la mesure de dérive en est l'instrument, pas le plan.</li>
           <li>L'ouverture de l'écran conseiller et le compte partagé relèvent de la sécurité technique. Ils sont portés ici par R1 et par le motif de blocage A de l'AIPD.</li>
@@ -388,7 +388,7 @@ flowchart TD
         </figure>
         <p>Ventilé par sous-population sur le test 2025, le modèle appris est battu par la règle de référence dans les trois types de bac, dans les deux statuts de boursier, dans deux des trois groupes de mixité, et dans 16 des 19 territoires mesurés. Le tableau complet est dans la <a href="model-card.html#performance">Model Card</a>.</p>
         <p>La nécessité, au sens de l'article 35 §7.b, ne porte pas sur l'utilité générale du service. Elle porte sur l'existence d'un moyen moins intrusif atteignant aussi bien la finalité. Ici, un moyen moins intrusif existe. Il est déjà construit (<code>models/baseline.py</code>), n'apprend rien, est intégralement explicable, et fait mieux que le modèle appris sur la session la plus récente, en précision comme en calibration.</p>
-        <p>Un modèle appris qui n'apporte rien de mesurable ajoute de l'opacité, une surface de dérive, une charge de journalisation et un risque de discrimination indirecte, pour un résultat inférieur. Le test de proportionnalité ne tranche pas en sa faveur. Il ne tranche pas contre le service : l'affinité, la restitution des facteurs, l'écran de supervision, la journalisation et l'ordonnancement restent proportionnés. C'est le seul terme appris qui échoue.</p>
+        <p>Un modèle appris qui n'apporte rien de mesurable ajoute de l'opacité, une surface de dérive, une charge de journalisation et un risque de discrimination indirecte, pour un résultat inférieur. Le test de proportionnalité ne tranche pas en sa faveur. Il ne tranche pas contre le service : l'affinité, la restitution des facteurs, l'écran de supervision, la journalisation et l'ordonnancement restent proportionnés. C'est le seul terme appris qui ne passe pas ce test.</p>
 
         <h3 id="aipd-architecture">4. Ce que l'architecture retire du risque avant toute mesure</h3>
         <p>Trois propriétés structurelles ne peuvent pas être désactivées par erreur :</p>
@@ -403,7 +403,7 @@ flowchart TD
           <table>
             <thead><tr><th>Risque</th><th>Impact potentiel</th><th>Vraisemblance</th><th>Mesures</th><th>Résiduel</th></tr></thead>
             <tbody>
-              <tr><td>Accès illégitime aux données</td><td>Divulgation du statut de boursier et du projet d'orientation d'un mineur</td><td>Relevée depuis la v0.9 : l'écran conseiller et <code>/matching</code> sont ouverts ; l'enregistrement d'une décision est authentifié, mais sur un compte partagé</td><td>Cloisonnement écrit dans le code d'infrastructure du second dépôt (réseau privé, registre et stockage privés, NetworkPolicy), non déployé ; chiffrement en transit non démontré ; purge du journal exécutée et planifiée</td><td><span class="badge bad">Élevé</span> tant que l'accès aux données de candidats n'est ni restreint ni imputable (<a href="#motifs">motif A</a>)</td></tr>
+              <tr><td>Accès illégitime aux données</td><td>Divulgation du statut de boursier et du projet d'orientation d'un mineur</td><td>Relevée depuis la v0.9 : l'écran conseiller et <code>/matching</code> sont ouverts ; l'enregistrement d'une décision est authentifié, mais sur un compte partagé</td><td>Cloisonnement écrit dans le code d'infrastructure du second dépôt (réseau privé, registre et stockage privés, NetworkPolicy), à déployer ; chiffrement en transit à démontrer au déploiement ; purge du journal exécutée et planifiée</td><td><span class="badge bad">Élevé</span> tant que l'accès aux données de candidats n'est ni restreint ni imputable (<a href="#motifs">motif A</a>)</td></tr>
               <tr><td>Modification non désirée</td><td>Caractéristique altérée, estimation fausse, conseil faux</td><td>Faible</td><td>Écriture atomique, empreintes SHA-256, contrôles qualité bloquants, idempotence testée</td><td><span class="badge ok">Faible</span></td></tr>
               <tr><td>Disparition de données</td><td>Impossibilité de retracer une recommandation contestée</td><td>Faible désormais</td><td>Journal d'inférence horodaté, version de modèle et empreinte de commit</td><td><span class="badge ok">Faible</span> pour T5 ; T6 ne se corrèle pas au journal d'inférence, faute d'identifiant commun</td></tr>
             </tbody>
@@ -415,7 +415,7 @@ flowchart TD
 
         <h3 id="substituts">6.1 Discrimination indirecte par variable substitut, mesurée</h3>
         <p>Le risque : recevoir une estimation systématiquement différente en raison d'un attribut protégé jamais collecté, sans moyen de s'en apercevoir.</p>
-        <p>Sur les entrées, j'ai mesuré l'information mutuelle corrigée par permutation. La filière reconstitue 19,5 % du genre, l'établissement d'origine 28,9 % (exclu), l'académie 1,4 %. La filière est indispensable au modèle : exclure le genre est nécessaire, mais insuffisant.</p>
+        <p>Sur les entrées, j'ai mesuré l'information mutuelle corrigée par permutation. La filière reconstitue 19,5 % du genre, l'établissement d'origine 28,9 % (exclu), l'académie 1,4 %. La filière est indispensable au modèle : exclure le genre est nécessaire, mais ce n'est pas la seule mesure requise.</p>
         <figure>
           <img src="../reports/figures/substituts-genre.png" alt="Diagramme en barres du rapport de corrélation eta carré entre la composition de genre et quatre variables licites du modèle : fili 25,2 %, acad_mies 1,6 %, dep 3,1 %, region_etab_aff 0,5 %." loading="lazy">
           <figcaption>Substituts du genre parmi les variables licites du modèle. Attention : cette figure mesure un rapport de corrélation (eta²), pas l'information mutuelle corrigée citée dans le texte ; les deux indicateurs ne donnent pas les mêmes valeurs (25,2 % contre 19,5 % pour la filière).</figcaption>
@@ -455,7 +455,7 @@ flowchart TD
         <ol>
           <li><strong>Sur le genre</strong>, le modèle sur-annonce les chances d'admission dans les formations très féminisées. Son erreur de calibration y est le double de celle des autres groupes, et supérieure à la règle de référence. Sur ma propre définition d'équité, la règle de référence est plus équitable que le modèle appris.</li>
           <li><strong>Le ratio de 0,76</strong> est sous le seuil des quatre cinquièmes, mais le modèle y fait mieux que la référence (0,63). Je n'ai pas choisi la définition d'équité selon le résultat : j'ai retenu la calibration par groupe avant de connaître les chiffres (voir la page <a href="modele.html">Modèle</a>). Je savais que le théorème d'impossibilité interdit de satisfaire calibration et parité en même temps si les taux de base diffèrent entre groupes. Sous une parité démographique, le verdict s'inverserait : je le note plutôt que de le taire.</li>
-          <li><strong>Les écarts par type de bac et par territoire</strong> sont réels, mais ce ne sont pas des artefacts du modèle. La règle de référence, qui n'apprend rien, échoue aux mêmes seuils (professionnel 0,62, Mayotte 0,25). Ils décrivent la structure du système d'orientation français. Exception : sur le bac professionnel, le modèle dégrade légèrement le ratio (0,58 contre 0,62).</li>
+          <li><strong>Les écarts par type de bac et par territoire</strong> sont réels, mais ce ne sont pas des artefacts du modèle. La règle de référence, qui n'apprend rien, reste sous les mêmes seuils (professionnel 0,62, Mayotte 0,25). Ils décrivent la structure du système d'orientation français. Exception : sur le bac professionnel, le modèle dégrade légèrement le ratio (0,58 contre 0,62).</li>
         </ol>
         <p>Retirer les quatre substituts encore présents (<code>fili</code>, <code>select_form</code>, <code>dep</code>, <code>acad_mies</code>, soit 14,2 % de l'explication SHAP) ne coûte presque rien en performance (+0,0006 de MAE pondérée). Mais cela n'améliore pas l'équité : le ratio du groupe le plus féminisé passe de 0,66 à 0,62. L'information est diffuse dans les variables décalées, pas concentrée dans quatre colonnes. L'exclusion de variables ne peut pas être le seul levier d'équité.</p>
 
@@ -464,7 +464,7 @@ flowchart TD
         <p>La mesure existe (<code>models/evaluate.py</code>, 10 tranches). En validation 2024, le modèle est bien calibré : ECE 0,0030. En test 2025, l'ECE monte à 0,0371, au-dessus de la règle de référence (0,0322). Le modèle devient sur-confiant sur toute la plage médiane : il annonce 0,55 quand la réalité observée est 0,49. Il reste bien calibré aux extrêmes.</p>
         <p>Six points de sur-annonce au milieu de l'échelle : c'est l'erreur qui compte pour ce risque, car le candidat qui hésite lit un chiffre médian. Lui annoncer 0,55 pour 0,49 le fait candidater sur une formation moins accessible qu'annoncé, et l'expose à un refus non anticipé. Sur-confiance et renoncement sont les deux faces du même défaut : la première est mesurée, la seconde n'est pas observable.</p>
         <p>La réserve de la version 0.9 est confirmée par la mesure, et elle change de motif. Je ne m'oppose plus à une restitution dont on ignore la qualité, mais à une restitution dont on connaît le défaut.</p>
-        <p><strong>Mesures en place.</strong> L'interface énonce que l'estimation porte sur une catégorie et non sur la personne. Les facteurs explicatifs sont présentés à côté du score. La mise en garde voyage avec chaque réponse de l'API (<code>MISE_EN_GARDE_ACCESSIBILITE</code>). Il manque un intervalle plutôt qu'un point.</p>
+        <p><strong>Mesures en place.</strong> L'interface énonce que l'estimation porte sur une catégorie et non sur la personne. Les facteurs explicatifs sont présentés à côté du score. La mise en garde voyage avec chaque réponse de l'API (<code>MISE_EN_GARDE_ACCESSIBILITE</code>). Reste à ajouter un intervalle plutôt qu'un point.</p>
 
         <h3 id="retroaction">6.3 Boucle de rétroaction, partiellement instrumentée</h3>
         <p>Le risque : appartenir à un profil découragé, le voir se raréfier dans les campagnes suivantes, pendant que le modèle confirme son propre biais. Profil exposé : le bac professionnel, où 21,6 % des formations n'émettent aucune proposition. Ce n'est pas théorique : la cible est un taux dont le dénominateur est le nombre de vœux, c'est-à-dire la grandeur que le système influence.</p>
@@ -533,7 +533,7 @@ flowchart TD
           <span class="ico" aria-hidden="true">×</span>
           <div>
             <span class="title">(a) Défavorable à la restitution, à des candidats réels, de l'estimation d'accessibilité produite par le modèle appris</span>
-            <p>Motif suffisant : il échoue au <a href="#test-necessite">test de nécessité</a>. Une règle de dénombrement déjà construite fait mieux que lui en précision et en calibration sur la session la plus récente, dans la quasi-totalité des sous-populations. Elle est aussi mieux calibrée par groupe sur la dimension la plus sensible du projet. Le modèle appris ajoute de l'opacité et un risque de discrimination indirecte pour un résultat inférieur. Cela ne se rattrape pas par un avertissement.</p>
+            <p>Motif suffisant : il ne passe pas le <a href="#test-necessite">test de nécessité</a>. Une règle de dénombrement déjà construite fait mieux que lui en précision et en calibration sur la session la plus récente, dans la quasi-totalité des sous-populations. Elle est aussi mieux calibrée par groupe sur la dimension la plus sensible du projet. Le modèle appris ajoute de l'opacité et un risque de discrimination indirecte pour un résultat inférieur. Cela ne se rattrape pas par un avertissement.</p>
             <p>Ce qui lèverait ce point, écrit avant la prochaine mesure : un modèle réentraîné qui passe sous 0,0701 de MAE pondérée et 0,0322 d'ECE sur une session de test non consultée pendant le réglage, avec un ECE du groupe le plus féminisé ramené à l'ordre de grandeur des autres groupes (0,032).</p>
           </div>
         </div>
@@ -570,7 +570,7 @@ flowchart TD
         <h3 id="reserves">8.5 Réserves fermes, non bloquantes</h3>
         <ol>
           <li>Aucun dispositif d'exercice des droits (T8), alors que le délai d'un mois court dès la première demande.</li>
-          <li>Aucune procédure de notification de violation (art. 33 et 34) : elle suppose de savoir qui héberge quoi.</li>
+          <li>Procédure de notification de violation (art. 33 et 34) écrite, non encore exercée faute d'incident ; elle suppose de savoir qui héberge quoi.</li>
           <li>Suivi partiel de l'écartement : un panneau Grafana compte les décisions, mais aucun taux n'est calculé ni restitué au déployeur. Un taux nul est un signal d'alerte, pas un succès.</li>
           <li>Aucun contrat de sous-traitance (art. 28) pour le fournisseur de modèle de langage : pas de mise en service de T7 sans lui.</li>
           <li>Pas d'affichage d'intervalle : le score est restitué comme un point.</li>
@@ -589,7 +589,7 @@ flowchart TD
         </div>
 
         <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
-        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777</p>
       </article>
     </main>
 

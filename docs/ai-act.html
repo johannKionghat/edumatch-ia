@@ -145,7 +145,7 @@ flowchart TD
             </tbody>
           </table>
         </div>
-        <p>Ce qui manque n'est pas le contenu, mais sa forme consolidée : un dossier technique unique, reprenant l'ordre de l'annexe IV, reste à assembler.</p>
+        <p>Le contenu existe déjà, réparti entre plusieurs documents du dépôt. Ce qui reste à faire, c'est l'assembler en un dossier technique unique, dans l'ordre de l'annexe IV.</p>
 
         <h2 id="art-12">Article 12 · Journalisation</h2>
         <p>L'article demande que le système permette l'enregistrement automatique d'événements, avec un niveau de traçabilité adapté.</p>
@@ -270,7 +270,7 @@ flowchart TD
               <tr><td>Prévention de l'injection dans l'interface</td><td>Rendu par <code>textContent</code> et <code>createElement</code>, jamais <code>innerHTML</code></td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Validation des entrées de l'API</td><td>Schémas Pydantic, plafonds explicites, erreurs typées</td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Contrôle d'accès</td><td><code>api/auth.py</code> : HTTP Basic sur l'enregistrement des décisions</td><td><span class="badge warn">Partiel</span> compte partagé ; écran et <code>/matching</code> ouverts ; motif de blocage A</td></tr>
-              <tr><td>Chiffrement au repos et en transit, cloisonnement par rôles</td><td>Code d'infrastructure du second dépôt (<code>edumatch-cicd/terraform/</code>, <code>k8s/</code>) : réseau privé, registre et stockage privés, NetworkPolicy, conteneurs non root, système de fichiers en lecture seule, aucun jeton de compte de service monté</td><td><span class="badge warn">Partiel</span> écrit et non déployé ; chiffrement en transit non démontré, aucune terminaison TLS devant le service</td></tr>
+              <tr><td>Chiffrement au repos et en transit, cloisonnement par rôles</td><td>Code d'infrastructure du second dépôt (<code>edumatch-cicd/terraform/</code>, <code>k8s/</code>) : réseau privé, registre et stockage privés, NetworkPolicy, conteneurs non root, système de fichiers en lecture seule, aucun jeton de compte de service monté</td><td><span class="badge warn">Partiel</span> écrit et non déployé ; chiffrement en transit et terminaison TLS à démontrer au déploiement</td></tr>
               <tr><td>Rotation et révocation des secrets</td><td>Politique écrite dans le <a href="gouvernance.html">plan de gouvernance</a></td><td><span class="badge warn">Partiel</span> non outillée</td></tr>
               <tr><td>Résistance à l'empoisonnement des données ou du modèle</td><td>Contrôles qualité bloquants et empreintes SHA-256</td><td><span class="badge warn">Partiel</span> aucun test adverse conduit</td></tr>
             </tbody>
@@ -303,7 +303,7 @@ flowchart TD
               <tr><td><a href="#art-12">12</a>, journalisation</td><td><span class="badge warn">Partiel</span> couvert pour l'inférence, avec purge exécutable, testée et planifiée ; non couvert pour la trace de supervision</td></tr>
               <tr><td><a href="#art-13">13</a>, transparence</td><td><span class="badge warn">Partiel</span> couvert vers le déployeur ; non couvert vers la personne concernée et sur l'attribution des sources</td></tr>
               <tr><td><a href="#art-14">14</a>, contrôle humain</td><td><span class="badge warn">Partiel</span> dispositif couvert, effectivité non démontrable</td></tr>
-              <tr><td><a href="#art-15">15</a>, exactitude, robustesse, cybersécurité</td><td><span class="badge bad">Exactitude non satisfaite</span> robustesse couverte ; exactitude mesurée et insuffisante ; cybersécurité largement non couverte</td></tr>
+              <tr><td><a href="#art-15">15</a>, exactitude, robustesse, cybersécurité</td><td><span class="badge bad">Exactitude mesurée sous le seuil</span> robustesse couverte ; l'écart d'exactitude fonde l'avis défavorable de l'AIPD ; cybersécurité partielle, en attente du déploiement de l'infrastructure déjà écrite</td></tr>
             </tbody>
           </table>
         </div>
@@ -311,17 +311,17 @@ flowchart TD
         <div class="callout bad">
           <span class="ico" aria-hidden="true">×</span>
           <div>
-            <span class="title">Cinq obligations non couvertes, qu'un jury trouvera de toute façon</span>
+            <span class="title">Cinq obligations à couvrir avant toute mise en service</span>
             <ol>
-              <li>Aucune information de la personne concernée : ni notice candidat, ni attribution des sources.</li>
-              <li>Un compte conseiller partagé et un écran ouvert : aucune imputabilité de la supervision à une personne.</li>
-              <li>Aucune purge du journal de supervision.</li>
-              <li>Aucun plan de surveillance après commercialisation, ni journal d'incident.</li>
-              <li>Un niveau d'exactitude inférieur à celui d'une règle de dénombrement sur la session la plus récente.</li>
+              <li>Information de la personne concernée : notice candidat et attribution des sources restent à produire.</li>
+              <li>Imputabilité de la supervision : le compte conseiller est partagé, l'écran reste ouvert.</li>
+              <li>Purge du journal de supervision : à construire, faute d'identifiant commun avec le journal d'inférence.</li>
+              <li>Plan de surveillance après commercialisation et journal d'incident : à écrire.</li>
+              <li>Niveau d'exactitude : le modèle mesuré reste sous la règle de référence sur la session la plus récente.</li>
             </ol>
           </div>
         </div>
-        <p>Les quatre premières sont des manques d'outillage, rattrapables. La cinquième est un fait sur le modèle : elle porte l'avis défavorable rendu sur le terme appris (<a href="risques-aipd.html#avis-mise-en-service">AIPD, avis sur la mise en service</a>).</p>
+        <p>Les quatre premières sont des actions d'outillage, inscrites au plan de mise en conformité. La cinquième porte sur le modèle lui-même : c'est elle qui fonde l'avis défavorable rendu sur le terme appris (<a href="risques-aipd.html#avis-mise-en-service">AIPD, avis sur la mise en service</a>).</p>
 
         <div class="callout">
           <span class="ico" aria-hidden="true">i</span>
@@ -332,7 +332,7 @@ flowchart TD
         </div>
 
         <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
-        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777</p>
       </article>
     </main>
 
