@@ -48,7 +48,7 @@
               <tr><td><a href="#adr-0014">0014</a></td><td>Pandera plutôt que Great Expectations pour les contrôles qualité</td><td><span class="badge ok">Acceptée</span></td><td>3</td></tr>
               <tr><td><a href="#adr-0015">0015</a></td><td>Modèle en étoile : grain à la cellule, SCD 2, DuckDB et Parquet</td><td><span class="badge ok">Acceptée</span></td><td>2</td></tr>
               <tr><td><a href="#adr-0016">0016</a></td><td>Polars en exécution courante, Spark branché sur le mode cluster</td><td><span class="badge ok">Acceptée</span></td><td>2</td></tr>
-              <tr><td><a href="#adr-0017">0017</a></td><td>Chaîne NAF ↔ ROME ↔ formation sur trois sources, manque Parcoursup déclaré</td><td><span class="badge warn">Remplacée en partie par l'ADR 0020</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0017">0017</a></td><td>Chaîne NAF ↔ ROME ↔ formation construite sur trois sources vérifiées</td><td><span class="badge warn">Remplacée en partie par l'ADR 0020</span></td><td>3</td></tr>
               <tr><td><a href="#adr-0018">0018</a></td><td>Dérive : PSI médian sur 46 variables, seuil 0,20, sans Evidently</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
               <tr><td><a href="#adr-0019">0019</a></td><td>Airflow en production sur une instance Scaleway dédiée</td><td><span class="badge info">Amendée</span></td><td>2 · 3</td></tr>
               <tr><td><a href="#adr-0020">0020</a></td><td>Appariement textuel exact Parcoursup ↔ IDÉO pour le terme de débouchés, indisponibilité déclarée ailleurs</td><td><span class="badge ok">Acceptée</span></td><td>1 · 3 · 4</td></tr>
@@ -63,8 +63,8 @@
         <p>Trois sources publiques hétérogènes (Parcoursup, Sirene, référentiels). Huit millésimes aux schémas qui ont évolué. Des règles de nettoyage appelées à changer pendant la construction.</p>
         <h3>Décision</h3>
         <p>ELT : je charge le brut en couche bronze, puis je transforme avec dbt.</p>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Alternative écartée</span>
             <p>ETL (transformer avant de charger) : la couche brute ne serait pas conservée, et modifier une règle de nettoyage obligerait à retélécharger les sources.</p>
@@ -90,15 +90,15 @@
         <h3>Décision</h3>
         <p>PySpark local, appliqué à Sirene et à rien d'autre. Pas de Databricks.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Databricks (Spark managé, Delta Lake, Unity Catalog)</span>
             <p>Il tourne sur AWS, Azure ou GCP, ce qui contredirait l'hébergement Scaleway retenu pour la souveraineté : le système profile des mineurs. Un cluster managé facturé à l'unité de calcul est en outre disproportionné pour un job mensuel de quelques minutes sur 2,20 Go.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Tout en Polars ou DuckDB, sans Spark</span>
             <p>43,9 millions d'établissements joints au catalogue, et le critère 2.4 attend une structure démontrée adaptée au volume, pas une promesse.</p>
@@ -131,15 +131,15 @@
           <li><strong><code>EDUMATCH_DATA_ROOT</code> pilotable</strong>, avec <code>&lt;dépôt&gt;/data</code> par défaut. Une valeur vide, blanche ou relative est refusée explicitement : sinon <code>Path("")</code> se résout en <code>.</code>, un emplacement non maîtrisé qui dépend du point de lancement.</li>
         </ol>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">YAML brut, sans validation</span>
             <p>Une clé mal orthographiée n'est détectée qu'à l'usage, parfois en cours d'entraînement.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Hydra</span>
             <p>Composition multi-fichiers et interpolation : un outil de plus pour un besoin couvert ici par une fusion à un seul niveau.</p>
@@ -166,22 +166,22 @@
           <li>Un manifeste illisible est traité comme vide par <code>lire_manifeste()</code>, et la chaîne continue. Mais le fichier fautif est déplacé vers <code>manifeste.json.corrompu-{horodatage}</code> et l'incident est journalisé au niveau erreur, au lieu d'être écrasé en silence.</li>
         </ol>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Mutualiser seulement après trois occurrences</span>
             <p>C'est la règle classique contre l'abstraction prématurée. Mais ici la duplication à venir est déjà connue : attendre ne réduit aucun risque, cela reporte un refactoring certain.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Écraser silencieusement un manifeste illisible</span>
             <p>Un JSON qui devient illisible est un incident (disque plein, processus tué en cours d'écriture). Le laisser disparaître sans trace interdit tout diagnostic.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Bloquer la chaîne sur un manifeste corrompu</span>
             <p>Le manifeste n'est pas la source de vérité de l'intégrité : c'est l'empreinte SHA-256, recalculée à chaque passage. Le faire bloquer romprait la règle « le manifeste ne bloque jamais » pour un gain nul.</p>
@@ -206,15 +206,15 @@
         <h3>Décision</h3>
         <p><code>resoudre_ressources()</code> interroge le catalogue data.gouv à chaque exécution (<code>https://www.data.gouv.fr/api/1/datasets/{jeu}/</code>). Pour chaque fichier configuré, il sélectionne la ressource Parquet dont le titre correspond exactement (<code>Fichier {nom} -</code>), et non par sous-chaîne : deux des quatre noms configurés sont le préfixe d'un autre. Toute ambiguïté ou absence de correspondance lève une erreur explicite, jamais un choix par défaut.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">URL en configuration, mise à jour à la main chaque mois</span>
             <p>Elle viole le critère 3.3 (automatisation complète) dès le deuxième mois d'exécution.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Extraire l'URL de la page HTML du jeu de données</span>
             <p>L'API JSON du catalogue existe et est documentée ; analyser du HTML serait plus fragile pour un gain nul.</p>
@@ -249,15 +249,15 @@
         </div>
         <p>La classe de base de chaque connecteur reste levée en pratique via l'une des deux sous-classes : un appelant qui ne distingue pas encore les deux natures continue de fonctionner sans changement.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Une distinction propre à chaque connecteur, sans vocabulaire partagé</span>
             <p>Le DAG devrait connaître les classes internes de chaque connecteur, ce qui recrée le couplage que <code>_flux.py</code> a justement été créé pour éviter.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Un code d'erreur numérique ou une chaîne de statut</span>
             <p>Le typage est perdu : il faudrait comparer des chaînes au lieu d'utiliser <code>except</code>.</p>
@@ -285,15 +285,15 @@
         <p>Un fichier par date de publication (<code>rncp_AAAA-MM-JJ.csv</code>), jamais écrasé, et une entrée de manifeste par date. <code>_referentiels_rncp.resoudre_ressource</code> lit la date de publication rendue par le catalogue et en dérive le nom du fichier.</p>
         <p>L'idempotence porte sur « ai-je déjà l'export de cette date », pas sur « le contenu a-t-il changé ». Une réexécution le même jour ne retélécharge rien ; une réexécution un autre jour crée un nouveau fichier sans toucher aux précédents.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Un fichier unique écrasé à chaque republication, comme pour Sirene</span>
             <p>Le RNCP sert directement de table de réconciliation. Si le fichier est écrasé, l'export qui a servi un jour donné n'existe plus le lendemain, et rien ne permet de rejouer la construction.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Retéléchargement systématique, sans persistance nommée</span>
             <p>Il viole l'immuabilité de la couche brute et l'idempotence (critère 3.6).</p>
@@ -320,22 +320,22 @@
         <h3>Décision</h3>
         <p>Je conserve les lignes telles quelles, sous une base légale explicite : l'intérêt légitime (RGPD, art. 6.1.f). La mise en balance est écrite dans le README de <code>data/samples/</code> : intérêt poursuivi, nécessité, proportionnalité (500 lignes sur 29 à 96 millions par fichier, 9 colonnes d'identité déjà retirées), absence d'impact additionnel, attente raisonnable et droit d'opposition. Les 43 lignes en statut « P » (non diffusible) restent masquées <code>[ND]</code> par l'INSEE à la source : aucune n'a été reconstruite ni contournée.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Exclure les lignes d'entrepreneur individuel</span>
             <p>Elles représentent 56,4 % de <code>StockUniteLegale</code> sur le fichier complet (16 890 687 sur 29 922 486). Les retirer romprait la représentativité et masquerait la moitié de la diversité réelle des catégories juridiques.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Hacher ou tronquer le SIREN</span>
             <p>C'est un identifiant à 9 chiffres : un espace de 10<sup>9</sup> valeurs se force en quelques secondes. Un hachage salé casserait en plus la jointure entre fichiers que l'échantillon doit exercer.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Fabriquer une valeur de substitution plausible</span>
             <p>Une donnée simulée présentée comme réelle est interdite dans ce projet, et elle fausserait la distribution réelle des catégories juridiques.</p>
@@ -365,29 +365,29 @@
         <p>Je conserve <code>prop_tot / nb_voe_pp</code> comme définition du taux. Je le borne à 1, en énonçant que le dépassement vient des propositions réémises : c'est une borne sémantique, pas une correction de valeur aberrante. Je pondère par l'effectif de la cellule à l'entraînement. Je n'exclus pas les petites cellules.</p>
 <pre><code>taux = min(1, prop_tot_{bg|bt|bp}[_brs] / nb_voe_pp_{bg|bt|bp}[_brs])</code></pre>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title"><code>acc / nb_voe_pp</code> (candidats inscrits plutôt que propositions)</span>
             <p>Ce ratio ne dépasse jamais 1, mais il mesure l'acceptation, pas l'admission. Un candidat qui décline une proposition pour une meilleure option a bel et bien été admis.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Garder le taux brut, sans borne</span>
             <p>Un taux supérieur à 1 n'a pas de sens comme probabilité d'admission et casserait toute métrique de calibration en aval.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Poids égal pour toutes les cellules</span>
             <p>Une cellule à 3 vœux et une cellule à 500 vœux n'ont pas la même fiabilité statistique.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Exclure les cellules sous un seuil d'effectif</span>
             <p>Cela écarterait 26 % des observations, alors que la pondération traite déjà leur moindre fiabilité sans les supprimer.</p>
@@ -415,22 +415,22 @@
         <p><code>voe_tot</code> de la session courante n'entre pas dans les variables du modèle : seule une version décalée d'au moins une session est éligible.</p>
         <p>La clé de formation est reconstruite pour 2018 et 2019 à partir de <code>g_ta_cod</code>, qui coïncide exactement avec <code>cod_aff_form</code> sur les millésimes où les deux coexistent. Couverture : 92,4 % en 2018, 94,6 % en 2019. Taux de jointure d'une session à la suivante : de 82 % à 95 %, vérifiés par un test à chaque exécution.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Conserver <code>voe_tot</code> tel quel</span>
             <p>Excellente performance en évaluation rétrospective, inutilisable en production.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Retirer purement la tension du modèle</span>
             <p>Cela jette une information utile : la tension décalée d'une session reste disponible et porte une part du signal.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Abandonner le suivi entre sessions, faute de clé stable en 2018-2019</span>
             <p>Écartée après vérification : <code>g_ta_cod</code> comble le manque.</p>
@@ -475,22 +475,22 @@
           <li><strong>Audit a posteriori sur les prédictions</strong> : la seule vérification qui porte sur ce qui compte, l'écart de traitement produit, et non les corrélations d'entrée.</li>
         </ol>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Retirer aussi la filière par précaution</span>
             <p>Elle structure l'accessibilité (écart médian de +1,1 à +42,3 points selon la filière). La retirer détruirait la capacité prédictive pour un gain d'équité qui reste à démontrer.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Se fier au seul retrait du genre et de ses substituts directs</span>
             <p>La mesure montre que l'exclusion ne suffit pas : la filière reconstitue déjà 19,5 % du genre.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Ne surveiller que l'académie, comme prévu au départ</span>
             <p>La mesure la place au dernier rang des six variables testées.</p>
@@ -527,22 +527,22 @@
         </div>
         <p>2020 est conservée dans l'entraînement ; les variables dérivées des mentions sont écartées ou signalées comme contaminées pour 2020 et 2021. Trois réserves sont écrites avant tout résultat de modèle (détaillées dans <a href="modele.html">Modèle</a>) : mentions contaminées en 2020-2021 ; métriques ventilées par statut boursier à interpréter avec prudence ; dégradation attendue entre validation et test, à ne pas imputer d'emblée au modèle.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Maintenir 2018-2023 en tolérant l'absence de cible sur 2018-2019</span>
             <p>Cela viole le critère 4.2.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Un label de substitution pour 2018-2019, construit sur <code>acc_bg</code></span>
             <p><code>acc</code> mesure l'acceptation, pas l'admission : même raison qu'à l'<a href="#adr-0009">ADR 0009</a>.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Écarter aussi 2020, à cause de la rupture sur les mentions</span>
             <p>Vérifié après coup : l'anomalie porte sur des variables dérivées des mentions, pas sur la cible (tension médiane et masses aux bornes alignées sur les autres sessions). Écarter 2020 aurait réduit l'entraînement d'un quart sans fondement mesuré.</p>
@@ -615,7 +615,7 @@
             </tbody>
           </table>
         </div>
-        <p>Sur la redondance, la vérification a corrigé une erreur que j'avais d'abord écrite : <code>pct_bours</code> n'est pas <code>acc_brs / acc_tot</code>, l'écart atteint 97,5 points au maximum. Le dénominateur réel est <code>acc_neobac</code> (les néo-bacheliers). J'ai vérifié la reconstitution exacte des dix-neuf colonnes de pourcentage à 0,500 point près (l'arrondi) sur la session 2025, avec deux dénominateurs possibles (<code>acc_neobac</code> ou <code>acc_tot</code>). La leçon : on ne rattache jamais un pourcentage à son dénominateur d'après le nom.</p>
+        <p>Sur la redondance : <code>pct_bours</code> n'est pas <code>acc_brs / acc_tot</code>, mais <code>acc_brs / acc_neobac</code> (les néo-bacheliers) — un écart qui atteint 97,5 points au maximum si l'on s'était fié au seul nom de la colonne. Je l'ai établi en vérifiant la reconstitution exacte des dix-neuf colonnes de pourcentage à 0,500 point près (l'arrondi) sur la session 2025, en testant les deux dénominateurs possibles. La règle que j'en tire : ne jamais rattacher un pourcentage à son dénominateur d'après le seul nom de la colonne.</p>
 
         <h4>L'arbitrage sur <code>cod_uai</code> et <code>ville_etab</code></h4>
         <p><code>cod_uai</code> est le premier substitut du genre mesuré (28,9 % net) et pourrait sembler indispensable : la réputation d'un établissement pèse sur la sélectivité. Je l'exclus pour deux raisons indépendantes. Sa cardinalité (4 058 établissements) pousserait le modèle à mémoriser l'établissement au lieu d'apprendre une règle transférable. Et c'est l'association la plus forte mesurée avec la féminisation. L'information ne disparaît pas complètement : les variables décalées, attachées à la formation, en portent une partie. C'est pourquoi le dispositif d'équité de l'<a href="#adr-0011">ADR 0011</a> ne repose pas sur l'exclusion seule.</p>
@@ -634,22 +634,22 @@
         <p>Vérifiés par mutation : colonne mal orthographiée, colonne retirée du classement, <code>voe_tot</code> déplacé vers la liste blanche, split rouvert à 2018. Chaque mutation fait échouer le test qui la vise, et lui seul.</p>
 
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Une liste noire : lister les exclusions et prendre le reste</span>
             <p>Une colonne ajoutée par un millésime futur entrerait dans le modèle sans avoir été examinée.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Décaler aussi les attributs de catalogue</span>
             <p>La filière ou le caractère sélectif sont publiés avant la campagne. Les décaler ferait perdre les formations nouvelles (5 % à 18 % du catalogue selon la paire de sessions), sans gain de sûreté.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Décaler de deux sessions plutôt qu'une</span>
             <p>Écarté par défaut, conservé comme repli si l'écart entre version révisée et version publiée en janvier s'avérait important.</p>
@@ -682,15 +682,15 @@
         <h3>Décision</h3>
         <p>Pandera pour <code>parcoursup.py</code> : un DataFrame par millésime, <code>.validate(df, lazy=True)</code>. Pour <code>sirene.py</code> (flux par lots) et <code>referentiels.py</code>, des compteurs et vérifications <code>pandas</code> écrits à la main, sans dépendance supplémentaire, pour un coût de développement équivalent à l'accumulation manuelle qu'un schéma Pandera aurait de toute façon exigée.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Great Expectations</span>
             <p>Pertinent pour un entrepôt partagé entre plusieurs équipes et suivi dans la durée. Ici : neuf dépendances nouvelles, dont plusieurs à compilation native, pour valider un fichier de 82 Mo et un flux Sirene qui n'est de toute façon jamais un DataFrame unique.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Pandera pour Sirene aussi</span>
             <p>Un schéma Pandera couvrirait un lot et non le fichier entier ; les compteurs de complétude devraient de toute façon être accumulés à la main.</p>
@@ -799,15 +799,15 @@ flowchart TD
         <p>Les deux moteurs sont implémentés et sélectionnés par la configuration : <code>execution.moteur_volume: local</code> exécute Polars, <code>moteur_volume: cluster</code> exécute Spark. Les deux s'appuient sur un seul module de définitions (grain, colonnes, règles métier), et un test compare leurs sorties ligne à ligne sur le même échantillon.</p>
         <p>À la date de la décision, dev et staging étaient en <code>local</code> et la prod en <code>cluster</code>. L'<a href="#adr-0019">amendement de l'ADR 0019</a> (15 septembre 2026) a depuis placé la prod en <code>local</code>, conformément à la conclusion ci-dessous.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Spark partout, y compris en développement</span>
             <p>La mesure dit 4,8 fois plus lent pour un résultat identique, sans aucun bénéfice sur ce volume.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Polars partout, Spark jamais implémenté</span>
             <p>Le critère 2.4 demande une structure distribuée réelle, pas une promesse écrite dans un ADR. Et la trajectoire de volume (historique à 95,9 millions de lignes, republication mensuelle) rend la question du passage à l'échelle bien réelle.</p>
@@ -825,7 +825,7 @@ flowchart TD
         </div>
 
         <!-- ============================================================ 0017 -->
-        <h2 id="adr-0017">ADR 0017 — Chaîne NAF ↔ ROME ↔ formation sur trois sources réelles, manque Parcoursup déclaré</h2>
+        <h2 id="adr-0017">ADR 0017 — Chaîne NAF ↔ ROME ↔ formation construite sur trois sources vérifiées</h2>
         <p><span class="badge warn">Remplacée en partie par l'ADR 0020</span> Acceptée le 30 août 2026 · Bloc 3</p>
         <div class="callout warn">
           <span class="ico" aria-hidden="true">!</span>
@@ -857,15 +857,15 @@ flowchart TD
         <h3>Décision</h3>
         <p>Je construis <code>naf_rome_formation.csv</code> sur les trois sources réelles disponibles, en déclarant le maillon Parcoursup manquant. La table relie une formation IDÉO à une ou plusieurs divisions NAF, via RNCP et ROME. La colonne d'état de certification (<code>rncp_actif</code>) est exposée, pas filtrée à cette étape.</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Appariement textuel des libellés (Parcoursup contre IDÉO) pour construire la table</span>
             <p>C'est une correspondance floue, pas une jointure sur clé. Une table qui aurait l'air complète avec un maillon deviné serait pire qu'une table partielle assumée.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Correspondance à la sous-classe NAF (5 caractères)</span>
             <p>Aucune source publique ne relie ROME à la sous-classe ; en inventer une plus fine reviendrait à fabriquer de la donnée.</p>
@@ -885,8 +885,8 @@ flowchart TD
         <h2 id="adr-0018">ADR 0018 — Détection de dérive : PSI médian sur 46 variables, seuil à 0,20, sans Evidently</h2>
         <p><span class="badge ok">Acceptée</span> le 1<sup>er</sup> septembre 2026 · Bloc 4</p>
         <h3>Contexte</h3>
-        <p>Le critère 4.11 exige une détection de dérive avec un seuil documenté ; le critère 4.12, un réentraînement automatique qui s'appuie dessus. <code>configs/base.yaml</code> portait déjà <code>seuil_reentrainement: 0.20</code> en indice de stabilité de population (PSI), sans qu'aucune mesure sur les données réelles n'ait jamais confronté ce chiffre à une dérive observée.</p>
-        <p>Le modèle a par ailleurs un défaut déjà mesuré : il bat la baseline en validation 2024 (MAE pondérée 0,0690 contre 0,0727), mais la perd en test 2025 (0,0758 contre 0,0701), et sa calibration s'effondre (ECE de 0,0030 à 0,0371). Il fallait établir si le PSI, à ce seuil, aurait pu signaler ce défaut à l'avance.</p>
+        <p>Le critère 4.11 exige une détection de dérive avec un seuil documenté ; le critère 4.12, un réentraînement automatique qui s'appuie dessus. <code>configs/base.yaml</code> fixait déjà <code>seuil_reentrainement: 0.20</code> en indice de stabilité de population (PSI). Je le confronte ici pour la première fois aux données réelles, en le mesurant sur les six sessions disponibles.</p>
+        <p>Le protocole d'évaluation a par ailleurs déjà mis en évidence un écart de généralisation entre validation et test : le modèle bat la baseline en validation 2024 (MAE pondérée 0,0690 contre 0,0727), la baseline reprend l'avantage en test 2025 (0,0701 contre 0,0758), et l'écart de calibration se creuse nettement (ECE de 0,0030 à 0,0371). C'est le type de dégradation que le PSI est censé anticiper : il fallait établir s'il l'aurait signalée à l'avance.</p>
         <h3>Ce que j'ai mesuré</h3>
         <p>Sur la fenêtre où le label existe (2020-2025), en comparant la référence à la validation puis au test :</p>
         <div class="table-wrap">
@@ -912,8 +912,8 @@ flowchart TD
 <pre><code>réentraîner si  médiane(PSI des 46 variables) ≥ 0,20
             ou  PSI(cible)       ≥ 0,20
             ou  PSI(prédictions) ≥ 0,20</code></pre>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Alternative écartée : Evidently</span>
             <p>Sa dernière version compatible entraîne un conflit de dépendances qui casse FastAPI (<code>ImportError: cannot import name 'MultipartSegment'</code>), reproduit et non contourné. Les fonctions de <code>models/derive_stats.py</code> produisent le même résultat sans cette dépendance.</p>
@@ -994,15 +994,15 @@ flowchart TD
 </pre>
         </div>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Airflow sur le cluster Kapsule (chart Helm ou manifestes)</span>
             <p>79 % de la capacité brute du pool réservée avant même le pic Spark. Et le partage de données entre pods de tâches est impossible sur un stockage bloc <code>ReadWriteOnce</code> sans réécrire toutes les entrées-sorties vers le stockage objet : plusieurs jours de travail sur un socle jamais appliqué, incompatibles avec l'échéance du 24 septembre. Kubernetes reste le bon choix pour l'API, dont la charge est élastique (rapport de 1 à 6 pendant la campagne), pas pour un traitement périodique sur une seule machine.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Airflow local, filmé, en définissant la « production » par les données et la cadence</span>
             <p>Coût nul, mais cela contredit la promesse du dossier et laisse le critère 3.12 à la merci d'une lecture stricte de « en production ». L'écart de coût avec l'instance dédiée (0,35 € par séance) ne justifie pas ce risque.</p>
@@ -1041,8 +1041,8 @@ flowchart TD
             <p>L'<a href="#adr-0016">ADR 0016</a> concluait déjà que Polars reste le chemin de production réel tant que le calcul tient sur un nœud (18,2 s contre 87,0 s pour Spark, résultat identique) ; <code>configs/prod.yaml</code> contredisait cette conclusion sans que je l'aie relevé. Le critère 2.4 reste prouvé : le job Spark est écrit, testé et sélectionnable par configuration. Ce que je revendique, c'est la capacité de basculer, pas une exécution permanente. La décision de fond (instance dédiée, pas Kapsule) ne change pas : sans JVM ni exécuteurs Spark, la marge mémoire de l'instance augmente au lieu de diminuer.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Alternative écartée : isoler PySpark avec <code>ExternalPythonOperator</code></span>
             <p>Un environnement Python séparé imposerait de réécrire la tâche d'agrégation et de maintenir deux jeux de dépendances pour un moteur que le volume actuel ne demande pas. Cette voie redevient la bonne réponse le jour où le seuil de l'<a href="#adr-0016">ADR 0016</a> est franchi.</p>
@@ -1079,29 +1079,29 @@ flowchart TD
         </div>
         <p>La valeur neutre 1,0 réduit le score à affinité × accessibilité : je ne pénalise pas une formation dont je ne sais rien dire, et je ne fabrique pas de correspondance. Le motif remonte jusqu'à l'écran du conseiller (<a href="service.html">Service et accessibilité</a>).</p>
         <h3>Alternatives écartées</h3>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Attendre un identifiant commun entre Parcoursup et les certifications</span>
             <p>C'est le seuil posé par l'ADR 0017, mais aucune source publique ne l'offre aujourd'hui. Attendre laissait le terme sans aucune valeur, alors qu'un sous-ensemble peut être raccordé de façon vérifiable.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Un appariement textuel non mesuré ou flou, appliqué à tout le catalogue</span>
             <p>L'ADR 0017 l'écartait déjà : une table qui a l'air complète, avec un maillon deviné, est pire qu'une table partielle assumée. Le risque R7 en fait un risque pour les personnes : un débouché faux, présenté comme sûr.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Un rapprochement par la seule filière (<code>fili</code>)</span>
             <p>Bien trop grossier : une licence de mathématiques et une licence d'arts plastiques recevraient le même débouché, ce qui revient à le fabriquer.</p>
           </div>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Mettre le terme à zéro quand il est inconnu</span>
             <p>La formation disparaîtrait de la liste, le score étant multiplicatif, pour une raison qui tient aux sources et non à la formation. J'utilise un statut déclaré, jamais un zéro silencieux.</p>
@@ -1138,7 +1138,7 @@ flowchart TD
         </div>
 
         <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
-        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777</p>
       </article>
     </main>
 

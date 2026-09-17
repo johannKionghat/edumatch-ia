@@ -78,7 +78,7 @@ flowchart TD
             </tbody>
           </table>
         </div>
-        <p>Ce que le diagramme ne masque pas : deux millésimes sur huit (2018, 2019) ne produisent aucun fait — le numérateur ventilé par type de baccalauréat n'existe pas avant 2020, le label n'est calculable que sur six sessions, limite de la source reportée sur <a href="donnees.html">la page données</a>. La chaîne NAF ↔ ROME ↔ formation ne rejoint pas Parcoursup par une clé — détaillé plus bas. Le modèle n'a pas encore battu sa baseline, comparaison rapportée telle qu'elle est mesurée sur <a href="modele.html">la page modèle</a>. La surveillance d'exécution reste locale : la dérive est calculée et écrite, aucune alerte n'est encore routée vers un système d'observabilité, point également relevé sur <a href="architecture.html">la page architecture</a>.</p>
+        <p>Ce que le diagramme ne masque pas : deux millésimes sur huit (2018, 2019) ne produisent aucun fait — le numérateur ventilé par type de baccalauréat n'existe pas avant 2020, le label n'est calculable que sur six sessions, limite de la source reportée sur <a href="donnees.html">la page données</a>. La chaîne NAF ↔ ROME ↔ formation ne rejoint pas Parcoursup par une clé — détaillé plus bas. La baseline reste devant le modèle appris sur la session de test, comparaison rapportée telle qu'elle est mesurée sur <a href="modele.html">la page modèle</a>. La surveillance d'exécution reste locale : la dérive est calculée et écrite, aucune alerte n'est encore routée vers un système d'observabilité, point également relevé sur <a href="architecture.html">la page architecture</a>.</p>
 
         <h2 id="ingestion">Ingestion</h2>
         <p>Trois connecteurs opérationnels — Parcoursup, Sirene, référentiels — partagent des primitives communes (<code>src/edumatch/ingestion/_flux.py</code>) : session HTTP, téléchargement en flux par blocs, empreinte SHA-256, écriture atomique, manifeste. Chacun a sa propre stratégie de résolution d'URL, dictée par la façon dont la source publie ses fichiers, pas par préférence.</p>
@@ -370,7 +370,7 @@ flowchart TD
 
         <h3 id="reentrainement">Le réentraînement automatique et la porte de promotion</h3>
         <p>Les deux dernières tâches de la chaîne annuelle réentraînent puis évaluent le modèle, derrière le même contrôle qualité que les tâches qui précèdent : une donnée cassée empêche mécaniquement tout réentraînement sur une table non conforme. L'entraînement suit le même protocole que l'entraînement manuel — split strictement temporel, arrêt anticipé sur la seule validation, jeu de test 2025 touché une seule fois — puis délègue la décision de publication à une porte de promotion.</p>
-        <p>Le modèle n'est publié, c'est-à-dire que l'artefact chargé par l'API n'est réécrit, que si sa MAE pondérée de test est strictement inférieure à celle du plancher (le taux de la session précédente), comparés à couverture égale. Aucune marge de tolérance n'est ajoutée. Mesuré sur ce dépôt, ce seuil se referme dès la première exécution : le modèle vaut 0,0758 de MAE pondérée en test contre 0,0701 pour le plancher, il perd contre la règle triviale. Publier ce résultat automatiquement chaque année remplacerait un plancher qui fonctionne par un modèle qui fait strictement pire — un refus n'est pas une panne, la tâche journalise le verdict et se termine normalement.</p>
+        <p>Le modèle n'est publié, c'est-à-dire que l'artefact chargé par l'API n'est réécrit, que si sa MAE pondérée de test est strictement inférieure à celle du plancher (le taux de la session précédente), comparés à couverture égale. Aucune marge de tolérance n'est ajoutée. Mesuré sur ce dépôt, la porte se referme dès la première exécution : le modèle vaut 0,0758 de MAE pondérée en test contre 0,0701 pour le plancher, la baseline reste devant. La porte fait exactement ce pour quoi elle a été écrite : elle empêche de remplacer un plancher qui fonctionne par un modèle qui fait strictement pire — un refus n'est pas une panne, la tâche journalise le verdict et se termine normalement.</p>
         <p>Ce qui ferait reconsidérer cette porte : si un futur réentraînement bat le plancher de très peu et que ce gain s'avère instable d'une exécution à l'autre, bruit d'échantillonnage plutôt que progrès réel, une marge de tolérance documentée et mesurée sur plusieurs exécutions se justifierait. Pas avant : au moment d'écrire cette page, l'écart va dans le mauvais sens.</p>
 
         <h3 id="demo-panne">Démonstration de la panne et de la reprise</h3>
@@ -418,7 +418,7 @@ make verifier-idempotence-comparer</code></pre>
         </div>
 
         <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
-        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777</p>
       </article>
     </main>
 

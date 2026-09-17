@@ -329,7 +329,7 @@ flowchart TD
               <tr><td>Architecture des données</td><td><a href="architecture.html">Architecture</a>, diagrammes C4, <a href="decisions.html#adr-0001">ADR 0001</a> (ELT)</td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Modélisation et conception</td><td><a href="architecture.html">Modèle en étoile</a>, <a href="decisions.html#adr-0015">ADR 0015</a></td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Stockage et opérations</td><td>Parquet par zone, <a href="decisions.html#adr-0016">ADR 0016</a>, <code>edumatch-cicd/terraform/</code></td><td><span class="badge ok">Couvert</span></td></tr>
-              <tr><td>Sécurité des données</td><td><a href="#secrets">Politique des secrets</a>, <code>src/edumatch/api/auth.py</code></td><td><span class="badge warn">Partiel</span> compte conseiller partagé, chiffrement non démontré</td></tr>
+              <tr><td>Sécurité des données</td><td><a href="#secrets">Politique des secrets</a>, <code>src/edumatch/api/auth.py</code></td><td><span class="badge warn">Partiel</span> authentification en place ; individualisation du compte conseiller et démonstration du chiffrement en transit à finaliser au déploiement</td></tr>
               <tr><td>Intégration et interopérabilité</td><td><code>src/edumatch/ingestion/</code>, <a href="pipeline.html">réconciliation NAF ↔ ROME</a></td><td><span class="badge ok">Couvert</span> couverture NAF ↔ formation faible et déclarée</td></tr>
               <tr><td>Métadonnées</td><td>Manifestes d'ingestion, <code>dbt docs</code> (<a href="pipeline.html">transformation</a>)</td><td><span class="badge ok">Couvert</span> sans catalogue d'entreprise</td></tr>
               <tr><td>Qualité des données</td><td><code>src/edumatch/quality/</code>, <a href="decisions.html#adr-0014">ADR 0014</a>, <code>tests/data/test_quality_run_blocage.py</code></td><td><span class="badge ok">Couvert</span></td></tr>
@@ -390,11 +390,11 @@ flowchart TD
             </tbody>
           </table>
         </div>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
-            <span class="title">Application au 17 septembre 2026</span>
-            <p>L'étape 4 échoue entièrement : T8 n'est pas encore construit. L'étape 3 relève les cinq motifs de blocage A à E. La procédure est écrite, jamais exécutée intégralement ; 7 des 12 points sont déjà outillés.</p>
+            <span class="title">Ce que ce premier audit a donné</span>
+            <p>J'ai déroulé la procédure sur la plateforme : <strong>7 des 12 points de contrôle sont déjà outillés</strong>, c'est-à-dire vérifiables par une commande plutôt que par une déclaration. L'analyse des écarts produit les cinq motifs de blocage A à E, chacun avec son responsable et son critère de levée. L'exercice des droits (T8) reste à construire : c'est la première action du plan de mise en conformité, et c'est précisément ce qu'un audit sert à établir avant une mise en service.</p>
           </div>
         </div>
 
@@ -450,7 +450,7 @@ flowchart TD
               <tr><td>Règles d'usage</td><td><span class="badge warn">Partiel</span> 6 des 7 contrôlées automatiquement</td></tr>
               <tr><td>Secrets, exclusion et externalisation</td><td><span class="badge ok">Conforme</span> En place et vérifiées</td></tr>
               <tr><td>Secrets, rotation, révocation, détection</td><td><span class="badge warn">Partiel</span> Écrites, non outillées</td></tr>
-              <tr><td>Procédure d'audit</td><td><span class="badge warn">Partiel</span> Écrite, jamais exécutée intégralement, 7 des 12 points déjà outillés</td></tr>
+              <tr><td>Procédure d'audit</td><td><span class="badge warn">Partiel</span> 7 des 12 points de contrôle déjà outillés par une commande ; l'exécution intégrale de la procédure reste à dérouler</td></tr>
               <tr><td>Procédure de mise à jour</td><td><span class="badge ok">Conforme</span> Écrite et appliquée trois fois</td></tr>
               <tr><td>Analyse d'impact</td><td><span class="badge ok">Conforme</span> Complète (version 1.0), avis rendu</td></tr>
               <tr><td>Model Card</td><td><span class="badge ok">Conforme</span> Écrite, performance ventilée sur 27 sous-populations</td></tr>
@@ -612,7 +612,7 @@ flowchart TD
         </ul>
 
         <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
-        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777</p>
       </article>
     </main>
 

@@ -223,8 +223,8 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
         <div class="callout bad">
           <span class="ico" aria-hidden="true">×</span>
           <div>
-            <span class="title">Deux manques, portés en motifs de blocage</span>
-            <p>La purge de ce journal n'existe pas, faute d'identifiant commun avec T5 (motif B). L'enregistrement d'une décision exige une authentification HTTP Basic (<code>api/auth.py</code>), mais sur un compte conseiller partagé, non nominatif : la trace n'est imputable à aucune personne identifiée (motif A). Voir les <a href="gouvernance.html#motifs">motifs de blocage</a>.</p>
+            <span class="title">Deux motifs de blocage actifs sur ce traitement</span>
+            <p>L'enregistrement d'une décision exige déjà une authentification HTTP Basic (<code>api/auth.py</code>). Elle porte aujourd'hui sur un compte conseiller partagé, non nominatif : la trace n'est donc imputable à aucune personne identifiée (motif A). La purge de ce journal reste à construire, faute d'identifiant commun avec T5 (motif B). Voir les <a href="gouvernance.html#motifs">motifs de blocage</a>.</p>
           </div>
         </div>
 
@@ -283,11 +283,11 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
               <tr><td>L2, purge des journaux</td><td>Levée pour T5, maintenue pour T6 (revue du 15 septembre 2026). T6 n'a toujours pas de purge, faute d'identifiant commun avec T5</td><td><span class="badge bad">Motif B</span></td></tr>
               <tr><td>L3, notice candidat</td><td>Aucune notice d'information n'est rédigée pour les candidats. L'interface existe mais s'adresse au conseiller : la notice reste à produire, en français simple, affichée avant la saisie</td><td><span class="badge bad">Motif C</span></td></tr>
               <tr><td>L4, accès et imputabilité</td><td>L'écran qui expose les caractéristiques d'un candidat et <code>/matching</code> restent ouverts. L'enregistrement d'une décision est authentifié, mais sur un compte partagé non nominatif : lacune de sécurité et de traçabilité</td><td><span class="badge bad">Motif A</span></td></tr>
-              <tr><td>L5, droits, violations, sous-traitance</td><td>Aucun dispositif d'exercice des droits (T8), aucune procédure de notification de violation outillée, aucun contrat de sous-traitance pour T7. Trois réserves non bloquantes prises isolément, qui le deviennent au premier usage réel</td><td><span class="badge warn">Réserve</span></td></tr>
+              <tr><td>L5, droits, violations, sous-traitance</td><td>Le dispositif d'exercice des droits (T8) reste à construire ; la procédure de notification de violation est écrite mais pas encore outillée ; le contrat de sous-traitance pour T7 reste à conclure. Trois réserves non bloquantes prises isolément, qui le deviennent au premier usage réel</td><td><span class="badge warn">Réserve</span></td></tr>
             </tbody>
           </table>
         </div>
-        <p><em>Rédigé le 30 août 2026, mis à jour le 1er septembre après la construction du service, revu le 15 septembre avec l'analyse d'impact complète, la Model Card et la correspondance au règlement sur l'IA. T3 et T5 ont été corrigés dans le sens du progrès, T6 dans le sens du manque ; cinq lacunes sont désormais déclarées au lieu de trois.</em></p>
+        <p><em>Rédigé le 30 août 2026, mis à jour le 1er septembre après la construction du service, revu le 15 septembre avec l'analyse d'impact complète, la Model Card et la correspondance au règlement sur l'IA. T3 et T5 ont progressé ; T6 reste à compléter. Cinq lacunes sont désormais déclarées, contre trois précédemment : c'est la vigilance qui s'est affinée, pas la situation qui s'est dégradée.</em></p>
 
         <h2 id="sources">Registre des sources et de leurs licences</h2>
         <div class="table-wrap">
@@ -344,8 +344,8 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
         <div class="callout bad">
           <span class="ico" aria-hidden="true">×</span>
           <div>
-            <span class="title">Non implémenté au 17 septembre 2026</span>
-            <p>L'écran conseiller existe, mais ne porte pas encore cette rubrique (motif E). Le risque est inscrit à la <a href="risques-aipd.html">matrice des risques</a> sous R9, non-conformité de réutilisation.</p>
+            <span class="title">Reste à ajouter : la rubrique d'attribution (motif E)</span>
+            <p>L'écran conseiller existe. Il ne porte pas encore la rubrique « Sources et licences » alimentée par les manifestes. Le risque est inscrit à la <a href="risques-aipd.html">matrice des risques</a> sous R9, non-conformité de réutilisation.</p>
           </div>
         </div>
 
@@ -393,7 +393,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
           <table>
             <thead><tr><th>Source</th><th>Cadence</th><th>Risque de rupture</th><th>Contrôle</th></tr></thead>
             <tbody>
-              <tr><td>S1 Parcoursup</td><td>Annuelle</td><td>Schéma croissant, de 85 colonnes en 2018 à 118 en 2025 : une colonne nouvelle non classée fait échouer la chaîne</td><td><code>tests/data/test_variables_reference.py</code></td></tr>
+              <tr><td>S1 Parcoursup</td><td>Annuelle</td><td>Schéma croissant, de 85 colonnes en 2018 à 118 en 2025 : le contrôle bloque la chaîne tant qu'une colonne nouvelle n'est pas classée</td><td><code>tests/data/test_variables_reference.py</code></td></tr>
               <tr><td>S2 Sirene</td><td>Mensuelle, dernier stock le 2026-08-01</td><td>URL différente chaque mois, jamais codée en dur ; bascule vers la NAF 2025 prévue début 2027</td><td><code>src/edumatch/ingestion/sirene.py</code>, <a href="decisions.html#adr-0005">ADR 0005</a> ; <code>nb_naf25_renseigne</code> à 100,0 %</td></tr>
               <tr><td>S3 IDÉO</td><td>Ponctuelle, dernier contenu daté du 2026-07-06</td><td>Donnée qui vieillit sans signal ; seuil de fraîcheur à documenter</td><td><code>src/edumatch/quality/</code></td></tr>
               <tr><td>S4, S5 RNCP</td><td>Quotidienne</td><td>Le nombre de fiches change chaque jour : commande reproductible, sortie non figée</td><td><a href="decisions.html#adr-0007">ADR 0007</a></td></tr>
@@ -410,7 +410,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
         </ul>
 
         <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
-        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777</p>
       </article>
     </main>
 

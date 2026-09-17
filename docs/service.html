@@ -50,8 +50,8 @@ flowchart TD
         <div class="callout warn">
           <span class="ico" aria-hidden="true">!</span>
           <div>
-            <span class="title">Ce terme n'a pas encore battu son plancher</span>
-            <p>Mesuré sur le test 2025 (page <a href="modele.html#evaluation">Évaluation et calibration</a>) : MAE pondérée 0,0758 pour le modèle contre 0,0701 pour la baseline, à couverture égale. Le modèle reste au-dessus du plancher qu'il doit battre, et sa calibration s'y dégrade aussi. Cette mise en garde est portée par chaque recommandation produite, écrite là où le terme est consommé.</p>
+            <span class="title">La baseline reste devant sur ce terme, mesuré et déclaré</span>
+            <p>Mesuré sur le test 2025 (page <a href="modele.html#evaluation">Évaluation et calibration</a>) : MAE pondérée 0,0758 pour le modèle contre 0,0701 pour la baseline, à couverture égale ; sa calibration s'y dégrade aussi. La porte de promotion refuse de publier tant que ce résultat tient, et cette même réserve est portée par chaque recommandation produite, écrite là où le terme est consommé — condition de levée : passer sous 0,0701 de MAE et 0,0322 d'ECE sur une session de test non consultée.</p>
           </div>
         </div>
 
@@ -176,7 +176,7 @@ flowchart TD
         <p>L'écran dit ce que beaucoup d'interfaces cachent :</p>
         <ul>
           <li>le terme de débouchés est indisponible pour 98,6 % des formations — quand c'est le cas, l'écran l'affiche avec son motif, jamais un score qui laisserait croire que les trois termes ont été calculés ;</li>
-          <li>la réserve sur le modèle, qui ne bat pas la baseline sur le jeu de test, est affichée et non enfouie dans la documentation ;</li>
+          <li>la réserve sur le modèle, dont la baseline reste devant sur le jeu de test, est affichée et non enfouie dans la documentation ;</li>
           <li>le rappel que le score assiste sans décider (article 22 du RGPD) est lisible à l'écran, pas relégué à une mention légale.</li>
         </ul>
         <p>Le flux d'écartement journalise, via <code>/feedback</code>, une décision motivée et horodatée — voir la section <a href="#journalisation">Journalisation et purge</a> pour ce que devient cette trace et ce qui n'est pas encore construit sur sa purge.</p>
@@ -289,7 +289,7 @@ flowchart TD
         </ol>
 
         <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
-        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777</p>
       </article>
     </main>
 
