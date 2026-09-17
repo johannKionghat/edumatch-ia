@@ -84,12 +84,12 @@ focus jamais supprimé sans remplacement visible, absence d'`innerHTML`.
 zoom, comportement d'un lecteur d'écran, parcours clavier de bout en bout,
 perception effective par une personne daltonienne, temps de réponse
 perçu — fait l'objet d'une procédure d'audit manuel :
-**`reports/e31-audit-rgaa-procedure.md`**. Je l'ai déroulée le 2026-09-16,
+**`reports/audit-rgaa-procedure.md`**. Je l'ai déroulée le 2026-09-16,
 sur le commit `1a9a0e6`, avec Chrome (Lighthouse 100/100 en accessibilité,
 0 violation axe-core sur les trois états réels de l'écran : vide,
 résultats, panneau d'explication) et un parcours clavier et de
 redimensionnement scripté. Détail point par point dans
-**`reports/e31-audit-rgaa-resultats.md`**. Deux non-conformités réelles en
+**`reports/audit-rgaa-resultats.md`**. Deux non-conformités réelles en
 sont ressorties, et j'ai corrigé et revérifié les deux le jour même
 (section de re-vérification datée dans le rapport) :
 
@@ -114,7 +114,7 @@ absente de l'environnement où j'ai mené cet audit.
 1. **L'audit manuel RGAA a été déroulé dans un vrai navigateur pour tout ce
    qui ne demande pas de lecteur d'écran** (clavier, zoom,
    redimensionnement, simulation de daltonisme, outils automatisés) — voir
-   `reports/e31-audit-rgaa-resultats.md`. Les deux non-conformités
+   `reports/audit-rgaa-resultats.md`. Les deux non-conformités
    trouvées (lien d'évitement sans focus programmatique, message d'erreur
    422 non informatif) ont été corrigées et revérifiées en conditions
    réelles (parcours clavier scripté et audit axe-core rejoués sur les

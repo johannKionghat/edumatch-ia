@@ -15,7 +15,7 @@ un fichier.
 - Lighthouse : `13.4.1` (catégorie accessibilité uniquement)
 - `@axe-core/cli` / `axe-core` : `4.13.0`, piloté par un script Puppeteer
   pour auditer les trois états réels de l'écran
-- Scripts d'audit et JSON bruts : `reports/e31-audit-rgaa/`
+- Scripts d'audit et JSON bruts : `reports/audit-rgaa/`
 
 ## Score Lighthouse (accessibilité)
 
@@ -23,7 +23,7 @@ un fichier.
 (`http://127.0.0.1:8010/`, après authentification HTTP Basic passée dans
 l'URL pour Lighthouse). Aucun audit binaire en échec (`color-contrast`,
 `heading-order`, `html-has-lang`, `label`, `link-name` : tous à 1). Rapport
-brut : `reports/e31-audit-rgaa/lighthouse-ecran-vide.report.json` et
+brut : `reports/audit-rgaa/lighthouse-ecran-vide.report.json` et
 `.report.html`.
 
 **Limite** : Lighthouse audite une page chargée, pas un parcours scripté ;
@@ -41,7 +41,7 @@ pas par Lighthouse.
 | Résultats affichés (profil bac général, non boursier, département 05) | 0 | 0 | 26 |
 | Panneau « Comprendre cette recommandation » ouvert | 0 | 0 | 26 |
 
-Rapports bruts : `reports/e31-audit-rgaa/axe-ecran-vide.json`,
+Rapports bruts : `reports/audit-rgaa/axe-ecran-vide.json`,
 `axe-ecran-resultats.json`, `axe-ecran-explication.json`.
 
 **Ce que ça ne prouve pas** : axe-core et Lighthouse détectent des défauts
@@ -60,7 +60,7 @@ défiler la page jusqu'à `<main id="contenu-principal">`, mais ne pose pas
 le focus clavier dessus. `document.activeElement` retombe sur `<body>` :
 un `Tab` suivant repart du tout début du document, pas du contenu
 principal. Vérifié par script Puppeteer
-(`reports/e31-audit-rgaa/clavier-zoom-check.mjs`, section « clavier »).
+(`reports/audit-rgaa/clavier-zoom-check.mjs`, section « clavier »).
 
 **Cause** : `<main id="contenu-principal">`
 (`src/edumatch/api/static/index.html`) n'a pas d'attribut `tabindex`. Un

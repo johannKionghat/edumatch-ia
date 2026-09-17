@@ -80,7 +80,7 @@ LOGGER = logging.getLogger(__name__)
 NOM_EXPERIENCE_MLFLOW = "edumatch-accessibilite"
 
 DOSSIER_FIGURES_DEFAUT = PROJECT_ROOT / "reports" / "figures"
-NOM_FIGURE_IMPORTANCE = "e25-importance-globale.png"
+NOM_FIGURE_IMPORTANCE = "importance-globale.png"
 
 # Où vit le précalcul par cellule (le pendant de `features.build.SOUS_DOSSIER`,
 # côté explicabilité plutôt que côté variables).

@@ -84,7 +84,7 @@ from edumatch.models.train import charger_table, entrainer_modele, preparer_jeux
 LOGGER = logging.getLogger(__name__)
 
 DOSSIER_FIGURES_DEFAUT = PROJECT_ROOT / "reports" / "figures"
-NOM_FIGURE = "e24-courbe-apprentissage.png"
+NOM_FIGURE = "courbe-apprentissage.png"
 
 # Les quatre paliers demandés par le plan d'exécution (E24). 1.0 rejoue
 # exactement l'entraînement complet de E22 : aucune donnée n'est retirée.

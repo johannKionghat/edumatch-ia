@@ -82,9 +82,9 @@ from edumatch.models.train import COLONNE_TAUX_PRECEDENT
 LOGGER = logging.getLogger(__name__)
 
 DOSSIER_FIGURES_DEFAUT = PROJECT_ROOT / "reports" / "figures"
-NOM_FIGURE_IMPACT_DISPARATE = "e26-impact-disparate.png"
-NOM_FIGURE_CALIBRATION_GENRE = "e26-calibration-genre.png"
-NOM_FIGURE_SUBSTITUTS = "e26-substituts-genre.png"
+NOM_FIGURE_IMPACT_DISPARATE = "impact-disparate.png"
+NOM_FIGURE_CALIBRATION_GENRE = "calibration-genre.png"
+NOM_FIGURE_SUBSTITUTS = "substituts-genre.png"
 
 # Réutilise le nom de fichier déjà fixé par `transform.run` / `features.build`
 # (E15) — redéfini ici plutôt qu'importé, par le même principe que ces deux

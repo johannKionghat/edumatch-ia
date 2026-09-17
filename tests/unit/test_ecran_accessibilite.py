@@ -11,7 +11,7 @@ sémantique du document, la présence d'étiquettes associées à chaque champ, 
 contraste théorique des couleurs déclarées dans la feuille de style (calcul
 WCAG exact, pas une estimation), et la syntaxe du JavaScript. La procédure
 d'audit manuel qui referme ce que ces tests ne couvrent pas est décrite dans
-`reports/e31-audit-rgaa-procedure.md`.
+`reports/audit-rgaa-procedure.md`.
 """
 
 from __future__ import annotations
@@ -69,9 +69,9 @@ def test_contenu_principal_est_focusable_par_programme() -> None:
     même technique que `#explication`, déjà en place plus bas dans ce même document, voir
     `test_panneau_explication_est_focusable_au_clavier`.
 
-    Non-régression du défaut constaté dans `reports/e31-audit-rgaa-resultats.md`
+    Non-régression du défaut constaté dans `reports/audit-rgaa-resultats.md`
     (non-conformité n°1, majeure) : reproduit en direct par
-    `reports/e31-audit-rgaa/clavier-zoom-check.mjs` avant correction
+    `reports/audit-rgaa/clavier-zoom-check.mjs` avant correction
     (`lien_evitement_deplace_focus_dans_main: false`).
     """
     bloc = re.search(r'<main id="contenu-principal"[^>]*>', HTML).group(0)
@@ -265,12 +265,12 @@ def _executer_lire_detail_erreur(detail: object) -> str:
 
 
 def test_erreur_422_tableau_pydantic_nomme_le_champ_fautif() -> None:
-    """Non-régression du défaut n°2 (mineur) de `reports/e31-audit-rgaa-resultats.md` :
+    """Non-régression du défaut n°2 (mineur) de `reports/audit-rgaa-resultats.md` :
     FastAPI/Pydantic v2 renvoie sur une 422 un **tableau** d'objets d'erreur
     (`type`, `loc`, `msg`), pas une chaîne. Avant correction, `lireDetailErreur` ne
     traitait que le cas chaîne et retombait sur le générique « Erreur 422. », reproduit
     par requête directe (voir le rapport) et par
-    `reports/e31-audit-rgaa/clavier-zoom-check.mjs` (`departement_mal_forme_message`)."""
+    `reports/audit-rgaa/clavier-zoom-check.mjs` (`departement_mal_forme_message`)."""
     detail = [
         {
             "type": "string_pattern_mismatch",

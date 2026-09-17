@@ -7,7 +7,7 @@ d'évaluation.
 
 Analyse produite dans `notebooks/01-jgk-eda-label.ipynb`, sur le fichier
 Parcoursup 2025 (`data/raw/parcoursup/`). Figure exportée dans
-`reports/figures/e09-distribution-taux-admission.png`.
+`reports/figures/distribution-taux-admission.png`.
 
 ## Le grain de l'analyse
 

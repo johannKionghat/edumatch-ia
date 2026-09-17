@@ -66,7 +66,7 @@ NOM_EXPERIENCE_MLFLOW = "edumatch-accessibilite"
 LIBELLES_TYPE_BAC: dict[str, str] = {"bg": "Général", "bt": "Technologique", "bp": "Professionnel"}
 
 DOSSIER_FIGURES_DEFAUT = PROJECT_ROOT / "reports" / "figures"
-NOM_FIGURE_CALIBRATION = "e23-calibration.png"
+NOM_FIGURE_CALIBRATION = "calibration.png"
 
 
 @dataclass(frozen=True)

@@ -41,7 +41,7 @@ def settings_avec_variables(tmp_path_factory: pytest.TempPathFactory) -> Setting
 
 @pytest.fixture(scope="module")
 def rapport(settings_avec_variables: Settings, tmp_path_factory: pytest.TempPathFactory) -> derive.RapportDerive:
-    dossier_figures = tmp_path_factory.mktemp("derive-e34-figures")
+    dossier_figures = tmp_path_factory.mktemp("derive-figures")
     return derive.executer(settings_avec_variables, dossier_figures=dossier_figures)
 
 

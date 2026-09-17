@@ -82,8 +82,8 @@ LIBELLE_CIBLE = "taux (cible observée)"
 LIBELLE_PREDICTION = "taux prédit (sortie du modèle)"
 
 DOSSIER_FIGURES_DEFAUT = PROJECT_ROOT / "reports" / "figures"
-NOM_FIGURE_VARIABLES = "e34-derive-variables.png"
-NOM_FIGURE_TRAJECTOIRE = "e34-derive-trajectoire.png"
+NOM_FIGURE_VARIABLES = "derive-variables.png"
+NOM_FIGURE_TRAJECTOIRE = "derive-trajectoire.png"
 
 COMPARAISON_VALIDATION = "entrainement -> validation-2024"
 COMPARAISON_TEST = "entrainement -> test-2025"
