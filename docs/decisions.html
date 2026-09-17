@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Décisions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Blocs 2 · 3 · 4 · Décisions d'architecture</p>
+        <h1>Les décisions d'architecture</h1>
+        <p class="lead">Chaque choix structurant du projet est consigné dans un ADR (Architecture Decision Record) : le contexte chiffré, la décision, les alternatives que j'ai écartées et pourquoi, les conséquences que j'assume, et le seuil qui me ferait changer d'avis. Un ADR accepté ne se réécrit pas : s'il évolue, je le date et je garde la trace de l'amendement.</p>
+
+        <h2>Le registre</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>N°</th><th>Décision</th><th>Statut</th><th>Blocs</th></tr></thead>
+            <tbody>
+              <tr><td><a href="#adr-0001">0001</a></td><td>ELT plutôt qu'ETL : le brut est conservé, dbt transforme ensuite</td><td><span class="badge ok">Acceptée</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0002">0002</a></td><td>Pas de Databricks : Spark local, sur Sirene uniquement</td><td><span class="badge ok">Acceptée</span></td><td>2</td></tr>
+              <tr><td><a href="#adr-0003">0003</a></td><td>Configuration centralisée par Pydantic Settings, précédence à trois couches</td><td><span class="badge ok">Acceptée</span></td><td>2 · 3</td></tr>
+              <tr><td><a href="#adr-0004">0004</a></td><td>Primitives d'ingestion mutualisées, manifeste corrompu mis en quarantaine</td><td><span class="badge ok">Acceptée</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0005">0005</a></td><td>URL Sirene résolue dynamiquement par le catalogue, jamais en configuration</td><td><span class="badge ok">Acceptée</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0006">0006</a></td><td>Vocabulaire d'erreur commun : transitoire contre définitive</td><td><span class="badge ok">Acceptée</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0007">0007</a></td><td>Un fichier RNCP par date de publication, jamais écrasé</td><td><span class="badge ok">Acceptée</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0008">0008</a></td><td>Échantillon Sirene : entrepreneurs individuels conservés sous intérêt légitime</td><td><span class="badge ok">Acceptée</span></td><td>1</td></tr>
+              <tr><td><a href="#adr-0009">0009</a></td><td>Label : définition, bornage à 1, pondération, aucun seuil d'effectif</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
+              <tr><td><a href="#adr-0010">0010</a></td><td>Tension de vœux décalée d'une session, clé de formation reconstruite</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
+              <tr><td><a href="#adr-0011">0011</a></td><td>Substituts du genre mesurés, dispositif d'équité à trois niveaux</td><td><span class="badge ok">Acceptée</span></td><td>1 · 4</td></tr>
+              <tr><td><a href="#adr-0012">0012</a></td><td>Protocole d'évaluation sur six sessions, 2020 conservée</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
+              <tr><td><a href="#adr-0013">0013</a></td><td>Variables : liste blanche sur la session prédite, décalage pour le reste</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
+              <tr><td><a href="#adr-0014">0014</a></td><td>Pandera plutôt que Great Expectations pour les contrôles qualité</td><td><span class="badge ok">Acceptée</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0015">0015</a></td><td>Modèle en étoile : grain à la cellule, SCD 2, DuckDB et Parquet</td><td><span class="badge ok">Acceptée</span></td><td>2</td></tr>
+              <tr><td><a href="#adr-0016">0016</a></td><td>Polars en exécution courante, Spark branché sur le mode cluster</td><td><span class="badge ok">Acceptée</span></td><td>2</td></tr>
+              <tr><td><a href="#adr-0017">0017</a></td><td>Chaîne NAF ↔ ROME ↔ formation sur trois sources, manque Parcoursup déclaré</td><td><span class="badge warn">Remplacée en partie par l'ADR 0020</span></td><td>3</td></tr>
+              <tr><td><a href="#adr-0018">0018</a></td><td>Dérive : PSI médian sur 46 variables, seuil 0,20, sans Evidently</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
+              <tr><td><a href="#adr-0019">0019</a></td><td>Airflow en production sur une instance Scaleway dédiée</td><td><span class="badge info">Amendée</span></td><td>2 · 3</td></tr>
+              <tr><td><a href="#adr-0020">0020</a></td><td>Appariement textuel exact Parcoursup ↔ IDÉO pour le terme de débouchés, indisponibilité déclarée ailleurs</td><td><span class="badge ok">Acceptée</span></td><td>1 · 3 · 4</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ============================================================ 0001 -->
+        <h2 id="adr-0001">ADR 0001 — ELT plutôt qu'ETL</h2>
+        <p><span class="badge ok">Acceptée</span> le 24 août 2026 · Bloc 3</p>
+        <h3>Contexte</h3>
+        <p>Trois sources publiques hétérogènes (Parcoursup, Sirene, référentiels). Huit millésimes aux schémas qui ont évolué. Des règles de nettoyage appelées à changer pendant la construction.</p>
+        <h3>Décision</h3>
+        <p>ELT : je charge le brut en couche bronze, puis je transforme avec dbt.</p>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Alternative écartée</span>
+            <p>ETL (transformer avant de charger) : la couche brute ne serait pas conservée, et modifier une règle de nettoyage obligerait à retélécharger les sources.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Le lignage du brut au final est conservé, ce qu'exige le critère 3.8 du bloc 3. Le coût de stockage du brut est négligeable ici : 82 Mo mesurés pour Parcoursup, 4,63 Go pour Sirene. La couche bronze est immuable : je n'y écris jamais deux fois le même fichier. Détail de la chaîne dans <a href="pipeline.html">Pipeline de données</a>.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Une volumétrie brute de plusieurs téraoctets, au point de rendre ce stockage coûteux.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0002 -->
+        <h2 id="adr-0002">ADR 0002 — Pas de Databricks : Spark local, sur Sirene uniquement</h2>
+        <p><span class="badge ok">Acceptée</span> le 28 août 2026 · Bloc 2</p>
+        <h3>Contexte</h3>
+        <p>Le projet ne comporte qu'un seul traitement distribué : l'agrégation Sirene. <code>StockEtablissement</code>, stock du 01/08/2026, pèse 2,20 Go en Parquet (4,63 Go pour les quatre fichiers retenus). Il porte 54 colonnes, dont 9 utiles ; les autres ne sont jamais chargées, grâce à la projection colonnaire.</p>
+        <p>Compté par métadonnée Parquet le 28/08/2026 : 43 896 818 lignes. Ce chiffre corrige l'ordre de grandeur « 36 millions », qui n'avait jamais été recalculé. Les filtres du projet (actif, employeur, diffusible) n'en retiennent que 2 436 624, soit 5,6 %. Mais c'est la lecture des 43,9 millions de lignes qui dimensionne le job, pas le résultat filtré : il faut toutes les parcourir pour savoir lesquelles passent.</p>
+        <p>Lecture mesurée de 2 colonnes sur 54 : 35,4 secondes sur un poste ordinaire. Le job tourne chaque mois en quelques minutes et produit des agrégats commune × NAF de quelques dizaines de Mo. Parcoursup (104 274 formation-années, 82 Mo mesurés sur disque) reste en Polars et dbt, sur un seul nœud.</p>
+        <h3>Décision</h3>
+        <p>PySpark local, appliqué à Sirene et à rien d'autre. Pas de Databricks.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Databricks (Spark managé, Delta Lake, Unity Catalog)</span>
+            <p>Il tourne sur AWS, Azure ou GCP, ce qui contredirait l'hébergement Scaleway retenu pour la souveraineté : le système profile des mineurs. Un cluster managé facturé à l'unité de calcul est en outre disproportionné pour un job mensuel de quelques minutes sur 2,20 Go.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Tout en Polars ou DuckDB, sans Spark</span>
+            <p>43,9 millions d'établissements joints au catalogue, et le critère 2.4 attend une structure démontrée adaptée au volume, pas une promesse.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <ul>
+          <li>Pas d'Unity Catalog : le lignage est produit par <code>dbt docs</code> (critère 3.8).</li>
+          <li>Pas de cluster managé : la mémoire et le partitionnement Spark restent à ma charge, un travail réel mené sur ce job d'agrégation.</li>
+          <li>Pas de Delta Lake : je m'appuie sur du Parquet immuable en couche bronze et sur PostgreSQL.</li>
+        </ul>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Une jointure intermédiaire qui dépasse la mémoire d'un nœud, mesurée sur ce job et non supposée ; la réponse serait alors de partitionner davantage, pas d'acheter une plateforme. Plusieurs personnes travaillant sur les mêmes données avec droits et lignage centralisés. Un volume qui passe de quelques Go à plusieurs centaines. La suite de cet arbitrage est à l'<a href="#adr-0016">ADR 0016</a>.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0003 -->
+        <h2 id="adr-0003">ADR 0003 — Configuration centralisée : Pydantic Settings, précédence à trois couches</h2>
+        <p><span class="badge ok">Acceptée</span> le 28 août 2026 · Blocs 2 · 3</p>
+        <h3>Contexte</h3>
+        <p>Aucun chemin ni seuil ne doit être écrit en dur dans le code : la configuration métier vient de <code>configs/*.yaml</code>, les secrets de l'environnement. Trois environnements reposent sur une base commune. Le code tourne à des endroits différents selon le moment : poste de développement, Scaleway, conteneur, intégration continue. La racine des données ne peut donc pas être un chemin unique écrit en dur.</p>
+        <h3>Décision</h3>
+        <p>Pydantic Settings, avec trois arbitrages :</p>
+        <ol>
+          <li><strong>Précédence à trois couches</strong> : <code>base.yaml</code> &lt; <code>{env}.yaml</code> (via <code>herite_de: base.yaml</code>) &lt; variable d'environnement, réservée aux secrets et aux réglages modifiables sans redéploiement.</li>
+          <li><strong>Héritage limité à un niveau</strong>, pour rester auditable d'un coup d'œil.</li>
+          <li><strong><code>EDUMATCH_DATA_ROOT</code> pilotable</strong>, avec <code>&lt;dépôt&gt;/data</code> par défaut. Une valeur vide, blanche ou relative est refusée explicitement : sinon <code>Path("")</code> se résout en <code>.</code>, un emplacement non maîtrisé qui dépend du point de lancement.</li>
+        </ol>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">YAML brut, sans validation</span>
+            <p>Une clé mal orthographiée n'est détectée qu'à l'usage, parfois en cours d'entraînement.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Hydra</span>
+            <p>Composition multi-fichiers et interpolation : un outil de plus pour un besoin couvert ici par une fusion à un seul niveau.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Une configuration invalide échoue au démarrage, avec le champ fautif nommé. <code>load_settings()</code> traduit toute erreur de validation en erreur de configuration explicite, quelle que soit la source. Ajouter un environnement ou un paramètre demande de modifier le schéma Pydantic : c'est le contrat entre la configuration et le code qui la consomme, pas une simple recopie du YAML.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un besoin réel de composition multi-fichiers ou d'interpolation entre clés, ou une configuration qui devrait se recharger sans redémarrage.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0004 -->
+        <h2 id="adr-0004">ADR 0004 — Primitives d'ingestion mutualisées avant duplication, manifeste corrompu mis en quarantaine</h2>
+        <p><span class="badge ok">Acceptée</span> le 28 août 2026 · Bloc 3</p>
+        <h3>Contexte</h3>
+        <p>Le connecteur Parcoursup est le premier des trois connecteurs d'ingestion prévus (Parcoursup, Sirene, référentiels). Tous les trois doivent garantir la même chose : téléchargement en flux, empreinte SHA-256, écriture atomique, manifeste de traçabilité. Seule la résolution d'URL varie vraiment d'une source à l'autre. Deux questions ont dû être arbitrées en écrivant ce premier connecteur.</p>
+        <h3>Décision</h3>
+        <ol>
+          <li>J'extrais les primitives génériques dans <code>_flux.py</code> dès ce premier connecteur, sans attendre une troisième occurrence. La mutualisation n'est pas une conjecture : les connecteurs Sirene et référentiels répéteront flux HTTP, empreinte, écriture atomique et manifeste. <code>parcoursup.py</code> ne porte plus que ce qui lui est propre : le gabarit d'URL et l'enchaînement des 8 millésimes.</li>
+          <li>Un manifeste illisible est traité comme vide par <code>lire_manifeste()</code>, et la chaîne continue. Mais le fichier fautif est déplacé vers <code>manifeste.json.corrompu-{horodatage}</code> et l'incident est journalisé au niveau erreur, au lieu d'être écrasé en silence.</li>
+        </ol>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Mutualiser seulement après trois occurrences</span>
+            <p>C'est la règle classique contre l'abstraction prématurée. Mais ici la duplication à venir est déjà connue : attendre ne réduit aucun risque, cela reporte un refactoring certain.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Écraser silencieusement un manifeste illisible</span>
+            <p>Un JSON qui devient illisible est un incident (disque plein, processus tué en cours d'écriture). Le laisser disparaître sans trace interdit tout diagnostic.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Bloquer la chaîne sur un manifeste corrompu</span>
+            <p>Le manifeste n'est pas la source de vérité de l'intégrité : c'est l'empreinte SHA-256, recalculée à chaque passage. Le faire bloquer romprait la règle « le manifeste ne bloque jamais » pour un gain nul.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Le connecteur Sirene s'appuie sur du code déjà testé, au lieu de dupliquer puis refactorer sous pression. Risque assumé : <code>_flux.py</code> n'a encore qu'un seul appelant réel, son interface pourrait devoir bouger à l'usage. Un manifeste corrompu entraîne un retéléchargement complet des millésimes déjà présents : l'idempotence est perdue pour ce passage, pas les données, et une trace exploitable subsiste.</p>
+        <p>Une revue de code avait signalé un risque de perte d'entrées du manifeste en fonctionnement normal. Je l'ai reproduit avant toute correction : le risque n'existait qu'avec un manifeste déjà corrompu, exactement le cas couvert ci-dessus. Aucun correctif supplémentaire n'a été nécessaire.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Sur la mutualisation : si le connecteur Sirene révélait qu'une primitive supposée commune doit en réalité être rendue générique. Sur la quarantaine : si la fréquence réelle de corruption s'avérait non négligeable, avec alors une sauvegarde du manifeste avant écriture.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0005 -->
+        <h2 id="adr-0005">ADR 0005 — Résolution dynamique de l'URL Sirene, jamais une URL en configuration</h2>
+        <p><span class="badge ok">Acceptée</span> le 28 août 2026 · Bloc 3</p>
+        <h3>Contexte</h3>
+        <p>Le connecteur Sirene télécharge 4 fichiers stock republiés chaque mois par l'INSEE. Le stock du 01/08/2026 porte une URL dont l'horodatage <code>20260801-074451</code> fait partie du chemin, pas d'un paramètre de requête. Une URL codée en dur pour un mois donné cesse donc de fonctionner dès la publication suivante. Le connecteur Parcoursup, à l'inverse, s'appuie sur un gabarit stable écrit en configuration : un identifiant par millésime, qui ne change plus une fois publié.</p>
+        <h3>Décision</h3>
+        <p><code>resoudre_ressources()</code> interroge le catalogue data.gouv à chaque exécution (<code>https://www.data.gouv.fr/api/1/datasets/{jeu}/</code>). Pour chaque fichier configuré, il sélectionne la ressource Parquet dont le titre correspond exactement (<code>Fichier {nom} -</code>), et non par sous-chaîne : deux des quatre noms configurés sont le préfixe d'un autre. Toute ambiguïté ou absence de correspondance lève une erreur explicite, jamais un choix par défaut.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">URL en configuration, mise à jour à la main chaque mois</span>
+            <p>Elle viole le critère 3.3 (automatisation complète) dès le deuxième mois d'exécution.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Extraire l'URL de la page HTML du jeu de données</span>
+            <p>L'API JSON du catalogue existe et est documentée ; analyser du HTML serait plus fragile pour un gain nul.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Une dépendance de plus à l'exécution : le catalogue doit être joignable. Le DAG Airflow traite donc son indisponibilité comme une panne transitoire, avec nouvelle tentative, et non comme une erreur de configuration (voir l'<a href="#adr-0006">ADR 0006</a>). En contrepartie, le connecteur réagit à un renommage par un arrêt explicite, pas par une disparition silencieuse : si l'INSEE change le format de titre, il s'arrête avec un message clair.</p>
+        <p>La date de publication du stock (<code>last_modified</code>) est enregistrée au manifeste sous <code>date_publication_stock</code>, une traçabilité qu'une URL statique n'aurait pas fournie sans champ supplémentaire à tenir à jour. Vérifié le jour même : <code>resoudre_ressources()</code>, rejoué contre le catalogue réel, reproduit exactement les 4 URL enregistrées lors du téléchargement effectif.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Une API du catalogue devenue instable ou dépréciée, ou un format de titre qui change trop souvent. La correspondance par titre serait alors remplacée par un identifiant de ressource plus stable, si l'API en expose un.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0006 -->
+        <h2 id="adr-0006">ADR 0006 — Vocabulaire commun d'erreur : transitoire contre définitive</h2>
+        <p><span class="badge ok">Acceptée</span> le 28 août 2026 · Bloc 3</p>
+        <h3>Contexte</h3>
+        <p>Le DAG Airflow doit décider, à chaque échec d'un connecteur, s'il retente la tâche ou alerte un humain. Jusqu'ici, chaque connecteur ne levait qu'une seule classe d'erreur. Elle ne distinguait pas une coupure réseau (retentable) d'un millésime absent ou d'un catalogue qui a changé de contrat (non retentable, intervention humaine nécessaire). Un orchestrateur qui capturerait cette classe unique retenterait aveuglément des échecs qu'aucune tentative ne résoudrait.</p>
+        <h3>Décision</h3>
+        <p>Deux mixins communs, <code>ErreurTransitoire</code> et <code>ErreurDefinitive</code>, posés dans <code>_flux.py</code> et combinés par héritage multiple à la classe de base de chaque connecteur.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nature</th><th>Classes</th><th>Réaction attendue</th></tr></thead>
+            <tbody>
+              <tr><td><code>ErreurTransitoire</code></td><td><code>ErreurReseauParcoursup</code>, <code>ErreurReseauSirene</code></td><td>Nouvelle tentative</td></tr>
+              <tr><td><code>ErreurDefinitive</code></td><td><code>ErreurConfigurationParcoursup</code>, <code>ErreurCatalogueSirene</code></td><td>Alerte humaine</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>La classe de base de chaque connecteur reste levée en pratique via l'une des deux sous-classes : un appelant qui ne distingue pas encore les deux natures continue de fonctionner sans changement.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Une distinction propre à chaque connecteur, sans vocabulaire partagé</span>
+            <p>Le DAG devrait connaître les classes internes de chaque connecteur, ce qui recrée le couplage que <code>_flux.py</code> a justement été créé pour éviter.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Un code d'erreur numérique ou une chaîne de statut</span>
+            <p>Le typage est perdu : il faudrait comparer des chaînes au lieu d'utiliser <code>except</code>.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Le DAG peut écrire une seule fois <code>except ErreurTransitoire: retenter()</code> et <code>except ErreurDefinitive: alerter()</code>, valable pour les deux connecteurs actuels et pour tout connecteur à venir. Un connecteur qui oublierait de distinguer retomberait sur la classe de base : c'est à surveiller en revue de code et à l'ajout de chaque connecteur, le typage seul ne le garantit pas.</p>
+        <p>Testé pour les deux connecteurs existants : coupure réseau et échec HTTP lèvent <code>ErreurTransitoire</code> ; configuration absente ou catalogue non conforme lèvent <code>ErreurDefinitive</code> ; jamais les deux à la fois.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Une nature d'échec mal classée à l'usage réel du DAG : une erreur 5xx qui ne se résorbe jamais, une absence de configuration qu'un simple redéploiement corrigerait. Je reverrais alors le classement de cette erreur précise, pas la distinction elle-même.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0007 -->
+        <h2 id="adr-0007">ADR 0007 — Un fichier par date de publication pour l'export RNCP, jamais un fichier unique écrasé</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Bloc 3</p>
+        <h3>Contexte</h3>
+        <p>Le connecteur des référentiels télécharge, en plus des quatre jeux ONISEP à URL fixe, l'export RNCP/RS de France Compétences, republié chaque jour. Contrairement à Parcoursup (un fichier par session, jamais réédité) ou à Sirene (un stock complet republié chaque mois), son contenu change quotidiennement.</p>
+        <p>Vérifié le 29/08/2026 : l'export du jour compte 30 484 fiches, dont 7 000 actives. La documentation en annonçait à tort 36 000 la veille, un chiffre faussé par la méthode de comptage et non par une évolution réelle de la source.</p>
+        <p>La table de réconciliation NAF ↔ ROME ↔ formation est construite à partir d'un export donné : il faut pouvoir retrouver, après coup, la version sur laquelle une exécution passée s'est appuyée.</p>
+        <h3>Décision</h3>
+        <p>Un fichier par date de publication (<code>rncp_AAAA-MM-JJ.csv</code>), jamais écrasé, et une entrée de manifeste par date. <code>_referentiels_rncp.resoudre_ressource</code> lit la date de publication rendue par le catalogue et en dérive le nom du fichier.</p>
+        <p>L'idempotence porte sur « ai-je déjà l'export de cette date », pas sur « le contenu a-t-il changé ». Une réexécution le même jour ne retélécharge rien ; une réexécution un autre jour crée un nouveau fichier sans toucher aux précédents.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Un fichier unique écrasé à chaque republication, comme pour Sirene</span>
+            <p>Le RNCP sert directement de table de réconciliation. Si le fichier est écrasé, l'export qui a servi un jour donné n'existe plus le lendemain, et rien ne permet de rejouer la construction.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Retéléchargement systématique, sans persistance nommée</span>
+            <p>Il viole l'immuabilité de la couche brute et l'idempotence (critère 3.6).</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Chaque export utilisé par une table dérivée reste vérifiable après coup, même longtemps après sa publication. Accumulation assumée : au rythme observé (environ 9 Mo par export), une exécution quotidienne prolongée accumulerait de l'ordre de 3,3 Go par an. Une politique de rétention deviendra nécessaire si cette cadence est programmée dans la durée ; elle sort du périmètre de l'ingestion, qui garantit la disponibilité de l'instantané, pas sa purge.</p>
+        <p>Le principe (dater le stock plutôt que se fier au seul contenu) vaut pour Sirene comme pour le RNCP, mais seul le RNCP en tire un fichier par date : sa cadence quotidienne et son usage direct en table de réconciliation justifient la différence.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un pipeline qui n'aurait finalement besoin que du dernier export, sans historique, et un volume accumulé devenu gênant avant qu'une politique de rétention soit écrite.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0008 -->
+        <h2 id="adr-0008">ADR 0008 — Conserver les lignes d'entrepreneur individuel dans l'échantillon Sirene, sous intérêt légitime</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Bloc 1</p>
+        <h3>Contexte</h3>
+        <p><code>data/samples/</code> porte un échantillon de 500 lignes de <code>StockUniteLegale</code> et <code>StockUniteLegaleHistorique</code>, tiré du stock Sirene complet pour faire tourner les tests sans les 4,6 Go de sources. Les 9 colonnes d'identité directe de personne physique (nom, prénom, sexe…) en sont exclues.</p>
+        <p>Cela ne suffit pas à rendre l'échantillon anonyme. 282 des 500 lignes portent la catégorie juridique 1000 (entrepreneur individuel, sans personnalité juridique distincte), et 239 sont en statut diffusible. Une jointure sur le SIREN avec la dénomination usuelle ou l'enseigne, conservées sans restriction dans <code>StockEtablissementHistorique</code>, restitue l'identité des 239 lignes diffusibles sur 239, avec le seul fichier public déjà téléchargé.</p>
+        <p>C'est donc une pseudonymisation (RGPD, art. 4.5), pas une anonymisation : la donnée reste dans le champ du RGPD. La Licence Ouverte v2.0 qui couvre sa réutilisation n'y change rien : les deux régimes se cumulent, et une licence ne vaut jamais base légale.</p>
+        <h3>Décision</h3>
+        <p>Je conserve les lignes telles quelles, sous une base légale explicite : l'intérêt légitime (RGPD, art. 6.1.f). La mise en balance est écrite dans le README de <code>data/samples/</code> : intérêt poursuivi, nécessité, proportionnalité (500 lignes sur 29 à 96 millions par fichier, 9 colonnes d'identité déjà retirées), absence d'impact additionnel, attente raisonnable et droit d'opposition. Les 43 lignes en statut « P » (non diffusible) restent masquées <code>[ND]</code> par l'INSEE à la source : aucune n'a été reconstruite ni contournée.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Exclure les lignes d'entrepreneur individuel</span>
+            <p>Elles représentent 56,4 % de <code>StockUniteLegale</code> sur le fichier complet (16 890 687 sur 29 922 486). Les retirer romprait la représentativité et masquerait la moitié de la diversité réelle des catégories juridiques.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Hacher ou tronquer le SIREN</span>
+            <p>C'est un identifiant à 9 chiffres : un espace de 10<sup>9</sup> valeurs se force en quelques secondes. Un hachage salé casserait en plus la jointure entre fichiers que l'échantillon doit exercer.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Fabriquer une valeur de substitution plausible</span>
+            <p>Une donnée simulée présentée comme réelle est interdite dans ce projet, et elle fausserait la distribution réelle des catégories juridiques.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>L'échantillon Sirene reste une donnée personnelle tant que la source contient des entrepreneurs individuels : il figure à ce titre dans les <a href="registres.html">registres des traitements et des sources</a>. La minimisation (9 colonnes retirées) est réelle, mais ne dispense pas de la base légale. Un contrôle automatisé, <code>tests/data/test_echantillons_conformite.py</code>, empêche qu'une régénération réintroduise par erreur une colonne d'identité directe.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un échantillon qui devrait porter une variable supplémentaire propre à la personne physique (revenu, âge, situation familiale ; rien de tel n'est prévu), ou dont le volume dépasserait quelques milliers de lignes.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0009 -->
+        <h2 id="adr-0009">ADR 0009 — Définition du label, bornage, pondération et absence de seuil d'effectif</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Bloc 4</p>
+        <h3>Contexte</h3>
+        <p>La cible du modèle est un taux d'admission observé par cellule (formation × session × type de bac × boursier). L'analyse du carnet <code>01-jgk-eda-label.ipynb</code> établit trois faits sur la session 2025 :</p>
+        <ul>
+          <li>Le taux <code>prop_tot / nb_voe_pp</code> dépasse 1 dans 8,9 % des cellules bac général (1 219 sur 13 685). Ce n'est pas un artefact de petit effectif : 483 cas sur 7 154 cellules au-delà de 100 vœux. <code>nb_voe_pp</code> compte des vœux, <code>prop_tot</code> compte des propositions, réémises après chaque désistement.</li>
+          <li>La distribution est étalée, avec des masses non négligeables aux deux bornes : jusqu'à 21,6 % de taux nul pour le bac professionnel.</li>
+          <li>Le nombre de vœux par cellule varie fortement : un seuil d'effectif minimal à 30 vœux écarterait 26 % des observations.</li>
+        </ul>
+        <h3>Décision</h3>
+        <p>Je conserve <code>prop_tot / nb_voe_pp</code> comme définition du taux. Je le borne à 1, en énonçant que le dépassement vient des propositions réémises : c'est une borne sémantique, pas une correction de valeur aberrante. Je pondère par l'effectif de la cellule à l'entraînement. Je n'exclus pas les petites cellules.</p>
+<pre><code>taux = min(1, prop_tot_{bg|bt|bp}[_brs] / nb_voe_pp_{bg|bt|bp}[_brs])</code></pre>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title"><code>acc / nb_voe_pp</code> (candidats inscrits plutôt que propositions)</span>
+            <p>Ce ratio ne dépasse jamais 1, mais il mesure l'acceptation, pas l'admission. Un candidat qui décline une proposition pour une meilleure option a bel et bien été admis.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Garder le taux brut, sans borne</span>
+            <p>Un taux supérieur à 1 n'a pas de sens comme probabilité d'admission et casserait toute métrique de calibration en aval.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Poids égal pour toutes les cellules</span>
+            <p>Une cellule à 3 vœux et une cellule à 500 vœux n'ont pas la même fiabilité statistique.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Exclure les cellules sous un seuil d'effectif</span>
+            <p>Cela écarterait 26 % des observations, alors que la pondération traite déjà leur moindre fiabilité sans les supprimer.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>La moyenne de 0,522 citée dans la documentation est cette moyenne bornée ; la moyenne brute vaut 0,545. Le protocole d'évaluation vérifie explicitement la calibration aux deux bornes. J'ai retenu une erreur absolue moyenne pondérée plutôt qu'une erreur quadratique, plus sensible aux valeurs bornées. Définition complète dans <a href="donnees.html">Données et label</a>.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un audit d'équité qui montrerait que la pondération défavorise systématiquement les formations à faible volume de vœux d'un profil donné, notamment le bac professionnel, où 21,6 % des formations n'émettent aucune proposition.</p>
+          </div>
+        </div>
+        <p>Reproduit par <code>notebooks/01-jgk-eda-label.ipynb</code>, sur <code>data/raw/parcoursup/</code> (session 2025).</p>
+
+        <!-- ============================================================ 0010 -->
+        <h2 id="adr-0010">ADR 0010 — Fuite fonctionnelle de la tension de vœux, décalage temporel pour reconstruire la clé de formation</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Bloc 4</p>
+        <h3>Contexte</h3>
+        <p>L'analyse des écarts entre types de baccalauréat (<code>02-jgk-eda-ecarts-selectivite.ipynb</code>) montre que le taux d'admission est fortement expliqué par la tension, <code>voe_tot / capa_fin</code> : il passe de 1,000 à 0,182 du quintile le moins tendu au plus tendu (médiane : 11,4 vœux par place).</p>
+        <p>Mais <code>voe_tot</code> est le total des vœux reçus sur la session, connu seulement à la clôture de la campagne, donc après le moment où le système doit répondre à un candidat qui formule encore son vœu. Ce n'est pas une fuite temporelle au sens strict, puisque la variable précède la décision d'admission. C'est une inadéquation au cas d'usage : elle existe avant l'admission, mais après le moment où le système doit répondre.</p>
+        <p>Par ailleurs, la clé de formation <code>cod_aff_form</code>, grain de l'analyse, est absente des millésimes 2018 et 2019.</p>
+        <h3>Décision</h3>
+        <p><code>voe_tot</code> de la session courante n'entre pas dans les variables du modèle : seule une version décalée d'au moins une session est éligible.</p>
+        <p>La clé de formation est reconstruite pour 2018 et 2019 à partir de <code>g_ta_cod</code>, qui coïncide exactement avec <code>cod_aff_form</code> sur les millésimes où les deux coexistent. Couverture : 92,4 % en 2018, 94,6 % en 2019. Taux de jointure d'une session à la suivante : de 82 % à 95 %, vérifiés par un test à chaque exécution.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Conserver <code>voe_tot</code> tel quel</span>
+            <p>Excellente performance en évaluation rétrospective, inutilisable en production.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Retirer purement la tension du modèle</span>
+            <p>Cela jette une information utile : la tension décalée d'une session reste disponible et porte une part du signal.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Abandonner le suivi entre sessions, faute de clé stable en 2018-2019</span>
+            <p>Écartée après vérification : <code>g_ta_cod</code> comble le manque.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Le test anti-fuite couvre cette classe d'inadéquation, en plus de la fuite temporelle au sens strict. Avec une jointure entre sessions de 82 % à 95 %, une part des formations n'aura pas de tension décalée fiable : elle est traitée par une valeur manquante explicite, pas par une imputation.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un taux de jointure sous 80 % sur les sessions les plus récentes (2024-2025) : la variable décalée perdrait trop de couverture et devrait être retirée.</p>
+          </div>
+        </div>
+        <p>Reproduit par <code>notebooks/02-jgk-eda-ecarts-selectivite.ipynb</code>, sur <code>data/raw/parcoursup/</code> (tous millésimes).</p>
+
+        <!-- ============================================================ 0011 -->
+        <h2 id="adr-0011">ADR 0011 — Substituts du genre mesurés et dispositif d'équité à trois niveaux</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Blocs 1 · 4</p>
+        <h3>Contexte</h3>
+        <p>Le genre est exclu des variables du modèle, et les substituts potentiels doivent être testés pour corrélation résiduelle. L'hypothèse de départ désignait l'académie et l'établissement d'origine comme principaux substituts.</p>
+        <p>L'analyse d'équité (<code>03-jgk-eda-equite-substituts.ipynb</code>) mesure l'information mutuelle entre six variables candidates et le sexe des admis, corrigée du nombre de modalités par permutation (5 tirages, graine 42) :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Variable</th><th>Part du genre expliquée (nette)</th></tr></thead>
+            <tbody>
+              <tr><td><code>cod_uai</code> (établissement)</td><td>28,9 %</td></tr>
+              <tr><td><code>fili</code> (filière)</td><td>19,5 %</td></tr>
+              <tr><td><code>ville_etab</code></td><td>10,2 %</td></tr>
+              <tr><td><code>select_form</code></td><td>5,6 %</td></tr>
+              <tr><td><code>dep</code></td><td>2,3 %</td></tr>
+              <tr><td><code>acad_mies</code> (académie)</td><td>1,4 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Ce résultat infirme l'hypothèse de départ : l'académie n'explique que 1,4 % du genre. Le deuxième substitut le plus puissant est la filière, à 19,5 %, une variable indispensable qu'on ne peut pas retirer sans détruire la capacité du modèle à distinguer les formations.</p>
+        <h3>Décision</h3>
+        <p>Un dispositif d'équité à trois niveaux, aucun ne suffisant seul :</p>
+        <ol>
+          <li><strong>Exclusion du genre à l'entrée</strong>, vérifiée par test.</li>
+          <li><strong>Mesure des substituts</strong>, à rejouer à chaque évolution notable du jeu de variables.</li>
+          <li><strong>Audit a posteriori sur les prédictions</strong> : la seule vérification qui porte sur ce qui compte, l'écart de traitement produit, et non les corrélations d'entrée.</li>
+        </ol>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Retirer aussi la filière par précaution</span>
+            <p>Elle structure l'accessibilité (écart médian de +1,1 à +42,3 points selon la filière). La retirer détruirait la capacité prédictive pour un gain d'équité qui reste à démontrer.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Se fier au seul retrait du genre et de ses substituts directs</span>
+            <p>La mesure montre que l'exclusion ne suffit pas : la filière reconstitue déjà 19,5 % du genre.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Ne surveiller que l'académie, comme prévu au départ</span>
+            <p>La mesure la place au dernier rang des six variables testées.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>L'audit d'équité doit détecter un écart de prédiction par sexe même en l'absence de toute variable de genre : c'est précisément le scénario que ce résultat rend probable, via la filière. La mesure des substituts doit être rejouée sur le jeu de variables finalement retenu (<a href="#adr-0013">ADR 0013</a>), avec la même correction de cardinalité : sans elle, le score de <code>cod_uai</code> était artificiellement doublé. Résultats de l'audit dans <a href="modele.html">Modèle</a>.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un ratio d'impact disparate significatif porté par la filière. Son maintien serait alors réexaminé, en mettant en balance la perte de performance et le gain d'équité mesuré.</p>
+          </div>
+        </div>
+        <p>Reproduit par <code>notebooks/03-jgk-eda-equite-substituts.ipynb</code>, sur <code>data/raw/parcoursup/</code> (session 2025).</p>
+
+        <!-- ============================================================ 0012 -->
+        <h2 id="adr-0012">ADR 0012 — Révision du protocole d'évaluation : six sessions exploitables, conservation de 2020</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Bloc 4 · remplace la répartition temporelle (entraînement 2018-2023) envisagée avant l'analyse de stabilité</p>
+        <h3>Contexte</h3>
+        <p>L'analyse de stabilité entre millésimes (<code>04-jgk-eda-stabilite-millesimes.ipynb</code>) établit que le numérateur du label ventilé par type de baccalauréat (<code>prop_tot_{bg|bt|bp}[_brs]</code>) n'existe qu'à partir de la session 2020. Le label n'est donc calculable que sur six sessions (2020-2025), pas huit.</p>
+        <p>La répartition envisagée jusque-là (entraînement 2018-2023) aurait placé deux sessions sans cible réelle dans le jeu d'entraînement, en violation du critère 4.2 (cible observée, non simulée). Le volume exploitable réel est de 440 030 cellules sur 2020-2025 (67 768 · 71 080 · 72 784 · 74 831 · 76 408 · 77 159), contre 560 000 à 625 000 annoncées en supposant huit sessions.</p>
+        <p>Deux ruptures de série affectent par ailleurs des variables candidates sur cette période, sans toucher le label : les mentions au baccalauréat (2020, barème modifié) et la part de vœux boursiers (rupture 2019-2020, retour proche du niveau antérieur en 2025).</p>
+        <h3>Décision</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Jeu</th><th>Sessions</th><th>Cellules</th></tr></thead>
+            <tbody>
+              <tr><td>Entraînement</td><td>2020-2023</td><td>286 463</td></tr>
+              <tr><td>Validation</td><td>2024</td><td>76 408</td></tr>
+              <tr><td>Test</td><td>2025</td><td>77 159</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>2020 est conservée dans l'entraînement ; les variables dérivées des mentions sont écartées ou signalées comme contaminées pour 2020 et 2021. Trois réserves sont écrites avant tout résultat de modèle (détaillées dans <a href="modele.html">Modèle</a>) : mentions contaminées en 2020-2021 ; métriques ventilées par statut boursier à interpréter avec prudence ; dégradation attendue entre validation et test, à ne pas imputer d'emblée au modèle.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Maintenir 2018-2023 en tolérant l'absence de cible sur 2018-2019</span>
+            <p>Cela viole le critère 4.2.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Un label de substitution pour 2018-2019, construit sur <code>acc_bg</code></span>
+            <p><code>acc</code> mesure l'acceptation, pas l'admission : même raison qu'à l'<a href="#adr-0009">ADR 0009</a>.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Écarter aussi 2020, à cause de la rupture sur les mentions</span>
+            <p>Vérifié après coup : l'anomalie porte sur des variables dérivées des mentions, pas sur la cible (tension médiane et masses aux bornes alignées sur les autres sessions). Écarter 2020 aurait réduit l'entraînement d'un quart sans fondement mesuré.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Le volume d'entraînement (286 463 cellules) est inférieur à celui qu'auraient donné huit sessions, mais chaque cellule utilisée porte une cible réellement observée.</p>
+        <p>La cible n'est pas stationnaire : le taux agrégé baisse de 40,5 % à 36,7 % entre 2020 et 2025, pendant que la moyenne des taux par formation monte de 0,491 à 0,522. Le suivi de dérive doit donc utiliser la même définition que celle apprise par le modèle, la moyenne par formation, sous peine de conclure à l'inverse de la réalité (voir l'<a href="#adr-0018">ADR 0018</a>). Le volume du label porte sur six sessions ; le fichier Parcoursup brut, lui, en couvre bien huit.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un export rétrospectif de Parcoursup qui publierait le numérateur ventilé par type de bac pour 2018-2019.</p>
+          </div>
+        </div>
+        <p>Reproduit par <code>notebooks/04-jgk-eda-stabilite-millesimes.ipynb</code>, sur <code>data/raw/parcoursup/</code> (tous millésimes).</p>
+
+        <!-- ============================================================ 0013 -->
+        <h2 id="adr-0013">ADR 0013 — Décision des variables : liste blanche sur la session prédite, décalage d'une session pour tout le reste</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Bloc 4 · applique, sans les rouvrir, les ADR <a href="#adr-0009">0009</a>, <a href="#adr-0010">0010</a>, <a href="#adr-0011">0011</a> et <a href="#adr-0012">0012</a>, colonne par colonne, à l'ensemble du fichier Parcoursup</p>
+        <h3>Contexte</h3>
+        <p>Il restait à décider, pour chaque colonne du fichier Parcoursup, si elle entre dans le modèle et sous quelle forme. Périmètre mesuré sur les huit millésimes : 128 colonnes vues au moins une fois (de 85 en 2018 à 118 de 2021 à 2025), dont 83 communes aux huit sessions et 59 remplies à plus de 99 % partout.</p>
+        <p>Trois contraintes encadrent la décision :</p>
+        <ul>
+          <li>Le système répond à un lycéen qui formule encore ses vœux, entre janvier et mars. Le critère d'exclusion est donc « inconnu au moment où le lycéen formule ses vœux », plus large que « postérieur à l'admission » (<a href="#adr-0010">ADR 0010</a>).</li>
+          <li>Le split temporel 2020-2023 / 2024 / 2025 (<a href="#adr-0012">ADR 0012</a>) rend piégeuse toute colonne dont la disponibilité change dans cette fenêtre.</li>
+          <li>L'exclusion du genre ne suffit pas : la filière reconstitue déjà 19,5 % de la féminisation (<a href="#adr-0011">ADR 0011</a>).</li>
+        </ul>
+        <h3>Décision</h3>
+        <p>Une liste blanche plutôt qu'une liste noire. Sur la session prédite, je n'autorise que les colonnes lisibles à ce moment-là ; tout le reste est décalé d'une session, ou exclu par défaut tant qu'il n'a pas été classé.</p>
+
+        <h4>Liste blanche de la session prédite : neuf attributs de catalogue publiés avant la campagne</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Colonne</th><th>Ce qu'elle porte</th><th>Modalités (2025)</th></tr></thead>
+            <tbody>
+              <tr><td><code>fili</code></td><td>filière</td><td>11</td></tr>
+              <tr><td><code>fil_lib_voe_acc</code></td><td>filière détaillée</td><td>438</td></tr>
+              <tr><td><code>form_lib_voe_acc</code></td><td>type de formation</td><td>53</td></tr>
+              <tr><td><code>select_form</code></td><td>sélective ou non</td><td>2</td></tr>
+              <tr><td><code>contrat_etab</code></td><td>public, privé sous contrat, hors contrat</td><td>4</td></tr>
+              <tr><td><code>tri</code></td><td>université, lycée, autre</td><td>3</td></tr>
+              <tr><td><code>dep</code></td><td>département</td><td>106</td></tr>
+              <tr><td><code>acad_mies</code></td><td>académie</td><td>33</td></tr>
+              <tr><td><code>region_etab_aff</code></td><td>région</td><td>19</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Aucune ne compte de vœux, de propositions ou d'admis. S'y ajoutent les deux dimensions de la cellule (type de bac, statut boursier), portées par la structure du label et non par une colonne.</p>
+
+        <h4>Variables décalées d'une session : trente-cinq colonnes</h4>
+        <p>Tous les compteurs de la session N-1 : capacité, vœux, candidats classés, propositions, admis, académie d'origine, calendrier, rang du dernier appelé. Le décalage est licite parce que le fichier du millésime 2024 porte, sur le catalogue du ministère, une dernière modification au 16 janvier 2025, date d'ouverture de la campagne 2025.</p>
+        <p>Réserve : cette métadonnée donne la dernière modification, pas la première publication (le millésime 2023 a été révisé après la phase de vœux 2024). L'écart n'est pas mesurable avec les données dont je dispose ; je le déclare comme limite au lieu de l'ignorer.</p>
+
+        <h4>Variables de mention : en réserve, écartées par défaut</h4>
+        <p>Huit colonnes : <code>acc_sansmention</code>, <code>acc_ab</code>, <code>acc_b</code>, <code>acc_tb</code>, <code>acc_mention_nonrenseignee</code>, <code>acc_bg_mention</code>, <code>acc_bt_mention</code>, <code>acc_bp_mention</code>. Le bac 2020, délivré en contrôle continu, fait passer les mentions « très bien » de 7,4 % à 11,8 %, sans retour au niveau antérieur en 2021. Décalées d'une session, ces variables contamineraient les sessions cibles 2021 et 2022, soit deux des quatre sessions d'entraînement. Elles sont écartées du jeu de référence et ne seront réintroduites que si l'ablation démontre un gain.</p>
+
+        <h4>Exclusions définitives : soixante-treize colonnes</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Motif</th><th>Nb</th><th>Raison</th></tr></thead>
+            <tbody>
+              <tr><td>Interdites</td><td>4</td><td>Ventilations par sexe (<code>pct_f</code>, <code>voe_tot_f</code>…) : le genre ne sert qu'à l'audit a posteriori</td></tr>
+              <tr><td>Substituts</td><td>3</td><td><code>cod_uai</code>, <code>ville_etab</code>, <code>g_olocalisation_des_formations</code> (voir ci-dessous)</td></tr>
+              <tr><td>Instabilité</td><td>22</td><td>Disponibilité qui change dans la fenêtre 2020-2025 (ex. <code>*_id_paysage</code> : environ 47 % de 2021 à 2024, vide en 2025)</td></tr>
+              <tr><td>Complétude non aléatoire</td><td>10</td><td>Renseignées sur 7 % à 47 % des lignes, et pas au hasard (ex. <code>acc_term</code> : non applicable hors BTS et CPGE)</td></tr>
+              <tr><td>Hors périmètre</td><td>10</td><td>Décrivent les autres terminales et la phase complémentaire, hors du label</td></tr>
+              <tr><td>Redondance</td><td>23</td><td>Recalculables depuis une colonne retenue (règle : effectifs gardés, pourcentages écartés)</td></tr>
+              <tr><td>Cardinalité</td><td>1</td><td><code>lib_comp_voe_ins</code> : 11 891 modalités pour 14 252 lignes, un quasi-identifiant</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Sur la redondance, la vérification a corrigé une erreur que j'avais d'abord écrite : <code>pct_bours</code> n'est pas <code>acc_brs / acc_tot</code>, l'écart atteint 97,5 points au maximum. Le dénominateur réel est <code>acc_neobac</code> (les néo-bacheliers). J'ai vérifié la reconstitution exacte des dix-neuf colonnes de pourcentage à 0,500 point près (l'arrondi) sur la session 2025, avec deux dénominateurs possibles (<code>acc_neobac</code> ou <code>acc_tot</code>). La leçon : on ne rattache jamais un pourcentage à son dénominateur d'après le nom.</p>
+
+        <h4>L'arbitrage sur <code>cod_uai</code> et <code>ville_etab</code></h4>
+        <p><code>cod_uai</code> est le premier substitut du genre mesuré (28,9 % net) et pourrait sembler indispensable : la réputation d'un établissement pèse sur la sélectivité. Je l'exclus pour deux raisons indépendantes. Sa cardinalité (4 058 établissements) pousserait le modèle à mémoriser l'établissement au lieu d'apprendre une règle transférable. Et c'est l'association la plus forte mesurée avec la féminisation. L'information ne disparaît pas complètement : les variables décalées, attachées à la formation, en portent une partie. C'est pourquoi le dispositif d'équité de l'<a href="#adr-0011">ADR 0011</a> ne repose pas sur l'exclusion seule.</p>
+        <p><code>ville_etab</code> (10,2 % net) est plus simple à trancher : apport métier faible, puisque département, académie et région sont déjà retenus, et colonne absente de la session 2020. <code>g_olocalisation_des_formations</code>, ses coordonnées exactes, la suit par cohérence.</p>
+
+        <h4>Une conséquence non anticipée</h4>
+        <p><code>prop_tot_*</code> ventilé par type de bac n'existe pas avant 2020 (<a href="#adr-0012">ADR 0012</a>). Décalé d'une session, il manque donc pour la session cible 2020 : la variable la plus prédictive du jeu est absente pour un quart des sessions d'entraînement. Ces valeurs restent manquantes de façon explicite, sans imputation ; LightGBM traite nativement l'absence. La baseline (taux de la session précédente) n'est mesurable que sur 2021-2025.</p>
+
+        <h4>Où vit la décision</h4>
+        <p>La classification des 128 colonnes est écrite dans <code>configs/base.yaml</code> (section <code>modele.variables</code>), typée par <code>VariablesConfig</code>. Trois tests s'appuient dessus :</p>
+        <ul>
+          <li>toute colonne citée doit exister réellement ;</li>
+          <li>toute colonne d'un millésime doit être classée : un millésime futur qui en ajoute une fait échouer la suite tant qu'elle n'est pas décidée ;</li>
+          <li>aucune colonne de résultat ne doit figurer dans la liste blanche.</li>
+        </ul>
+        <p>Vérifiés par mutation : colonne mal orthographiée, colonne retirée du classement, <code>voe_tot</code> déplacé vers la liste blanche, split rouvert à 2018. Chaque mutation fait échouer le test qui la vise, et lui seul.</p>
+
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Une liste noire : lister les exclusions et prendre le reste</span>
+            <p>Une colonne ajoutée par un millésime futur entrerait dans le modèle sans avoir été examinée.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Décaler aussi les attributs de catalogue</span>
+            <p>La filière ou le caractère sélectif sont publiés avant la campagne. Les décaler ferait perdre les formations nouvelles (5 % à 18 % du catalogue selon la paire de sessions), sans gain de sûreté.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Décaler de deux sessions plutôt qu'une</span>
+            <p>Écarté par défaut, conservé comme repli si l'écart entre version révisée et version publiée en janvier s'avérait important.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Le jeu de référence compte 9 colonnes lues sur la session prédite, 35 colonnes décalées, 2 dimensions de cellule et 8 colonnes de mention en réserve. C'est peu au regard des 128 colonnes disponibles, et c'est voulu : chaque variable retenue doit pouvoir être justifiée une par une. Le niveau 2 du dispositif d'équité (<a href="#adr-0011">ADR 0011</a>) doit être rejoué sur ce jeu final. L'ablation doit mesurer trois retraits : les mentions, <code>cod_uai</code>, et les variables décalées dans leur ensemble.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuils de bascule</span>
+            <p><strong>Mentions</strong> : un gain d'erreur absolue moyenne pondérée supérieur à 0,01 à l'ablation, sur les sessions non contaminées. <strong><code>cod_uai</code></strong> : une perte mesurée à l'ablation, traitée alors par un encodage par la cible calculé sur les seuls plis d'entraînement, jamais par réintroduction de l'identifiant brut. <strong>Décalage d'une session</strong> : un écart entre version révisée et version publiée en janvier devenu mesurable et important.</p>
+          </div>
+        </div>
+        <h3>Ce que je n'ai pas tranché</h3>
+        <p><code>capa_fin</code>. Parcoursup affiche un nombre de places sur chaque fiche pendant la campagne, mais rien dans les fichiers dont je dispose ne prouve que la colonne « capacité finale » du fichier de résultats vaut la capacité affichée en janvier. Par prudence, je la classe en variable décalée. Trancher demanderait de comparer la fiche affichée pendant la campagne au fichier publié ensuite, une vérification que je n'ai pas faite. Si les deux valeurs coïncident, <code>capa_fin</code> passe en liste blanche : c'est le dénominateur direct de la tension, mon meilleur prédicteur.</p>
+        <p>Reproduit par les quatre carnets de <code>notebooks/</code> pour les mesures citées, et par une commande d'inventaire des 128 colonnes sur <code>data/raw/parcoursup/</code>.</p>
+
+        <!-- ============================================================ 0014 -->
+        <h2 id="adr-0014">ADR 0014 — Pandera plutôt que Great Expectations pour les contrôles qualité</h2>
+        <p><span class="badge ok">Acceptée</span> le 29 août 2026 · Bloc 3</p>
+        <h3>Contexte</h3>
+        <p>Le critère 3.5 exige des contrôles qualité bloquants sur trois sources : Parcoursup, Sirene, référentiels. La structure du projet évoquait Great Expectations comme piste ; j'ai mesuré le coût réel de chaque option contre le volume réel des données.</p>
+        <ul>
+          <li>Parcoursup tient dans 82 Mo pour huit fichiers (14 252 lignes au plus par millésime).</li>
+          <li>Les référentiels comptent quelques dizaines de milliers de lignes.</li>
+          <li>Sirene (43,9 millions de lignes, 2,2 Go) n'a jamais besoin d'être chargé en mémoire : il est lu par lots, projetés sur 9 colonnes.</li>
+        </ul>
+        <p>Mesuré avec <code>pip install --dry-run</code> sur l'environnement du dépôt : Great Expectations pèse 5,7 Mo et ajoute 9 dépendances directes (<code>altair</code>, <code>cryptography</code>, <code>jsonschema</code>…). Pandera pèse 447 Ko et n'en ajoute qu'une (<code>typeguard</code>), le reste (<code>pandas</code>, <code>numpy</code>, <code>pydantic</code>) étant déjà présent.</p>
+        <h3>Décision</h3>
+        <p>Pandera pour <code>parcoursup.py</code> : un DataFrame par millésime, <code>.validate(df, lazy=True)</code>. Pour <code>sirene.py</code> (flux par lots) et <code>referentiels.py</code>, des compteurs et vérifications <code>pandas</code> écrits à la main, sans dépendance supplémentaire, pour un coût de développement équivalent à l'accumulation manuelle qu'un schéma Pandera aurait de toute façon exigée.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Great Expectations</span>
+            <p>Pertinent pour un entrepôt partagé entre plusieurs équipes et suivi dans la durée. Ici : neuf dépendances nouvelles, dont plusieurs à compilation native, pour valider un fichier de 82 Mo et un flux Sirene qui n'est de toute façon jamais un DataFrame unique.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Pandera pour Sirene aussi</span>
+            <p>Un schéma Pandera couvrirait un lot et non le fichier entier ; les compteurs de complétude devraient de toute façon être accumulés à la main.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Ce que j'accepte de perdre : la documentation HTML générée automatiquement, l'historique persisté des validations comme livrable en soi, et un magasin de contextes partageable entre projets. Aucun de ces éléments n'est exigé par le critère 3.5, qui porte sur la détection, la validation et le blocage, pas sur la traçabilité inter-équipes des contrôles. Le blocage est décrit dans <a href="pipeline.html">Pipeline de données</a>.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un entrepôt partagé entre plusieurs équipes et suivi dans la durée, où la documentation générée et l'historique des validations deviendraient eux-mêmes un livrable attendu.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0015 -->
+        <h2 id="adr-0015">ADR 0015 — Modèle en étoile de la couche gold : grain, SCD 2 et moteur</h2>
+        <p><span class="badge ok">Acceptée</span> le 30 août 2026 · Bloc 2 · complète l'<a href="#adr-0001">ADR 0001</a> (ELT), s'appuie sur les ADR <a href="#adr-0009">0009</a> (label) et <a href="#adr-0012">0012</a> (six sessions exploitables)</p>
+        <h3>Contexte</h3>
+        <p>La couche silver (<code>stg_parcoursup</code>) est une table unique de 104 274 lignes et 128 colonnes, une ligne par formation-session. Elle est réconciliée et typée, mais pas modélisée pour l'entraînement, l'analyse ou la supervision. Trois contraintes commandent la couche gold :</p>
+        <ul>
+          <li>le label est un taux par cellule (formation × session × type de bac × boursier) : une ligne silver se déplie en jusqu'à six cellules ;</li>
+          <li>les attributs d'une formation changent d'une session à l'autre (capacité, filière, sélectivité) ;</li>
+          <li>la volumétrie est petite (440 030 cellules de faits, 43 858 versions de formations) : ce n'est pas une échelle qui impose un entrepôt distribué.</li>
+        </ul>
+        <h3>Décision</h3>
+        <ol>
+          <li><strong>Le grain de la table de faits est la cellule</strong> <code>(session, cod_aff_form, type_bac, boursier)</code>, portée après résolution des dimensions par <code>(session, sk_formation, sk_profil)</code>. Unicité vérifiée sur les 440 030 lignes.</li>
+          <li><strong>Une étoile</strong> : une table de faits, quatre dimensions, des clés de substitution entières.</li>
+          <li><strong>SCD 2 (historisation par versions) sur <code>dim_formation</code></strong> : une nouvelle version naît dès qu'un des huit attributs suivis change (<code>fili</code>, <code>form_lib_voe_acc</code>, <code>fil_lib_voe_acc</code>, <code>select_form</code>, <code>contrat_etab</code>, <code>tri</code>, <code>capa_fin</code>, <code>cod_uai</code>). Résultat mesuré : 43 858 versions pour 16 618 formations, 2,6 versions en moyenne, 6 au maximum. <code>dim_territoire</code> reste en SCD 1 (écrasement) : l'affectation département-académie-région ne varie pas dans les données observées.</li>
+          <li><strong>Pas de <code>dim_etablissement</code> séparée</strong> : aucune formation ne change d'établissement gérant d'une session à l'autre dans les données observées. <code>cod_uai</code> reste un attribut de <code>dim_formation</code>, suivi en SCD 2 comme les autres, et jamais une variable du modèle (ADR <a href="#adr-0011">0011</a> et <a href="#adr-0013">0013</a>).</li>
+          <li><strong>DuckDB comme moteur, Parquet comme format d'échange</strong> : les tables gold sont matérialisées en Parquet dans <code>data/processed/parcoursup/</code>, puis rejouées par dbt dans une base DuckDB locale pour le lignage et les tests.</li>
+          <li><strong>2018 et 2019 filtrées par la disponibilité de la donnée, pas par un millésime écrit en dur</strong> : la condition d'exploitabilité (dénominateur renseigné et positif, numérateur renseigné) exclut d'elle-même les deux sessions. Elles restent présentes dans <code>dim_session</code>, avec <code>label_disponible</code> à <code>False</code>.</li>
+        </ol>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  F[fait_admission<br/>440 030 lignes<br/>grain : la cellule]
+  DF[dim_formation<br/>SCD 2 · 43 858 versions]
+  DT[dim_territoire<br/>SCD 1 · 1 448 lignes]
+  DP[dim_profil_candidat<br/>6 profils]
+  DS[dim_session<br/>8 sessions]
+  DF --- F
+  DT --- F
+  DP --- F
+  DS --- F
+</pre>
+        </div>
+        <h3>Alternatives écartées</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Option</th><th>Pourquoi je l'ai écartée</th></tr></thead>
+            <tbody>
+              <tr><td>Grain formation-session (celui de silver)</td><td>Six couples de mesures par ligne : les profils deviendraient des colonnes, et l'ajout d'un septième serait une migration de schéma.</td></tr>
+              <tr><td>Ligne dépliée par genre</td><td>Ferait entrer le genre dans la table que lit l'entraînement, ce qu'interdit l'<a href="#adr-0011">ADR 0011</a>.</td></tr>
+              <tr><td>Table plate dénormalisée</td><td>Attributs recopiés jusqu'à six fois par session, historisation impossible à faire proprement, et moins lisible pour le critère 2.1 qui demande une modélisation justifiée. Elle reste disponible en aval, comme produit de la construction des variables.</td></tr>
+              <tr><td>Flocon (sous-dimensions du département)</td><td>Économise quelques kilo-octets et coûte deux jointures de plus, pour une table de 1 448 lignes : un non-sujet.</td></tr>
+              <tr><td>SCD 1 sur <code>dim_formation</code></td><td>Écraserait l'historique : la capacité 2025 serait attribuée à la cellule 2020, une fuite de données rétrospective.</td></tr>
+              <tr><td>PostgreSQL comme entrepôt gold</td><td>La table de faits pèse 3,85 Mo, est reconstruite en totalité à chaque exécution, jamais mise à jour ligne à ligne, sans accès concurrent : un serveur et une migration seraient hors de proportion.</td></tr>
+              <tr><td>Entrepôt distant managé (BigQuery, Snowflake)</td><td>Hors sujet à cette volumétrie, et contraire à la contrainte de souveraineté déjà arbitrée.</td></tr>
+              <tr><td>Filtre explicite <code>session &gt;= 2020</code></td><td>Deviendrait faux le jour où le ministère republierait ces deux millésimes, ou si une session future présentait la même lacune.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Conséquences</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Table</th><th>Lignes</th><th>Colonnes</th></tr></thead>
+            <tbody>
+              <tr><td><code>fait_admission</code></td><td>440 030</td><td>9</td></tr>
+              <tr><td><code>dim_formation</code></td><td>43 858</td><td>12</td></tr>
+              <tr><td><code>dim_territoire</code></td><td>1 448</td><td>6</td></tr>
+              <tr><td><code>dim_profil_candidat</code></td><td>6</td><td>4</td></tr>
+              <tr><td><code>dim_session</code></td><td>8</td><td>2</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le grain est unique, et aucune cellule ne porte un taux hors de [0,1] : c'est vérifié à la construction et rejoué comme test dbt. Le label est calculé une seule fois, dans la table de faits. Au moment de la décision, <code>dbt run</code> puis <code>dbt test</code> donnaient 26 nœuds et 26 succès, et la suite du dépôt comptait 260 tests, tous verts.</p>
+        <p>Coût assumé : le calcul de <code>dim_formation</code> parcourt les versions en Python plutôt qu'en SQL ensembliste. C'est négligeable à 16 618 formations ; à un ordre de grandeur de plus, il faudra le réécrire en fonction de fenêtre. Schéma détaillé dans <a href="architecture.html">Architecture</a>.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuils de bascule</span>
+            <p><strong>Grain</strong> : une ventilation supplémentaire du numérateur publiée par le ministère. <strong>SCD 2</strong> : si aucun des huit attributs suivis n'entrait ni dans le modèle ni dans l'écran de supervision. <strong>DuckDB et Parquet</strong> : une couche gold au-delà de quelques dizaines de gigaoctets, plusieurs services lisant la même table en concurrence, ou un besoin de mise à jour transactionnelle.</p>
+          </div>
+        </div>
+        <p>Reproduit par <code>make gold</code> et <code>make transform-lignage</code>, sur <code>data/interim/parcoursup/silver.parquet</code>.</p>
+
+        <!-- ============================================================ 0016 -->
+        <h2 id="adr-0016">ADR 0016 — Polars en exécution courante, Spark implémenté et branché sur le mode cluster</h2>
+        <p><span class="badge ok">Acceptée</span> le 30 août 2026 · Bloc 2 · prolonge l'<a href="#adr-0002">ADR 0002</a></p>
+        <h3>Contexte</h3>
+        <p>L'agrégat Sirene commune × NAF lit <code>StockEtablissement.parquet</code> (43 896 818 lignes, 54 colonnes, 2,20 Go), le réduit à 9 colonnes, le filtre et le regroupe en 1 929 179 cellules. Le critère 2.4 exige des structures adaptées au volume, ce qui justifie un job Spark à cette étape.</p>
+        <p>Mesure sur ce poste, avec le même fichier, les mêmes 9 colonnes, le même filtre et le même regroupement :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Moteur</th><th>Durée</th><th>Résultat</th></tr></thead>
+            <tbody>
+              <tr><td>Polars (<code>scan_parquet</code>, évaluation paresseuse)</td><td>18,2 s</td><td>2 423 308 actifs-employeurs, 1 929 179 cellules</td></tr>
+              <tr><td>PySpark (<code>local[*]</code>)</td><td>87,0 s (18,0 s de démarrage JVM + 69,0 s)</td><td>identique</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Spark est 4,8 fois plus lent que Polars sur ce volume : la JVM et le shuffle entre exécuteurs locaux coûtent plus qu'ils ne rapportent tant que le calcul tient sur un seul nœud. Ce qui empêche de conclure que Spark est inutile : <code>StockEtablissementHistorique</code>, l'une des quatre sources retenues, compte 95 865 102 lignes, et le stock est republié, donc grossit, chaque mois.</p>
+        <h3>Décision</h3>
+        <p>Les deux moteurs sont implémentés et sélectionnés par la configuration : <code>execution.moteur_volume: local</code> exécute Polars, <code>moteur_volume: cluster</code> exécute Spark. Les deux s'appuient sur un seul module de définitions (grain, colonnes, règles métier), et un test compare leurs sorties ligne à ligne sur le même échantillon.</p>
+        <p>À la date de la décision, dev et staging étaient en <code>local</code> et la prod en <code>cluster</code>. L'<a href="#adr-0019">amendement de l'ADR 0019</a> (15 septembre 2026) a depuis placé la prod en <code>local</code>, conformément à la conclusion ci-dessous.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Spark partout, y compris en développement</span>
+            <p>La mesure dit 4,8 fois plus lent pour un résultat identique, sans aucun bénéfice sur ce volume.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Polars partout, Spark jamais implémenté</span>
+            <p>Le critère 2.4 demande une structure distribuée réelle, pas une promesse écrite dans un ADR. Et la trajectoire de volume (historique à 95,9 millions de lignes, republication mensuelle) rend la question du passage à l'échelle bien réelle.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Le chemin réellement emprunté aujourd'hui, en développement comme en intégration continue, est Polars : je l'assume comme tel au lieu de le cacher derrière un choix « par défaut ». Le job Spark existe, il est testé, et il produit le même résultat que Polars sur le même échantillon. Le critère 2.4 est prouvé par du code qui s'exécute, pas par une intention.</p>
+        <p>Limite de plateforme, sans rapport avec l'arbitrage : sur ce poste Windows, l'écrivain Parquet natif de Spark échoue faute de <code>winutils.exe</code>. Le résultat, déjà réduit à 12,6 Mo, est ramené au pilote puis écrit par la primitive atomique du projet, un choix qui reste valide sur un cluster Linux.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>La fusion de plusieurs des quatre fichiers Sirene retenus (le stock courant avec l'historique, qui dépasse déjà 95,9 millions de lignes), ou tout calcul dont le travail intermédiaire ne tient plus dans la mémoire d'un poste de développement. Tant que ce seuil n'est pas franchi, Polars reste le chemin de production réel.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0017 -->
+        <h2 id="adr-0017">ADR 0017 — Chaîne NAF ↔ ROME ↔ formation sur trois sources réelles, manque Parcoursup déclaré</h2>
+        <p><span class="badge warn">Remplacée en partie par l'ADR 0020</span> Acceptée le 30 août 2026 · Bloc 3</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Décision remplacée en partie</span>
+            <p>La construction de la chaîne IDÉO → RNCP → ROME → NAF reste en vigueur. Le raccordement à Parcoursup, déclaré manquant ici, est désormais tranché par l'<a href="#adr-0020">ADR 0020</a> : un appariement textuel exact et mesuré, et un terme déclaré indisponible partout ailleurs. Le texte ci-dessous est conservé tel qu'il a été accepté le 30 août 2026.</p>
+          </div>
+        </div>
+        <h3>Contexte</h3>
+        <p>Le terme « débouchés » du score doit relier une formation à une activité économique, le code NAF de l'agrégat Sirene. Aucune table officielle ne relie directement NAF et formation. NAF décrit l'activité d'un établissement ; ROME (France Travail) décrit un métier ; RNCP relie une certification à un ou plusieurs métiers ROME ; IDÉO (ONISEP) relie une formation à une certification RNCP. Ce sont trois sources publiques, vérifiées séparément : Licence Ouverte v2.0 pour RNCP et France Travail, ODbL pour IDÉO (voir <a href="registres.html">Registres</a>).</p>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  I[Formation IDÉO<br/>ONISEP] -->|code RNCP · 65,72 %| R[Certification RNCP<br/>France Compétences]
+  R -->|codes ROME| M[Métier ROME<br/>France Travail]
+  M -->|division NAF| N[Activité NAF<br/>agrégat Sirene]
+  P[Formation Parcoursup] -. aucune clé .-> I
+</pre>
+        </div>
+        <p>Mesuré sur les exports du 30/08/2026 :</p>
+        <ul>
+          <li>3 857 formations IDÉO sur 5 869 portent un code RNCP (65,72 %) ;</li>
+          <li>l'export ROME couvre 100 % de ses fiches ;</li>
+          <li>93,47 % des formations avec RNCP trouvent leur fiche dans l'export ROME ;</li>
+          <li>92,31 % des codes ROME de l'export RNCP se retrouvent dans la table France Travail ;</li>
+          <li>au total, la chaîne complète, d'une formation IDÉO à une division NAF, atteint 61,42 % (3 605 sur 5 869).</li>
+        </ul>
+        <p>Aucun des huit millésimes Parcoursup, ni <code>dim_formation</code>, ne porte de code RNCP, NSF ou ROME (vérifié par inspection directe des colonnes). La chaîne relie donc IDÉO à la NAF, pas Parcoursup à la NAF.</p>
+        <h3>Décision</h3>
+        <p>Je construis <code>naf_rome_formation.csv</code> sur les trois sources réelles disponibles, en déclarant le maillon Parcoursup manquant. La table relie une formation IDÉO à une ou plusieurs divisions NAF, via RNCP et ROME. La colonne d'état de certification (<code>rncp_actif</code>) est exposée, pas filtrée à cette étape.</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Appariement textuel des libellés (Parcoursup contre IDÉO) pour construire la table</span>
+            <p>C'est une correspondance floue, pas une jointure sur clé. Une table qui aurait l'air complète avec un maillon deviné serait pire qu'une table partielle assumée.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Correspondance à la sous-classe NAF (5 caractères)</span>
+            <p>Aucune source publique ne relie ROME à la sous-classe ; en inventer une plus fine reviendrait à fabriquer de la donnée.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>61,42 % du référentiel IDÉO atteint une division NAF ; 38,58 % n'a aucun débouché calculable dans l'état actuel des sources. Le raccordement à Parcoursup n'est pas simulé : tant qu'il n'existe pas, aucun score ne peut s'appuyer sur cette chaîne sans un maillon supplémentaire. La correspondance ROME/NAF reste à la division, ce qui fait perdre la granularité fine de l'activité. La façon dont le terme « débouchés » traite ce manque est tranchée par l'<a href="#adr-0020">ADR 0020</a>.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Une table ROME ↔ NAF à la sous-classe publiée par France Travail ou l'INSEE, ou un futur millésime Parcoursup portant un identifiant de certification.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0018 -->
+        <h2 id="adr-0018">ADR 0018 — Détection de dérive : PSI médian sur 46 variables, seuil à 0,20, sans Evidently</h2>
+        <p><span class="badge ok">Acceptée</span> le 1<sup>er</sup> septembre 2026 · Bloc 4</p>
+        <h3>Contexte</h3>
+        <p>Le critère 4.11 exige une détection de dérive avec un seuil documenté ; le critère 4.12, un réentraînement automatique qui s'appuie dessus. <code>configs/base.yaml</code> portait déjà <code>seuil_reentrainement: 0.20</code> en indice de stabilité de population (PSI), sans qu'aucune mesure sur les données réelles n'ait jamais confronté ce chiffre à une dérive observée.</p>
+        <p>Le modèle a par ailleurs un défaut déjà mesuré : il bat la baseline en validation 2024 (MAE pondérée 0,0690 contre 0,0727), mais la perd en test 2025 (0,0758 contre 0,0701), et sa calibration s'effondre (ECE de 0,0030 à 0,0371). Il fallait établir si le PSI, à ce seuil, aurait pu signaler ce défaut à l'avance.</p>
+        <h3>Ce que j'ai mesuré</h3>
+        <p>Sur la fenêtre où le label existe (2020-2025), en comparant la référence à la validation puis au test :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Signal</th><th>PSI référence → validation</th><th>PSI référence → test</th></tr></thead>
+            <tbody>
+              <tr><td>Médiane des 46 variables</td><td>0,0061</td><td>0,0096</td></tr>
+              <tr><td>Cible (<code>taux</code>)</td><td>0,0115</td><td>0,0115</td></tr>
+              <tr><td>Prédictions du modèle</td><td>0,0174</td><td>0,0296</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Les comparaisons consécutives (session N contre N-1) calibrent le bruit « normal » : entre 0,0007 et 0,0106 selon la famille, à une exception près, 2020→2021 (0,063), qui recoupe l'anomalie documentée à l'<a href="#adr-0012">ADR 0012</a>.</p>
+        <p>Seules trois variables sur 46 dépassent seules le seuil de 0,20 dans au moins une comparaison, et il s'agit de dérive amont plutôt que d'un déplacement réel :</p>
+        <ul>
+          <li><code>region_etab_aff</code> : PSI canonisé 0,75, dû à un renommage de nomenclature entre sessions ; variable reléguée au rang 45/48 en importance.</li>
+          <li><code>select_form</code> : 0,35, dû à un libellé tronqué propre au seul millésime 2020, alors que la proportion réelle ne bouge presque pas (22,7 % en 2020, 23,9 % en 2025) ; la variable compte (rang 6/48).</li>
+          <li><code>fil_lib_voe_acc</code> : 0,23 à 0,31, un renouvellement réel des libellés de filière, plafonné à 30 catégories pour ne pas dominer le rapport.</li>
+        </ul>
+        <h3>Décision</h3>
+        <p>Le seuil reste 0,20, mais il s'applique à la <strong>médiane</strong> du PSI des 46 variables, jamais à leur maximum : appliqué au maximum, il se déclencherait en permanence à cause des deux artefacts ci-dessus. Les variables individuellement au-delà du seuil restent rapportées comme diagnostic de dérive amont, jamais comme déclencheur. Le PSI catégoriel est toujours calculé sur la forme canonisée (accents, casse et séparateurs neutralisés).</p>
+        <p>La dérive de la cible et celle des prédictions gouvernent aussi le déclenchement, à égalité avec la médiane des variables (OU logique). Sans cela, une dérive du concept pure, où P(Y|X) change sans que P(X) bouge, ne serait jamais vue.</p>
+<pre><code>réentraîner si  médiane(PSI des 46 variables) ≥ 0,20
+            ou  PSI(cible)       ≥ 0,20
+            ou  PSI(prédictions) ≥ 0,20</code></pre>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Alternative écartée : Evidently</span>
+            <p>Sa dernière version compatible entraîne un conflit de dépendances qui casse FastAPI (<code>ImportError: cannot import name 'MultipartSegment'</code>), reproduit et non contourné. Les fonctions de <code>models/derive_stats.py</code> produisent le même résultat sans cette dépendance.</p>
+          </div>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Écart assumé avec la grille d'évaluation</span>
+            <p>La grille du critère 4.11 cite des « rapports Evidently » comme preuve. Je n'utilise pas Evidently, pour la raison ci-dessus, et je l'assume. Les rapports de dérive sont produits par le code du projet, <code>src/edumatch/models/derive.py</code>, lancé par <code>make derive</code>. Chaque exécution produit :</p>
+            <ul>
+              <li>un rapport texte journalisé : médiane du PSI par comparaison, variables individuellement au-delà du seuil, dérive de la cible et des prédictions, verdict « Réentraînement recommandé : OUI / NON » ;</li>
+              <li>deux figures, <code>reports/figures/derive-variables.png</code> et <code>reports/figures/derive-trajectoire.png</code> ;</li>
+              <li>une exécution MLflow dans l'expérience <code>edumatch-derive</code>, avec le seuil, le verdict, les médianes et les PSI de la cible et des prédictions en métriques, et les deux figures en artefacts.</li>
+            </ul>
+            <p>Le test de Kolmogorov-Smirnov (KS) est calculé en complément du PSI, dans <code>models/derive_stats.py</code>.</p>
+          </div>
+        </div>
+        <h3>Ce que cette mesure ne permet pas de conclure</h3>
+        <p>À ce seuil, le PSI n'aurait pas signalé la dégradation connue entre validation et test : la dérive de la cible et des prédictions reste un ordre de grandeur sous 0,20. Deux lectures restent ouvertes. Soit le seuil est bien calibré et cette dégradation est une dérive du concept trop fine pour que le PSI la capture. Soit une partie de l'écart est un défaut de généralisation sur un split court plutôt qu'une dérive. Le PSI est un signal précoce sur les entrées et les sorties, pas un substitut à la mesure de performance réelle, qui reste tranchée par <code>models.evaluate</code> une fois la vérité terrain disponible. Résultats du modèle dans <a href="modele.html">Modèle</a>.</p>
+        <h3>Conséquences</h3>
+        <p>Corriger <code>select_form</code> et <code>region_etab_aff</code> à la source ferait retomber leur PSI sous 0,10 ; le seuil pourrait alors s'appliquer au maximum.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Une session future qui ferait franchir 0,20 à la médiane, à la cible ou aux prédictions sans cause amont identifiable. Ce serait le premier cas réel d'usage du seuil, à comparer à la MAE effectivement mesurée sur la session suivante.</p>
+          </div>
+        </div>
+        <p>Reproduit par <code>src/edumatch/models/derive.py</code> (<code>executer</code>), sur <code>data/processed/parcoursup/variables.parquet</code> ; commande <code>make derive</code>.</p>
+
+        <!-- ============================================================ 0019 -->
+        <h2 id="adr-0019">ADR 0019 — Airflow en production sur une instance Scaleway dédiée, pas sur le cluster Kapsule</h2>
+        <p><span class="badge info">Amendée</span> Acceptée le 15 septembre 2026, amendée le même jour (moteur de l'agrégat Sirene et contenu de l'image Airflow, sans remise en cause du choix de l'instance dédiée) · Blocs 2 · 3</p>
+        <h3>Contexte</h3>
+        <p>Le critère 3.12 exige une vidéo du pipeline en production, avec une panne et sa reprise. Le graphe existe et est testé : quatre DAG (Parcoursup annuel, Sirene mensuel, référentiels et purge d'audit quotidiens), avec une reprise décidée dans le code (jusqu'à 3 tentatives, à 60 s puis 120 s, uniquement pour une erreur transitoire, voir l'<a href="#adr-0006">ADR 0006</a>) et prouvée par test d'intégration.</p>
+        <p>Mais Airflow n'avait jamais tourné dans un vrai Airflow : le service de <code>docker-compose.yml</code> démarre en mode <code>standalone</code> sur SQLite, que la documentation d'Airflow déclare elle-même impropre à la production. Le socle Terraform provisionne un cluster Kapsule dont les manifestes ne déploient que l'API ; aucun fichier ne déploie Airflow dessus. Or le dossier de certification annonce que la vidéo montre « la même chaîne, provisionnée par Terraform » : filmer sur le poste de développement contredirait cette phrase, et une incohérence entre dossier et dépôt invalide un bloc à elle seule.</p>
+        <p>En instruisant cette décision, j'ai aussi trouvé un défaut valable quelle que soit l'option : <code>configs/prod.yaml</code> fixait le moteur de l'agrégat Sirene sur Spark, alors que l'image Airflow n'embarque ni Java ni PySpark. Le DAG Sirene aurait échoué en production ; déduit à la lecture du code, confirmé ensuite (voir l'amendement).</p>
+        <h3>Les chiffres qui servent à trancher</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Élément (tarifs Scaleway relevés le 15/09/2026)</th><th>Coût</th></tr></thead>
+            <tbody>
+              <tr><td>Instance DEV1-M (3 vCPU, 4 Go)</td><td>0,0202 €/h, environ 14,74 €/mois</td></tr>
+              <tr><td>Instance DEV1-L (4 vCPU, 8 Go)</td><td>0,04284 €/h, environ 31,27 €/mois</td></tr>
+              <tr><td>IPv4 flexible</td><td>0,005 €/h</td></tr>
+              <tr><td>Stockage bloc</td><td>0,000130 €/Go</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>La documentation d'Airflow 2.9.3 demande au moins 4 Go de mémoire pour sa pile Compose de référence. Sur le cluster Kapsule, la mémoire déjà réservée (API au pic et monitoring) atteint 2 368 Mi sur une capacité brute de 8 192 Mi. Y ajouter les 4 Go d'Airflow porte le total à 6 464 Mi, soit 79 % de la capacité brute, avant même le pic de la tâche Spark.</p>
+        <p>Deux chiffres restent inconnus, et je ne les invente pas : le pic mémoire réel de l'agrégation Sirene, et la mémoire que Kapsule réserve au système sur chaque nœud. Ils sont à mesurer au premier lancement.</p>
+        <h3>Décision</h3>
+        <p>En production, Airflow tourne sur une instance Scaleway dédiée de type DEV1-L, provisionnée par le même Terraform, sur le réseau privé du cluster :</p>
+        <ul>
+          <li>exécuteur <code>LocalExecutor</code>, base de métadonnées PostgreSQL ;</li>
+          <li>image tirée du registre privé et étiquetée par l'empreinte du commit ;</li>
+          <li>aucune interface exposée publiquement : accès par tunnel SSH.</li>
+        </ul>
+        <p>Coût : environ 40 €/mois si l'instance tourne en permanence, environ 0,35 € pour une séance de tournage de 6 heures.</p>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph TF[Scaleway · provisionné par Terraform]
+    subgraph K[Cluster Kapsule]
+      API[API FastAPI<br/>charge élastique · HPA]
+    end
+    subgraph V[Instance dédiée DEV1-L]
+      AF[Airflow<br/>LocalExecutor]
+      PG[(PostgreSQL<br/>métadonnées)]
+      AF --- PG
+    end
+    REG[Registre privé<br/>images par empreinte]
+  end
+  REG --> API
+  REG --> AF
+  OP[Exploitant] -->|tunnel SSH| AF
+</pre>
+        </div>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Airflow sur le cluster Kapsule (chart Helm ou manifestes)</span>
+            <p>79 % de la capacité brute du pool réservée avant même le pic Spark. Et le partage de données entre pods de tâches est impossible sur un stockage bloc <code>ReadWriteOnce</code> sans réécrire toutes les entrées-sorties vers le stockage objet : plusieurs jours de travail sur un socle jamais appliqué, incompatibles avec l'échéance du 24 septembre. Kubernetes reste le bon choix pour l'API, dont la charge est élastique (rapport de 1 à 6 pendant la campagne), pas pour un traitement périodique sur une seule machine.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Airflow local, filmé, en définissant la « production » par les données et la cadence</span>
+            <p>Coût nul, mais cela contredit la promesse du dossier et laisse le critère 3.12 à la merci d'une lecture stricte de « en production ». L'écart de coût avec l'instance dédiée (0,35 € par séance) ne justifie pas ce risque.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>Deux plans d'exécution, chacun à sa place : Kapsule sert l'API, dont la charge suit la campagne de vœux ; l'instance dédiée exécute le pipeline, dont la charge suit la cadence de publication des sources. Le diagramme C4 de niveau 2 (<a href="architecture.html">Architecture</a>) montre les deux.</p>
+        <ul>
+          <li><strong>Ce que j'assume de « Docker Compose en production »</strong> : la mise en garde de la documentation vise le démarrage rapide (SQLite, mots de passe par défaut, interface ouverte) ; aucun des trois n'est présent ici.</li>
+          <li><strong>Ce que je ne revendique pas</strong> : la haute disponibilité de l'ordonnanceur. Une instance arrêtée retarde une exécution mensuelle ; elle n'interrompt aucun service pour un utilisateur.</li>
+          <li>L'infrastructure reste éphémère, détruite après le tournage.</li>
+          <li>Le monitoring du pipeline (critère 3.7) n'est pas couvert par cette décision : c'est un point ouvert.</li>
+          <li>La reprise n'étant pas gérée par le mécanisme natif d'Airflow, la vidéo doit ouvrir le journal de la tâche pour la montrer.</li>
+        </ul>
+        <p>La panne se filme en trois temps (voir <a href="pipeline.html">Pipeline de données</a>) :</p>
+        <ol>
+          <li><strong>Coupure réseau pendant l'ingestion Sirene</strong> : <code>iptables REJECT</code> sur le trafic sortant des conteneurs, rétabli avant la fin des 60 s de temporisation ; la deuxième tentative retélécharge depuis le début le fichier interrompu.</li>
+          <li><strong>Contrôle qualité bloquant</strong> : retrait contrôlé d'une colonne de la liste blanche sur le dernier millésime ; les tâches en aval passent en <code>upstream_failed</code> ; restauration vérifiée par SHA-256.</li>
+          <li><strong>Vérification d'idempotence</strong> : relance du même DAG et comparaison du contenu des sorties avant et après.</li>
+        </ol>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Une tâche dépassant 12 Go de pic mémoire, ou des fichiers Sirene à fusionner (seuil déjà posé par l'<a href="#adr-0016">ADR 0016</a>) : l'agrégat partirait alors vers un Spark réellement distribué, pas la machine d'orchestration. Également : une exigence de fraîcheur inférieure à la journée, ou plusieurs personnes exploitant le pipeline en parallèle.</p>
+          </div>
+        </div>
+
+        <h3>Amendement du 15 septembre 2026 : l'agrégat Sirene tourne en Polars en production</h3>
+        <p>En construisant l'image Airflow avec un environnement Java et l'extra <code>[spark]</code>, comme prescrit initialement, j'ai confirmé le défaut déduit plus haut : l'image de base ne contient ni Java ni PySpark. Mais la correction elle-même cassait Airflow. Le paquet du projet exigeait alors <code>sqlalchemy&gt;=2.0</code>, alors qu'Airflow 2.9.3 est construit pour SQLAlchemy 1.4. Avec le fichier de contraintes d'Airflow, l'installation est impossible ; sans lui, <code>airflow dags list</code> échoue sur un modèle interne écrit pour SQLAlchemy 1.4. Le paquet du projet et Airflow ne pouvaient pas partager le même environnement Python, ce que je n'avais pas vérifié avant d'écrire la recommandation initiale.</p>
+        <p>J'ai donc corrigé <code>configs/prod.yaml</code> : le moteur de l'agrégat Sirene passe de <code>cluster</code> à <code>local</code> (Polars) en production. L'image Airflow n'embarque ni Java ni <code>[spark]</code>, mais ajoute <code>libgomp1</code> (sans quoi <code>import lightgbm</code> échoue), et embarque directement ses DAG et sa configuration au lieu de les monter depuis l'hôte. Vérifié sur l'image, sans aucun montage : elle tourne sous l'utilisateur <code>airflow</code>, <code>import lightgbm</code> réussit, et les quatre DAG s'affichent sans erreur d'import.</p>
+        <div class="callout ok">
+          <span class="ico" aria-hidden="true">✓</span>
+          <div>
+            <span class="title">Pourquoi ce n'est pas un recul</span>
+            <p>L'<a href="#adr-0016">ADR 0016</a> concluait déjà que Polars reste le chemin de production réel tant que le calcul tient sur un nœud (18,2 s contre 87,0 s pour Spark, résultat identique) ; <code>configs/prod.yaml</code> contredisait cette conclusion sans que je l'aie relevé. Le critère 2.4 reste prouvé : le job Spark est écrit, testé et sélectionnable par configuration. Ce que je revendique, c'est la capacité de basculer, pas une exécution permanente. La décision de fond (instance dédiée, pas Kapsule) ne change pas : sans JVM ni exécuteurs Spark, la marge mémoire de l'instance augmente au lieu de diminuer.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Alternative écartée : isoler PySpark avec <code>ExternalPythonOperator</code></span>
+            <p>Un environnement Python séparé imposerait de réécrire la tâche d'agrégation et de maintenir deux jeux de dépendances pour un moteur que le volume actuel ne demande pas. Cette voie redevient la bonne réponse le jour où le seuil de l'<a href="#adr-0016">ADR 0016</a> est franchi.</p>
+          </div>
+        </div>
+
+        <!-- ============================================================ 0020 -->
+        <h2 id="adr-0020">ADR 0020 — Appariement textuel Parcoursup ↔ IDÉO pour le terme de débouchés</h2>
+        <p><span class="badge ok">Acceptée</span> le 17 septembre 2026 · Blocs 1 · 3 · 4 · remplace en partie l'<a href="#adr-0017">ADR 0017</a></p>
+        <p>Cet ADR n'introduit pas une décision nouvelle. Il consigne celle que le code applique déjà, dans <code>src/edumatch/matching/debouches.py</code>, et que la gouvernance a tranchée (risque R7).</p>
+        <h3>Contexte</h3>
+        <p>L'<a href="#adr-0017">ADR 0017</a> relie une formation IDÉO à une division NAF via RNCP et ROME, mais déclare un maillon manquant : aucun des huit millésimes Parcoursup ne porte de code RNCP, NSF ou ROME. Aucune formation effectivement recommandée n'est donc raccordée à la chaîne par une clé, et le terme « débouchés » ne peut être calculé pour aucune d'elles.</p>
+        <p>Le risque R7 (<a href="risques-aipd.html#r7">matrice des risques</a>) pose le problème : un appariement de libellés non mesuré produirait des débouchés faux, présentés avec la même assurance que des débouchés justes, et un lycéen ne peut pas les distinguer. Deux issues sont acceptables : un appariement mesuré avec son taux d'erreur, ou un périmètre restreint et déclaré, où le terme n'est calculé que pour les formations réellement raccordées.</p>
+        <h3>Décision</h3>
+        <p>Je retiens un appariement textuel <strong>exact</strong> et <strong>mesuré</strong>, limité au sous-ensemble où il est fiable, et je déclare le terme indisponible partout ailleurs.</p>
+        <ol>
+          <li><strong>La règle d'appariement</strong> : <code>fil_lib_voe_acc</code> (Parcoursup) est comparé au libellé de formation IDÉO, les deux normalisés de la même façon (minuscules, sans accents, sans ponctuation). Seule l'égalité stricte compte.</li>
+          <li><strong>Les exclusions</strong> : je retire d'abord les formations IDÉO sans code RNCP. J'écarte ensuite les libellés IDÉO ambigus, c'est-à-dire rattachés à plusieurs codes RNCP distincts sous le même libellé normalisé : une jointure ambiguë n'est jamais résolue par un choix arbitraire.</li>
+          <li><strong>Les certifications radiées</strong> : la chaîne est filtrée sur <code>rncp_actif</code>, car une certification radiée n'est jamais un débouché actuel.</li>
+          <li><strong>Le grain territorial</strong> : l'effectif vient de l'agrégat Sirene département × division NAF (<code>src/edumatch/matching/agregat_sirene_debouches.py</code>). Il est k-anonymisé avec k = 5 (<code>matching.k_anonymat_debouches</code>, risque R2), après application du filtre <code>diffusible</code>, qui exclut 20 488 établissements. Le terme vaut <code>min(1, n / 100)</code>, où 100 est la valeur de <code>matching.seuil_saturation_etablissements</code>.</li>
+          <li><strong>Ailleurs, un statut déclaré, jamais une valeur devinée.</strong> Chaque calcul porte un statut lisible par le conseiller (tableau ci-dessous).</li>
+        </ol>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Statut</th><th>Situation</th><th>Valeur du terme</th></tr></thead>
+            <tbody>
+              <tr><td><code>mesure</code></td><td>Formation raccordée et cellule conservée ; ou aucun établissement du secteur dans le département, un zéro réel</td><td><code>min(1, n / 100)</code>, ou 0</td></tr>
+              <tr><td><code>indisponible_chaine_rompue</code></td><td>Libellé Parcoursup sans correspondance IDÉO</td><td>1,0 (neutre)</td></tr>
+              <tr><td><code>indisponible_k_anonymat</code></td><td>Au moins un établissement existe, mais la cellule est sous le seuil k = 5</td><td>1,0 (neutre)</td></tr>
+              <tr><td><code>indisponible_territoire_non_renseigne</code></td><td>Département du candidat non renseigné</td><td>1,0 (neutre)</td></tr>
+              <tr><td><code>indisponible_certification_radiee</code></td><td>Fiche RNCP atteinte, mais sans débouché actif rattaché</td><td>0 (terme marqué disponible)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>La valeur neutre 1,0 réduit le score à affinité × accessibilité : je ne pénalise pas une formation dont je ne sais rien dire, et je ne fabrique pas de correspondance. Le motif remonte jusqu'à l'écran du conseiller (<a href="service.html">Service et accessibilité</a>).</p>
+        <h3>Alternatives écartées</h3>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Attendre un identifiant commun entre Parcoursup et les certifications</span>
+            <p>C'est le seuil posé par l'ADR 0017, mais aucune source publique ne l'offre aujourd'hui. Attendre laissait le terme sans aucune valeur, alors qu'un sous-ensemble peut être raccordé de façon vérifiable.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Un appariement textuel non mesuré ou flou, appliqué à tout le catalogue</span>
+            <p>L'ADR 0017 l'écartait déjà : une table qui a l'air complète, avec un maillon deviné, est pire qu'une table partielle assumée. Le risque R7 en fait un risque pour les personnes : un débouché faux, présenté comme sûr.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Un rapprochement par la seule filière (<code>fili</code>)</span>
+            <p>Bien trop grossier : une licence de mathématiques et une licence d'arts plastiques recevraient le même débouché, ce qui revient à le fabriquer.</p>
+          </div>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Mettre le terme à zéro quand il est inconnu</span>
+            <p>La formation disparaîtrait de la liste, le score étant multiplicatif, pour une raison qui tient aux sources et non à la formation. J'utilise un statut déclaré, jamais un zéro silencieux.</p>
+          </div>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Non tenté, et non présenté comme résolu</span>
+            <p>Un appariement approché, par distance d'édition ou par croisement du code NSF d'IDÉO avec la filière, reste à mesurer avant de conclure qu'aucune meilleure couverture n'est possible.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <p>La couverture est faible, et je le dis comme tel. L'appariement exact relie <strong>7 libellés distincts sur 712</strong> (1,0 %), soit <strong>6 017 lignes sur 440 030</strong> (1,4 %) de la table de variables. J'ai relu les sept correspondances à la main :</p>
+        <ul>
+          <li>le diplôme de comptabilité et de gestion ;</li>
+          <li>deux certificats de capacité, d'orthoptiste et d'orthophoniste ;</li>
+          <li>prothésiste dentaire ;</li>
+          <li>le DTS imagerie médicale et radiologie thérapeutique ;</li>
+          <li>deux intitulés de cadre technique de la mer.</li>
+        </ul>
+        <p>Ce sont des diplômes d'État aux intitulés très normés. C'est ce qui explique leur appariement, et l'échec des autres, dont les libellés sont rédigés librement par les établissements (« BTS Comptabilité et gestion » contre « brevet de technicien supérieur comptabilité et gestion »).</p>
+        <ul>
+          <li>Pour les 98,6 % restants, le terme est déclaré indisponible avec son motif. Le troisième terme du score est donc sans valeur pour la quasi-totalité du catalogue : c'est une limite du produit, à dire au déployeur.</li>
+          <li>Le risque résiduel R7 est jugé faible. Ce n'est pas parce que la couverture est bonne, mais parce qu'aucune personne n'est exposée à un chiffre faux. La limite est déclarée dans l'<a href="risques-aipd.html#debouches">AIPD (section 6.5)</a>, dans la <a href="risques-aipd.html#r7">matrice des risques (R7)</a> et dans la <a href="model-card.html">Model Card</a>.</li>
+          <li>La mesure est rejouée à chaque exécution de <code>python -m edumatch.matching.debouches</code>. Elle est écrite dans <code>data/processed/matching/debouches_couverture.json</code>, avec la correspondance (<code>correspondance_formation_ideo.csv</code>) et l'agrégat conservé (<code>agregat_debouches_departement.parquet</code>).</li>
+        </ul>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Un identifiant de certification (RNCP, NSF ou ROME) publié dans un millésime Parcoursup : la jointure par clé remplacerait alors l'appariement textuel. Une table ROME ↔ NAF à la sous-classe publiée par France Travail ou l'INSEE. Ou un appariement approché dont la couverture et le taux d'erreur, mesurés et relus, montreraient un gain réel sans exposer de débouché faux. Je ne fixe pas de seuil chiffré de couverture : la documentation n'en arrête aucun.</p>
+          </div>
+        </div>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>

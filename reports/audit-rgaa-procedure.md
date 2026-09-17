@@ -1,4 +1,4 @@
-# Procédure d'audit RGAA — écran conseiller (E31, critère 4.18)
+# Procédure d'audit RGAA — écran conseiller (critère 4.18)
 
 Le RGAA (Référentiel général d'amélioration de l'accessibilité) s'appuie
 sur WCAG 2.1 niveau AA. Ce document décrit la procédure d'audit manuel, au
