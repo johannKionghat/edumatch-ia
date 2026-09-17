@@ -53,7 +53,7 @@ resterait à mesurer avant de conclure qu'aucune amélioration n'est possible.
 
 Extrait dans `matching/agregat_sirene_debouches.py`, que ce module
 consomme : k = 5 au grain département x division NAF (décision de la
-gouvernance, `risques.md` R2), filtre `diffusible` appliqué (20 488
+gouvernance, `docs/risques-aipd.html` R2), filtre `diffusible` appliqué (20 488
 établissements exclus, mesuré), jamais un effectif sous le seuil exposé —
 voir le docstring de ce module pour le détail complet de cette partie.
 

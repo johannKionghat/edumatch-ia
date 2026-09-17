@@ -1,4 +1,4 @@
-"""Journal des décisions du conseiller : écartement motivé, horodaté (R6, `risques.md`).
+"""Journal des décisions du conseiller : écartement motivé, horodaté (R6, `docs/risques-aipd.html`).
 
 Un écran de contrôle humain qui n'écarte jamais rien n'est pas un contrôle
 (article 14 de l'AI Act) — R6 exige que l'écartement soit **motivé**,

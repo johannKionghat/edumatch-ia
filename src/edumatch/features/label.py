@@ -11,7 +11,7 @@ différents de la construction du projet :
    l'importe désormais au lieu de la recalculer, pour qu'une formule ne
    diverge jamais silencieusement entre la couche gold et les étapes en aval
    (variables, entraînement, audit). Le comportement n'a pas changé d'une
-   virgule — voir `docs/sous-docs-projets/adr/0009-definition-et-bornage-du-label.md`
+   virgule — voir `docs/decisions.html#adr-0009`
    pour l'arbitrage complet, non rouvert ici.
 
 2. **La pondération par effectif** est le véritable ajout de cette étape :

@@ -92,7 +92,7 @@ def _libelle_formation(catalogue: pd.DataFrame, identifiant_cellule: str) -> str
 
 
 def _entrees_journal(profil: ProfilRequete, session: int) -> dict[str, Any]:
-    """Les variables d'entrée de l'inférence, au sens de T5 (`registre-traitements.md`) : la
+    """Les variables d'entrée de l'inférence, au sens de T5 (`docs/registres.html`) : la
     session courante, déterminée côté serveur, plus le profil déclaré par le candidat — jamais
     son genre, qui n'existe même pas dans `ProfilRequete` (voir le docstring du module)."""
     return {

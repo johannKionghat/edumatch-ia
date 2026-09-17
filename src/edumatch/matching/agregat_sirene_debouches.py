@@ -5,7 +5,7 @@ que le terme expose ou pas).
 
 ## Le grain territorial : k-anonymat et le filtre `diffusible`
 
-`docs/sous-docs-projets/05-gouvernance/risques.md` (R2) a tranché : k = 5,
+`docs/risques-aipd.html` (R2) a tranché : k = 5,
 au grain **département x NAF**, jamais au grain commune (qui perdrait
 90,6 % des cellules et 46,9 % des établissements réels pour la même
 protection). Ce module construit directement l'agrégat à ce grain, sans
@@ -66,7 +66,7 @@ _PREFIXES_DOM_TOM: tuple[str, ...] = ("97", "98")
 def departement_depuis_commune(code_commune: str | None) -> str | None:
     """Département INSEE porté par un code commune (5 caractères) — voir le docstring du module.
 
-    Vérifié par comparaison d'ordre de grandeur avec `risques.md` (R2) :
+    Vérifié par comparaison d'ordre de grandeur avec `docs/risques-aipd.html` (R2) :
     55 091 cellules département x NAF (5 caractères) mesurées par cette règle
     contre 52 493 dans le tableau de la gouvernance — écart de 4,7 %, sans
     effet sur la décision qu'il documente (méthode de rattachement légèrement

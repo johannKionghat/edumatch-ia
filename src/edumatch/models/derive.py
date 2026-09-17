@@ -2,7 +2,7 @@
 
 ## Ce que ce module mesure, et sur quelle fenêtre
 
-Trois dérives distinctes (voir aussi `docs/sous-docs-projets/adr/0018-...`), jamais
+Trois dérives distinctes (voir aussi `docs/decisions.html#adr-0018`), jamais
 confondues dans le rapport :
 
 1. **Dérive des variables** — P(X) change-t-il d'une session à l'autre ? Sur les 46

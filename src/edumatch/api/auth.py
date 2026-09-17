@@ -6,7 +6,7 @@
 librement par l'appelant dans le corps de la requête : n'importe qui pouvait
 imputer un écartement à un conseiller qui ne l'a jamais décidé, ce qui ruine
 la trace de contrôle humain exigée par l'article 14 du règlement sur l'IA
-(voir `docs/sous-docs-projets/05-gouvernance/risques.md`, R6). La correction
+(voir `docs/risques-aipd.html`, R6). La correction
 retire ce champ du contrat d'entrée (`schemas.RequeteFeedback` ne le porte
 plus) : c'est cette fonction qui construit le principal authentifié dont
 `routes/feedback.py` dérive l'identifiant, jamais une valeur saisie par

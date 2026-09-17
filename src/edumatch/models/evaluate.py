@@ -16,7 +16,7 @@ prédictions déjà calculées, puis il y ajoute ce que l'entraînement ne mesur
    40 %. Une MAE moyenne ne révèle pas cette faute ; le diagramme de
    fiabilité et l'erreur de calibration attendue (ECE), oui.
 2. **La ventilation par type de baccalauréat** — l'erreur moyenne peut
-   cacher une erreur très inégale selon le profil (`04-modele/evaluation.md`,
+   cacher une erreur très inégale selon le profil (`docs/modele.html`,
    réserve sur la progression bac général -> technologique -> professionnel).
    Nécessaire à l'audit d'équité, qui suit.
 3. **La même mesure pour la baseline**, jamais seulement pour le
@@ -136,7 +136,7 @@ def ventiler_par_type_bac(
     """Le score du modèle et celui de la baseline, séparément pour chaque type de baccalauréat.
 
     Une erreur moyenne peut masquer une erreur très inégale selon le profil
-    (`04-modele/evaluation.md`) : nécessaire ici avant l'audit d'équité,
+    (`docs/modele.html`) : nécessaire ici avant l'audit d'équité,
     qui s'appuiera sur cette même ventilation.
     """
     type_bac = _type_bac(jeu)

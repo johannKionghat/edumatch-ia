@@ -36,8 +36,8 @@ down:  ## Arrête tout et supprime les volumes
 # (edumatch-cicd), jamais sur le poste de développement : ces cibles
 # supposent /srv/edumatch/data déjà monté (voir le cloud-init de l'instance)
 # et un .env positionné avec les variables listées dans .env.example, section
-# « Airflow en production ». Voir docs/sous-docs-projets/03-pipeline/
-# orchestration.md pour la séquence complète, panne comprise.
+# « Airflow en production ». Voir docs/pipeline.html
+# docs/pipeline.html#orchestration pour la séquence complète, panne comprise.
 up-prod:  ## Démarre la pile Airflow de production (LocalExecutor, PostgreSQL dédié, image du registre)
 	docker compose -f docker-compose.prod.yml up -d
 

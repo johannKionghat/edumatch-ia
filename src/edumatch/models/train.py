@@ -51,7 +51,7 @@ appliquée ici à la frontière suivante de la chaîne.
 en `category` (LightGBM les traite nativement, sans encodage one-hot qui
 ferait exploser la dimension pour une colonne à forte cardinalité).
 LightGBM plutôt qu'un réseau de neurones, pour la même raison qu'à l'étape
-de conception (`04-modele/specification.md`) : données tabulaires et
+de conception (`docs/modele.html`) : données tabulaires et
 hétérogènes, valeurs manquantes structurelles (ADR 0013 §6) — un réseau
 n'apporterait rien sur ce volume (286 463 cellules d'entraînement) et
 coûterait l'explicabilité exacte que permet TreeSHAP.
@@ -272,7 +272,7 @@ def entrainer_modele(
     perte optimisée. C'est elle, et seulement elle, qui gouverne l'arrêt
     anticipé (`early_stopping_rounds`, `configs/base.yaml`) : le nombre
     d'arbres n'est donc jamais fixé a priori, il est tranché par la
-    validation, exactement le rôle que `04-modele/specification.md` (§5) lui
+    validation, exactement le rôle que `docs/modele.html` (§5) lui
     assigne dans le compromis biais-variance.
     """
     modele = lgb.LGBMRegressor(

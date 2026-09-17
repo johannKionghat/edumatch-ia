@@ -183,11 +183,11 @@ class RequeteFeedback(BaseModel):
 
     @model_validator(mode="after")
     def _motif_obligatoire_si_ecartee(self) -> RequeteFeedback:
-        """R6 (`risques.md`) : un écartement doit être motivé, sans quoi le contrôle humain
+        """R6 (`docs/risques-aipd.html`) : un écartement doit être motivé, sans quoi le contrôle humain
         n'est qu'une façade — voir le docstring de `feedback_store.py`."""
         if self.decision == "ecartee" and not (self.motif and self.motif.strip()):
             raise ValueError(
-                "Un écartement doit être motivé (R6, risques.md) : le champ 'motif' est obligatoire "
+                "Un écartement doit être motivé (R6, docs/risques-aipd.html) : le champ 'motif' est obligatoire "
                 "quand decision='ecartee'."
             )
         return self

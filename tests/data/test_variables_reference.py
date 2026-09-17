@@ -3,7 +3,7 @@
 La section `modele.variables` de `configs/base.yaml` décide du sort de chaque
 colonne du fichier Parcoursup (retenue sur la session prédite, retenue décalée
 d'une session, retenue sous réserve, ou exclue avec son motif). Les arbitrages
-sont dans `docs/sous-docs-projets/adr/0013-decision-des-variables.md`.
+sont dans `docs/decisions.html#adr-0013`.
 
 Ces tests vérifient deux choses que la relecture ne garantit pas :
 

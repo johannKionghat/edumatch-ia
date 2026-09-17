@@ -45,7 +45,7 @@ _LIBELLES_SOURCE: dict[str, str] = {
 class Citation:
     """Une source vérifiable : de quel jeu elle vient, sous quelle licence, à quelle URL, et
     depuis quand elle a été collectée — le minimum qu'exige l'attribution Licence Ouverte / ODbL
-    (voir `docs/sous-docs-projets/05-gouvernance/registre-sources.md`)."""
+    (voir `docs/registres.html#sources`)."""
 
     identifiant: str
     source: str

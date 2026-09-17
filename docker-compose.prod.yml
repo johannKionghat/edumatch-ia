@@ -1,7 +1,7 @@
 # Pile de production de l'orchestrateur (ADR 0019 amendé) — l'instance
 # Scaleway DEV1-L dédiée à Airflow, PAS le cluster Kapsule qui héberge l'API. Voir
-# `docs/sous-docs-projets/adr/0019-airflow-en-production-sur-instance-dediee.md`
-# pour l'arbitrage complet et `docs/sous-docs-projets/03-pipeline/orchestration.md`
+# `docs/decisions.html#adr-0019`
+# pour l'arbitrage complet et `docs/pipeline.html#orchestration`
 # pour le mode d'emploi de démonstration.
 #
 # Différences volontaires avec `docker-compose.yml` (pile de développement) :
@@ -133,7 +133,7 @@ services:
   # airflow-scheduler`), consultés depuis le tunnel SSH ou directement sur
   # l'instance — c'est précisément ce journal qu'il faut ouvrir pour voir une
   # reprise, puisque `retries: 0` empêche l'état `up_for_retry` de l'interface
-  # de jamais apparaître (voir orchestration.md, section « Où regarder la
+  # de jamais apparaître (voir docs/pipeline.html#orchestration, section « Où regarder la
   # reprise »).
   airflow-scheduler:
     <<: *airflow-commun

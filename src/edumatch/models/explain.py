@@ -11,7 +11,7 @@ approximation (KernelSHAP, LIME) ; sur LightGBM, TreeSHAP la calcule
 plutôt qu'en ré-échantillonnant des coalitions de variables.
 
 Le nombre de cellules est fini — 440 030 sur les huit millésimes réels
-(`04-modele/variables.md`) — donc le coût est borné à l'avance, contrairement
+(`docs/modele.html`) — donc le coût est borné à l'avance, contrairement
 à un flux de requêtes illimité : c'est ce qui rend un **précalcul complet**
 raisonnable plutôt qu'un calcul à la demande à chaque appel de l'API. Mesuré
 ici : environ 930 cellules/seconde en mono-processus, ~8 minutes et ~85 Mo

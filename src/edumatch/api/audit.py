@@ -1,5 +1,5 @@
 """Journal des inférences : horodatage, exécution, version du modèle, entrées et sortie
-(article 12 du règlement sur l'IA, R1 de `docs/sous-docs-projets/05-gouvernance/risques.md`).
+(article 12 du règlement sur l'IA, R1 de `docs/risques-aipd.html`).
 
 ## Pourquoi un journal distinct des logs applicatifs
 
@@ -17,7 +17,7 @@ des compteurs, jamais le contenu d'une entrée ou d'une sortie.
 
 ## Ce qui est journalisé, et ce qui ne l'est pas
 
-Catégorie de données (`registre-traitements.md`, T5) : horodatage,
+Catégorie de données (`docs/registres.html`, T5) : horodatage,
 identifiant technique de requête, version du modèle et empreinte du commit,
 variables d'entrée, score produit. C'est exactement ce que porte
 `EnregistrementAudit` — ni plus (aucune identité du candidat n'est
@@ -34,7 +34,7 @@ que masqué.
 
 ## La tension article 12 / article 5.1.e, et sa résolution exécutable
 
-Voir `registre-traitements.md` T5 pour la conciliation en trois paliers
+Voir `docs/registres.html` T5 pour la conciliation en trois paliers
 (12 mois en clair, 36 mois pseudonymisé, puis agrégats) et
 `config.AuditConfig` pour les durées, qui vivent en configuration et jamais
 en dur ici. `audit_purge.py` est le mécanisme qui **exécute** cette

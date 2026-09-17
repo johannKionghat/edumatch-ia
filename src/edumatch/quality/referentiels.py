@@ -32,7 +32,7 @@ from edumatch.quality._diagnostic import Anomalie, Gravite, RapportControle, fus
 from edumatch.quality._fraicheur import controler_fraicheur
 
 # Nombre de colonnes attendu par jeu IDÉO, mesuré sur les fichiers réellement
-# téléchargés le 2026-08-29 (voir 01-donnees/sources.md).
+# téléchargés le 2026-08-29 (voir docs/donnees.html).
 COLONNES_ATTENDUES_IDEO: dict[str, int] = {
     "formations": 16,
     "metiers": 13,
