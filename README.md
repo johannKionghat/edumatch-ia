@@ -95,8 +95,8 @@ edumatch-ia/
 ├── models/                     artefacts locaux — le registre MLflow fait foi
 ├── configs/                    YAML par environnement : dev, staging, prod
 ├── docker/                     Dockerfile.train, Dockerfile.serve, Dockerfile.airflow
-├── reports/figures/            figures pour le dossier et la soutenance
-├── docs/sous-docs-projets/     documentation projet et dossier de certification
+├── reports/                    figures et audit d'accessibilité
+├── docs/sous-docs-projets/     documentation du projet
 │
 ├── pyproject.toml              dépendances et configuration des outils
 ├── Makefile                    commandes courantes
@@ -178,11 +178,6 @@ développement.
 
 | Dossier | Contenu |
 |---|---|
-| `00-vue-ensemble.md` | L'état réel du projet |
+| `ARCHITECTURE_EduMatch.md` | L'architecture d'ensemble |
 | `01-donnees/` … `05-gouvernance/` | Par domaine |
 | `adr/` | Une décision d'architecture par fichier |
-| `dossier/` | Le dossier de certification et son générateur |
-| `reference/` | Documents de l'école, lecture seule |
-
-Le dossier de certification se régénère par `make docs`. Je n'édite jamais
-le `.docx` à la main.

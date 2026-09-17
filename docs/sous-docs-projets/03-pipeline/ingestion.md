@@ -84,7 +84,7 @@ mesuré le 2026-08-28). Ce chiffre corrige l'estimation « ~100 Mo » retenue
 jusqu'ici, un ordre de grandeur jamais mesuré faute de fichier réellement
 téléchargé, l'export de l'API n'annonçant pas sa taille (`Content-Length`
 absent, transfert « chunked »). Détail de la correction dans
-`01-donnees/sources.md` et `avancement.md`.
+`01-donnees/sources.md`.
 
 **Dérive de schéma entre millésimes** : 85 colonnes en 2018, 92 en 2019, 115
 en 2020, stable à 118 à partir de 2021. Ce n'est pas une anomalie : le MESR a

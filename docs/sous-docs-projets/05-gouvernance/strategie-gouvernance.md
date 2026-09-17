@@ -278,8 +278,6 @@ flowchart TD
 
 ### 9.1 Phases réalisées
 
-Dates reprises de `avancement.md`.
-
 | Phase | Objectif | Jalon | Livrables | Période |
 |---|---|---|---|---|
 | Fondations | Dépôt normé, secrets exclus | Deux dépôts publiés | Arborescence, `configs/`, `.gitignore` vérifié | 24 au 26 août 2026 |
@@ -337,7 +335,7 @@ administrer se paie sur ce budget.
 | Écarté | Ce qu'il apporte | Pourquoi je ne le préconise pas aujourd'hui |
 |---|---|---|
 | SAFe (cadre agile à grande échelle) | Coordination de plusieurs équipes agiles | Une équipe de développement unique ; les sprints pilotés par la cheffe de projet suffisent |
-| Jira | Suivi de tickets | Le backlog de la cheffe de projet, l'historique Git et `avancement.md` tracent déjà chaque action |
+| Jira | Suivi de tickets | Le backlog de la cheffe de projet, et l'historique Git tracent déjà chaque action |
 | Collibra (catalogue de données) | Catalogue et lignage d'entreprise | Le lignage est produit par `dbt docs`, le catalogue par la documentation versionnée et les manifestes |
 | Power BI | Tableaux de bord métier | Pas de tableau de bord produit à ce stade ; Grafana couvre l'exploitation |
 | Certification ISO/IEC 42001 | Système de management de l'IA | Coût disproportionné avant la mise sur le marché ; l'écart est déclaré dans `ai-act.md` §3 |

@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier assistant-exemple test lint fmt docs clean up-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
+.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier assistant-exemple test lint fmt clean up-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -160,10 +160,6 @@ lint:  ## Vérifie le style et les erreurs statiques
 
 fmt:  ## Formate le code
 	ruff format src tests
-
-# ─── Documentation ──────────────────────────────────────────────────
-docs:  ## Régénère le dossier de certification
-	cd docs/sous-docs-projets/dossier && python _build_dossier.py
 
 clean:  ## Supprime les artefacts d'exécution
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

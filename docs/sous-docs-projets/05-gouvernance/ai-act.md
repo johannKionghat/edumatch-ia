@@ -127,14 +127,14 @@ jour, dont le contenu minimal est fixé par l'annexe IV. Le dossier existe,
 
 | Rubrique de l'annexe IV | Où | Statut |
 |---|---|---|
-| Description générale, finalité, versions | `model-card.md` §1-2, `00-vue-ensemble.md` | Couvert |
+| Description générale, finalité, versions | `model-card.md` §1-2, `ARCHITECTURE_EduMatch.md` | Couvert |
 | Développement, architecture, ressources de calcul | `02-architecture/`, ADR 0001 à 0018 | Partiel, description de l'infrastructure de déploiement dépendante de travaux non achevés |
 | Spécifications de conception, arbitrages | Les dix-huit ADR, chacune avec alternative écartée et seuil de réouverture | Couvert |
 | Jeux de données : provenance, portée, préparation | `registre-sources.md`, `01-donnees/sources.md`, `01-donnees/label.md` | Couvert |
 | Évaluation de la supervision humaine | `06-service/ecran-conseiller.md`, `aipd.md` §6.4 | Couvert |
 | Performance, exactitude, métriques par sous-population | `model-card.md` §6, 27 sous-populations | Couvert |
 | Système de gestion des risques | `risques.md` | Couvert |
-| Modifications au cours du cycle de vie | `avancement.md` et l'historique Git | Couvert |
+| Modifications au cours du cycle de vie | Historique Git et ADR datés | Couvert |
 | Normes harmonisées appliquées | | Non couvert, aucune revendiquée, NIST AI RMF, ISO/IEC 42001, ISO/IEC 27001 sont des cadres de travail |
 | Déclaration UE de conformité | | Non couvert, le système n'est pas mis sur le marché |
 

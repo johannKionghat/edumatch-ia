@@ -207,21 +207,18 @@ edumatch-ia/
 │   └── data/                      contrats de données, anti-fuite, idempotence
 │
 ├── pipelines/
-│   └── edumatch_pipeline.py       DAG : ingestion→GE→dbt→Spark→features→train→eval→promote
+│   └── edumatch_pipeline.py       4 DAG : ingestion→qualité→dbt→agrégats→variables→dérive→réentraînement
 │
 ├── configs/                       base.yaml + dev / staging / prod
-├── docker/                        Dockerfile.train, Dockerfile.serve
+├── docker/                        Dockerfile.train, .serve, .airflow
 ├── models/                        artefacts locaux — le registre MLflow fait foi
-├── reports/figures/               figures pour le dossier et la soutenance
+├── reports/                       figures et audit d'accessibilité
 │
 ├── docs/sous-docs-projets/
-│   ├── 00-vue-ensemble.md
-│   ├── 01-donnees/ … 05-gouvernance/
+│   ├── 01-donnees/ … 06-service/
 │   ├── ARCHITECTURE_EduMatch.md   ce document
-│   ├── adr/                       un ADR par décision, écrit le jour même
-│   └── dossier/                   dossier de certification + son générateur
+│   └── adr/                       un ADR par décision, écrit le jour même
 │
-├── .github/workflows/             CI/CD (miroir du dépôt 2 pour les tests)
 ├── pyproject.toml   Makefile   docker-compose.yml
 ├── .gitignore   .gitattributes   .env.example
 └── README.md
