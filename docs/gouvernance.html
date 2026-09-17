@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Gouvernance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Bloc 1 · Gouvernance des données</p>
+        <h1>Stratégie et plan de gouvernance des données</h1>
+        <p class="lead">Je pilote la gouvernance des données d'EduMatch en tant qu'architecte IA. Cette page décrit celle que je conçois et préconise pour l'entreprise : vers quoi elle tend, avec qui, et comment elle s'applique au code. Chaque politique pointe vers un fichier, une commande ou un contrôle automatisé. Quand une politique n'a pas encore sa traduction technique, je la marque « non implémentée ».</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Élément</th><th>Valeur</th></tr></thead>
+            <tbody>
+              <tr><td>Critères servis</td><td>Bloc 1 : 1.1 (politiques, classification, règles d'usage), 1.2 (rôles et responsabilités), 1.5 (risques), 1.10 (gestion des secrets), 1.11 (procédure d'audit et de mise à jour)</td></tr>
+              <tr><td>Version</td><td>1.1 du 17 septembre 2026</td></tr>
+              <tr><td>Périmètre</td><td>L'entreprise EduMatch et sa plateforme d'orientation ; cas d'usage limité au matching entre lycéens de terminale et formations Parcoursup</td></tr>
+              <tr><td>Documents rattachés</td><td><a href="registres.html#traitements">registre des traitements</a>, <a href="registres.html#sources">registre des sources</a>, <a href="risques-aipd.html">risques et analyse d'impact</a>, <a href="ai-act.html">correspondance AI Act</a>, <a href="model-card.html">Model Card</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>EduMatch est une jeune entreprise EdTech d'Île-de-France, en phase d'amorçage (levée seed de 350 000 euros). Elle édite une plateforme d'orientation en B2B2C. Ses clients sont des établissements : lycées, collèges, CFA, organismes de formation. Ses utilisateurs finaux sont des élèves et des personnes en reconversion. Le cas d'usage couvert ici est le matching entre lycéens de terminale et formations Parcoursup : les autres publics de la plateforme en sont exclus.</p>
+        <p>Règle de lecture : chaque chiffre cité renvoie au fichier qui le porte. Quand une valeur n'a jamais été mesurée, j'écris « non mesuré ». Je décris la gouvernance de ce dépôt, pas une gouvernance idéale.</p>
+
+        <h2 id="vision">Vision et piliers</h2>
+        <p><strong>Vision.</strong> Une recommandation d'orientation adressée à un lycéen doit pouvoir être expliquée, contestée et retracée. Elle ne doit rien affirmer que les données ne prouvent pas.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pilier</th><th>Ce qu'il engage</th><th>Preuves dans le dépôt</th></tr></thead>
+            <tbody>
+              <tr><td>1. Preuve avant déclaration</td><td>Un chiffre non reproductible est retiré</td><td><a href="#principes">Principes</a>, <a href="modele.html">évaluation du modèle</a></td></tr>
+              <tr><td>2. Minimisation par conception</td><td>Liste blanche : ce qui n'est pas classé n'entre pas</td><td><code>configs/base.yaml</code> (<code>modele.variables</code>), <code>tests/data/test_variables_reference.py</code></td></tr>
+              <tr><td>3. Non-discrimination mesurée</td><td>Le genre sert l'audit, jamais le modèle</td><td><code>tests/data/test_features_build_antifuite.py</code>, <a href="modele.html">audit d'équité</a>, <a href="decisions.html#adr-0011">ADR 0011</a></td></tr>
+              <tr><td>4. Contrôle humain effectif</td><td>Le conseiller comprend et écarte avec motif</td><td><code>src/edumatch/api/routes/feedback.py</code>, <a href="service.html">écran conseiller</a></td></tr>
+              <tr><td>5. Traçabilité bornée dans le temps</td><td>Journaliser, puis pseudonymiser, puis agréger</td><td><code>src/edumatch/api/audit.py</code>, <code>audit_purge.py</code>, <a href="service.html">journalisation et purge</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Ces piliers ne sont pas des valeurs affichées. Chacun a un test, un fichier ou un motif de blocage qui le rend opposable.</p>
+
+        <h3 id="principes">Les principes d'application</h3>
+        <ol>
+          <li>La preuve prime sur la déclaration : un chiffre non reproductible est retiré, pas arrondi. J'ai déjà fait quatre corrections : volumétrie Sirene, nombre d'établissements, nombre de fiches RNCP, encodage.</li>
+          <li>La minimisation est une décision de conception : je lis neuf colonnes sur cinquante-quatre pour Sirene, neuf sur cent vingt-huit pour Parcoursup.</li>
+          <li>Le genre n'entre jamais dans le modèle. Il sert à l'audit d'équité a posteriori.</li>
+          <li>Ce qui n'est pas classé n'entre pas : listes blanches, chaîne arrêtée par défaut.</li>
+          <li>Une obligation qui ne se traduit pas en code ou en procédure datée n'est pas mise en œuvre.</li>
+          <li>Je déclare ce qui manque.</li>
+        </ol>
+
+        <h2 id="organisation">Organisation d'EduMatch</h2>
+
+        <h3 id="roles">Les parties prenantes et leur rôle de gouvernance</h3>
+        <p>Je rattache chaque rôle de gouvernance à une partie prenante existante d'EduMatch.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Niveau</th><th>Rôle de gouvernance</th><th>Tenu chez EduMatch par</th><th>Responsabilité principale</th></tr></thead>
+            <tbody>
+              <tr><td>Stratégique</td><td>Sponsor de la gouvernance</td><td>Direction (3 associés)</td><td>Arbitre valeur, coût et conformité ; accepte ou refuse les risques résiduels</td></tr>
+              <tr><td>Stratégique</td><td>Pilote de la gouvernance</td><td>Architecte IA</td><td>Conçoit l'architecture et la gouvernance, anime le comité, prépare les arbitrages</td></tr>
+              <tr><td>Stratégique</td><td>Délégué à la protection des données (DPO)</td><td>DPO</td><td>Qualification juridique, AIPD, licences, <strong>droit de blocage</strong> de la mise en production</td></tr>
+              <tr><td>Tactique</td><td>Data Owner, un par domaine</td><td>Un associé de la direction pour chaque domaine : catalogue de formations, territoire et emploi, référentiels</td><td>Usage autorisé, classification, durée de conservation</td></tr>
+              <tr><td>Tactique</td><td>Responsable du modèle</td><td>Architecte IA</td><td>Variables, protocole d'évaluation, seuils de dérive, Model Card</td></tr>
+              <tr><td>Tactique</td><td>Pilotage de la mise en œuvre</td><td>Cheffe de projet agile</td><td>Inscrit les actions de conformité au backlog, suit leurs échéances</td></tr>
+              <tr><td>Opérationnel</td><td>Data Steward</td><td>Équipe de développement (pipelines de données)</td><td>Qualité, schémas, contrôles bloquants, nomenclatures</td></tr>
+              <tr><td>Opérationnel</td><td>Responsable sécurité technique</td><td>Un membre désigné de l'équipe de développement</td><td>Secrets, accès, chiffrement, cloisonnement</td></tr>
+              <tr><td>Opérationnel</td><td>Référent accessibilité</td><td>Référent accessibilité</td><td>Conformité RGAA des écrans</td></tr>
+              <tr><td>Opérationnel</td><td>Superviseur humain (AI Act art. 14)</td><td>Conseillers d'orientation des établissements clients</td><td>Revoir, contextualiser, écarter une recommandation avec motif</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  subgraph Strat[Stratégique]
+    SP[Direction<br/>sponsor]
+    PI[Architecte IA<br/>pilote]
+    DPO[DPO<br/>droit de blocage]
+  end
+  subgraph Tact[Tactique]
+    DO[Data Owners<br/>un par domaine]
+    RM[Responsable du modèle]
+    CP[Cheffe de projet<br/>mise en œuvre]
+  end
+  subgraph Oper[Opérationnel]
+    DS[Data Steward]
+    RS[Responsable sécurité]
+    RA[Référent accessibilité]
+    SH[Conseillers<br/>superviseurs humains]
+  end
+  SP --> PI
+  PI --> RM
+  PI --> CP
+  SP --> DO
+  DPO -.->|avis et blocage| DO
+  DPO -.->|avis et blocage| RM
+  DO --> DS
+  CP --> DS
+  CP --> RS
+  CP --> RA
+  RM -.->|notice et formation| SH
+</pre>
+        </div>
+
+        <h3 id="perimetres">Les périmètres de décision</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rôle</th><th>Décide de</th><th>Ne décide pas de</th><th>Traduction</th></tr></thead>
+            <tbody>
+              <tr><td>Data Owner (un par domaine)</td><td>Usage autorisé, classification, durée de conservation</td><td>La technique de mise en œuvre</td><td>Domaines : catalogue de formations, territoire et emploi, référentiels</td></tr>
+              <tr><td>Data Steward</td><td>Qualité, schéma, contrôles bloquants, réconciliation des nomenclatures</td><td>La finalité</td><td><code>src/edumatch/quality/</code>, <code>tests/data/</code>, <a href="pipeline.html">contrôles qualité</a></td></tr>
+              <tr><td>Délégué à la protection des données</td><td>Qualification juridique, base légale, durées, AIPD, licences ; blocage de mise en production</td><td>Les choix de modélisation</td><td>Les pages de gouvernance</td></tr>
+              <tr><td>Responsable du modèle</td><td>Variables, protocole d'évaluation, seuils de dérive, Model Card</td><td>La qualification juridique</td><td><code>configs/base.yaml</code>, <a href="decisions.html#adr-0009">ADR 0009</a> à <a href="decisions.html#adr-0013">0013</a></td></tr>
+              <tr><td>Responsable sécurité technique</td><td>Secrets, accès, chiffrement, cloisonnement</td><td>Le droit applicable</td><td><code>.gitignore</code>, infrastructure</td></tr>
+              <tr><td>Superviseur humain (conseiller, art. 14)</td><td>Écartement d'une recommandation, avec motif</td><td>Le modèle et ses paramètres</td><td>Écran conseiller construit, motif obligatoire côté client et côté serveur</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Quatre décisions exigent l'accord du DPO : ajouter une variable, exposer un nouvel agrégat, allonger une durée de conservation, ajouter une source.</p>
+
+        <h3 id="externes">Hors de l'entreprise</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Partie prenante</th><th>Place dans la gouvernance</th></tr></thead>
+            <tbody>
+              <tr><td>Établissements clients</td><td>Déployeurs au sens de l'AI Act (art. 26) ; responsables de traitement pour l'exploitation (T4 à T7)</td></tr>
+              <tr><td>Lycéens de terminale, majoritairement 17-18 ans</td><td>Personnes concernées : information, droits, contestation</td></tr>
+              <tr><td>Fournisseurs de données : MESR, INSEE, France Compétences, ONISEP</td><td>Titulaires des droits ; leurs licences fixent les conditions de réutilisation (<a href="registres.html#sources">registre des sources</a>)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fournisseur-deployeur">Le partage fournisseur / déployeur</h3>
+        <p>EduMatch édite la plateforme : elle est <strong>fournisseur</strong> au sens de l'AI Act et porte les articles 9 à 15. L'établissement client est <strong>déployeur</strong> : il utilise le système conformément à la notice, assure la supervision humaine et informe les personnes.</p>
+        <p>Côté RGPD, EduMatch est responsable de traitement pour le développement (T1 à T3) et sous-traitant pour l'hébergement. L'établissement est responsable de traitement pour l'exploitation. Ce partage est écrit dans la <a href="ai-act.html">correspondance AI Act</a> et dans le <a href="registres.html#roles">registre des traitements</a>.</p>
+        <p>Conséquence que je préconise : chaque contrat client annexe la notice d'utilisation et désigne, côté établissement, les conseillers habilités à superviser.</p>
+
+        <h3 id="instances">Les instances que je préconise</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Instance</th><th>Composition</th><th>Fréquence</th><th>Décide de</th></tr></thead>
+            <tbody>
+              <tr><td>Comité de gouvernance des données d'EduMatch</td><td>Direction, architecte IA, DPO, cheffe de projet</td><td>Mensuelle pendant la campagne Parcoursup, trimestrielle sinon</td><td>Indicateurs du <a href="#indicateurs">tableau de bord</a>, revue de la <a href="risques-aipd.html">matrice des risques</a>, levée des motifs de blocage</td></tr>
+              <tr><td>Revue annuelle</td><td>Comité, plus le responsable sécurité et le référent accessibilité</td><td>À la publication du millésime Parcoursup</td><td>Audit complet en douze points (<a href="#audit">procédure d'audit</a>)</td></tr>
+              <tr><td>Comité client</td><td>Architecte IA, DPO, référent de l'établissement déployeur</td><td>Deux fois par an</td><td>Retours des conseillers, taux d'écartement, demandes d'évolution</td></tr>
+              <tr><td>Cellule d'incident</td><td>DPO, responsable sécurité, Data Owner concerné</td><td>À l'événement</td><td>Qualification et notification (<a href="#incident">procédure d'incident</a>)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="escalade">L'escalade</h3>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    A[Conseiller d'un établissement<br/>ou Data Steward<br/>détecte un écart] --> B[Architecte IA<br/>ou Data Owner]
+    B -->|écart de conformité| C[DPO]
+    B -->|écart technique| D[Responsable sécurité]
+    C -->|motif de blocage| E[Comité de gouvernance]
+    D --> E
+    E -->|risque résiduel accepté ou refusé| F[Direction]
+</pre>
+        </div>
+        <p>Le droit de bloquer une mise en production appartient au DPO. La levée d'un motif de blocage appartient au comité, sur preuve. Quand un motif porte sur son domaine, le Data Owner concerné ne décide pas de sa levée. L'avis écrit du DPO figure au compte rendu du comité.</p>
+
+        <h2 id="zones">Architecture en zones et règles d'accès</h2>
+        <p>J'emploie la convention de fichiers standard. La correspondance avec l'architecture en médaillon est : <code>raw</code> = bronze, <code>interim</code> = silver, <code>processed</code> = gold.</p>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    S1[Parcoursup<br/>MESR] --> R
+    S2[Sirene<br/>INSEE] --> R
+    S3[ONISEP, RNCP,<br/>France Travail] --> X
+    R[data/raw<br/>bronze, immuable] -->|contrôles bloquants| I[data/interim<br/>silver, réconcilié]
+    X[data/external<br/>référentiels] --> I
+    I -->|dbt, modèle en étoile| P[data/processed<br/>gold]
+    P --> M[Modèle<br/>registre MLflow]
+    P --> A[API /matching]
+    A --> J[processed/audit<br/>journal d'inférence]
+    J -->|12 mois| J2[pseudonymisé]
+    J2 -->|36 mois| J3[agrégats]
+</pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Zone</th><th>Niveau de classification</th><th>Qui écrit</th><th>Qui lit</th></tr></thead>
+            <tbody>
+              <tr><td><code>data/raw/</code></td><td>P (Parcoursup), P et DP pour Sirene</td><td>Connecteurs d'ingestion, exclusivement</td><td>Data Steward</td></tr>
+              <tr><td><code>data/external/</code></td><td>P</td><td>Connecteur référentiels</td><td>Data Steward, responsable du modèle</td></tr>
+              <tr><td><code>data/interim/</code></td><td>Niveau le plus élevé des sources</td><td>Transformations dbt</td><td>Data Steward</td></tr>
+              <tr><td><code>data/processed/</code></td><td>P, sauf agrégat Sirene (DP)</td><td>Transformations, calcul du label</td><td>Responsable du modèle, API</td></tr>
+              <tr><td><code>data/processed/audit/</code></td><td>DP+ puis DP</td><td>API, exclusivement</td><td>DPO, déployeur, autorité sur demande</td></tr>
+              <tr><td><code>data/samples/</code></td><td>DP (échantillon Sirene pseudonymisé)</td><td>Versionné, revue obligatoire</td><td>Suite de tests</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Règles transverses : <code>data/raw/</code> ne se modifie jamais ; aucune zone <code>data/</code> n'est versionnée, sauf <code>samples/</code> ; une restitution territoriale passe le seuil de k-anonymat avant de quitter la zone gold.</p>
+
+        <h2 id="classification">Classification des données</h2>
+        <p>Quatre niveaux déterminent où la donnée vit, qui y accède et combien de temps elle est conservée.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Niveau</th><th>Définition</th><th>Où</th><th>Règles d'usage</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge ok">P</span> Publique</td><td>Donnée ouverte, sans caractère personnel</td><td><code>data/raw/parcoursup/</code>, <code>data/processed/parcoursup/</code>, <code>data/external/referentiels/</code>, <code>models/</code></td><td>Réutilisation libre sous attribution, versionnable, publiable</td></tr>
+              <tr><td><span class="badge info">I</span> Interne</td><td>Donnée dérivée du projet, dont la diffusion prématurée nuirait à la lecture</td><td>Rapports intermédiaires, exécutions enregistrées, <code>mlflow.db</code></td><td>Non versionnée, non publiée hors dossier de certification</td></tr>
+              <tr><td><span class="badge warn">DP</span> Personnelle pseudonymisée</td><td>Ré-identification possible avec une information complémentaire</td><td><code>data/samples/sirene/</code>, <code>agregats_commune_naf.parquet</code>, journaux d'inférence après 12 mois</td><td>Base légale obligatoire, durée définie, minimisation testée, jamais exposée au grain d'origine</td></tr>
+              <tr><td><span class="badge bad">DP+</span> Personnelle en clair</td><td>Donnée identifiante, y compris de mineurs</td><td>Saisie d'inférence, journaux des 12 premiers mois, motifs de supervision</td><td>Chiffrement au repos et en transit, accès nominatif journalisé, purge planifiée, hébergement dans l'Union</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Aucune catégorie particulière au sens de l'article 9</span>
+            <p>Je l'ai vérifié attribut par attribut. Le statut de boursier n'en est pas une : c'est une donnée à forte portée sociale. Elle appelle une vigilance sur la discrimination indirecte, pas la qualification de l'article 9.</p>
+          </div>
+        </div>
+        <p><strong>Règle de propagation.</strong> Le niveau d'un artefact dérivé est le plus élevé de ses sources, sauf démonstration écrite d'anonymisation : une base « sans nom » n'est pas anonyme. C'est cette règle qui classe <code>agregats_commune_naf</code> en DP, bien qu'il ne contienne que des comptages : 65,9 % de ses cellules non vides n'ont qu'un établissement.</p>
+
+        <h2 id="usage">Règles d'usage des données</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Règle</th><th>Traduction</th><th>Contrôle</th></tr></thead>
+            <tbody>
+              <tr><td>Les données brutes sont immuables</td><td><code>data/raw/</code> jamais modifié</td><td>Tout supprimer sauf <code>raw/</code> et régénérer par <code>make data</code></td></tr>
+              <tr><td>Ce qui n'est pas classé n'entre pas</td><td>Liste blanche de 9 colonnes, classement des 128 dans <code>configs/base.yaml</code></td><td><code>tests/data/test_variables_reference.py</code></td></tr>
+              <tr><td>Aucune variable postérieure à la connaissance du candidat</td><td>Décalage d'une session pour 35 compteurs</td><td><code>tests/data/test_features_build_antifuite.py</code>, 5 contrôles</td></tr>
+              <tr><td>Le genre ne sert qu'à l'audit</td><td>4 colonnes classées <code>interdite</code></td><td>Même fichier de test</td></tr>
+              <tr><td>Un échec de qualité bloque</td><td>Contrôles à l'entrée de chaque étape</td><td><code>tests/data/test_quality_run_blocage.py</code></td></tr>
+              <tr><td>Aucune donnée simulée</td><td>Toute source publique, réelle, sous licence vérifiée</td><td><a href="registres.html#sources">Registre des sources</a> et manifestes</td></tr>
+              <tr><td>Aucune donnée personnelle dans les journaux applicatifs</td><td>Journal d'inférence dans un registre dédié (<code>processed/audit/journal.jsonl</code>), distinct de la sortie standard ; l'assistant documentaire ne journalise jamais la question, seulement sa longueur</td><td><span class="badge warn">Partiel</span> Implémenté sur ces deux points, aucun contrôle automatisé pour le reste du code</td></tr>
+              <tr><td>Toute restitution territoriale passe un seuil de k-anonymat</td><td>k = 5 au grain <code>département × division NAF</code>, filtre <code>diffusible</code></td><td><code>src/edumatch/matching/agregat_sirene_debouches.py</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="secrets">Politique de gestion des secrets</h2>
+        <h3 id="secrets-en-place">En place et vérifié</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Mesure</th><th>Preuve</th><th>État</th></tr></thead>
+            <tbody>
+              <tr><td>Aucun secret versionné</td><td><code>.gitignore</code> exclut <code>.env</code>, <code>credentials*.json</code>, <code>*adminsdk*.json</code>, <code>*.pem</code>, <code>*.key</code>, <code>kubeconfig</code>, vérifié par <code>git check-ignore -v</code></td><td><span class="badge ok">En place</span></td></tr>
+              <tr><td>Variables documentées sans valeur</td><td><code>.env.example</code>, valeurs factices</td><td><span class="badge ok">En place</span></td></tr>
+              <tr><td>Aucun secret en dur</td><td>Identifiants exclusivement par variables d'environnement, règle rappelée en tête de <code>configs/base.yaml</code></td><td><span class="badge ok">En place</span></td></tr>
+              <tr><td>Configuration externalisée</td><td><code>src/edumatch/config.py</code>, typée, un fichier par environnement (<a href="decisions.html#adr-0003">ADR 0003</a>)</td><td><span class="badge ok">En place</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 id="secrets-manque">Ce qui manque</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Règle</th><th>Contenu</th><th>État</th></tr></thead>
+            <tbody>
+              <tr><td>Rotation</td><td>Clé cloud et clé API du modèle de langage : tous les 90 jours, et au départ de toute personne y ayant eu accès</td><td><span class="badge warn">Écrite, non outillée</span></td></tr>
+              <tr><td>Révocation</td><td>Un secret exposé est révoqué avant d'être remplacé, jamais l'inverse ; retirer le fichier du dépôt ne révoque rien</td><td><span class="badge warn">Écrite, non outillée</span></td></tr>
+              <tr><td>Détection</td><td>Analyse de secrets en intégration continue. Les trois workflows écrits dans le second dépôt (<code>edumatch-cicd/.github/workflows/</code>) portent lint, tests, construction et déploiement ; aucun n'analyse les secrets</td><td><span class="badge bad">Non implémentée</span></td></tr>
+              <tr><td>Portée minimale</td><td>Une clé par environnement, jamais partagée entre développement et production</td><td><span class="badge warn">Écrite, non outillée</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="indicateurs">Tableau de bord des indicateurs</h2>
+        <p>« Actuel » désigne la dernière valeur mesurée et écrite dans le dépôt. Les responsables sont des rôles de l'<a href="#roles">organisation</a>.</p>
+        <div class="stats">
+          <div class="stat"><span class="v">0,76</span><span class="l">ratio d'impact disparate, groupe le plus féminisé (objectif ≥ 0,80)</span></div>
+          <div class="stat"><span class="v">0,0371</span><span class="l">ECE en test 2025 (référence 0,0322)</span></div>
+          <div class="stat"><span class="v">0,0758</span><span class="l">MAE pondérée en test 2025 (référence 0,0701)</span></div>
+          <div class="stat"><span class="v">5</span><span class="l">motifs de blocage actifs (A à E)</span></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Indicateur</th><th>Objectif</th><th>Seuil d'alerte</th><th>Actuel</th><th>Source</th><th>Responsable</th><th>Fréquence</th></tr></thead>
+            <tbody>
+              <tr><td>Colonnes Parcoursup classées</td><td>100 %</td><td>Une colonne non classée</td><td><span class="badge ok">128 / 128</span></td><td><code>configs/base.yaml</code>, <code>tests/data/test_variables_reference.py</code></td><td>Data Steward</td><td>À chaque millésime</td></tr>
+              <tr><td>Variables de genre en entrée</td><td>0</td><td>≥ 1, blocage</td><td><span class="badge ok">0</span> (4 colonnes classées <code>interdite</code>)</td><td><code>tests/data/test_features_build_antifuite.py</code></td><td>Responsable du modèle</td><td>À chaque entraînement</td></tr>
+              <tr><td>Ratio d'impact disparate, groupe le plus féminisé</td><td>≥ 0,80</td><td>&lt; 0,80</td><td><span class="badge warn">0,76</span> (référence 0,63)</td><td><a href="modele.html">audit d'équité</a>, <code>configs/base.yaml</code> (<code>equite.seuil_impact_disparate</code>)</td><td>DPO et responsable du modèle</td><td>À chaque modèle</td></tr>
+              <tr><td>ECE (erreur de calibration), test 2025</td><td>Sous la référence</td><td>Au-dessus de la référence</td><td><span class="badge warn">0,0371</span> (référence 0,0322)</td><td><a href="modele.html">évaluation</a></td><td>Responsable du modèle</td><td>À chaque modèle</td></tr>
+              <tr><td>MAE pondérée, test 2025</td><td>Sous la référence</td><td>Au-dessus de la référence</td><td><span class="badge warn">0,0758</span> (référence 0,0701)</td><td><a href="modele.html">évaluation</a></td><td>Responsable du modèle</td><td>À chaque modèle</td></tr>
+              <tr><td>PSI médian des 46 variables</td><td>&lt; 0,20</td><td>≥ 0,20, réentraînement</td><td><span class="badge ok">0,0061</span> (validation), 0,0096 (test)</td><td><a href="decisions.html#adr-0018">ADR 0018</a>, <code>configs/base.yaml</code> (<code>derive</code>)</td><td>Responsable du modèle</td><td>À chaque millésime</td></tr>
+              <tr><td>Couverture du terme de débouchés</td><td>À fixer par le comité</td><td>—</td><td><span class="badge info">1,4 %</span> des lignes (6 017 / 440 030)</td><td><a href="risques-aipd.html">risque R7</a></td><td>Data Owner territoire et emploi</td><td>À chaque millésime</td></tr>
+              <tr><td>Latence p95 de <code>/matching</code></td><td>&lt; 300 ms</td><td>≥ 300 ms (alerte <code>EdumatchLatenceP95Elevee</code>)</td><td><span class="badge info">Non mesuré</span> sous trafic réel</td><td>SLO du second dépôt, <code>edumatch-cicd/monitoring/</code></td><td>Responsable sécurité technique</td><td>Continue</td></tr>
+              <tr><td>Disponibilité de <code>/matching</code></td><td>≥ 99,5 % hors 5xx</td><td>5xx &gt; 5 % sur 5 min</td><td><span class="badge info">Non mesuré</span> sous trafic réel</td><td>SLO du second dépôt, <code>edumatch-cicd/monitoring/</code></td><td>Responsable sécurité technique</td><td>Continue</td></tr>
+              <tr><td>Seuil de k-anonymat des restitutions</td><td>k = 5</td><td>Cellule restituée sous 5</td><td><span class="badge ok">Appliqué</span></td><td><code>configs/base.yaml</code> (<code>matching.k_anonymat_debouches</code>), <code>src/edumatch/matching/agregat_sirene_debouches.py</code></td><td>DPO</td><td>À chaque restitution</td></tr>
+              <tr><td>Purges du journal exécutées</td><td>Une par jour planifiée</td><td>Un jour sans purge</td><td><span class="badge info">Non mesuré</span> en exploitation (planifiée <code>@daily</code>)</td><td><code>pipelines/edumatch_pipeline.py</code>, <code>configs/base.yaml</code></td><td>Data Steward</td><td>Quotidienne</td></tr>
+              <tr><td>Taux d'écartement des conseillers</td><td>&gt; 0, à interpréter</td><td>Nul sur une campagne</td><td><span class="badge info">Non mesuré</span> (compteur instrumenté)</td><td><code>src/edumatch/api/routes/feedback.py</code></td><td>Établissement client (déployeur), avec l'architecte IA</td><td>Mensuelle</td></tr>
+              <tr><td>Incidents et violations RGPD</td><td>0</td><td>≥ 1</td><td><span class="badge info">Non mesuré</span> (aucun journal d'incident)</td><td><a href="#incident">Procédure d'incident</a></td><td>DPO</td><td>Continue</td></tr>
+              <tr><td>Secrets versionnés</td><td>0</td><td>≥ 1, blocage</td><td><span class="badge ok">0</span></td><td><code>.gitignore</code>, vérifié par <code>git check-ignore -v</code></td><td>Responsable sécurité technique</td><td>À chaque commit</td></tr>
+              <tr><td>Motifs de blocage actifs</td><td>0 avant mise en service</td><td>≥ 1</td><td><span class="badge bad">5</span> (A à E)</td><td><a href="risques-aipd.html">analyse d'impact, motifs de blocage</a></td><td>DPO</td><td>Mensuelle</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Trois indicateurs en alerte, que je laisse en alerte</span>
+            <p>Équité, calibration, précision. Ils fondent l'avis défavorable rendu sur la restitution du terme appris à des candidats réels (<a href="risques-aipd.html">analyse d'impact</a>). Un taux d'écartement nul n'est pas un succès : il signale une supervision de façade (risque R6).</p>
+          </div>
+        </div>
+
+        <h2 id="dmbok">Correspondance avec le DAMA-DMBOK</h2>
+        <p>Le DAMA-DMBOK (<em>Data Management Body of Knowledge</em>) découpe la gestion des données en onze domaines. Je le prends comme grille de couverture, pas comme méthode à dérouler.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Domaine DMBOK</th><th>Couvert par</th><th>État</th></tr></thead>
+            <tbody>
+              <tr><td>Gouvernance des données</td><td>Cette page</td><td><span class="badge ok">Couvert</span></td></tr>
+              <tr><td>Architecture des données</td><td><a href="architecture.html">Architecture</a>, diagrammes C4, <a href="decisions.html#adr-0001">ADR 0001</a> (ELT)</td><td><span class="badge ok">Couvert</span></td></tr>
+              <tr><td>Modélisation et conception</td><td><a href="architecture.html">Modèle en étoile</a>, <a href="decisions.html#adr-0015">ADR 0015</a></td><td><span class="badge ok">Couvert</span></td></tr>
+              <tr><td>Stockage et opérations</td><td>Parquet par zone, <a href="decisions.html#adr-0016">ADR 0016</a>, <code>edumatch-cicd/terraform/</code></td><td><span class="badge ok">Couvert</span></td></tr>
+              <tr><td>Sécurité des données</td><td><a href="#secrets">Politique des secrets</a>, <code>src/edumatch/api/auth.py</code></td><td><span class="badge warn">Partiel</span> compte conseiller partagé, chiffrement non démontré</td></tr>
+              <tr><td>Intégration et interopérabilité</td><td><code>src/edumatch/ingestion/</code>, <a href="pipeline.html">réconciliation NAF ↔ ROME</a></td><td><span class="badge ok">Couvert</span> couverture NAF ↔ formation faible et déclarée</td></tr>
+              <tr><td>Métadonnées</td><td>Manifestes d'ingestion, <code>dbt docs</code> (<a href="pipeline.html">transformation</a>)</td><td><span class="badge ok">Couvert</span> sans catalogue d'entreprise</td></tr>
+              <tr><td>Qualité des données</td><td><code>src/edumatch/quality/</code>, <a href="decisions.html#adr-0014">ADR 0014</a>, <code>tests/data/test_quality_run_blocage.py</code></td><td><span class="badge ok">Couvert</span></td></tr>
+              <tr><td>Données de référence et maîtresses</td><td><code>data/external/referentiels/</code>, <a href="registres.html#sources">registre des sources</a></td><td><span class="badge warn">Partiel</span> aucun référentiel maître de formations unifié</td></tr>
+              <tr><td>Entrepôt et décisionnel</td><td>Modèle en étoile en zone gold</td><td><span class="badge ok">Couvert</span> pour le modèle, pas de décisionnel produit</td></tr>
+              <tr><td>Gestion documentaire et contenus</td><td><code>src/edumatch/rag/</code>, brique secondaire</td><td><span class="badge warn">Partiel</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="audit">Audit RGPD et procédure d'audit</h2>
+        <h3 id="declencheurs">Les déclencheurs</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Déclencheur</th><th>Date</th><th>Portée</th></tr></thead>
+            <tbody>
+              <tr><td>Publication du millésime Parcoursup</td><td>Chaque année, juillet à octobre</td><td>Audit complet, les 12 points</td></tr>
+              <tr><td>Ouverture de la campagne</td><td>Chaque année, janvier</td><td>Fraîcheur, dérive, revue des risques</td></tr>
+              <tr><td>Changement substantiel</td><td>À l'événement</td><td>Nouvelle source, variable, finalité, modèle, incident</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="douze-points">Les douze points de contrôle</h3>
+        <p>Chaque point est prouvé par une commande ou un fichier.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th class="num">#</th><th>Point de contrôle</th><th>Preuve</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td>Aucun secret versionné</td><td><code>git check-ignore -v</code></td></tr>
+              <tr><td class="num">2</td><td>Licence à jour</td><td><a href="registres.html#sources">Registre des sources</a></td></tr>
+              <tr><td class="num">3</td><td>Attribution effective</td><td>Écran « Sources et licences »</td></tr>
+              <tr><td class="num">4</td><td>Base légale écrite</td><td><a href="registres.html#traitements">Registre des traitements</a></td></tr>
+              <tr><td class="num">5</td><td>Purge exécutée</td><td><code>processed/audit/purges.jsonl</code></td></tr>
+              <tr><td class="num">6</td><td>Absence de genre en entrée</td><td>Test anti-fuite</td></tr>
+              <tr><td class="num">7</td><td>Absence de fuite temporelle</td><td>Même test, par mutation</td></tr>
+              <tr><td class="num">8</td><td>Toute colonne classée</td><td>Même fichier</td></tr>
+              <tr><td class="num">9</td><td>Audit d'équité rejoué sur le modèle en service</td><td>Audit d'équité</td></tr>
+              <tr><td class="num">10</td><td>Calibration mesurée sur le millésime en service</td><td>Évaluation</td></tr>
+              <tr><td class="num">11</td><td>Taux d'écartement des superviseurs mesuré ; un taux nul est un signal d'alerte, pas un succès</td><td>Compteur de <code>src/edumatch/api/routes/feedback.py</code></td></tr>
+              <tr><td class="num">12</td><td>Seuils de k-anonymat appliqués aux restitutions</td><td><code>src/edumatch/matching/agregat_sirene_debouches.py</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Sortie</strong> : une entrée datée, avec les points en échec, leur responsable et leur échéance. Un audit sans point en échec est un audit à refaire.</p>
+
+        <h3 id="methode-audit">La méthode d'audit RGPD en cinq étapes</h3>
+        <p>L'audit annuel applique les douze points selon ce déroulé.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Étape</th><th>Ce que je fais</th><th>Support</th><th>Sortie</th></tr></thead>
+            <tbody>
+              <tr><td>1. Préparation</td><td>Fixer le périmètre (T1 à T8), rassembler les manifestes et la dernière AIPD</td><td><a href="registres.html#traitements">Registre des traitements</a>, <a href="risques-aipd.html">AIPD</a></td><td>Périmètre daté</td></tr>
+              <tr><td>2. Cartographie</td><td>Pour chaque traitement : données, base légale, durée, destinataires, flux hors UE</td><td><a href="registres.html#traitements">Traitements</a> et <a href="registres.html#durees">synthèse des durées</a></td><td>Tableau de synthèse à jour</td></tr>
+              <tr><td>3. Analyse des écarts</td><td>Confronter chaque déclaration au code : la purge existe-t-elle, le test passe-t-il</td><td>Les <a href="#douze-points">douze points</a></td><td>Liste des écarts, avec preuve</td></tr>
+              <tr><td>4. Droits des personnes</td><td>Vérifier que chaque droit s'exerce en moins d'un mois, jusqu'aux journaux et sauvegardes</td><td><a href="registres.html#t8">Traitement T8</a></td><td>Constat par droit</td></tr>
+              <tr><td>5. Rapport et plan d'action</td><td>Classer les écarts, attribuer un rôle et une échéance</td><td><a href="#conformite">Plan de mise en conformité</a></td><td>Entrée datée, points en échec</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Application au 17 septembre 2026</span>
+            <p>L'étape 4 échoue entièrement : T8 n'est pas encore construit. L'étape 3 relève les cinq motifs de blocage A à E. La procédure est écrite, jamais exécutée intégralement ; 7 des 12 points sont déjà outillés.</p>
+          </div>
+        </div>
+
+        <h2 id="conformite">Plan de mise en conformité et motifs de blocage</h2>
+
+        <h3 id="motifs">Les motifs de blocage</h3>
+        <p>Je bloque la mise en production, tels quels, pour l'un de ces motifs : une variable de genre en entrée du modèle ; une analyse d'impact absente ou périmée ; un secret versionné ; aucun contrôle humain effectif ; une donnée conservée sans durée ni purge exécutable ; une source utilisée hors licence ; une conformité affirmée sans preuve d'implémentation.</p>
+        <p><strong>État au 15 septembre 2026.</strong> Les trois motifs actifs de la version 1.0 sont levés : l'agrégat exposable sans seuil (k = 5 et filtre de diffusion appliqués), la journalisation sans purge (purge exécutable testée et planifiée) et l'absence d'écran de supervision (écran construit). Cinq motifs les remplacent. Leur motivation détaillée figure dans l'<a href="risques-aipd.html">analyse d'impact</a>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Motif</th><th>Contenu</th><th>État</th></tr></thead>
+            <tbody>
+              <tr><td>A</td><td>Supervision non imputable à une personne : l'enregistrement d'une décision (<code>POST /feedback</code>) exige une authentification HTTP Basic, mais sur un compte conseiller unique et partagé ; l'écran et <code>/matching</code> restent ouverts. Un contrôle non imputable ne se démontre pas</td><td><span class="badge bad">Actif</span></td></tr>
+              <tr><td>B</td><td>Journal de supervision (T6) sans purge exécutable</td><td><span class="badge bad">Actif</span></td></tr>
+              <tr><td>C</td><td>Aucune notice d'information destinée au candidat</td><td><span class="badge bad">Actif</span></td></tr>
+              <tr><td>D</td><td>Restitution d'une probabilité dont le défaut de calibration est mesuré et non corrigé</td><td><span class="badge bad">Actif</span></td></tr>
+              <tr><td>E</td><td>Attribution des sources non effective</td><td><span class="badge bad">Actif</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>J'ai ajouté le motif D lors de la révision du 15 septembre : mesurer la calibration et publier quand même le chiffre serait pire que ne l'avoir jamais mesurée. Ces motifs bloquent la mise en service auprès de candidats réels, pas le développement.</p>
+
+        <h3 id="actions">Le plan d'action</h3>
+        <p>Les échéances sont relatives : aucune mise en service réelle n'est datée.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Objectif</th><th>Action</th><th>Responsable</th><th>Échéance</th><th>Critère de levée</th></tr></thead>
+            <tbody>
+              <tr><td>A</td><td>Supervision imputable</td><td>Remplacer le compte conseiller partagé par des comptes individuels</td><td>Responsable sécurité</td><td>Avant mise en service</td><td>Chaque écartement porte un identifiant individuel authentifié</td></tr>
+              <tr><td>B</td><td>Journal de supervision borné</td><td>Identifiant de corrélation T5/T6, extension de <code>audit_purge.py</code></td><td>Data Steward</td><td>Avant mise en service</td><td>Purge T6 testée et planifiée</td></tr>
+              <tr><td>C</td><td>Information du candidat</td><td>Rédiger la notice, affichée avant la saisie, lisible à 17 ans</td><td>DPO</td><td>Avant mise en service</td><td>Notice visible sur l'écran avant tout champ</td></tr>
+              <tr><td>D</td><td>Estimation fiable</td><td>Réentraîner, tester sur une session non consultée</td><td>Responsable du modèle</td><td>Au prochain millésime Parcoursup</td><td>MAE &lt; 0,0701 et ECE &lt; 0,0322 (<a href="risques-aipd.html">avis de l'AIPD</a>)</td></tr>
+              <tr><td>E</td><td>Attribution des sources</td><td>Écran « Sources et licences » alimenté par les manifestes</td><td>Data Owner référentiels</td><td>Avant mise en service</td><td>Paternité et date affichées pour chaque source</td></tr>
+              <tr><td>T4</td><td>Saisie non conservée, prouvée</td><td>Test qui vérifie qu'aucune saisie ne survit à la requête hors T5</td><td>Data Steward</td><td>Avant mise en service</td><td>Test vert</td></tr>
+              <tr><td>T6</td><td>Motif libre maîtrisé</td><td>Revue périodique des motifs saisis</td><td>DPO</td><td>Avant mise en service</td><td>Procédure écrite et exécutée une fois</td></tr>
+              <tr><td>T7</td><td>Assistant encadré</td><td>Contrat de sous-traitance (art. 28) avec le fournisseur de modèle de langage</td><td>DPO</td><td>Avant activation de T7</td><td>Contrat signé</td></tr>
+              <tr><td>T8</td><td>Droits exerçables</td><td>Formulaire, registre des demandes, effacement jusqu'aux journaux</td><td>DPO</td><td>Avant mise en service</td><td>Demande test traitée en moins d'un mois</td></tr>
+              <tr><td>AI-1</td><td>Journal d'incident (art. 9, 73)</td><td>Registre d'incident et <a href="#incident">procédure d'incident</a></td><td>DPO</td><td>Avant mise en service</td><td>Registre existant, exercice à blanc réalisé</td></tr>
+              <tr><td>AI-2</td><td>Notice déployeur (art. 13)</td><td>Notice d'installation et de maintenance distincte de la Model Card</td><td>Responsable du modèle</td><td>Avant mise en service</td><td>Document remis au déployeur</td></tr>
+              <tr><td>AI-3</td><td>Surveillance après commercialisation (art. 72)</td><td>Plan écrit, <code>models/derive.py</code> comme instrument</td><td>Responsable du modèle</td><td>Avant mise en service</td><td>Plan approuvé par le comité</td></tr>
+              <tr><td>AI-4</td><td>Détection de secrets</td><td>Analyse de secrets dans les workflows d'intégration continue</td><td>Responsable sécurité</td><td>Avant mise en service</td><td>Étape bloquante dans <code>ci.yml</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="etat">État de mise en œuvre au 17 septembre 2026</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Élément</th><th>État</th></tr></thead>
+            <tbody>
+              <tr><td>Classification des données</td><td><span class="badge ok">Conforme</span> Écrite et appliquée</td></tr>
+              <tr><td>Rôles et périmètres de décision</td><td><span class="badge warn">Partiel</span> Écrits ; le superviseur humain dispose de l'écran de supervision, sa décision est authentifiée mais sur un compte partagé (motif A)</td></tr>
+              <tr><td>Règles d'usage</td><td><span class="badge warn">Partiel</span> 6 des 7 contrôlées automatiquement</td></tr>
+              <tr><td>Secrets, exclusion et externalisation</td><td><span class="badge ok">Conforme</span> En place et vérifiées</td></tr>
+              <tr><td>Secrets, rotation, révocation, détection</td><td><span class="badge warn">Partiel</span> Écrites, non outillées</td></tr>
+              <tr><td>Procédure d'audit</td><td><span class="badge warn">Partiel</span> Écrite, jamais exécutée intégralement, 7 des 12 points déjà outillés</td></tr>
+              <tr><td>Procédure de mise à jour</td><td><span class="badge ok">Conforme</span> Écrite et appliquée trois fois</td></tr>
+              <tr><td>Analyse d'impact</td><td><span class="badge ok">Conforme</span> Complète (version 1.0), avis rendu</td></tr>
+              <tr><td>Model Card</td><td><span class="badge ok">Conforme</span> Écrite, performance ventilée sur 27 sous-populations</td></tr>
+              <tr><td>Correspondance au règlement sur l'IA</td><td><span class="badge ok">Conforme</span> Écrite, articles 9 à 15</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="incident">Procédure d'incident et de violation</h2>
+        <p>Le RGPD impose de notifier la CNIL dans les <strong>72 heures</strong> après avoir pris connaissance d'une violation présentant un risque (art. 33), et d'informer les personnes si le risque est élevé (art. 34).</p>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    D["1. Détection<br/>alerte Prometheus, contrôle qualité,<br/>signalement d'un conseiller"] --> Q{Donnée personnelle<br/>concernée ?}
+    Q -->|non| C
+    Q -->|oui| N["2. Notification<br/>DPO sous 24 h ;<br/>CNIL sous 72 h si risque ;<br/>personnes si risque élevé"]
+    N --> C["3. Correction<br/>confinement, révocation des secrets,<br/>correctif avec test de non-régression"]
+    C --> R["4. Reporting<br/>entrée au journal d'incident :<br/>faits, effets, mesures"]
+    R --> A["5. Apprentissage<br/>revue de la matrice des risques,<br/>réouverture de l'AIPD si besoin"]
+</pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Étape</th><th>Règle</th></tr></thead>
+            <tbody>
+              <tr><td>Détection</td><td>Toute alerte est horodatée ; le délai de 72 heures court dès la prise de connaissance</td></tr>
+              <tr><td>Notification</td><td>En cas de doute sur le risque, je notifie : une notification inutile coûte moins qu'un retard</td></tr>
+              <tr><td>Correction</td><td>Un secret exposé est révoqué avant d'être remplacé (<a href="#secrets">politique des secrets</a>)</td></tr>
+              <tr><td>Reporting</td><td>Chaque violation est consignée, même non notifiée (art. 33.5)</td></tr>
+              <tr><td>Apprentissage</td><td>Un incident déclenche la <a href="#mise-a-jour">mise à jour documentaire</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Procédure écrite, journal d'incident non construit</span>
+            <p>La procédure est décrite ici. Le journal d'incident n'existe pas encore : c'est l'action AI-1.</p>
+          </div>
+        </div>
+
+        <h2 id="mise-a-jour">Mise à jour de la documentation</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Événement</th><th>Ce qui doit être mis à jour, dans cet ordre</th></tr></thead>
+            <tbody>
+              <tr><td>Ajout d'une source</td><td><a href="registres.html#sources">Registre des sources</a>, puis <a href="registres.html#traitements">registre des traitements</a>, puis <a href="risques-aipd.html">matrice des risques</a></td></tr>
+              <tr><td>Ajout ou retrait d'une variable</td><td><code>configs/base.yaml</code>, l'ADR correspondant, la <a href="model-card.html">Model Card</a>, l'analyse d'impact si l'équité est touchée</td></tr>
+              <tr><td>Nouveau modèle en service</td><td><a href="model-card.html">Model Card</a>, <a href="ai-act.html">correspondance AI Act</a>, <a href="risques-aipd.html">matrice des risques</a></td></tr>
+              <tr><td>Changement de finalité</td><td>Analyse d'impact rouverte avant toute mise en œuvre</td></tr>
+              <tr><td>Incident ou violation</td><td>Journal d'incident, notification sous 72 heures si risque pour les personnes, revue de la <a href="risques-aipd.html">matrice des risques</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Règle de cohérence</strong> : le dépôt fait foi. Si un document déclare un composant que le code ne confirme pas, c'est le document que je corrige.</p>
+
+        <h3 id="historique">Historique des versions</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Révision</th></tr></thead>
+            <tbody>
+              <tr><td>30 août 2026</td><td>Rédaction du plan de gouvernance</td></tr>
+              <tr><td>15 septembre 2026</td><td>Motifs de blocage actualisés, motif D ajouté, état de mise en œuvre repris point par point</td></tr>
+              <tr><td>17 septembre 2026</td><td>Version 1.1 : motif A reformulé après l'authentification de <code>/feedback</code>, état de l'intégration continue corrigé</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le comité de gouvernance revoit cette page à chaque audit annuel.</p>
+
+        <h2 id="feuille-de-route">Feuille de route</h2>
+        <h3 id="phases-realisees">Phases réalisées</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Phase</th><th>Objectif</th><th>Jalon</th><th>Livrables</th><th>Période</th></tr></thead>
+            <tbody>
+              <tr><td>Fondations</td><td>Dépôt normé, secrets exclus</td><td>Deux dépôts publiés</td><td>Arborescence, <code>configs/</code>, <code>.gitignore</code> vérifié</td><td>24 au 26 août 2026</td></tr>
+              <tr><td>Données</td><td>Accès réel, licences vérifiées</td><td>Connecteurs idempotents</td><td><code>src/edumatch/ingestion/</code>, <a href="registres.html#sources">registre des sources</a></td><td>26 au 29 août</td></tr>
+              <tr><td>Exploration</td><td>Comprendre, repérer les substituts</td><td>Décision de variables</td><td>Notebooks, <a href="decisions.html#adr-0011">ADR 0011</a> et <a href="decisions.html#adr-0013">0013</a></td><td>29 août</td></tr>
+              <tr><td>Qualité et transformation</td><td>Données validées, modèle en étoile</td><td>Contrôle bloquant démontré</td><td><code>quality/</code>, <code>transform/dbt/</code>, label</td><td>29 au 30 août</td></tr>
+              <tr><td>Modèle</td><td>Mesurer honnêtement</td><td>Comparaison à la référence rapportée</td><td>Évaluation, SHAP, équité, ablation</td><td>30 au 31 août</td></tr>
+              <tr><td>Service</td><td>Recommander et superviser</td><td>Écran conseiller</td><td>API, journal, purge, écran, assistant</td><td>1er septembre</td></tr>
+              <tr><td>Industrialisation</td><td>Automatiser et surveiller</td><td>Dérive mesurée, SLO déclaré</td><td>DAG, conteneurs, Terraform, monitoring</td><td>1er au 16 septembre</td></tr>
+              <tr><td>Gouvernance</td><td>Rendre la conformité opposable</td><td>Avis de l'AIPD rendu</td><td>Registres, AIPD, Model Card, AI Act</td><td>15 septembre</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Restent ouverts : l'intégration continue et l'infrastructure, écrites dans le second dépôt mais non déployées ; la panne provoquée filmée ; les vidéos ; la relecture croisée entre le dossier et le dépôt.</p>
+
+        <h3 id="phases-a-venir">Phases à venir</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Phase</th><th>Objectif</th><th>Jalon de sortie</th><th>Condition</th></tr></thead>
+            <tbody>
+              <tr><td>Conformité avant mise en service</td><td>Lever les motifs A à E et les actions du <a href="#actions">plan d'action</a></td><td>Zéro motif de blocage actif</td><td>Validation du comité, preuve par motif</td></tr>
+              <tr><td>Pilote chez un établissement client</td><td>Supervision réelle, restitution aux conseillers uniquement</td><td>Premier taux d'écartement mesuré</td><td>AIPD du déployeur, notice remise</td></tr>
+              <tr><td>Amélioration continue</td><td>Réentraîner et réauditer à chaque millésime</td><td>Audit annuel sans point en échec non traité</td><td>Nouveau millésime Parcoursup publié</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Pas d'estimation apprise restituée à des mineurs</span>
+            <p>Le pilote ne restitue pas l'estimation apprise à des mineurs tant que le motif D n'est pas levé.</p>
+          </div>
+        </div>
+
+        <h2 id="adoption">Adoption et culture</h2>
+        <p>Une gouvernance que personne n'applique n'est qu'un document. Je préconise qu'EduMatch forme trois publics.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Public</th><th>Besoin</th><th>Réponse</th><th>Fondement</th></tr></thead>
+            <tbody>
+              <tr><td>Conseillers d'orientation</td><td>Comprendre le score, ses limites, et oser l'écarter</td><td>Formation avant accès : lecture des facteurs SHAP, biais d'automatisation, écartement motivé, interdiction de consigner santé, famille ou origine</td><td>AI Act art. 4 (maîtrise de l'IA) et art. 14</td></tr>
+              <tr><td>Candidats</td><td>Savoir ce qui est traité, pourquoi, et comment contester</td><td>Notice en français simple, affichée avant la saisie</td><td>RGPD art. 12 à 14, art. 8</td></tr>
+              <tr><td>Équipe de développement</td><td>Appliquer les règles sans y penser</td><td>Tests bloquants, liste blanche, gabarit de commit</td><td><a href="#usage">Règles d'usage</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Contenu minimal de la formation des conseillers : ce que le modèle ne sait pas faire (<a href="model-card.html">Model Card</a>), pourquoi il sur-annonce sur les formations très féminisées (<a href="modele.html">audit d'équité</a>), comment écarter une recommandation. Indicateur d'adoption : le taux d'écartement du <a href="#indicateurs">tableau de bord</a>.</p>
+        <p>État : formation et notice <strong>non rédigées</strong> (motif C, action AI-2).</p>
+
+        <h2 id="ecartes">Choix écartés et limites</h2>
+        <p>J'applique une règle de proportionnalité : un outil n'entre que s'il répond à un besoin réel d'EduMatch. En amorçage, l'entreprise a une petite équipe et un budget seed de 350 000 euros. Chaque licence et chaque outil à administrer se paie sur ce budget.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Écarté</th><th>Ce qu'il apporte</th><th>Pourquoi je ne le préconise pas aujourd'hui</th></tr></thead>
+            <tbody>
+              <tr><td>SAFe (cadre agile à grande échelle)</td><td>Coordination de plusieurs équipes agiles</td><td>Une équipe de développement unique ; les sprints pilotés par la cheffe de projet suffisent</td></tr>
+              <tr><td>Jira</td><td>Suivi de tickets</td><td>Le backlog de la cheffe de projet et l'historique Git tracent déjà chaque action</td></tr>
+              <tr><td>Collibra (catalogue de données)</td><td>Catalogue et lignage d'entreprise</td><td>Le lignage est produit par <code>dbt docs</code>, le catalogue par la documentation versionnée et les manifestes</td></tr>
+              <tr><td>Power BI</td><td>Tableaux de bord métier</td><td>Pas de tableau de bord produit à ce stade ; Grafana couvre l'exploitation</td></tr>
+              <tr><td>Certification ISO/IEC 42001</td><td>Système de management de l'IA</td><td>Coût disproportionné avant la mise sur le marché ; l'écart est déclaré dans la <a href="ai-act.html">correspondance AI Act</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="seuils">Le seuil qui me ferait changer d'avis</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Signal de croissance</th><th>Ce que je réexaminerais</th></tr></thead>
+            <tbody>
+              <tr><td>Plusieurs équipes de développement</td><td>Un cadre de coordination agile</td></tr>
+              <tr><td>Plus de dix sources, ou plus de trois Data Owners actifs</td><td>Un catalogue de données : il coûte alors moins que la documentation tenue à la main</td></tr>
+              <tr><td>Des dizaines d'établissements clients</td><td>Un outil de tickets partagé avec les clients, et un décisionnel pour le comité client</td></tr>
+              <tr><td>Mise sur le marché du système à haut risque</td><td>Un système de management de la qualité formalisé (AI Act art. 17)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="limites">Ce que cette gouvernance ne couvre pas encore</h3>
+        <ul>
+          <li>Aucun système de management de la qualité au sens de l'article 17 du règlement sur l'IA, ni de certification ISO/IEC 42001. Les cadres mobilisés (NIST AI RMF, ISO/IEC 27001) sont des cadres de travail, pas des normes harmonisées.</li>
+          <li>Aucun journal d'incident et aucun plan de surveillance après commercialisation. La procédure de notification de violation est écrite, mais n'a jamais été exercée.</li>
+          <li>Aucune détection de secrets en intégration continue.</li>
+          <li>Les instances préconisées n'ont encore produit aucun compte rendu de comité dans le dépôt.</li>
+          <li>Plusieurs indicateurs sont « non mesurés », faute d'exploitation chez un établissement client.</li>
+          <li>Les responsables du plan d'action sont des rôles, pas des personnes nommées.</li>
+        </ul>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Registres</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Bloc 1 · Gouvernance des données</p>
+        <h1>Registre des traitements et registre des sources</h1>
+        <p class="lead">Le premier registre recense, au sens de l'article 30 du RGPD, chaque traitement du cas d'usage : sa finalité, sa base légale, sa durée, ses destinataires. Le second recense chaque source de données, sa licence et ce que cette licence m'oblige à faire. Chaque ligne renvoie à un fichier du dépôt.</p>
+
+        <div class="stats">
+          <div class="stat"><span class="v">8</span><span class="l">traitements recensés, T1 à T8</span></div>
+          <div class="stat"><span class="v">6</span><span class="l">sources entrantes, S1 à S6</span></div>
+          <div class="stat"><span class="v">5</span><span class="l">lacunes déclarées, L1 à L5</span></div>
+          <div class="stat"><span class="v">440 030</span><span class="l">cellules d'entraînement, aucune donnée personnelle</span></div>
+        </div>
+
+        <h2 id="traitements">Registre des traitements</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Élément</th><th>Valeur</th></tr></thead>
+            <tbody>
+              <tr><td>Critères servis</td><td>Bloc 1 : 1.3, et 1.6 pour la conformité</td></tr>
+              <tr><td>Mise à jour</td><td>15 septembre 2026</td></tr>
+              <tr><td>Article de référence</td><td>RGPD art. 30</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Ce registre distingue ce qui existe aujourd'hui dans le dépôt (T1 à T7, vérifiables par un fichier) de ce qui est spécifié et pas encore construit (T8). La colonne « statut » m'évite de décrire une intention au présent.</p>
+
+        <h3 id="qualification">La qualification qui structure tout le reste</h3>
+<pre><code>ENTRAÎNEMENT   comptages agrégés Parcoursup, par formation et par session
+               -&gt; aucune donnée à caractère personnel
+
+INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
+               -&gt; données personnelles, candidats mineurs possibles</code></pre>
+        <p>Aucune donnée de navigation, aucun historique, aucun comportement, ni à l'entraînement ni à l'inférence. Le modèle apprend sur des taux d'admission observés par cellule <code>(formation × session × type de baccalauréat × boursier)</code>, soit 440 030 cellules (<a href="donnees.html">définition du label</a>), et non sur des dossiers de candidats.</p>
+        <p>Le projet est donc dans une situation plus favorable qu'un système entraîné sur des dossiers scolaires individuels. Cela ne règle rien pour l'inférence, qui traite des données personnelles, et de mineurs.</p>
+
+        <h3 id="roles">Les rôles</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rôle RGPD / AI Act</th><th>Qui</th><th>Portée</th></tr></thead>
+            <tbody>
+              <tr><td>Responsable de traitement, développement (T1 à T3)</td><td>Le porteur du projet, EduMatch</td><td>Ingestion, entrepôt, échantillons, entraînement</td></tr>
+              <tr><td>Responsable de traitement, exploitation (T4 à T7)</td><td>L'établissement ou l'organisme d'orientation déployeur</td><td>Recommandation, journalisation, supervision</td></tr>
+              <tr><td>Sous-traitant (art. 28)</td><td>L'éditeur de la solution, EduMatch</td><td>Hébergement du modèle et de l'API</td></tr>
+              <tr><td>Fournisseur au sens de l'AI Act</td><td>L'éditeur de la solution, EduMatch</td><td>Articles 9 à 15</td></tr>
+              <tr><td>Déployeur au sens de l'AI Act</td><td>L'établissement client</td><td>Article 26, supervision humaine effective</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le détail des responsabilités opérationnelles figure dans le <a href="gouvernance.html#organisation">plan de gouvernance</a>.</p>
+
+        <h3 id="t1">T1, catalogue de formations et entraînement du modèle</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Existant</span> <code>data/raw/parcoursup/</code>, <code>data/processed/parcoursup/</code>, <code>src/edumatch/models/</code></td></tr>
+              <tr><th scope="row">Finalité</th><td>Apprendre un taux d'admission par cellule, pour estimer l'accessibilité d'une formation</td></tr>
+              <tr><th scope="row">Données personnelles ?</th><td>Non</td></tr>
+              <tr><th scope="row">Base légale</th><td>Sans objet, hors champ du RGPD</td></tr>
+              <tr><th scope="row">Catégories de données</th><td>Comptages agrégés par formation et session : vœux, propositions, admis, capacité, ventilés par type de baccalauréat et statut de boursier</td></tr>
+              <tr><th scope="row">Durée de conservation</th><td>Sans limite RGPD ; conservation liée aux millésimes utiles (2020-2025 aujourd'hui)</td></tr>
+              <tr><th scope="row">Destinataires</th><td>Personne : les données restent sur le poste et l'infrastructure du projet</td></tr>
+              <tr><th scope="row">Transferts hors UE</th><td>Aucun</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le fichier du MESR est un fichier d'agrégats par formation : une ligne est une formation pour une session, jamais un candidat. Aucun identifiant direct ou indirect n'y figure.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Réserve : les cellules à très faible effectif</span>
+            <p>L'effectif minimal observé par cellule est de 1 (minimum 1, médiane 30, maximum 16 483, voir la <a href="donnees.html">définition du label</a>). Une cellule à un vœu, dans une formation à faible effectif, décrit statistiquement une personne. Ce risque est porté par la publication du MESR, pas créé par ce projet. Je m'interdis pourtant d'exposer les comptages de cellule à l'utilisateur final : l'API restitue un taux estimé et ses facteurs, jamais l'effectif brut (exigence portée dans T4).</p>
+            <p>Je n'en conclus pas que le traitement devient un traitement de données personnelles : aucun moyen raisonnable ne permet d'individualiser à partir de ces seuls comptages.</p>
+          </div>
+        </div>
+        <p><strong>Genre.</strong> Les quatre colonnes de ventilation par sexe (<code>pct_f</code>, <code>voe_tot_f</code>, <code>acc_tot_f</code>, <code>acc_term_f</code>) sont classées <code>interdite</code> dans <code>configs/base.yaml</code>. Elles sont réservées à l'audit d'équité a posteriori. Contrôle : <code>tests/data/test_features_build_antifuite.py</code>.</p>
+
+        <h3 id="t2">T2, échantillons versionnés pour la suite de tests</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Existant</span> <code>data/samples/</code>, 17 fichiers, 1,2 Mo, versionnés</td></tr>
+              <tr><th scope="row">Finalité</th><td>Faire tourner la suite de tests et l'intégration continue sans dépendre de 4,6 Go de sources non versionnées</td></tr>
+              <tr><th scope="row">Données personnelles ?</th><td>Oui : lignes d'entrepreneur individuel de Sirene</td></tr>
+              <tr><th scope="row">Base légale</th><td>Intérêt légitime, art. 6.1.f ; mise en balance dans le fichier README de <code>data/samples/</code> et dans l'<a href="decisions.html#adr-0008">ADR 0008</a></td></tr>
+              <tr><th scope="row">Personnes concernées</th><td>Entrepreneurs individuels inscrits au répertoire Sirene : 282 des 500 lignes de <code>StockUniteLegale</code> portent la catégorie juridique 1000, dont 239 diffusibles</td></tr>
+              <tr><th scope="row">Catégories de données</th><td>SIREN, catégorie juridique, activité principale, commune, dates. Les 9 colonnes d'identité directe sont exclues (<code>nomUniteLegale</code>, <code>prenomNUniteLegale</code> ×4, <code>prenomUsuelUniteLegale</code>, <code>pseudonymeUniteLegale</code>, <code>nomUsageUniteLegale</code>, <code>sexeUniteLegale</code>)</td></tr>
+              <tr><th scope="row">Mesure de sécurité</th><td>Pseudonymisation, pas anonymisation</td></tr>
+              <tr><th scope="row">Durée de conservation</th><td>Durée de vie du dépôt ; régénérés à chaque évolution des sources</td></tr>
+              <tr><th scope="row">Destinataires</th><td>Tout lecteur du dépôt, qui est public</td></tr>
+              <tr><th scope="row">Transferts hors UE</th><td><span class="badge warn">À qualifier</span> Le dépôt peut être hébergé sur une forge dont les serveurs sont hors UE (lacune L1)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Pseudonymisation, et non anonymisation</span>
+            <p>Retirer les 9 colonnes d'identité ne rend pas l'échantillon anonyme. Une jointure sur le SIREN entre l'unité légale et <code>denominationUsuelleEtablissement</code> / <code>enseigne1Etablissement</code>, conservées sans restriction dans <code>StockEtablissementHistorique</code>, restitue l'identité des 239 lignes diffusibles sur 239. La seule information complémentaire nécessaire est le fichier source public.</p>
+            <p>L'individualisation reste possible, la corrélation aussi : la donnée reste personnelle (art. 4.5). L'exclusion des colonnes reste une mesure de minimisation réelle (art. 5.1.c), qui ne change pas le régime juridique. Les 43 lignes en statut « P » restent masquées <code>[ND]</code> par l'INSEE à la source ; je n'en ai reconstruit aucune.</p>
+          </div>
+        </div>
+        <p><strong>Contrôle</strong> : <code>tests/data/test_echantillons_conformite.py</code> applique une liste blanche de colonnes écrite dans le test lui-même. Une régénération future ne peut donc pas réintroduire une colonne d'identité directe.</p>
+
+        <h3 id="t3">T3, agrégat territorial Sirene, commune × NAF</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Existant</span> <code>data/processed/sirene/agregats_commune_naf.parquet</code>, 1 929 179 lignes, 12,6 Mo</td></tr>
+              <tr><th scope="row">Finalité</th><td>Calculer le terme « débouchés » du score : densité d'établissements employeurs par commune et secteur</td></tr>
+              <tr><th scope="row">Données personnelles ?</th><td>Oui, indirectement : une cellule à un seul établissement désigne cet établissement, et si c'est un entrepreneur individuel, une personne</td></tr>
+              <tr><th scope="row">Base légale</th><td>Intérêt légitime, art. 6.1.f, même mise en balance que T2</td></tr>
+              <tr><th scope="row">Catégories de données</th><td>Comptages par couple (commune, code NAF) : actifs employeurs, fermés employeurs, ventilation par tranche d'effectifs, ancienneté moyenne</td></tr>
+              <tr><th scope="row">Durée de conservation</th><td>Recalculé à chaque stock mensuel ; l'agrégat précédent est écrasé</td></tr>
+              <tr><th scope="row">Destinataires</th><td>Interne au calcul du score, non exposé en l'état</td></tr>
+              <tr><th scope="row">Transferts hors UE</th><td>Aucun</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Sur les 886 688 cellules qui comptent au moins un établissement actif employeur, 584 489 n'en comptent qu'un seul, soit 65,9 %. Un couple (commune, secteur) d'effectif 1 identifie une entreprise de façon quasi directe. Jusqu'au 30 août 2026, 20 501 établissements actifs employeurs non diffusibles (0,84 %) n'étaient pas filtrés, faute d'une dixième colonne lue.</p>
+        <div class="callout ok">
+          <span class="ico" aria-hidden="true">✓</span>
+          <div>
+            <span class="title">Deux exigences posées le 30 août, levées au 15 septembre</span>
+            <p>Le seuil est chiffré dans la <a href="risques-aipd.html">matrice des risques</a> (R2). Le filtre <code>diffusible</code> est appliqué : <code>src/edumatch/matching/agregat_sirene_debouches.py</code> exclut 20 488 établissements non diffusibles sur 2 423 308 rattachés à une commune. L'exposition se fait au grain <code>département × division NAF</code>, avec suppression des cellules sous 5 établissements, sans jamais renvoyer l'effectif sous le seuil.</p>
+            <p>T3 peut donc alimenter le terme de débouchés exposé. La donnée reste pseudonymisée, pas anonymisée : k = 5 réduit le risque sans sortir du champ du RGPD.</p>
+          </div>
+        </div>
+
+        <h3 id="t4">T4, recommandation d'orientation (inférence)</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Construit</span> <code>src/edumatch/matching/</code>, <code>src/edumatch/api/routes/matching.py</code>. Détail dans <a href="service.html">score et API</a></td></tr>
+              <tr><th scope="row">Finalité</th><td>Estimer les chances d'admission d'un candidat dans une formation et restituer les facteurs de l'estimation</td></tr>
+              <tr><th scope="row">Données personnelles ?</th><td>Oui, et de mineurs</td></tr>
+              <tr><th scope="row">Personnes concernées</th><td>Lycéens de terminale, en majorité 17-18 ans, une minorité de 16 ans. Pas destiné aux moins de 15 ans</td></tr>
+              <tr><th scope="row">Catégories de données</th><td>Type de baccalauréat, statut de boursier, académie ou département, intérêts déclarés. Aucune donnée de navigation, aucun historique, aucun identifiant de compte tiers</td></tr>
+              <tr><th scope="row">Données non collectées, par décision</th><td>Nom, adresse, date de naissance exacte, établissement d'origine, genre, origine, handicap, résultats scolaires nominatifs</td></tr>
+              <tr><th scope="row">Base légale</th><td>Consentement (art. 6.1.a) en usage direct, ou mission d'intérêt public (art. 6.1.e) si le déployeur est un établissement public. Le choix appartient au responsable de traitement</td></tr>
+              <tr><th scope="row">Durée de conservation</th><td>Aucune conservation de la saisie au-delà de la requête ; ce qui est conservé relève de T5</td></tr>
+              <tr><th scope="row">Destinataires</th><td>Le candidat, et le conseiller (T6)</td></tr>
+              <tr><th scope="row">Transferts hors UE</th><td>Aucun : hébergement souverain prévu chez Scaleway, motivé par la présence de données de mineurs (infrastructure écrite dans le second dépôt, non déployée)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Le statut de boursier n'est pas une donnée sensible</span>
+            <p>L'article 9 vise l'origine raciale ou ethnique, les opinions politiques, les convictions, l'appartenance syndicale, les données génétiques et biométriques, la santé, la vie et l'orientation sexuelles. Le statut de boursier n'en fait pas partie. C'est une donnée à forte portée sociale, qui appelle une vigilance sur la discrimination indirecte.</p>
+          </div>
+        </div>
+        <p><strong>Article 8, mineurs.</strong> En France, l'âge du consentement numérique est de quinze ans. Le public visé est au-dessus. L'information doit pourtant être rédigée dans des termes qu'un adolescent comprend, et affichée avant la saisie, pas dans un lien de bas de page. Un déploiement visant des élèves de moins de quinze ans exigerait le consentement du titulaire de l'autorité parentale et rouvrirait l'analyse d'impact.</p>
+        <p><strong>Article 22.</strong> Le système ne prend aucune décision : il n'admet ni ne refuse personne, la décision appartient aux établissements via Parcoursup. Je n'estime donc pas relever du §1 : aucun effet juridique ou significatif n'est produit automatiquement. J'applique pourtant les garanties comme si c'était le cas, pour deux raisons : la frontière est discutable, et la qualification de haut risque au titre de l'AI Act s'impose de toute façon. Ces garanties sont l'intervention humaine (T6), l'explication par valeurs de Shapley et la possibilité de contester par le formulaire de retour.</p>
+
+        <h3 id="t5">T5, journalisation des inférences</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Construit</span> <code>src/edumatch/api/audit.py</code>, purge dans <code>audit_purge.py</code>. Détail dans <a href="service.html">journalisation et purge</a></td></tr>
+              <tr><th scope="row">Finalité</th><td>Traçabilité exigée par l'AI Act pour un système à haut risque</td></tr>
+              <tr><th scope="row">Données personnelles ?</th><td>Oui, pendant la phase en clair</td></tr>
+              <tr><th scope="row">Base légale</th><td>Obligation légale, art. 6.1.c</td></tr>
+              <tr><th scope="row">Catégories de données</th><td>Horodatage, identifiant de requête, version du modèle et empreinte du commit, variables d'entrée, score produit, facteurs explicatifs</td></tr>
+              <tr><th scope="row">Durée de conservation</th><td>12 mois en clair, puis pseudonymisation, puis agrégation à 36 mois, puis suppression</td></tr>
+              <tr><th scope="row">Destinataires</th><td>Le déployeur, le fournisseur, une autorité de contrôle sur demande</td></tr>
+              <tr><th scope="row">Transferts hors UE</th><td>Aucun</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>L'AI Act impose une durée minimale de conservation : au moins six mois pour un fournisseur de système à haut risque (article 19). Le RGPD impose de la limiter (art. 5.1.e). Je concilie les deux en trois paliers datés.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Palier</th><th>Durée</th><th>Contenu</th><th>Ce que cela permet</th></tr></thead>
+            <tbody>
+              <tr><td>1, journal en clair</td><td>0 à 12 mois</td><td>Entrées, sortie, version, horodatage</td><td>Répondre à une réclamation et rejouer une inférence contestée, au-delà du plancher légal de six mois</td></tr>
+              <tr><td>2, journal pseudonymisé</td><td>12 à 36 mois</td><td>Identifiant remplacé par un jeton non réversible</td><td>Audit d'équité et détection de dérive, sans lien avec une personne</td></tr>
+              <tr><td>3, agrégats</td><td>Au-delà de 36 mois</td><td>Distributions par sous-population, plus aucune ligne d'inférence</td><td>Démonstration historique sans identification</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Douze mois couvrent une campagne Parcoursup complète, plus une marge de réclamation. Trente-six mois correspondent à trois millésimes : c'est la fenêtre minimale pour observer une dérive du concept.</p>
+        <p>La purge est exécutable, testée et idempotente. <code>audit_purge.py</code> exécute les trois paliers, en simulation par défaut et en mode réel sur option, et journalise ses compteurs dans <code>processed/audit/purges.jsonl</code>. La lacune L2 est levée pour T5. Le DAG Airflow <code>edumatch_audit_purge</code> (1er septembre 2026) appelle <code>purger_audit</code> avec <code>simulation=False</code> explicite : sans cela, une tâche planifiée en mode par défaut ne purgerait jamais rien.</p>
+
+        <h3 id="t6">T6, supervision humaine et écartement motivé</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge warn">Construit, purge absente</span> <code>src/edumatch/api/static/</code>, <code>routes/ecran.py</code>, <code>feedback_store.py</code>. Détail dans <a href="service.html">écran conseiller</a></td></tr>
+              <tr><th scope="row">Finalité</th><td>Permettre à un conseiller de comprendre une recommandation et de l'écarter avec motif (article 14 de l'AI Act)</td></tr>
+              <tr><th scope="row">Données personnelles ?</th><td>Oui : celles du candidat et l'identifiant du conseiller</td></tr>
+              <tr><th scope="row">Base légale</th><td>Mission d'intérêt public ou intérêt légitime du déployeur ; obligation légale pour la part imposée par l'article 14</td></tr>
+              <tr><th scope="row">Catégories de données</th><td>Recommandation affichée, facteurs explicatifs, décision du conseiller, motif en texte libre, horodatage, identifiant du conseiller</td></tr>
+              <tr><th scope="row">Durée de conservation</th><td>Alignée sur T5 : 12 mois en clair. Le motif en texte libre est le point de vigilance</td></tr>
+              <tr><th scope="row">Destinataires</th><td>Le déployeur</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>L'écran affiche au conseiller un avertissement explicite : ne consigner aucune information de santé, de situation familiale ou d'origine. Une purge au même terme que T5 est prévue.</p>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Deux manques, portés en motifs de blocage</span>
+            <p>La purge de ce journal n'existe pas, faute d'identifiant commun avec T5 (motif B). L'enregistrement d'une décision exige une authentification HTTP Basic (<code>api/auth.py</code>), mais sur un compte conseiller partagé, non nominatif : la trace n'est imputable à aucune personne identifiée (motif A). Voir les <a href="gouvernance.html#motifs">motifs de blocage</a>.</p>
+          </div>
+        </div>
+
+        <h3 id="t7">T7, assistant conversationnel (brique secondaire)</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Construit</span> <code>src/edumatch/rag/</code>. La question posée n'est jamais journalisée, seulement sa longueur et le nombre de résultats. Détail dans <a href="service.html">assistant documentaire</a></td></tr>
+              <tr><th scope="row">Finalité</th><td>Répondre à des questions sur les formations en citant ses sources documentaires</td></tr>
+              <tr><th scope="row">Données personnelles ?</th><td>Oui, potentiellement : une question en texte libre peut contenir n'importe quoi</td></tr>
+              <tr><th scope="row">Base légale</th><td>Consentement, ou intérêt légitime du déployeur</td></tr>
+              <tr><th scope="row">Destinataires</th><td>Un fournisseur de modèle de langage tiers : c'est le seul point du projet où une donnée saisie sort de l'infrastructure</td></tr>
+              <tr><th scope="row">Transferts hors UE</th><td><span class="badge warn">À qualifier</span> selon le fournisseur. <code>MISTRAL_API_KEY</code> dans <code>.env.example</code> désigne un fournisseur européen. Cela écarte la question du transfert, mais ne dispense pas du contrat de sous-traitance (art. 28)</td></tr>
+              <tr><th scope="row">Durée de conservation</th><td>Aucune conservation des questions côté projet</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Exigence posée : sans contrat de sous-traitance écrit, cette brique secondaire n'est pas mise en service. Elle ne justifie aucune exception.</p>
+
+        <h3 id="t8">T8, exercice des droits des personnes</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><th scope="row">Statut</th><td><span class="badge bad">À construire</span> Procédure non construite</td></tr>
+              <tr><th scope="row">Finalité</th><td>Recevoir, tracer et traiter les demandes d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité</td></tr>
+              <tr><th scope="row">Délai</th><td>Un mois à réception (art. 12.3), prorogeable de deux mois pour les demandes complexes</td></tr>
+              <tr><th scope="row">Traçabilité</th><td>Chaque demande enregistrée : date, nature, identité vérifiée, date et sens de la réponse</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>L'effacement doit atteindre la base de production, les journaux d'inférence (T5), les sauvegardes et, pour T2, l'historique Git. Une demande d'opposition d'un entrepreneur individuel figurant dans <code>data/samples/</code> exigerait de retirer la ligne et de réécrire l'historique du dépôt, ce qu'un simple commit ne fait pas. C'est un coût connu, que j'accepte.</p>
+
+        <h3 id="durees">Synthèse : ce qui se conserve, et combien de temps</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Traitement</th><th>Donnée personnelle</th><th>Base légale</th><th>Durée définie ?</th><th>Purge implémentée ?</th></tr></thead>
+            <tbody>
+              <tr><td>T1 catalogue et modèle</td><td>Non</td><td>Sans objet</td><td>Sans objet</td><td><span class="badge info">Sans objet</span></td></tr>
+              <tr><td>T2 échantillons</td><td>Oui (pseudonymisée)</td><td>art. 6.1.f</td><td>Vie du dépôt</td><td><span class="badge info">Sans objet</span></td></tr>
+              <tr><td>T3 agrégat territorial</td><td>Oui (indirecte)</td><td>art. 6.1.f</td><td>Écrasé chaque mois</td><td><span class="badge ok">Oui</span> par écrasement ; k = 5 et filtre de diffusion appliqués</td></tr>
+              <tr><td>T4 inférence</td><td>Oui, mineurs</td><td>art. 6.1.a ou 6.1.e</td><td>Aucune conservation</td><td><span class="badge warn">À implémenter</span></td></tr>
+              <tr><td>T5 journalisation</td><td>Oui</td><td>art. 6.1.c</td><td>12 / 36 mois</td><td><span class="badge ok">Oui</span> testée, idempotente, planifiée. Lacune L2 levée</td></tr>
+              <tr><td>T6 supervision</td><td>Oui</td><td>art. 6.1.c et 6.1.e</td><td>12 mois</td><td><span class="badge bad">Non</span> écran construit, purge non construite. Motif de blocage actif</td></tr>
+              <tr><td>T7 assistant</td><td>Oui, possible</td><td>art. 6.1.a</td><td>Aucune</td><td><span class="badge warn">Non</span></td></tr>
+              <tr><td>T8 droits</td><td>Oui</td><td>art. 6.1.c</td><td>3 ans après clôture</td><td><span class="badge bad">Non</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="lacunes">Les lacunes, déclarées plutôt que masquées</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Lacune</th><th>Contenu</th><th>État</th></tr></thead>
+            <tbody>
+              <tr><td>L1, localisation de la forge</td><td>Le dépôt public héberge <code>data/samples/</code>, qui contient des données pseudonymisées (T2), sans que la localisation des serveurs soit qualifiée. À trancher : qualifier le transfert, ou retirer les lignes d'entrepreneur individuel des échantillons, au prix de 56,4 % de représentativité perdue sur les catégories juridiques (<a href="decisions.html#adr-0008">ADR 0008</a>)</td><td><span class="badge warn">Ouverte</span></td></tr>
+              <tr><td>L2, purge des journaux</td><td>Levée pour T5, maintenue pour T6 (revue du 15 septembre 2026). T6 n'a toujours pas de purge, faute d'identifiant commun avec T5</td><td><span class="badge bad">Motif B</span></td></tr>
+              <tr><td>L3, notice candidat</td><td>Aucune notice d'information n'est rédigée pour les candidats. L'interface existe mais s'adresse au conseiller : la notice reste à produire, en français simple, affichée avant la saisie</td><td><span class="badge bad">Motif C</span></td></tr>
+              <tr><td>L4, accès et imputabilité</td><td>L'écran qui expose les caractéristiques d'un candidat et <code>/matching</code> restent ouverts. L'enregistrement d'une décision est authentifié, mais sur un compte partagé non nominatif : lacune de sécurité et de traçabilité</td><td><span class="badge bad">Motif A</span></td></tr>
+              <tr><td>L5, droits, violations, sous-traitance</td><td>Aucun dispositif d'exercice des droits (T8), aucune procédure de notification de violation outillée, aucun contrat de sous-traitance pour T7. Trois réserves non bloquantes prises isolément, qui le deviennent au premier usage réel</td><td><span class="badge warn">Réserve</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><em>Rédigé le 30 août 2026, mis à jour le 1er septembre après la construction du service, revu le 15 septembre avec l'analyse d'impact complète, la Model Card et la correspondance au règlement sur l'IA. T3 et T5 ont été corrigés dans le sens du progrès, T6 dans le sens du manque ; cinq lacunes sont désormais déclarées au lieu de trois.</em></p>
+
+        <h2 id="sources">Registre des sources et de leurs licences</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Élément</th><th>Valeur</th></tr></thead>
+            <tbody>
+              <tr><td>Critère servi</td><td>Bloc 1 : 1.4</td></tr>
+              <tr><td>Mise à jour</td><td>30 août 2026, statut de l'attribution revu le 17 septembre 2026</td></tr>
+              <tr><td>Prochaine revue obligatoire</td><td>À chaque ajout de source, et au plus tard à l'ouverture de la campagne Parcoursup suivante (janvier 2027)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Pour chaque source, j'indique qui la produit, sous quelle licence, ce que cette licence m'oblige à faire, ce que j'ai réellement téléchargé, quand, et où se trouve la preuve dans le dépôt.</p>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Le manifeste fait foi</span>
+            <p>Je ne recopie pas les licences à la main. Chaque connecteur écrit la licence, l'URL, la date et l'empreinte SHA-256 de chaque fichier dans un manifeste (<code>data/raw/*/manifeste.json</code>, <code>data/external/referentiels/manifeste.json</code>, <code>data/samples/manifeste.json</code>). Ce registre commente ces manifestes, il ne s'y substitue pas. En cas de divergence, le manifeste fait foi : c'est lui qu'un programme a écrit à partir du fichier réel.</p>
+          </div>
+        </div>
+
+        <h3 id="six-sources">Les six sources entrantes</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Source</th><th>Producteur</th><th>Licence</th><th>Volumétrie mesurée</th><th>Récupérée le</th><th>Preuve</th></tr></thead>
+            <tbody>
+              <tr><td>S1</td><td>Parcoursup, 8 millésimes 2018-2025</td><td>MESR</td><td>Licence Ouverte v2.0 (Etalab)</td><td>104 274 formation-années, 118 colonnes en 2025, 82 Mo</td><td>2026-08-28</td><td><code>data/raw/parcoursup/manifeste.json</code></td></tr>
+              <tr><td>S2</td><td>Base Sirene, 4 fichiers de stock</td><td>INSEE</td><td>Licence Ouverte v2.0 (Etalab)</td><td>4 fichiers Parquet, 4,63 Go ; <code>StockEtablissement</code> = 43 896 818 lignes, 54 colonnes</td><td>2026-08-28, stock publié le 2026-08-01</td><td><code>data/raw/sirene/manifeste.json</code></td></tr>
+              <tr><td>S3</td><td>IDÉO, 4 jeux (formations, métiers, structures du secondaire et du supérieur)</td><td>ONISEP</td><td><span class="badge warn">ODbL v1.0</span> (<code>odc-odbl</code>)</td><td>5 869 + 1 534 + 15 293 + 8 985 lignes, 15,9 Mo</td><td>2026-08-29</td><td><code>data/external/referentiels/manifeste.json</code>, entrées <code>ideo:*</code></td></tr>
+              <tr><td>S4</td><td>RNCP et Répertoire spécifique, export CSV</td><td>France Compétences</td><td>Licence Ouverte v2.0 (Etalab)</td><td>30 484 fiches dont 7 000 actives, 16 colonnes</td><td>2026-08-29 et 2026-08-30</td><td>Entrées <code>rncp:2026-08-29</code>, <code>rncp:2026-08-30</code></td></tr>
+              <tr><td>S5</td><td>RNCP, membre « codes ROME » de la même archive</td><td>France Compétences</td><td>Licence Ouverte v2.0 (Etalab)</td><td>24 424 fiches couvrant au moins un code ROME, 4 353 036 o</td><td>2026-08-30</td><td>Entrée <code>rncp_rome:2026-08-30</code></td></tr>
+              <tr><td>S6</td><td>Table de correspondance ROME / NAF</td><td>France Travail</td><td>Licence Ouverte v2.0 (Etalab)</td><td>112 896 o, correspondance à la division NAF (2 chiffres)</td><td>2026-08-30</td><td>Entrée <code>france_travail_rome_naf:rome_naf</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Toutes les volumétries sont mesurées sur le fichier réellement posé sur disque, pas reprises d'un catalogue. Le détail des commandes figure dans la <a href="donnees.html">page des sources</a>, avec les trois chiffres que j'ai dû corriger en cours de route : la volumétrie compressée de Sirene, le nombre d'établissements, et le nombre de fiches RNCP, faussé par mon propre outil de comptage.</p>
+
+        <h3 id="obligations">Ce que chaque licence m'oblige à faire</h3>
+        <h4 id="licence-ouverte">Licence Ouverte v2.0 (S1, S2, S4, S5, S6)</h4>
+        <p>Je l'ai vérifiée sur le texte de la licence (Etalab), pas sur son résumé.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Point de contrôle</th><th>Réponse</th></tr></thead>
+            <tbody>
+              <tr><td>Réutilisation commerciale autorisée ?</td><td>Oui, sans restriction</td></tr>
+              <tr><td>Attribution obligatoire ?</td><td>Oui : paternité et date de la dernière mise à jour</td></tr>
+              <tr><td>Partage à l'identique ?</td><td>Non</td></tr>
+              <tr><td>Durée ?</td><td>Non limitée</td></tr>
+              <tr><td>Compatible avec un projet porté par une société ?</td><td>Oui</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Une mention générique « source : données publiques » ne suffit pas, car elle omet la date. J'en fais donc une rubrique « Sources et licences » côté conseiller, alimentée par les manifestes plutôt que par une liste écrite en dur, qui deviendrait fausse au stock Sirene suivant. Elle affiche le producteur, l'intitulé, la licence et la date du fichier utilisé.</p>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Non implémenté au 17 septembre 2026</span>
+            <p>L'écran conseiller existe, mais ne porte pas encore cette rubrique (motif E). Le risque est inscrit à la <a href="risques-aipd.html">matrice des risques</a> sous R9, non-conformité de réutilisation.</p>
+          </div>
+        </div>
+
+        <h4 id="odbl">ODbL v1.0, S3 (IDÉO, ONISEP)</h4>
+        <p>L'ODbL impose le partage à l'identique de toute base dérivée. Trois artefacts du dépôt contiennent de la donnée IDÉO.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Artefact</th><th>Redistribué ?</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr><td><code>data/samples/referentiels/ideo/</code>, 4 extraits de 300 lignes</td><td>Oui, versionné</td><td><span class="badge ok">Conforme</span> un fichier <code>LICENSE</code> dédié place ce dossier sous ODbL, producteur et date indiqués</td></tr>
+              <tr><td><code>data/processed/referentiel/naf_rome_formation.csv</code>, colonne <code>libelle_formation_ideo</code></td><td>Non aujourd'hui, dossier exclu par <code>.gitignore</code></td><td><span class="badge warn">Conforme aujourd'hui</span> à requalifier dès l'exposition par l'interface</td></tr>
+              <tr><td>Le modèle appris</td><td>Non concerné, entraîné sur Parcoursup seul</td><td><span class="badge info">Sans objet</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>L'ODbL vise aussi l'usage public d'une base dérivée non diffusée. Servir un libellé IDÉO par une interface accessible au public compte comme un tel usage, ce qui impose d'offrir une copie ODbL de la base dérivée.</p>
+        <p>Plutôt que de retirer les libellés IDÉO, je choisis donc de :</p>
+        <ol>
+          <li>publier <code>naf_rome_formation.csv</code> sous ODbL quand l'interface exposera les débouchés, avec un fichier de licence dédié ;</li>
+          <li>attribuer les quatre producteurs (ONISEP, France Compétences, France Travail, INSEE) ;</li>
+          <li>ne poser aucune mesure technique restrictive sur cette table, ce que l'ODbL interdit.</li>
+        </ol>
+        <p><strong>Alternative écartée</strong> : retirer <code>libelle_formation_ideo</code> pour repasser sous Licence Ouverte. Je l'écarte parce que ce libellé est le maillon qui relie la chaîne à un lecteur humain ; sans lui, la table ne relie que des codes. Le coût de la conformité ODbL (un fichier de licence, une ligne d'attribution) est très inférieur au coût fonctionnel du retrait.</p>
+        <p><strong>Ce qui me ferait changer d'avis</strong> : une contrainte contractuelle interdisant de publier la table sous ODbL, par exemple si elle intégrait une donnée propriétaire d'un client. Le retrait des champs IDÉO redeviendrait alors la seule issue.</p>
+
+        <h3 id="licence-base-legale">La licence n'est pas une base légale</h3>
+        <p>La Licence Ouverte règle le droit de réutiliser une information publique. Elle ne dit rien du droit des données personnelles. Les deux régimes se cumulent : une donnée peut être librement réutilisable et rester une donnée personnelle soumise au RGPD. C'est le cas des lignes d'entrepreneur individuel de Sirene, dont la base légale (intérêt légitime, article 6.1.f) est établie séparément, dans les traitements <a href="#t2">T2</a> et <a href="#t3">T3</a>.</p>
+
+        <h3 id="derives">Les artefacts dérivés et leur régime</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Artefact</th><th>Sources</th><th>Régime</th><th>Publiable en l'état ?</th></tr></thead>
+            <tbody>
+              <tr><td><code>data/samples/</code> (17 fichiers, 1,2 Mo)</td><td>S1, S2, S3, S4</td><td>Mixte : ODbL sur le sous-dossier IDÉO, Licence Ouverte ailleurs, MIT pour le code</td><td><span class="badge ok">Oui</span> déjà publié</td></tr>
+              <tr><td><code>data/processed/referentiel/naf_rome_formation.csv</code></td><td>S3, S4, S5, S6</td><td>ODbL, par contamination du champ IDÉO</td><td><span class="badge warn">Oui, sous réserve</span> d'y joindre la licence et l'attribution</td></tr>
+              <tr><td><code>data/processed/sirene/agregats_commune_naf.parquet</code></td><td>S2 seule</td><td>Licence Ouverte v2.0</td><td><span class="badge warn">Oui côté licence</span> pas encore côté RGPD : voir le k-anonymat dans la <a href="risques-aipd.html">matrice des risques</a> (R2)</td></tr>
+              <tr><td><code>data/processed/parcoursup/*.parquet</code></td><td>S1 seule</td><td>Licence Ouverte v2.0</td><td><span class="badge ok">Oui</span></td></tr>
+              <tr><td>Le modèle appris et sa <a href="model-card.html">Model Card</a></td><td>S1 seule</td><td>Licence Ouverte v2.0 pour la donnée d'entraînement ; le modèle est une création du projet</td><td><span class="badge ok">Oui</span> avec attribution du MESR</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="surveillance">Ce que je surveille dans le temps</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th>Cadence</th><th>Risque de rupture</th><th>Contrôle</th></tr></thead>
+            <tbody>
+              <tr><td>S1 Parcoursup</td><td>Annuelle</td><td>Schéma croissant, de 85 colonnes en 2018 à 118 en 2025 : une colonne nouvelle non classée fait échouer la chaîne</td><td><code>tests/data/test_variables_reference.py</code></td></tr>
+              <tr><td>S2 Sirene</td><td>Mensuelle, dernier stock le 2026-08-01</td><td>URL différente chaque mois, jamais codée en dur ; bascule vers la NAF 2025 prévue début 2027</td><td><code>src/edumatch/ingestion/sirene.py</code>, <a href="decisions.html#adr-0005">ADR 0005</a> ; <code>nb_naf25_renseigne</code> à 100,0 %</td></tr>
+              <tr><td>S3 IDÉO</td><td>Ponctuelle, dernier contenu daté du 2026-07-06</td><td>Donnée qui vieillit sans signal ; seuil de fraîcheur à documenter</td><td><code>src/edumatch/quality/</code></td></tr>
+              <tr><td>S4, S5 RNCP</td><td>Quotidienne</td><td>Le nombre de fiches change chaque jour : commande reproductible, sortie non figée</td><td><a href="decisions.html#adr-0007">ADR 0007</a></td></tr>
+              <tr><td>S6 France Travail ROME/NAF</td><td>Aucune cadence connue</td><td>Nom de fichier variable à chaque révision ; idempotence par empreinte SHA-256</td><td><code>src/edumatch/ingestion/_referentiels_france_travail.py</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="sources-limites">Ce que ce registre ne couvre pas encore</h3>
+        <ul>
+          <li>La rubrique « Sources et licences » n'existe pas encore sur l'écran conseiller. L'attribution des cinq jeux sous Licence Ouverte n'est donc satisfaite que vis-à-vis d'un lecteur du dépôt, pas d'un utilisateur final.</li>
+          <li>La publication ODbL de la table dérivée est décidée, pas faite.</li>
+          <li>Aucune source sous licence non commerciale, ou à réciprocité autre que l'ODbL, n'est utilisée. Je l'ai vérifié source par source.</li>
+        </ul>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>

@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Bloc 2 · Architecture</p>
+        <h1>L'architecture d'EduMatch-IA</h1>
+        <p class="lead">Le système sépare deux préoccupations : une couche de volume (Sirene, aucune donnée personnelle, plusieurs gigaoctets) et une couche de décision (référentiels compacts, inférence, données personnelles minimisées). Cette page décrit le dépôt applicatif tel qu'il est aujourd'hui, et le second dépôt qui porte son industrialisation (infrastructure et intégration continue) — chaque élément non déployé sur l'infrastructure cible est marqué comme tel, jamais présenté comme en production.</p>
+
+        <h2 id="contexte">Le contexte — niveau 1</h2>
+        <p>Trois catégories de personnes entourent le système, et cinq producteurs publics l'alimentent.</p>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart TB
+    CONSEILLER["Conseiller d'orientation<br/>[Personne]<br/>Accompagne un lycéen.<br/>Seul utilisateur direct : il décide, le système propose."]
+    CANDIDAT["Lycéen / candidat<br/>[Personne concernée]<br/>N'accède pas au système.<br/>Ses données servent à l'apprendre, agrégées, jamais nominatives."]
+    EXPLOITANT["Exploitant de la solution<br/>[Personne]<br/>Régénère les données, réentraîne, surveille la dérive, purge le journal."]
+
+    SYSTEME["EduMatch-IA<br/>[Système logiciel]<br/>Recommande des formations à un profil de candidat et explique chaque recommandation.<br/>score = affinité x accessibilité x débouchés"]
+
+    subgraph SOURCES["Producteurs de données publiques"]
+        direction TB
+        MESR["Portail de données du MESR<br/>[Système externe]<br/>Parcoursup, 8 millésimes 2018-2025<br/>Licence Ouverte v2.0"]
+        INSEE["Base Sirene — INSEE<br/>[Système externe]<br/>Établissements, stock republié chaque mois<br/>Licence Ouverte v2.0"]
+        ONISEP["ONISEP — IDÉO<br/>[Système externe]<br/>Formations et métiers<br/>ODbL : partage à l'identique"]
+        RNCP["France Compétences — RNCP<br/>[Système externe]<br/>Fiches de certification, RNCP vers ROME<br/>Licence Ouverte v2.0"]
+        FT["France Travail<br/>[Système externe]<br/>Table de correspondance ROME vers NAF<br/>Licence Ouverte v2.0"]
+    end
+
+    MISTRAL["API de modèle de langage<br/>[Système externe — optionnel]<br/>Reformule la réponse de l'assistant.<br/>Sans clé : le mode extractif fonctionne seul."]
+
+    CONSEILLER -->|"consulte, comprend, et écarte une recommandation avec motif"| SYSTEME
+    SYSTEME -->|"recommandations expliquées, jamais une décision automatisée"| CONSEILLER
+    CANDIDAT -.->|"est accompagné par"| CONSEILLER
+    EXPLOITANT -->|"déclenche et surveille les chaînes de traitement"| SYSTEME
+
+    SYSTEME -->|"télécharge les exports CSV, cadence annuelle"| MESR
+    SYSTEME -->|"résout le catalogue, télécharge le stock, cadence mensuelle"| INSEE
+    SYSTEME -->|"télécharge 4 jeux CSV, cadence quotidienne"| ONISEP
+    SYSTEME -->|"télécharge l'export du jour"| RNCP
+    SYSTEME -->|"télécharge la table ROME/NAF"| FT
+    SYSTEME -.->|"reformule un extrait, seulement si clé fournie"| MISTRAL
+</pre>
+        </div>
+        <p>Le candidat n'a pas d'accès direct : ce n'est pas un manque de temps, mais une conséquence du profilage de mineurs et de l'exigence de contrôle humain effectif de l'article 14 de l'AI Act sur un usage classé à haut risque par son annexe III (l'accès à l'éducation). Interposer un professionnel qui peut écarter une recommandation en motivant son écart rend ce contrôle réel : le motif est enregistré, il devient une trace vérifiable. Aucune décision n'est donc prise par le système — il classe et il explique — et l'article 22 du RGPD sur la décision entièrement automatisée n'est pas la base du dispositif.</p>
+        <p>Le projet compte cinq producteurs, pas quatre : France Travail s'est ajouté en construisant la chaîne NAF ↔ ROME ↔ formation, car il porte la seule table publique reliant directement un code ROME à la NAF. Quatre sources sont sous Licence Ouverte v2.0 ; IDÉO est sous <strong>ODbL</strong>, qui impose le partage à l'identique de toute base dérivée redistribuée — c'est pour cette raison que l'assistant documentaire rattache une citation à chaque ligne indexée, et non au fichier entier (détail des sources et des licences : <a href="donnees.html#referentiels">les données</a>). L'assistant documentaire répond en mode extractif par défaut ; une clé d'API de modèle de langage activerait en plus une reformulation contrainte à ne rien ajouter hors des extraits fournis — sans clé, le mode extractif s'exécute seul, un comportement documenté et testé, pas un plantage.</p>
+        <p>Ce niveau ne montre ni l'intérieur du système (niveau 2), ni l'hébergement — aucune infrastructure cloud n'est déployée à ce jour, le système s'exécute en conteneurs sur un poste — ni les rôles de gouvernance, qui relèvent du <a href="gouvernance.html">plan de gouvernance</a>.</p>
+
+        <h2 id="conteneurs">Les conteneurs — niveau 2</h2>
+        <p>Un « conteneur » au sens C4 est une unité déployable ou un magasin de données, pas nécessairement un conteneur Docker au sens strict — ici la plupart en sont. Chaque boîte pleine correspond à un fichier ou un service ouvert dans un des deux dépôts ; le sous-graphe en pointillé regroupe l'industrialisation, écrite dans le second dépôt (<code>edumatch-cicd</code>) et détaillée à la section <a href="#infrastructure">Infrastructure de production</a> — écrite et testée localement, non déployée sur Scaleway à ce jour.</p>
+        <div class="diagram tall">
+<pre class="mermaid">
+flowchart TB
+    CONSEILLER["Conseiller d'orientation<br/>[Personne]"]
+    EXPLOITANT["Exploitant<br/>[Personne]"]
+    SOURCES["5 producteurs publics<br/>[Systèmes externes]<br/>MESR, INSEE, ONISEP, France Compétences, France Travail"]
+
+    subgraph SYS["EduMatch-IA"]
+        direction TB
+
+        subgraph SERVICE["Service en ligne"]
+            direction TB
+            ECRAN["Écran conseiller<br/>[HTML, CSS, JavaScript sans cadriciel]<br/>Voir, comprendre, écarter avec motif.<br/>Servi en fichiers statiques par l'API."]
+            API["Service de matching<br/>[FastAPI / Uvicorn, python:3.11-slim]<br/>/matching /explain /feedback /assistant /health<br/>Charge ses artefacts au démarrage, n'entraîne jamais."]
+        end
+
+        subgraph LOT["Traitements par lots"]
+            direction TB
+            AIRFLOW["Orchestrateur<br/>[Airflow 2.9.3, mode standalone]<br/>4 DAG, une cadence par source.<br/>Reprise décidée en Python, pas par le retry natif."]
+            TRAITEMENT["Chaîne de traitement<br/>[Paquet Python edumatch]<br/>Ingestion, qualité (Pandera), dbt + DuckDB, agrégat Sirene, variables, label."]
+            ENTRAINEMENT["Entraînement<br/>[Conteneur d'entraînement]<br/>LightGBM pondéré, SHAP, équité, ablation, dérive.<br/>Exécution unique, se termine en code 0."]
+        end
+
+        subgraph STOCKAGE["Magasins de données"]
+            direction TB
+            RAW[("data/raw — bronze<br/>[CSV, ZIP, Parquet]<br/>Immuable, jamais versionné")]
+            SILVER[("data/interim — silver<br/>[Fichier DuckDB]<br/>8 millésimes réconciliés")]
+            GOLD[("data/processed — gold<br/>[Parquet]<br/>Étoile, variables, précalcul SHAP")]
+            JOURNAUX[("Journaux de service<br/>[JSON Lines]<br/>Journal d'inférence (art. 12) et retours du conseiller")]
+        end
+
+        subgraph SUIVI["Suivi d'expériences"]
+            direction TB
+            MLFLOW["Registre d'expériences<br/>[MLflow 2.14.1]<br/>Paramètres, métriques, artefacts, empreinte du commit"]
+            PG[("Base du registre<br/>[PostgreSQL 16]<br/>Métadonnées MLflow uniquement")]
+        end
+    end
+
+    subgraph CIBLE["Industrialisation — dépôt edumatch-cicd, écrite, non déployée"]
+        direction TB
+        CICD["Chaîne CI/CD<br/>[Dépôt distinct edumatch-cicd]<br/>3 workflows écrits et exécutables, exécution sur GitHub non démontrée"]
+        IAC["Infrastructure<br/>[Terraform + Kubernetes Kapsule]<br/>Écrite, relue ligne à ligne, jamais appliquée (pas de compte Scaleway)"]
+        OBS["Observabilité<br/>[Prometheus + Alertmanager + Grafana]<br/>Manifestes écrits, instrumentation API déjà en place, non déployée"]
+    end
+
+    CONSEILLER -->|"HTTPS"| ECRAN
+    ECRAN -->|"JSON / HTTP"| API
+    EXPLOITANT -->|"déclenche, surveille, port 8080"| AIRFLOW
+    EXPLOITANT -->|"compare les exécutions, port 5000"| MLFLOW
+
+    AIRFLOW -->|"appelle les tâches en processus Python"| TRAITEMENT
+    TRAITEMENT -->|"télécharge"| SOURCES
+    SOURCES -.->|"fichiers bruts"| RAW
+    TRAITEMENT -->|"écrit, écriture atomique"| RAW
+    TRAITEMENT -->|"réconcilie, dbt sur DuckDB"| SILVER
+    SILVER -->|"modèles gold"| GOLD
+    TRAITEMENT -->|"agrégats, variables"| GOLD
+
+    ENTRAINEMENT -->|"lit la table de variables"| GOLD
+    ENTRAINEMENT -->|"enregistre paramètres, métriques, artefacts"| MLFLOW
+    ENTRAINEMENT -->|"écrit prédictions et précalcul SHAP"| GOLD
+    MLFLOW -->|"SQL"| PG
+
+    API -->|"lit en lecture seule"| GOLD
+    API -->|"ajoute une ligne par inférence et par retour"| JOURNAUX
+    AIRFLOW -->|"purge par paliers"| JOURNAUX
+
+    CICD -.->|"construira et déploiera"| API
+    IAC -.->|"hébergera"| SYS
+    OBS -.->|"observera"| API
+</pre>
+        </div>
+
+        <h3 id="etat-conteneurs">L'état réel de chaque conteneur</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Conteneur</th><th>Technologie</th><th>Où il vit</th><th>État</th></tr></thead>
+            <tbody>
+              <tr><td>Service de matching</td><td>FastAPI / Uvicorn, <code>python:3.11-slim</code></td><td><code>src/edumatch/api/</code>, <code>docker/Dockerfile.serve</code></td><td><span class="badge ok">écrit et testé</span></td></tr>
+              <tr><td>Écran conseiller</td><td>HTML, CSS, JavaScript natif</td><td><code>src/edumatch/api/static/</code></td><td><span class="badge ok">écrit</span></td></tr>
+              <tr><td>Orchestrateur</td><td>Airflow 2.9.3 (standalone)</td><td><code>pipelines/edumatch_pipeline.py</code></td><td><span class="badge ok">4 DAG écrits</span></td></tr>
+              <tr><td>Chaîne de traitement</td><td>Polars, dbt, DuckDB, Pandera, PySpark</td><td><code>src/edumatch/{ingestion,quality,transform,spark,features,referentiel}/</code></td><td><span class="badge ok">exécutée sur données réelles</span></td></tr>
+              <tr><td>Entraînement</td><td>LightGBM, scikit-learn, SHAP</td><td><code>src/edumatch/models/</code></td><td><span class="badge ok">écrit, exécutions enregistrées</span></td></tr>
+              <tr><td>Registre d'expériences</td><td>MLflow 2.14.1</td><td><code>docker-compose.yml</code></td><td><span class="badge ok">en service local</span></td></tr>
+              <tr><td>Base du registre</td><td>PostgreSQL 16</td><td><code>docker-compose.yml</code></td><td><span class="badge ok">en service local</span></td></tr>
+              <tr><td>Magasins bronze / silver / gold</td><td>CSV, ZIP, DuckDB, Parquet</td><td><code>data/</code> (jamais versionné, sauf <code>data/samples/</code>)</td><td><span class="badge ok">peuplés</span></td></tr>
+              <tr><td>Journaux de service</td><td>JSON Lines</td><td><code>data/processed/audit/</code></td><td><span class="badge ok">écrits, purgés par un DAG</span></td></tr>
+              <tr><td>Chaîne CI/CD</td><td>GitHub Actions, dépôt <code>edumatch-cicd</code></td><td><code>.github/workflows/{ci,build-images,deploy}.yml</code></td><td><span class="badge warn">écrite, exécutable ; exécution sur GitHub non démontrée</span></td></tr>
+              <tr><td>Infrastructure</td><td>Terraform, Kubernetes Kapsule (Scaleway)</td><td><code>terraform/</code>, <code>k8s/base/</code> (dépôt <code>edumatch-cicd</code>)</td><td><span class="badge warn">écrite, relue ligne à ligne ; non déployée</span></td></tr>
+              <tr><td>Observabilité</td><td>Prometheus, Alertmanager, Grafana</td><td><code>monitoring/</code> (dépôt <code>edumatch-cicd</code>)</td><td><span class="badge warn">écrite ; non déployée</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le fichier <code>docker-compose.yml</code> décrit la pile de développement (cinq services) et leurs dépendances de démarrage ; <code>docker-compose.prod.yml</code> décrit la pile de production de l'orchestrateur, destinée à l'instance Scaleway dédiée à Airflow (détail à la section <a href="#infrastructure">Infrastructure de production</a>). Le système fonctionne aujourd'hui en local, en conteneurs : aucun registre de conteneurs distant n'a reçu d'image à ce jour, aucune ressource Scaleway n'a été provisionnée. L'infrastructure et l'intégration continue existent par conception dans un second dépôt (<code>edumatch-cicd</code>, critère 4.9) : elles y sont écrites et, pour la CI, exécutables sans compte Scaleway ; ce qui reste non démontré est l'exécution réelle sur GitHub et le premier déploiement sur Scaleway.</p>
+
+        <h3 id="decisions-conteneurs">Six décisions que ce diagramme matérialise</h3>
+        <p><strong>Aucun serveur de base de données pour l'entrepôt.</strong> PostgreSQL n'est que la base de métadonnées de MLflow ; l'entrepôt en étoile est un fichier DuckDB pour silver et des fichiers Parquet pour gold. La couche gold pèse quelques mébioctets pour 440 030 lignes de faits : y poser un serveur relationnel coûterait une complexité qu'aucun chiffre n'exige. Le seuil qui ferait changer d'avis : plusieurs lecteurs concurrents ayant besoin d'écrire, ou une couche gold devenant trop grande pour un poste (<a href="decisions.html#adr-0015">ADR 0015</a>).</p>
+        <p><strong>Polars et Spark coexistent, la configuration tranche à l'exécution.</strong> Un commutateur (<code>execution.moteur_volume</code>) choisit entre Polars en local et Spark en mode cluster, sur un module unique de définitions du grain et des règles. Sur le stock des établissements — 43 896 818 lignes, 54 colonnes réduites à 9 colonnes projetées — Polars met 18,2 s là où Spark en met 87,0 s pour un résultat identique : la machine virtuelle Java et le brassage entre exécuteurs locaux coûtent plus qu'ils ne rapportent tant que le calcul tient sur un nœud. Mais le fichier historique des établissements compte à lui seul 95 865 102 lignes, republié chaque mois : Spark est écrit et testé maintenant plutôt que promis pour plus tard (<a href="decisions.html#adr-0016">ADR 0016</a>, <a href="decisions.html#adr-0002">ADR 0002</a> pour le refus de Databricks).</p>
+        <p><strong>L'API ne s'entraîne jamais.</strong> Le service de matching lit des artefacts précalculés — le catalogue de prédictions et le précalcul SHAP par cellule — sans jamais charger LightGBM pour inférer à la volée. La raison est un budget de latence : une explication SHAP calculée en ligne coûte un temps sans rapport avec l'objectif de service fixé (p95 à 300 ms, un objectif documenté, pas une mesure en production tant qu'aucune production n'existe). La contrepartie assumée : le service ne sait expliquer que des cellules déjà calculées, et l'entraînement doit s'être terminé avec succès avant que l'API démarre.</p>
+        <p><strong>La reprise est décidée en Python, pas par le mécanisme natif d'Airflow.</strong> Les tâches sont déclarées avec <code>retries=0</code> : le code décide de retenter à partir d'un vocabulaire d'erreur explicite, transitoire contre définitive. Un retry natif retenterait aveuglément n'importe quelle exception, y compris un schéma cassé ou un contrôle qualité en échec — les cas où retenter ne répare rien et masque la panne. La temporisation croissante (60 s puis 120 s, trois tentatives) est en configuration (<a href="decisions.html#adr-0006">ADR 0006</a>).</p>
+        <p><strong>Toute la configuration passe par un seul point d'entrée typé.</strong> Aucun chemin, seuil ou URL de fichier n'est écrit dans le code : un fichier <code>configs/base.yaml</code> commun, surchargé par environnement, chargé et validé par <code>src/edumatch/config.py</code>. Les secrets ne passent que par l'environnement (<a href="decisions.html#adr-0003">ADR 0003</a>).</p>
+        <p><strong>Les journaux de service sont un conteneur à part entière.</strong> Le journal d'inférence porte l'obligation de journalisation de l'article 12 de l'AI Act, avec une durée de conservation bornée par paliers (pseudonymisation à 12 mois, agrégation à 36 mois). Un DAG dédié applique la purge, et une commande permet de la simuler avant de l'appliquer.</p>
+
+        <h3 id="flux">Les flux, avec leur protocole et leur sens</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Flux</th><th>Protocole</th><th>Sens</th><th>Cadence</th></tr></thead>
+            <tbody>
+              <tr><td>Conseiller → écran → service</td><td>HTTPS puis JSON/HTTP</td><td>Requête / réponse</td><td>À la demande</td></tr>
+              <tr><td>Chaîne de traitement → producteurs publics</td><td>HTTPS</td><td>Lecture seule</td><td>Annuelle, mensuelle ou quotidienne selon la source</td></tr>
+              <tr><td>Chaîne → bronze → silver → gold</td><td>Système de fichiers</td><td>Écriture atomique, sens unique</td><td>Par exécution de DAG</td></tr>
+              <tr><td>Entraînement → registre d'expériences</td><td>HTTP (port 5000)</td><td>Écriture de métriques et d'artefacts</td><td>Par entraînement</td></tr>
+              <tr><td>Service → gold</td><td>Système de fichiers, lecture seule</td><td>Lecture</td><td>Au démarrage</td></tr>
+              <tr><td>Service → journaux</td><td>Système de fichiers, ajout en fin de fichier</td><td>Écriture</td><td>Par requête</td></tr>
+              <tr><td>Orchestrateur → journaux</td><td>Système de fichiers</td><td>Réécriture par purge</td><td>Quotidienne</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le montage local monte la couche gold en lecture seule dans le service : ce n'est pas décoratif, c'est le moindre privilège appliqué au seul conteneur exposé au réseau. S'il était compromis, il ne pourrait pas corrompre les données qui alimentent le modèle.</p>
+        <p>Ce que je n'ai pas dessiné ici : le niveau 3 (composants) pour tous les conteneurs — le modèle C4 le réserve aux endroits réellement complexes, et ici seule la chaîne de traitement le mériterait, déjà détaillée par le <a href="pipeline.html">pipeline</a> et le lignage dbt ; le détail des quatre DAG, à sa place dans <a href="pipeline.html">le pipeline</a>. La topologie cloud cible, elle, est décrite plus bas, à la section <a href="#infrastructure">Infrastructure de production</a>.</p>
+
+        <h2 id="etoile">Le modèle en étoile de la couche gold</h2>
+        <p>Une ligne de <code>fait_admission</code> est une cellule dont le taux d'admission est calculable : un croisement <code>(session, formation, type de baccalauréat, statut de boursier)</code>. Une ligne silver (une formation pour une session) se déplie donc en jusqu'à six lignes de faits, une par profil de candidat ; elle n'en produit aucune si son taux n'est calculable pour aucun profil, ce qui écarte 2018 et 2019 sans qu'aucun millésime ne soit nommé dans le code. Le grain final s'écrit <code>(session, sk_formation, sk_profil)</code>, vérifié unique sur les 440 030 lignes produites, à la construction puis par un test dbt singulier.</p>
+
+        <div class="diagram">
+<pre class="mermaid">
+erDiagram
+    DIM_SESSION ||--o{ FAIT_ADMISSION : "qualifie"
+    DIM_FORMATION ||--o{ FAIT_ADMISSION : "qualifie"
+    DIM_TERRITOIRE ||--o{ FAIT_ADMISSION : "localise"
+    DIM_PROFIL_CANDIDAT ||--o{ FAIT_ADMISSION : "segmente"
+
+    FAIT_ADMISSION {
+        int session "FK dim_session"
+        int sk_formation "FK dim_formation, version SCD 2"
+        int sk_territoire "FK dim_territoire"
+        int sk_profil "FK dim_profil_candidat"
+        int nb_voe_pp "mesure, denominateur, voeux"
+        int prop_tot "mesure, numerateur, propositions"
+        int effectif "mesure, poids d entrainement"
+        float taux "mesure, label, borne a 1"
+        bool taux_depasse_1 "trace du depassement avant bornage"
+    }
+
+    DIM_SESSION {
+        int session PK
+        bool label_disponible
+    }
+
+    DIM_FORMATION {
+        int sk_formation PK
+        string cod_aff_form "cle naturelle"
+        int session_debut
+        int session_fin
+        string fili
+        string select_form
+        string contrat_etab
+        int capa_fin
+        string cod_uai
+    }
+
+    DIM_TERRITOIRE {
+        int sk_territoire PK
+        string dep "cle naturelle"
+        string ville_etab "cle naturelle"
+        string acad_mies
+        string region_etab_aff
+    }
+
+    DIM_PROFIL_CANDIDAT {
+        int sk_profil PK
+        string type_bac
+        bool boursier
+        string libelle_type_bac
+    }
+</pre>
+        </div>
+        <p>Une étoile, pas un flocon : <code>dim_territoire</code> porte académie et région en clair plutôt que de les renvoyer vers des sous-dimensions ; la redondance est assumée (<a href="decisions.html#adr-0015">ADR 0015</a>).</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Table</th><th>Grain — une ligne = …</th><th>Clé</th><th>SCD</th><th class="num">Lignes</th><th class="num">Colonnes</th></tr></thead>
+            <tbody>
+              <tr><td><code>fait_admission</code></td><td>une cellule dont le taux est calculable</td><td><code>(session, sk_formation, sk_profil)</code></td><td>—</td><td class="num"><strong>440 030</strong></td><td class="num">9</td></tr>
+              <tr><td><code>dim_formation</code></td><td>une version d'une formation</td><td><code>sk_formation</code> (naturelle : <code>cod_aff_form</code>)</td><td><strong>type 2</strong></td><td class="num">43 858</td><td class="num">12</td></tr>
+              <tr><td><code>dim_territoire</code></td><td>un couple département × ville d'établissement</td><td><code>sk_territoire</code> (naturelle : <code>dep</code>, <code>ville_etab</code>)</td><td>type 1</td><td class="num">1 448</td><td class="num">6</td></tr>
+              <tr><td><code>dim_profil_candidat</code></td><td>une combinaison type de bac × boursier</td><td><code>sk_profil</code> (naturelle : <code>type_bac</code>, <code>boursier</code>)</td><td>fixe</td><td class="num">6</td><td class="num">4</td></tr>
+              <tr><td><code>dim_session</code></td><td>un millésime Parcoursup ingéré</td><td><code>session</code></td><td>—</td><td class="num">8</td><td class="num">2</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="fait-admission">Le fait et ses dimensions</h3>
+        <p>Le label <code>taux</code> vaut <code>prop_tot / nb_voe_pp</code>, borné à 1 (<a href="decisions.html#adr-0009">ADR 0009</a>) : 0 ligne ne porte un taux hors de <code>[0, 1]</code>, vérifié sur l'artefact produit. <code>taux_depasse_1</code> garde en clair l'information du dépassement avant bornage, et <code>effectif</code> reprend <code>nb_voe_pp</code> pour servir de poids à l'entraînement (détail de la formule : <a href="donnees.html#label">le label</a>).</p>
+        <p><code>dim_formation</code> est la seule dimension historisée : 43 858 versions pour 16 618 formations distinctes, soit 2,6 versions par formation en moyenne et 6 au maximum. Une version naît dès que change l'un des huit attributs suivis (<code>fili</code>, <code>form_lib_voe_acc</code>, <code>fil_lib_voe_acc</code>, <code>select_form</code>, <code>contrat_etab</code>, <code>tri</code>, <code>capa_fin</code>, <code>cod_uai</code>), avec une plage de validité bornée par <code>session_debut</code> et <code>session_fin</code>. Le catalogue silver compte 16 960 formations distinctes sur 2020-2025, dont 10 826 aux six sessions ; <code>dim_formation</code> n'en porte que 16 618, les 342 autres figurant au catalogue sans aucune cellule dont le label soit calculable. Historiser permet de reconstituer l'état d'une formation tel qu'il était à la session observée, et d'éviter qu'une valeur de 2025 soit attribuée à une cellule de 2020. <code>cod_uai</code> (l'établissement gérant) reste un attribut de dimension pour l'analyse et la supervision, jamais une variable du modèle.</p>
+        <p><code>dim_session</code> porte huit millésimes ingérés, mais deux n'apparaissent jamais dans les faits : sur silver, <code>nb_voe_pp_bg</code> est renseigné pour 2018 et 2019, mais <code>prop_tot_bg</code> ne l'est sur aucune ligne — le numérateur du label n'existe pas. <code>dim_profil_candidat</code> porte les six combinaisons sans amont dans le graphe de lignage : elles ne viennent pas d'une colonne source, mais de la structure du label elle-même.</p>
+
+        <h3 id="physique">La modélisation physique</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Couche</th><th>Emplacement</th><th>Format</th></tr></thead>
+            <tbody>
+              <tr><td>bronze</td><td><code>data/raw/parcoursup/</code></td><td>CSV publiés, immuables</td></tr>
+              <tr><td>silver</td><td><code>data/interim/parcoursup/silver.parquet</code></td><td>Parquet, 104 274 lignes × 128 colonnes</td></tr>
+              <tr><td>gold</td><td><code>data/processed/parcoursup/*.parquet</code></td><td>Parquet, un fichier par table</td></tr>
+              <tr><td>base de travail dbt</td><td><code>data/interim/parcoursup/silver.duckdb</code></td><td>DuckDB, régénérable</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fichier</th><th class="num">Octets</th><th>Ordre de grandeur</th></tr></thead>
+            <tbody>
+              <tr><td><code>fait_admission.parquet</code></td><td class="num">4 037 104</td><td>3,85 Mio</td></tr>
+              <tr><td><code>dim_formation.parquet</code></td><td class="num">694 034</td><td>678 Kio</td></tr>
+              <tr><td><code>dim_territoire.parquet</code></td><td class="num">31 344</td><td>30,6 Kio</td></tr>
+              <tr><td><code>dim_profil_candidat.parquet</code></td><td class="num">2 765</td><td>2,7 Kio</td></tr>
+              <tr><td><code>dim_session.parquet</code></td><td class="num">1 706</td><td>1,7 Kio</td></tr>
+              <tr><td><strong>Couche gold complète</strong></td><td class="num"><strong>4 766 953</strong></td><td><strong>4,55 Mio</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Pour comparaison, <code>silver.parquet</code> pèse 16 247 456 octets (15,5 Mio) et la base de travail <code>silver.duckdb</code> 22 294 528 octets (21,3 Mio). C'est ce chiffre de 4,55 Mio qui justifie le dimensionnement : pas besoin de serveur d'entrepôt, ni de moteur distribué, ni de partitionnement — la couche se lit en entier en mémoire sur n'importe quel poste. Le seuil de bascule vers un entrepôt distant : quelques dizaines de gigaoctets, un accès concurrent multi-services, ou un besoin de mise à jour transactionnelle. Aucun n'est atteint (<a href="decisions.html#adr-0015">ADR 0015</a>).</p>
+        <p><strong>Parquet</strong> sert de format d'échange (typage conservé, lecture par colonne, compression Snappy), relu à chaque étape aval — construction des variables, entraînement, audit d'équité. <strong>DuckDB</strong> sert de moteur pour dbt : il lit et écrit le Parquet nativement, sans serveur à administrer, avec une base de travail régénérable. Le typage hérité de silver suit une règle générique — une colonne devient numérique seulement si elle se convertit sans perte sur les huit millésimes — plutôt qu'une table de correspondance à maintenir à la main : c'est ce qui garantit que <code>dep</code> reste du texte, puisque <code>2A</code> et <code>2B</code> existent. Chacune des cinq tables est écrite par fichier temporaire renommé à la fin, même primitive que l'ingestion et la couche silver.</p>
+
+        <h3 id="reproduire">Reproduire et consulter le lignage</h3>
+        <pre><code># Chemin de production : silver -> gold, sans dépendance à dbt
+make gold
+
+# Rejeu par dbt : matérialise silver ET gold dans DuckDB,
+# exécute les tests, puis génère le graphe de lignage
+make transform-lignage</code></pre>
+        <p><code>make gold</code> exige que <code>data/interim/parcoursup/silver.parquet</code> existe, sinon il s'arrête avec un message indiquant de lancer <code>make transform</code> d'abord. Dernière exécution de <code>make transform-lignage</code> vérifiée : <strong>26 nœuds, 26 succès</strong>, dont le test singulier de grain sur <code>fait_admission</code>. La suite de tests complète du dépôt (<code>make test</code>) compte aujourd'hui <strong>751 tests, tous verts</strong>. Les deux chemins appellent les mêmes fonctions : ce qui change n'est jamais le calcul, seulement le moteur qui a chargé la table amont. Les modèles dbt de <code>gold/</code> ne contiennent aucune logique — ils existent pour que le graphe de dépendances soit produit automatiquement, pas pour réécrire en SQL ce qui est déjà écrit et testé en Python.</p>
+        <p>Le graphe de lignage montre la chaîne complète : source bronze → <code>stg_parcoursup</code> → les trois dimensions issues de silver → <code>fait_admission</code>, seul modèle qui dépend à la fois de silver et de ses trois dimensions. Cet ordre est déduit des références dbt, pas déclaré à la main.</p>
+
+        <h3 id="garanties">Ce que le modèle garantit</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Propriété</th><th>Comment elle est garantie</th></tr></thead>
+            <tbody>
+              <tr><td>Grain unique</td><td>Vérifié à la construction (erreur levée sinon) et rejoué par le test dbt singulier</td></tr>
+              <tr><td>Aucun fait orphelin</td><td>Une clé de dimension non résolue lève une erreur avant l'écriture</td></tr>
+              <tr><td>Aucune dimension orpheline</td><td>Faits et dimensions construits sur le même sous-ensemble exploitable</td></tr>
+              <tr><td>Aucune jointure qui gonfle</td><td>Chaque jointure de dimension compare le nombre de lignes avant et après, et lève si elles diffèrent</td></tr>
+              <tr><td>Taux dans <code>[0, 1]</code></td><td>Bornage à la construction, 0 ligne hors bornes sur l'artefact</td></tr>
+              <tr><td>Écriture non tronquée</td><td>Fichier temporaire renommé à la fin</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le contrôle de jointure mérite un mot : un simple test « pas de doublon sur le grain final » ne l'aurait pas remplacé. Si une dimension proposait deux versions candidates pour une même clé naturelle, les lignes fabriquées en trop porteraient par construction des clés de substitution différentes — le grain resterait unique et le défaut passerait inaperçu. Il fallait donc contrôler la jointure elle-même, pas seulement son résultat.</p>
+
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Limites assumées de la couche gold</span>
+            <p><code>session_fin</code> documente la dernière session observée, pas une garantie de continuité. <code>dim_formation</code> est construite formation par formation en Python, pas en SQL ensembliste — négligeable à 16 618 formations, à revoir en fonction de fenêtre à un ordre de grandeur de plus. La couche gold ne couvre que Parcoursup : les agrégats territoriaux issus de Sirene ne sont pas encore une table de faits de cette étoile, ils viendront par le job d'agrégation dédié. Aucun partitionnement, aucune indexation, à 4,55 Mio ce serait une complexité gratuite. Deux sessions sur huit ne portent aucun fait : ce n'est pas une limite du modèle mais de la source, documentée plutôt que masquée.</p>
+          </div>
+        </div>
+
+        <h2 id="infrastructure">Infrastructure de production</h2>
+        <p>Le code métier (API, modèle, pipelines) vit dans <code>edumatch-ia</code> ; son industrialisation — conteneurs, infrastructure, déploiement, supervision — vit dans un second dépôt, <code>edumatch-cicd</code>, conformément au critère 4.9 (deux dépôts de code distincts). La séparation tient à deux cycles de vie différents et à des permissions différentes : les identifiants Scaleway (registre, cluster) n'ont aucune raison d'être accessibles à qui propose une modification du code métier. Tout ce qui suit est écrit et relu, mais <strong>rien n'a été appliqué sur Scaleway à ce jour</strong> : ni compte Scaleway ni binaire Terraform n'étaient disponibles pour exécuter la séquence.</p>
+
+        <h3 id="infra-conteneurs">Conteneurs</h3>
+        <p>Trois images, construites depuis <code>edumatch-ia/docker/</code> par <code>build-images.yml</code> : <code>edumatch-serve</code> (<code>Dockerfile.serve</code>), <code>edumatch-train</code> (<code>Dockerfile.train</code>) et <code>edumatch-airflow</code> (<code>Dockerfile.airflow</code>). Les deux premières sont construites en deux étages (<code>builder</code> puis <code>runtime</code>) depuis <code>python:3.11-slim</code>, tournent sous un utilisateur non root d'uid et de gid fixes (10001), et n'embarquent que <code>libgomp1</code> comme dépendance système — nécessaire à LightGBM, dont l'absence fait échouer l'import (constaté en conteneur réel avant d'ajouter la ligne). <code>edumatch-serve</code> expose un <code>HEALTHCHECK</code> qui interroge <code>/health</code> (intervalle 30 s, délai de démarrage 15 s, 3 tentatives) ; <code>edumatch-train</code> n'en a délibérément aucun, puisqu'il exécute un travail par lots qui se termine par un code de sortie, pas un processus interrogé en continu. <code>edumatch-airflow</code> part de l'image officielle <code>apache/airflow:2.9.3</code> (déjà non root, uid 50000) et y ajoute le paquet du projet sans machine virtuelle Java ni extra <code>[spark]</code> — leur ajout casse le cœur d'Airflow par conflit de versions de SQLAlchemy et de pandas, reproduit avant d'écrire cette contrainte ; l'agrégation Sirene tourne donc en production avec le moteur Polars (<code>moteur_volume: local</code>).</p>
+        <p>Chaque image reçoit l'empreinte courte du commit qui l'a produite par un argument de construction (<code>GIT_SHA</code>), reportée dans un <code>LABEL</code> et surtout dans le tag publié — jamais <code>latest</code> en production, pour toujours savoir ce qui tourne réellement.</p>
+        <p>Deux piles Docker Compose, aux rôles distincts : <code>docker-compose.yml</code> pour le développement local (déjà décrit plus haut), et <code>docker-compose.prod.yml</code> pour la pile de production de l'orchestrateur — destinée à l'instance Scaleway dédiée à Airflow, pas au cluster Kapsule. Cette seconde pile diffère sur plusieurs points : aucune image n'y est construite sur place, elle est tirée du registre et étiquetée par un commit ; l'exécuteur est <code>LocalExecutor</code> (les quatre DAG peuvent s'exécuter en parallèle) sur une base PostgreSQL dédiée, distincte de celle qui sert de backend à MLflow sur le cluster ; aucun port n'est ouvert sur l'interface publique, chaque port est lié à <code>127.0.0.1</code>, seul un tunnel SSH permet d'atteindre l'interface web ; tous les secrets viennent de variables d'environnement à syntaxe stricte (<code>${VARIABLE:?message}</code>), qui font échouer immédiatement le démarrage si une valeur manque plutôt que de démarrer avec une clé vide.</p>
+
+        <h3 id="infra-terraform">Terraform — socle Scaleway</h3>
+        <p>Le socle (réseau, cluster, registre, bucket) est provisionné par Terraform, versions épinglées sans borne ouverte : <strong>Terraform 1.10.5</strong>, <strong>provider <code>scaleway/scaleway</code> 2.83.0</strong> (vérifiée le 2026-09-15 via l'API des releases GitHub du provider, jamais exécutée faute de binaire disponible). L'état est distant et verrouillé dès la première exécution : bucket Object Storage <code>edumatch-tfstate</code> comme backend <code>s3</code>, verrouillage natif par fichier (<code>use_lockfile</code>, natif depuis Terraform 1.10) plutôt qu'une table façon DynamoDB, qui n'a pas d'équivalent chez Scaleway.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ressource</th><th>Dimensionnement</th></tr></thead>
+            <tbody>
+              <tr><td>Réseau privé</td><td>dédié au cluster, cloisonnement avant même les <code>NetworkPolicy</code> internes</td></tr>
+              <tr><td>Cluster Kapsule</td><td>plan de contrôle mutualisé (sans frais), CNI Cilium</td></tr>
+              <tr><td>Pool de nœuds « demo »</td><td>type <strong>DEV1-M</strong> (3 vCPU, 4 Go), <strong>1 à 2 nœuds</strong>, autoscaling et autoréparation activés</td></tr>
+              <tr><td>Registre de conteneurs</td><td>espace de noms privé</td></tr>
+              <tr><td>Bucket d'artefacts</td><td>Object Storage privé — catalogue de prédictions et précalcul SHAP, déposés après <code>make train</code> / <code>make explain</code></td></tr>
+              <tr><td>Instance Airflow (ADR 0019)</td><td>type <strong>DEV1-L</strong> (4 vCPU, 8 Go), volume bloc 60 Go, IP flexible, conditionnée par <code>airflow_active</code> (<code>false</code> par défaut)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>L'instance Airflow est distincte du cluster Kapsule : la pile Airflow de référence exige au moins 4 Go à elle seule, et son exécuteur suppose un partage de fichiers entre pods que le stockage bloc Scaleway (accès exclusif à un seul nœud) ne permet pas sans réécrire les entrées-sorties du pipeline vers le stockage objet. Le pool Kapsule (8 192 Mi de capacité brute par nœud) a déjà 2 368 Mi réservés par l'API et le monitoring avant même le pic de l'agrégation Sirene. Toutes les ressources de l'instance Airflow portent une bascule <code>count = var.airflow_active ? 1 : 0</code> : elle n'existe, et ne se facture, que pendant les séances de tournage.</p>
+        <p><strong>Coûts</strong>, tels qu'écrits dans le README Terraform, constatés sur la page tarifaire publique Scaleway au 2026-09-15 : plan de contrôle Kapsule mutualisé sans frais ; 1 nœud DEV1-M ≈ 0,02 EUR/heure (≈ 14,74 EUR/mois s'il tournait un mois complet) ; bucket Object Storage négligeable à cette taille ; instance DEV1-L ≈ 0,04284 EUR/heure (≈ 31,27 EUR/mois en continu) ; IPv4 flexible ≈ 0,005 EUR/heure (≈ 3,6 EUR/mois) ; volume bloc 60 Go ≈ 5,70 EUR/mois. Une séance de démonstration complète (provisionner, déployer, vérifier, détruire) coûte de l'ordre de quelques dizaines de centimes d'euro, à condition de détruire ensuite : un cluster oublié coûte de l'ordre de 15 à 30 EUR pour un mois, une instance Airflow oubliée de l'ordre de 40 EUR pour un mois — l'erreur d'exploitation que la règle de coût du projet interdit.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Non vérifié à ce jour, faute de compte Scaleway et de binaire Terraform</span>
+            <p>Le comportement du backend <code>s3</code> contre le point de terminaison Object Storage de Scaleway (<code>use_lockfile</code>, <code>use_path_style</code>) ; l'argument <code>acl</code> porté directement par <code>scaleway_object_bucket</code> dans la version 2.83.0 du provider, plutôt que par une ressource séparée ; la version de Kubernetes réellement proposée par Kapsule (<code>1.30</code> déclarée, non confirmée contre <code>scw k8s version list</code>) ; un conflit possible avec un espace de noms de registre <code>edumatch</code> déjà créé à la main pendant l'étape CI/CD ; le libellé exact de l'image Ubuntu LTS de l'instance Airflow (<code>ubuntu_jammy</code>, par convention observée, pas confirmée) ; les noms d'attributs <code>ip_id</code>, le bloc <code>private_network</code> et <code>stateful</code> sur les ressources d'instance et de groupe de sécurité dans cette version du provider.</p>
+          </div>
+        </div>
+
+        <h3 id="infra-kubernetes">Kubernetes — les manifestes de <code>k8s/base/</code></h3>
+        <p>Un espace de noms dédié (<code>edumatch</code>), un <code>Deployment edumatch-serve</code> sans <code>replicas</code> fixé — laissé au <code>HorizontalPodAutoscaler</code>, pour éviter qu'un <code>kubectl apply</code> répété n'entre en conflit avec sa décision — et un <code>HorizontalPodAutoscaler</code> qui monte de <strong>2 à 6 réplicas</strong> sur un seuil de <strong>60 % d'utilisation CPU</strong>. Les deux bornes répondent à des questions différentes : le plancher de 2 vise la disponibilité (jamais aucun pod prêt pendant une bascule), le plafond de 6 matérialise le rapport de charge mesuré de 1 à 6 entre le pic de la campagne de vœux et le creux estival.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Conteneur</th><th class="num">requests CPU</th><th class="num">requests mémoire</th><th class="num">limits CPU</th><th class="num">limits mémoire</th></tr></thead>
+            <tbody>
+              <tr><td>Initialisation (<code>recuperer-artefacts</code>)</td><td class="num">50m</td><td class="num">64Mi</td><td class="num">250m</td><td class="num">128Mi</td></tr>
+              <tr><td>Principal (<code>edumatch-serve</code>)</td><td class="num">200m</td><td class="num">320Mi</td><td class="num">1</td><td class="num">640Mi</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Ces valeurs, lues dans <code>k8s/base/deployment.yaml</code>, ne sont pas mesurées sous charge réelle faute de cluster disponible : elles sont posées sur l'empreinte connue d'un processus FastAPI, pandas, LightGBM et SHAP chargés en mémoire, à confirmer avec <code>kubectl top pod</code> après le premier déploiement. <code>requests</code> et <code>limits</code> diffèrent volontairement (classe de qualité de service <em>Burstable</em>, pas <em>Guaranteed</em>) : la charge d'une requête <code>/matching</code> individuelle est légère, aucun calcul SHAP n'y est fait à la volée.</p>
+        <p>Le reste de la surface de sécurité : une <strong>NetworkPolicy</strong> qui n'autorise en entrée que le port 8000 depuis l'intérieur du cluster, et en sortie que la résolution DNS (port 53) et le HTTPS (port 443) ; un <strong>PodDisruptionBudget</strong> à <code>minAvailable: 1</code>, qui protège le plancher de disponibilité contre les évictions volontaires (maintenance, mise à niveau du pool) sans jamais bloquer une opération planifiée sur un pool réduit à un seul nœud ; un <strong>compte de service dédié</strong> (<code>edumatch-serve</code>, pas le compte <code>default</code> du espace de noms), avec <code>automountServiceAccountToken: false</code> — aucun jeton d'API Kubernetes, même inutilisé, ne traîne dans le système de fichiers du conteneur, puisque l'API ne parle jamais à l'API Kubernetes ; et un contexte de sécurité de pod <strong>non root</strong> (uid et gid 10001, cohérents avec l'image), système de fichiers racine en <strong>lecture seule</strong>, aucune élévation de privilège, toutes les capacités Linux retirées.</p>
+
+        <h3 id="infra-monitoring">Monitoring</h3>
+        <p>Prometheus, Alertmanager et Grafana, en manifestes Kubernetes bruts plutôt qu'un paquet Helm communautaire (<code>kube-prometheus-stack</code>) : un seul service à surveiller ne justifie pas l'opérateur et ses CRD, et le coût mémoire de l'opérateur, de <code>node-exporter</code> et de <code>kube-state-metrics</code> (de l'ordre de 300 à 500 Mi cumulés) pèserait significativement sur un nœud DEV1-M de 4 Go.</p>
+        <p>L'API expose déjà une route <code>/metrics</code> : la dépendance <code>prometheus-fastapi-instrumentator</code> est déclarée dans <code>edumatch-ia/pyproject.toml</code> et l'instrumentation est branchée dans <code>src/edumatch/api/main.py</code>, avant l'exposition de la route (<code>include_in_schema=False</code>, puisque ce n'est pas une route fonctionnelle pour un conseiller). L'instrumentation est donc en place côté code applicatif ; ce qui reste non démontré est sa collecte réelle par un Prometheus déployé, faute de cluster.</p>
+        <p>Le SLO déclaré porte sur la route <code>/matching</code>, celle qui porte l'usage réel : <strong>p95 sous 300 ms</strong> (budget d'erreur : 5 % des requêtes peuvent dépasser ce seuil) et <strong>99,5 % des requêtes sans code 5xx</strong> (budget d'erreur : 0,5 %) — un chiffre volontairement en retrait des 99,9 % d'un service permanent, puisque le cluster n'est provisionné que pour les démonstrations et n'a ni tolérance multi-zone ni garantie de non-colocalisation des deux réplicas sur un pool réduit à un seul nœud.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Alerte</th><th>Sévérité</th><th>Symptôme</th></tr></thead>
+            <tbody>
+              <tr><td><code>EdumatchLatenceP95Elevee</code></td><td><span class="badge warn">warning</span></td><td>p95 de <code>/matching</code> au-dessus de 300 ms pendant 5 minutes</td></tr>
+              <tr><td><code>EdumatchTauxErreur5xxEleve</code></td><td><span class="badge bad">critical</span></td><td>plus de 5 % de réponses 5xx pendant 5 minutes</td></tr>
+              <tr><td><code>EdumatchAucunReplicaDisponible</code></td><td><span class="badge bad">critical</span></td><td>zéro pod prêt depuis 2 minutes</td></tr>
+              <tr><td><code>EdumatchHpaPlafondAtteintDurablement</code></td><td><span class="badge warn">warning</span></td><td>6 réplicas prêts depuis plus de 15 minutes</td></tr>
+              <tr><td><code>EdumatchInstrumentationAbsente</code></td><td><span class="badge warn">warning</span></td><td>aucune métrique reçue depuis 10 minutes</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Chacune porte un texte d'action, pas seulement un symptôme : une checklist de commandes à exécuter, pas une phrase vague. Une sixième alerte, sur la dérive du modèle, est délibérément absente : le PSI (<a href="decisions.html#adr-0018">ADR 0018</a>) tourne aujourd'hui comme un rapport par lots, pas comme un flux qui expose une métrique consultable en continu — l'ajouter maintenant produirait une règle qui ne se déclenche jamais faute de métrique.</p>
+
+        <h3 id="infra-cicd">Intégration et déploiement continus</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Workflow</th><th>Déclenchement</th><th>Ce qu'il fait</th></tr></thead>
+            <tbody>
+              <tr><td><code>ci.yml</code></td><td>manuel, ou sur poussée/pull request d'<code>edumatch-ia</code></td><td>Récupère <code>edumatch-ia</code> au commit demandé, <code>ruff check</code>, <code>pytest</code> sur les échantillons versionnés — jamais un téléchargement des sources complètes</td></tr>
+              <tr><td><code>build-images.yml</code></td><td>manuel, ou sur poussée sur <code>main</code> d'<code>edumatch-ia</code></td><td>Construit les trois images, les tague par l'empreinte courte du commit, les publie sur le registre Scaleway</td></tr>
+              <tr><td><code>deploy.yml</code></td><td>manuel, ou sur étiquette de version d'<code>edumatch-ia</code></td><td>Applique les manifestes de <code>k8s/base/</code> sur le cluster de démonstration, après vérification qu'ils existent</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><code>ci.yml</code> fonctionne dès aujourd'hui sans aucun secret Scaleway. Aucun des trois ne se déclenche à chaque poussée vers le cluster de démonstration : c'est une règle de coût assumée, pas un oubli — le cluster n'est provisionné que pour les démonstrations, et son usage doit rester un geste délibéré.</p>
+        <p>Les secrets attendus, par nom seulement (les valeurs ne sont jamais écrites dans un fichier versionné) : <code>EDUMATCH_IA_PAT</code> (lecture seule sur <code>edumatch-ia</code>, nécessaire seulement si ce dépôt est privé), <code>SCW_SECRET_KEY</code> et <code>SCW_ACCESS_KEY</code> (clés API Scaleway), <code>SCW_DEFAULT_PROJECT_ID</code>, <code>SCW_KUBECONFIG_B64</code> (kubeconfig encodé, obtenu une fois le cluster créé). Une variable non sensible complète cette liste : <code>SCW_REGISTRY_ENDPOINT</code>.</p>
+
+        <h3 id="infra-cible">La cible de déploiement, en un schéma</h3>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    DEV["Poussée ou étiquette<br/>sur edumatch-ia"] --> GH["GitHub Actions<br/>edumatch-cicd<br/>ci -> build-images -> deploy"]
+    GH -->|"images taguées<br/>par empreinte de commit"| REG[("Registre de conteneurs<br/>Scaleway, privé")]
+    REG --> K8S["Cluster Kapsule<br/>pool DEV1-M, 1 à 2 nœuds<br/>Deployment + HPA 2-6 réplicas"]
+    K8S --> MON["Prometheus + Alertmanager + Grafana<br/>namespace monitoring"]
+    BUCKET[("Bucket d'artefacts<br/>catalogue + SHAP précalculé")] --> K8S
+
+    subgraph AIRFLOW["Instance dédiée, indépendante du cluster"]
+        direction TB
+        AF["Instance DEV1-L<br/>docker-compose.prod.yml<br/>Airflow LocalExecutor + PostgreSQL"]
+    end
+    GH -.->|"image edumatch-airflow"| AIRFLOW
+</pre>
+        </div>
+
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Rien n'est déployé à ce jour</span>
+            <p>Aucun <code>terraform apply</code>, aucun <code>kubectl apply</code> réel n'a été exécuté : ni compte Scaleway ni binaire Terraform n'étaient disponibles au moment d'écrire ce socle. Tous les fichiers ont été relus manuellement et validés syntaxiquement (YAML, JSON), pas exécutés contre une vraie API. Avant le premier <code>apply</code>, restent à vérifier : les points Terraform listés plus haut (backend S3, attributs du provider 2.83.0, version Kubernetes, conflit possible sur l'espace de noms du registre, image Ubuntu de l'instance Airflow) ; côté Kubernetes, le tag de l'image <code>amazon/aws-cli</code> du conteneur d'initialisation et le comportement du CNI Cilium avec les <code>NetworkPolicy</code> standard ; côté monitoring, les tags d'image épinglés (<code>prom/prometheus:v2.54.1</code>, <code>prom/alertmanager:v0.27.0</code>, <code>grafana/grafana:11.2.0</code>) et la validation native des règles d'alerte par <code>promtool</code>, non exécutée faute de binaire. Chaque point est isolé dans un seul fichier pour que la correction reste rapide.</p>
+          </div>
+        </div>
+
+        <h2 id="arbitrages">Les arbitrages qui structurent l'architecture</h2>
+        <p>Cinq principes reviennent à chaque décision de dimensionnement, détaillés chacun dans son ADR :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Principe</th><th>Où il s'applique</th></tr></thead>
+            <tbody>
+              <tr><td>Distribué là où c'est nécessaire, seulement là</td><td>Spark sur Sirene (43,9 M d'établissements, mesuré), Polars et dbt sur Parcoursup (82 Mo, mesuré) — le seuil est une règle mesurée, pas un principe général (<a href="decisions.html#adr-0016">ADR 0016</a>)</td></tr>
+              <tr><td>Latence par précalcul, pas par cache</td><td>L'espace des cellules est fini : SHAP et agrégats de débouchés sont précalculés, le service ne recalcule jamais à la volée</td></tr>
+              <tr><td>Conformité par construction</td><td>La séparation volume/décision rend le périmètre RGPD minimal architecturalement, pas par une politique à faire respecter à côté</td></tr>
+              <tr><td>Configuration centralisée</td><td>Un seul point d'entrée typé, aucun seuil ni chemin en dur (<a href="decisions.html#adr-0003">ADR 0003</a>)</td></tr>
+              <tr><td>Réversibilité mesurée</td><td>L'ablation peut retirer les variables Sirene du modèle sans toucher au schéma, puisque les agrégats sont rattachés à <code>dim_territoire</code> et non à la table de faits</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Les agrégats Sirene sont rattachés à <code>dim_territoire</code>, pas à la table de faits : cela les rend réutilisables à la fois par le terme de débouchés du score et par les variables du modèle sans duplication, et permet de retirer les variables Sirene après ablation sans toucher au schéma de l'étoile (détail de l'ablation : <a href="modele.html">le modèle</a>).</p>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 2026-09-17.</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>

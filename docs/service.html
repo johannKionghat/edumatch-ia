@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Service</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Bloc 4 · Déploiement de la solution IA</p>
+        <h1>Le service : score, API, écran conseiller</h1>
+        <p class="lead">Le score de matching, l'API qui le sert, la journalisation de chaque décision, l'écran qui donne au conseiller le dernier mot, l'assistant documentaire et l'audit d'accessibilité qui a couvert cet écran : cette page réunit tout ce qui rend le modèle utilisable par un conseiller d'orientation, sans jamais lui retirer la décision.</p>
+
+        <h2 id="score">Le score à trois termes</h2>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  A[Affinité<br/>règles sur la requête] --> S[Score]
+  B[Accessibilité<br/>modèle LightGBM] --> S
+  C[Débouchés<br/>agrégats Sirene] --> S
+  S --> R{Un terme nul ?}
+  R -->|oui| X[Formation écartée]
+  R -->|non| L[Recommandation classée]
+</pre>
+        </div>
+        <p>Un seul terme est appris — l'accessibilité, produite par le modèle décrit dans la page <a href="modele.html">Modèle</a>. Les deux autres sont des règles déclaratives (affinité) et un dénombrement (débouchés). C'est le principe d'architecture du projet entier, retrouvé au niveau du score final.</p>
+
+        <h3 id="score-multiplicatif">Le caractère multiplicatif</h3>
+        <p>Un terme nul supprime la recommandation, testé séparément pour les trois termes. Une formation inaccessible, sans débouché mesuré, ou hors des préférences exprimées ne doit jamais apparaître, même si les deux autres termes sont excellents.</p>
+        <p>Effet à connaître : trois termes à 0,5 chacun donnent un score de 0,125, pas 0,5. Un score multiplicatif punit sévèrement une formation moyenne sur les trois critères à la fois. Le résultat expose donc toujours les trois termes séparément à côté du score global, pour qu'un lecteur ne prenne pas 0,125 pour un score bas sur un seul facteur.</p>
+
+        <h3 id="score-accessibilite">Le terme accessibilité et sa mise en garde</h3>
+        <p>Le modèle LightGBM n'est pas contraint à [0, 1] par construction ; toute prédiction est écrêtée dans cet intervalle — la correction naturelle du label qu'il approxime, pas une mise à l'échelle arbitraire.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Ce terme n'a pas encore battu son plancher</span>
+            <p>Mesuré sur le test 2025 (page <a href="modele.html#evaluation">Évaluation et calibration</a>) : MAE pondérée 0,0758 pour le modèle contre 0,0701 pour la baseline, à couverture égale. Le modèle reste au-dessus du plancher qu'il doit battre, et sa calibration s'y dégrade aussi. Cette mise en garde est portée par chaque recommandation produite, écrite là où le terme est consommé.</p>
+          </div>
+        </div>
+
+        <h3 id="score-debouches">Le terme débouchés : l'obstacle et la mesure qui a tranché</h3>
+        <p>Le référentiel de nomenclatures relie une formation ONISEP à une division NAF via son code RNCP. Aucun des huit millésimes Parcoursup ne porte de code RNCP, NSF ou ROME — vérifié par inspection des colonnes : la chaîne ne rattache aucune formation Parcoursup à une activité NAF par la clé. Le seul rapprochement possible est un appariement textuel des libellés, et je l'ai mesuré plutôt que supposé.</p>
+        <p><strong>La mesure</strong>, sur les 440 030 lignes de la table de variables et le référentiel ONISEP complet, après exclusion des formations sans code RNCP et des libellés ambigus : l'appariement exact couvre <strong>7 libellés distincts sur 712</strong> (1,0 %), soit <strong>6 017 lignes sur 440 030</strong> (1,4 %). J'ai relu les sept correspondances à la main : diplôme de comptabilité et de gestion, deux certificats de capacité (orthoptiste, orthophoniste), prothésiste dentaire, DTS imagerie médicale, deux intitulés de cadre technique de la mer — des diplômes d'État très normés, dont la forme ne varie quasiment pas d'une source à l'autre. C'est ce qui explique aussi bien la réussite de ces sept appariements que l'échec des autres, aux libellés rédigés librement par chaque établissement.</p>
+        <p><strong>Pour les 98,6 % de lignes restantes, le terme est marqué explicitement indisponible</strong> — jamais mis à zéro en silence, jamais deviné. Le score se réduit alors à affinité × accessibilité, et le motif exact voyage avec le résultat.</p>
+        <p><strong>Alternatives écartées</strong> : un rapprochement par la seule filière (12 valeurs) aurait été trop grossier, attachant le même débouché à une licence de mathématiques et à une licence d'arts plastiques. Un appariement approché par distance d'édition n'a pas été tenté faute d'être mesuré ; il reste une piste ouverte, non présentée comme résolue.</p>
+
+        <h3 id="score-territoire">Le grain territorial : k-anonymat et filtre de diffusion</h3>
+        <p>L'agrégat consommé par le terme de débouchés est construit au grain <strong>département × division NAF</strong> — jamais au grain commune, qui n'est qu'un calcul intermédiaire jamais exposé. Deux protections sont appliquées ici, absentes au stade de l'agrégat brut décrit dans la page <a href="pipeline.html">Pipeline de données</a> :</p>
+        <ul>
+          <li><strong>k-anonymat, k = 5</strong>, seuil arrêté par la gouvernance (voir <a href="risques-aipd.html">Risques et AIPD</a>) au grain département × NAF — contre 90,6 % des cellules et 46,9 % des établissements perdus pour la même protection au grain commune ;</li>
+          <li><strong>le filtre de diffusion</strong>, déclaré en configuration mais non appliqué par le job d'agrégation Spark (voir la page Pipeline), l'est ici : <strong>20 488 établissements actifs-employeurs</strong> portant un statut non diffusible sont exclus du comptage, sur les 2 423 308 rattachés à une commune — un ordre de grandeur cohérent avec les 20 501 établissements non diffusibles mesurés par ailleurs sur l'ensemble du stock.</li>
+        </ul>
+        <p>Le module ne renvoie jamais un effectif d'établissements sous le seuil de k-anonymat, même pour distinguer un zéro réel d'une cellule supprimée : les deux cas sont représentés par un simple indicateur d'existence, jamais par l'effectif intermédiaire.</p>
+
+        <h3 id="score-genre">Le genre, absent par construction</h3>
+        <p>Le genre n'entre ni dans le profil candidat requis par l'API, ni dans aucun des trois termes du score — vérifié par introspection au chargement du module et par test. Il ne sert qu'à l'audit d'équité a posteriori, décrit dans la page <a href="modele.html#equite">Équité</a>.</p>
+
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Ce qui reste ouvert sur le score</span>
+            <p>La couverture du terme débouchés (1,4 %) est le principal facteur limitant de la valeur du score pour la majorité des formations. Un appariement approché (distance d'édition, ou croisement du code de nomenclature ONISEP avec la filière) resterait à mesurer avant de conclure qu'aucune amélioration de couverture n'est possible.</p>
+          </div>
+        </div>
+
+        <h2 id="api">L'API</h2>
+        <p>FastAPI, 6 routeurs : vivacité, matching, explication, retour, assistant, écran conseiller. La suite de tests couvre le service au fil de sa construction, puis du durcissement de sécurité décrit ci-dessous.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Route</th><th>Méthode</th><th>Rôle</th></tr></thead>
+            <tbody>
+              <tr><td><code>/health</code></td><td>GET</td><td>sonde de vivacité</td></tr>
+              <tr><td><code>/matching</code></td><td>POST</td><td>recommande des formations pour un profil</td></tr>
+              <tr><td><code>/explain</code></td><td>GET</td><td>explication SHAP d'une cellule</td></tr>
+              <tr><td><code>/feedback</code></td><td>POST</td><td>retour et écartement motivé du conseiller</td></tr>
+              <tr><td><code>/assistant</code></td><td>POST</td><td>question documentaire</td></tr>
+              <tr><td><code>/</code></td><td>GET</td><td>écran conseiller</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="api-securite">Durcissement de sécurité</h3>
+        <p>Une revue de sécurité sur ce service et sur l'écran conseiller a montré qu'un identifiant de conseiller saisi librement dans le corps de <code>POST /feedback</code> permettait d'imputer un écartement à un conseiller qui ne l'avait jamais décidé. Une trace de contrôle humain non imputable ne prouve rien au sens de l'article 14 du règlement sur l'IA. C'était un motif retenu par l'analyse d'impact (page <a href="risques-aipd.html">Risques et AIPD</a>).</p>
+        <p><strong>Authentification HTTP Basic sur <code>/feedback</code> seulement.</strong> Le champ d'identifiant de conseiller a disparu du schéma d'entrée : l'identifiant journalisé est maintenant le principal HTTP authentifié, vérifié par une comparaison en temps constant, pour ne pas laisser deviner par le temps de réponse quels caractères sont déjà bons. Les identifiants attendus viennent de l'environnement, jamais versionnés. Sans eux, la route répond <strong>503</strong> plutôt que d'accepter un identifiant qu'elle ne peut pas vérifier.</p>
+        <p><code>/matching</code>, <code>/explain</code> et l'assistant restent anonymes : seule la route qui écrit une décision imputée à quelqu'un est concernée. Étendre l'authentification partout aurait cassé l'usage anonyme de l'écran sans bénéfice établi. Ce choix sera revu le jour où l'écran affichera une donnée nominative de candidat, ou s'il faut tracer qui a consulté quoi (pas seulement qui a décidé quoi).</p>
+        <p><strong>Limitation de débit à fenêtre glissante</strong> sur <code>/matching</code> (par adresse IP) et <code>/feedback</code> (par identifiant authentifié), 120 requêtes par minute par défaut. Une fenêtre glissante plutôt qu'un compteur remis à zéro périodiquement, qui laisserait passer une rafale à cheval sur deux fenêtres. Limite connue : le compteur vit en mémoire de chaque processus, donc plusieurs réplicas multiplieraient la limite réelle — il faudra un magasin partagé avant un déploiement à plusieurs pods.</p>
+        <p><strong>En-têtes de sécurité</strong> sur chaque réponse, y compris les erreurs : protection contre le reniflage de type de contenu, interdiction d'inclusion dans un cadre, politique de sécurité de contenu restreinte au propre domaine, politique de référent désactivée. Pas d'en-tête de sécurité de transport strict : aucun TLS ne termine devant ce service aujourd'hui, et ajouter cet en-tête mentirait sur une protection absente. Il sera posé quand un relais TLS existera.</p>
+        <p><strong>Métriques Prometheus</strong> exposées sans authentification (le collecteur n'en porte pas) et sans donnée personnelle : compteurs et histogrammes par route et par code de statut, plus deux compteurs métier (décisions de retour par type, requêtes de matching sans résultat).</p>
+        <div class="callout ok">
+          <span class="ico" aria-hidden="true">✓</span>
+          <div>
+            <span class="title">Un bug trouvé en lançant le conteneur</span>
+            <p>La bibliothèque d'instrumentation Prometheus en version 7 casse toutes les routes avec la version de FastAPI installée dans l'image. Bornée en version 8, image reconstruite, vérifiée par de vraies requêtes HTTP. Toutes les dépendances signalées reçoivent maintenant une borne haute calée sur ce qui est réellement installé.</p>
+          </div>
+        </div>
+        <p><strong>Ce qui reste ouvert</strong> : la limitation de débit ne survit pas à plusieurs réplicas, l'authentification ne couvre que <code>/feedback</code>, aucun verrouillage après une série d'échecs d'authentification, et aucun TLS ne termine devant le service.</p>
+
+        <h3 id="api-explain">L'explication ne se recalcule jamais en direct</h3>
+        <p>Le précalcul SHAP porte sur les <strong>440 030 cellules</strong>, pèse <strong>99,8 Mo</strong> et prend <strong>8,3 minutes</strong> (détail dans la page <a href="modele.html#explicabilite">Explicabilité</a>). Le nombre de cellules est fini, donc ce précalcul est relancé par lot après chaque réentraînement : l'API se contente de lire le fichier. La latence de <code>/explain</code> est bornée par une lecture disque, pas par un calcul TreeSHAP à la demande.</p>
+
+        <h3 id="api-degradation">Dégradation explicite, jamais de panne totale ni de zéro silencieux</h3>
+        <p>Si le stock Sirene manque au démarrage, le service démarre quand même : chaque formation porte le statut de chaîne rompue déjà défini par le module de débouchés, avec son motif dans la réponse. Un zéro n'est jamais confondu avec une absence réelle de débouché.</p>
+        <p>Si le sous-catalogue restreint au profil déclaré dépasse le plafond configuré, le service répond <strong>422</strong> et demande de préciser le département ou le domaine : le module de recommandation n'est pas vectorisé et ne peut pas classer un volume arbitraire en temps borné. Un plafond explicite vaut mieux qu'une troncature invisible.</p>
+
+        <h3 id="api-rgpd">Article 22 du RGPD</h3>
+        <p>Chaque réponse de <code>/matching</code> rappelle que le score assiste un conseiller, il ne décide jamais. <code>/feedback</code> est le point d'entrée où un écartement motivé et horodaté est journalisé, comme l'exige la matrice de risques de la gouvernance.</p>
+
+        <h3 id="api-dettes">Deux dettes déclarées</h3>
+        <ul>
+          <li><strong>Le modèle est entraîné au démarrage</strong>, faute d'un chargeur depuis un registre de modèles (MLflow n'est pas encore branché sur le service) — acceptable pour la démonstration, à corriger avant une vraie mise en production.</li>
+          <li><strong>La durée de conservation du journal de retour</strong> n'est pas encore purgeable à cette étape — voir la section <a href="#journalisation">Journalisation et purge</a> pour ce qui a été construit ensuite et ce qui reste ouvert.</li>
+        </ul>
+
+        <h2 id="journalisation">Journalisation article 12 et purge exécutable</h2>
+        <p>Complète le registre des traitements de la gouvernance (page <a href="registres.html">Registres</a>) : cette section décrit ce qui a été construit pour exécuter la durée de conservation que le registre décide.</p>
+        <p>Une durée de conservation n'existe que si une tâche l'exécute, sinon c'est une intention. C'était une lacune inscrite par la gouvernance. Elle est levée côté code : la purge existe, tourne, est testée et idempotente.</p>
+
+        <h3 id="journal-inference">Le journal d'inférence</h3>
+        <p>Un registre distinct des journaux applicatifs, écrit dans un fichier dédié plutôt que dans la sortie standard, accessible à quiconque a accès au service. Chaque enregistrement porte : horodatage, identifiant technique de requête, version du modèle et empreinte du commit, variables d'entrée, score produit, facteurs explicatifs restitués. La décision du conseiller reste vide à l'écriture : elle est journalisée séparément (voir plus bas), sans partager aujourd'hui d'identifiant de requête avec ce journal — les deux traces ne se corrèlent donc pas automatiquement. Le champ existe pour que la structure n'ait pas à changer le jour où cette corrélation sera construite.</p>
+
+        <h3 id="journal-paliers">Les trois paliers</h3>
+        <p>L'article 12 du règlement sur l'IA impose un plancher de conservation pour un système à haut risque (au moins six mois) ; l'article 5.1.e du RGPD impose un plafond. Deux textes contradictoires, conciliés par trois paliers datés :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Palier</th><th>Durée</th><th>Contenu</th><th>Ce que cela permet</th></tr></thead>
+            <tbody>
+              <tr><td>1 — clair</td><td>0 à 12 mois</td><td>Entrées, sortie, version, horodatage</td><td>Répondre à une réclamation individuelle, rejouer une inférence contestée. Couvre le plancher légal et une campagne Parcoursup entière</td></tr>
+              <tr><td>2 — pseudonymisé</td><td>12 à 36 mois</td><td>Identifiant de requête remplacé par un jeton non réversible, variables conservées</td><td>Audit d'équité et détection de dérive restent possibles ; le lien avec une personne est rompu</td></tr>
+              <tr><td>3 — agrégats</td><td>au-delà de 36 mois</td><td>Distributions et métriques par sous-population, plus aucune ligne d'inférence</td><td>Conserver la capacité de démonstration historique sans conserver l'identification</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  C[Clair<br/>0 à 12 mois] -->|jeton neuf, original jeté| P[Pseudonymisé<br/>12 à 36 mois]
+  P -->|plus aucune ligne| Ag[Agrégats<br/>au-delà de 36 mois]
+</pre>
+        </div>
+        <p>La pseudonymisation remplace l'identifiant d'exécution par un jeton neuf et jette l'original. Écarté : un hachage avec secret, techniquement réversible tant que le secret existe, pour une garantie plus faible que l'original qui n'existe simplement plus.</p>
+
+        <h3 id="journal-purge">La purge, prudente par construction</h3>
+        <p>Mode simulation par défaut, mode réel explicite. Chaque passage, simulation comprise, ajoute sa ligne à un journal de purge dédié : horodatage, mode, quatre compteurs. Une suppression silencieuse serait invisible le jour où elle se tromperait.</p>
+        <p><strong>Ce qui a été vérifié</strong> : un test écrit trois lignes à trois âges, lance une purge réelle, et vérifie que la fraîche est intacte, que l'intermédiaire a changé de jeton sans perdre ses variables, et que l'ancienne a disparu du journal pour réapparaître comptée dans l'agrégat. Un autre test rejoue la même purge à la même date et vérifie que rien ne bouge : l'idempotence est démontrée, pas supposée.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Une lacune déclarée</span>
+            <p>La purge du journal des décisions de conseiller n'est pas construite, faute d'identifiant commun avec le journal d'inférence : les deux journaux ne se corrèlent pas aujourd'hui, donc purger l'un ne garantit rien sur l'autre.</p>
+          </div>
+        </div>
+        <p>Le déclenchement planifié, lui, est posé : un DAG dédié appelle cette purge chaque jour, sans intervention manuelle (page <a href="pipeline.html">Pipeline de données</a>).</p>
+
+        <h2 id="ecran-conseiller">Écran conseiller</h2>
+        <p>Voir, comprendre, écarter avec motif : les trois actions que l'écran rend possibles, dans cet ordre.</p>
+
+        <h3 id="ecran-controle-humain">Contrôle humain effectif</h3>
+        <p>L'écartement d'une recommandation est <strong>bloqué côté client et côté serveur</strong> tant qu'aucun motif n'est saisi. Un écran qui affiche un score sans permettre de le contredire, motivé et tracé, n'est qu'une façade. L'article 14 demande un contrôle humain effectif, pas un bouton : la double validation (JavaScript et route <code>/feedback</code>) empêche qu'un contournement côté client rende le contrôle cosmétique.</p>
+        <p>L'écran dit ce que beaucoup d'interfaces cachent :</p>
+        <ul>
+          <li>le terme de débouchés est indisponible pour 98,6 % des formations — quand c'est le cas, l'écran l'affiche avec son motif, jamais un score qui laisserait croire que les trois termes ont été calculés ;</li>
+          <li>la réserve sur le modèle, qui ne bat pas la baseline sur le jeu de test, est affichée et non enfouie dans la documentation ;</li>
+          <li>le rappel que le score assiste sans décider (article 22 du RGPD) est lisible à l'écran, pas relégué à une mention légale.</li>
+        </ul>
+        <p>Le flux d'écartement journalise, via <code>/feedback</code>, une décision motivée et horodatée — voir la section <a href="#journalisation">Journalisation et purge</a> pour ce que devient cette trace et ce qui n'est pas encore construit sur sa purge.</p>
+
+        <p><strong>L'identifiant du conseiller n'est plus déclaratif</strong> (revue de sécurité du 16 septembre 2026). Jusqu'à cette date, <code>/feedback</code> acceptait un identifiant saisi librement dans le corps de la requête, ce qui permettait d'imputer un écartement à un conseiller qui ne l'avait jamais décidé. <code>/feedback</code> exige désormais une authentification HTTP Basic : l'identifiant journalisé est le principal authentifié, jamais une valeur saisie par le formulaire. Côté écran, le champ « Identifiant de conseiller » ne sert plus qu'à personnaliser l'affichage local, il n'est plus transmis à l'API. Une réponse <strong>401</strong> de <code>/feedback</code> affiche un message demandant de se reconnecter.</p>
+        <p><code>/matching</code> et l'écran lui-même restent accessibles sans authentification : seule la route qui écrit une décision imputée à quelqu'un l'exige. Cette limite sera revue le jour où l'écran affichera une donnée nominative de candidat, ou s'il faudra tracer qui a consulté quoi et non plus seulement qui a décidé quoi.</p>
+        <p>Une limitation de débit (fenêtre glissante, 120 requêtes par minute par identifiant de conseiller) protège désormais <code>/feedback</code> contre une succession d'appels automatisés.</p>
+        <p><strong>Ce que ce critère ne couvre pas encore</strong> : un tableau de bord du taux d'écartement, destiné au déployeur, n'existe pas. Sans lui, un contrôle humain qui n'écarte jamais rien resterait invisible au niveau de l'organisation, même si chaque écartement individuel est tracé.</p>
+
+        <h2 id="assistant">Assistant documentaire</h2>
+        <p>Brique secondaire, réécrite pour ce projet, sans reprise d'un prototype antérieur.</p>
+
+        <h3 id="assistant-corpus">Le corpus</h3>
+        <p><strong>7 403 documents</strong>, issus des référentiels ONISEP ingérés par le connecteur de référentiels (page <a href="pipeline.html">Pipeline de données</a>) : 5 869 formations et 1 534 métiers. Chaque document porte sa citation (jeu, URL, licence, date de collecte) lue depuis le manifeste d'ingestion, pas recalculée.</p>
+
+        <h3 id="assistant-citation">La citation est garantie par construction</h3>
+        <p>Les sources retournées viennent toujours de la recherche documentaire, jamais de ce que le modèle de langage affirme avoir consulté : la liste des citations se construit à partir des documents retrouvés <strong>avant</strong> l'appel au modèle. Un modèle qui invente une réponse ne peut pas inventer sa source.</p>
+        <p>Si aucun passage ne dépasse le seuil de similarité configuré, l'assistant répond qu'il ne sait pas plutôt que de produire une réponse sans appui documentaire.</p>
+
+        <h3 id="assistant-choix">Le choix technique : recherche lexicale, pas d'embeddings</h3>
+        <p>TF-IDF, sur une dépendance déjà présente dans le projet. Écartés : embeddings, base vectorielle, modèle à télécharger — le corpus est deux ordres de grandeur en dessous du volume où un index approximatif apporte un gain mesurable. Écartés aussi, faute de critère qui les exige : reranker et évaluation automatisée. Cette brique est secondaire ; la sobriété est le bon choix ici, pas un renoncement.</p>
+
+        <h3 id="assistant-degradation">Dégradation explicite à chaque étage</h3>
+        <p>Sans clé d'API, le client n'est même pas construit : pas d'appel réseau tenté puis échoué en silence. Avec une clé mais un appel en échec, le service répond quand même en <strong>mode extractif</strong> (les passages retrouvés, sans reformulation), avec un avertissement qui nomme la panne. Tout ceci est testé sans aucun appel réseau.</p>
+
+        <h3 id="assistant-journalisation">Ce qui n'est jamais journalisé</h3>
+        <p>La question posée n'est jamais journalisée, seulement sa longueur et le nombre de résultats retournés. Un mineur peut saisir une donnée personnelle dans une question sans y penser ; ne pas conserver la question retire ce risque à la source.</p>
+        <p>Les fichiers d'adresses d'établissements sont exclus de l'index : sans pertinence pour une question documentaire sur les formations et les métiers.</p>
+        <p>Cette brique reste hors du périmètre de la détection de dérive construite pour le modèle d'accessibilité : elle ne fait aucune prédiction chiffrée, il n'y a rien à dériver au sens statistique. Le code le déclare explicitement.</p>
+
+        <h2 id="rgaa">Accessibilité RGAA</h2>
+        <p>Pas de framework front : le contrôle fin du balisage qu'exige l'accessibilité (ordre des repères, attributs précis, pas de conteneurs imposés par une bibliothèque) est plus simple à garantir en HTML, CSS et JavaScript servis directement par l'API.</p>
+        <p><strong>Prévention du XSS par construction.</strong> Le rendu passe par l'écriture de texte brut dans le document, jamais par l'injection de HTML : la classe d'attaque entière est éliminée à la source plutôt que comptée sur un échappement qu'on oublierait une fois.</p>
+
+        <h3 id="rgaa-automatise">Ce que la suite automatisée prouve</h3>
+        <p>Structure sémantique du document (un seul titre de niveau 1, hiérarchie de titres sans saut, repères uniques), chaque champ de saisie associé à une étiquette, zones dynamiques annoncées, contraste recalculé à chaque exécution des tests par la formule WCAG sur les couleurs déclarées dans la feuille de style, focus jamais supprimé sans remplacement visible, absence d'injection de HTML brut.</p>
+
+        <h3 id="rgaa-procedure">La procédure d'audit manuel</h3>
+        <p><strong>Ce que seul un navigateur peut vérifier</strong> — rendu réel des polices et du zoom, comportement d'un lecteur d'écran, parcours clavier de bout en bout, perception effective par une personne daltonienne, temps de réponse perçu — fait l'objet d'une procédure d'audit manuel en cinq sections : navigation clavier seule, lecteur d'écran, zoom et redimensionnement, perception des couleurs, formulaires et erreurs. Le déroulé complet, coché point par point, est conservé dans <code>reports/audit-rgaa-procedure.md</code>.</p>
+        <p>Je l'ai déroulée le 16 septembre 2026, avec Chrome (Lighthouse 100/100 en accessibilité, 0 violation axe-core sur les trois états réels de l'écran : vide, résultats, panneau d'explication) et un parcours clavier et de redimensionnement scripté. Détail point par point dans <code>reports/audit-rgaa-resultats.md</code> ; les scripts et rapports bruts (Lighthouse, axe-core, Puppeteer) restent dans <code>reports/audit-rgaa/</code>.</p>
+
+        <div class="stats">
+          <div class="stat"><span class="v">100 / 100</span><span class="l">score Lighthouse, catégorie accessibilité</span></div>
+          <div class="stat"><span class="v">0</span><span class="l">violation axe-core sur les 3 états audités</span></div>
+          <div class="stat"><span class="v">73</span><span class="l">règles axe-core passées, cumulées sur les 3 états</span></div>
+          <div class="stat"><span class="v">2</span><span class="l">non-conformités trouvées, corrigées et revérifiées</span></div>
+        </div>
+
+        <h4>Score Lighthouse et axe-core</h4>
+        <p>Score Lighthouse : <strong>100 / 100</strong> sur l'écran de recherche vide, aucun audit binaire en échec (contraste des couleurs, ordre des titres, langue déclarée du document, étiquette des champs, intitulé des liens). Limite : Lighthouse audite une page chargée, pas un parcours scripté ; il n'a tourné que sur l'écran vide. Les états « résultats affichés » et « panneau d'explication ouvert » sont couverts par axe-core, pas par Lighthouse.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>État de l'écran</th><th class="num">Violations</th><th class="num">À vérifier manuellement</th><th class="num">Règles passées</th></tr></thead>
+            <tbody>
+              <tr><td>Écran vide, avant recherche</td><td class="num">0</td><td class="num">0</td><td class="num">21</td></tr>
+              <tr><td>Résultats affichés</td><td class="num">0</td><td class="num">0</td><td class="num">26</td></tr>
+              <tr><td>Panneau « Comprendre cette recommandation » ouvert</td><td class="num">0</td><td class="num">0</td><td class="num">26</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Ce que ça ne prouve pas</strong> : axe-core et Lighthouse détectent des défauts de balisage et de structure automatiquement identifiables (environ 30 à 40 % des critères RGAA selon les éditeurs eux-mêmes). Un score parfait aux deux outils ne dispense pas de la vérification manuelle — c'est d'ailleurs le parcours manuel qui a trouvé les deux non-conformités ci-dessous, invisibles à un audit de structure DOM statique.</p>
+
+        <h4>Deux non-conformités trouvées, corrigées et revérifiées</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Non-conformité</th><th>Gravité</th><th>Correction</th></tr></thead>
+            <tbody>
+              <tr><td>Le lien d'évitement posait le défilement mais pas le focus clavier dans la zone de contenu principal</td><td><span class="badge bad">Majeure</span></td><td>Attribut de focus programmatique ajouté sur la zone de contenu principal, la même technique que celle déjà en place sur le panneau d'explication</td></tr>
+              <tr><td>Le message d'une erreur de validation 422 s'affichait comme « Erreur 422. » sans indication exploitable</td><td><span class="badge warn">Mineure</span></td><td>Le tableau d'erreurs structurées renvoyé par l'API est désormais traité côté client et construit un message par champ fautif (ex. « Département visé : le format saisi ne correspond pas à celui attendu. »), sans jamais reprendre le message technique brut ni exposer de trace interne</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Reproduction avant correction, sur la première non-conformité (script rejoué, valeur observée <code>false</code>) ; après correction, le même script observe <code>true</code> : le focus est désormais posé dans la zone de contenu, pas seulement le défilement. Reproduction avant correction sur la seconde (« Erreur 422. ») ; après correction, le même scénario (département mal formé) affiche « Département visé : le format saisi ne correspond pas à celui attendu. », sans trace technique — point qui était déjà conforme avant correction et n'a pas régressé.</p>
+        <p>Confirmation qu'aucune violation n'est apparue : les scripts axe-core, inchangés, ont été rejoués sur les trois états après correction — 0 violation, mêmes nombres de règles passées qu'avant correction. Les deux corrections n'ont ni cassé ni masqué de structure sémantique, et n'ont introduit aucune nouvelle violation. Le reste du parcours clavier rejoué au passage reste stable (séquence de tabulation inchangée, sortie de tabulation inverse toujours sans piège, focus toujours retenu sur le bouton de recherche après une erreur 422, écartement sans motif toujours annoncé et suivi d'un déplacement de focus vers le champ de motif, aucun débordement horizontal à 640 px ni 320 px).</p>
+
+        <h4>Ce qui est conforme, vérifié en direct dans le navigateur</h4>
+        <ul>
+          <li>Premier passage de tabulation : active le lien d'évitement, avec un contour visible.</li>
+          <li>Ordre de tabulation du formulaire de recherche conforme à l'ordre visuel : identifiant conseiller, type de bac, boursier, type de formation, domaine, département, nombre de recommandations, bouton Rechercher.</li>
+          <li>Les 11 éléments interactifs de cette séquence affichent un contour visible au focus.</li>
+          <li>Aucun piège au clavier constaté ; après soumission d'un formulaire en erreur, le focus reste sur le bouton de recherche.</li>
+          <li>Écarter une recommandation sans motif : message explicite et focus déplacé automatiquement vers le champ de motif.</li>
+          <li>Zoom approché (réduction du viewport à 640 px) et fenêtre à 320 px de large : aucun débordement horizontal constaté.</li>
+          <li>Statuts « Mesuré » / « Indisponible » : le texte du badge reste identique et présent sous émulation de quatre déficiences de vision (deutéranopie, protanopie, tritanopie, achromatopsie) — le statut n'est jamais porté par la couleur seule.</li>
+          <li>Politique de sécurité de contenu stricte confirmée en conditions réelles : l'injection d'un script tiers dans la page est bloquée par défaut, et n'a été rendue possible pour l'audit qu'en désactivant explicitement cette politique côté outil d'audit.</li>
+        </ul>
+
+        <h3 id="rgaa-limites">Ce qui reste à vérifier</h3>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">La section « lecteur d'écran » n'a pas été déroulée</span>
+            <p>Elle demande une personne humaine avec NVDA ou VoiceOver, absente de l'environnement où cet audit a été mené. Les huit points de cette section restent à dérouler avant de clore complètement ce critère.</p>
+          </div>
+        </div>
+        <ul>
+          <li>Le focus précis sur le titre du panneau d'explication à l'ouverture, et le retour de focus au bon bouton à la fermeture — vérifiable par le même type de script, non fait par manque de temps, pas par impossibilité technique.</li>
+          <li>Le contour de focus sur un bouton à fond bleu — inapplicable dans l'état actuel de l'écran, à revérifier si la charte visuelle change.</li>
+          <li>Un vrai zoom du moteur de rendu, sur un navigateur non piloté par script — approché ici par une réduction du viewport CSS.</li>
+          <li>Vérification au pixel des couleurs réellement affichées par rapport aux variables déclarées dans la feuille de style, à l'œil.</li>
+        </ul>
+
+        <h3 id="rgaa-synthese">Synthèse des limites déclarées sur l'écran conseiller</h3>
+        <ol>
+          <li>L'audit manuel a été déroulé dans un vrai navigateur pour tout ce qui ne demande pas de lecteur d'écran (clavier, zoom, redimensionnement, simulation de daltonisme, outils automatisés). Les deux non-conformités trouvées ont été corrigées et revérifiées en conditions réelles (parcours clavier scripté et audit axe-core rejoués sur les trois états, 0 violation). La vérification au lecteur d'écran n'a pas été faite, faute d'un tel outil dans l'environnement audité — elle reste à dérouler par une personne humaine.</li>
+          <li>Le tableau de bord du taux d'écartement destiné au déployeur reste à construire : le tableau de supervision compte les décisions, sans en calculer le taux.</li>
+          <li>L'authentification ne couvre que <code>/feedback</code> — <code>/matching</code> et l'écran restent anonymes, par choix assumé plutôt que par oubli.</li>
+          <li>Aucun verrouillage après une série d'échecs d'authentification : la limitation de débit borne le rythme des appels, mais n'introduit pas de délai croissant ni de blocage après plusieurs mots de passe erronés.</li>
+          <li>Résolu au 16 septembre 2026 : l'identifiant du conseiller n'est plus déclaratif, comme décrit dans la section <a href="#ecran-conseiller">Écran conseiller</a>.</li>
+        </ol>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>

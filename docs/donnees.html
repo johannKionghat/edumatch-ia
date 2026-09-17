@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Données</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Blocs 1 · 3 · 4 · Données</p>
+        <h1>Les données et le label</h1>
+        <p class="lead">Trois sources publiques alimentent EduMatch-IA : Parcoursup pour la demande et l'admission, Sirene pour les débouchés, ONISEP/RNCP/France Travail pour les référentiels de formations et de métiers. Chaque chiffre de cette page est reproduit par une commande, jamais posé de mémoire.</p>
+
+        <div class="stats">
+          <div class="stat"><span class="v">104 274</span><span class="l">formation-années Parcoursup, 2018-2025</span></div>
+          <div class="stat"><span class="v">440 030</span><span class="l">cellules d'admission étiquetées, 2020-2025</span></div>
+          <div class="stat"><span class="v">43 896 818</span><span class="l">établissements Sirene, stock du 01/08/2026</span></div>
+          <div class="stat"><span class="v">2 436 624</span><span class="l">établissements actifs et employeurs (5,6 %)</span></div>
+        </div>
+
+        <h2 id="sources">Les sources publiques</h2>
+        <p>La méthode de vérification privilégie l'interrogation des métadonnées du catalogue plutôt que le téléchargement complet, sauf quand le fichier est assez petit pour que ce soit le seul moyen d'obtenir un compte exact. Les gros fichiers (8 CSV Parcoursup, 11 fichiers Sirene) ne sont jamais téléchargés pour cette seule vérification : j'interroge l'API de métadonnées (<code>api/explore/v2.1</code> côté opendatasoft pour Parcoursup, <code>api/1/datasets/...</code> côté data.gouv pour Sirene et RNCP), qui renvoie nombre d'enregistrements, colonnes, taille et date de publication sans rapatrier la donnée.</p>
+
+        <h3 id="parcoursup">Parcoursup — MESR</h3>
+        <p>Un jeu de données par millésime, sur le portail opendatasoft du MESR, exporté en CSV à la demande. Aucun fichier n'est stocké côté source : le connecteur appelle <code>api/explore/v2.1/catalog/datasets/{id}/exports/csv</code>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Millésime</th><th class="num">Formations</th><th class="num">Colonnes</th><th>Licence</th><th>Dernière modification</th></tr></thead>
+            <tbody>
+              <tr><td>2025</td><td class="num">14 252</td><td class="num">118</td><td>Licence Ouverte v2.0</td><td>2026-03-09</td></tr>
+              <tr><td>2024</td><td class="num">14 079</td><td class="num">118</td><td>Licence Ouverte v2.0</td><td>2025-01-16</td></tr>
+              <tr><td>2023</td><td class="num">13 869</td><td class="num">118</td><td>Licence Ouverte v2.0</td><td>2024-07-01</td></tr>
+              <tr><td>2022</td><td class="num">13 644</td><td class="num">118</td><td>Licence Ouverte v2.0</td><td>2023-01-30</td></tr>
+              <tr><td>2021</td><td class="num">13 396</td><td class="num">118</td><td>Licence Ouverte v2.0</td><td>2022-01-20</td></tr>
+              <tr><td>2020</td><td class="num">12 760</td><td class="num">115</td><td>Licence Ouverte v2.0</td><td>2022-01-20</td></tr>
+              <tr><td>2019</td><td class="num">11 577</td><td class="num">92</td><td>Licence Ouverte v2.0</td><td>2020-04-27</td></tr>
+              <tr><td>2018</td><td class="num">10 697</td><td class="num">85</td><td>Licence Ouverte v2.0</td><td>2019-10-07</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Total : 104 274 formation-années</strong>, 82 Mo mesurés sur <code>data/raw/parcoursup/</code> une fois les 8 millésimes téléchargés.</p>
+        <p><strong>Licence.</strong> Licence Ouverte v2.0 (Etalab) : elle oblige à mentionner la source (MESR, Parcoursup) et la date de dernière mise à jour, sans imposer de partage à l'identique ni de restriction d'usage commercial.</p>
+        <p><strong>Schéma.</strong> Le nombre de colonnes croît d'un millésime à l'autre : 85 en 2018, 92 en 2019, 115 en 2020, 118 à partir de 2021, le MESR ayant ajouté des champs au fil des sessions (mentions, néo-bacheliers, académie d'origine). En intersection des noms de champs, je mesure <strong>106 champs communs entre 2020 et 2025</strong> et <strong>83 champs communs sur les 8 sessions</strong>. Ce socle est dominé par les compteurs de vœux et d'admis et les identifiants de formation ; il ne suffit pas à entraîner un modèle sur les huit sessions, car le numérateur du label n'existe qu'à partir de 2020 (voir <a href="#label">le label</a>).</p>
+        <p><strong>Fréquence.</strong> Annuelle, un jeu par session, publié en fin de campagne (juillet à octobre selon les années).</p>
+
+        <h3 id="sirene">Sirene — INSEE</h3>
+        <p>Jeu <code>base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret</code> sur data.gouv, 24 ressources, dernier stock publié le <strong>01/08/2026</strong>, fréquence mensuelle, licence Licence Ouverte v2.0. Les URL de téléchargement changeant chaque mois, le connecteur interroge le point d'entrée stable du catalogue, jamais une URL codée en dur.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fichier Parquet retenu</th><th class="num">Taille (octets)</th><th class="num">Go décimal</th><th class="num">Lignes</th><th class="num">Colonnes</th></tr></thead>
+            <tbody>
+              <tr><td>StockEtablissement</td><td class="num">2 202 341 459</td><td class="num">2,20</td><td class="num">43 896 818</td><td class="num">54</td></tr>
+              <tr><td>StockEtablissementHistorique</td><td class="num">870 319 380</td><td class="num">0,87</td><td class="num">95 865 102</td><td class="num">18</td></tr>
+              <tr><td>StockUniteLegaleHistorique</td><td class="num">855 957 649</td><td class="num">0,86</td><td class="num">71 355 318</td><td class="num">28</td></tr>
+              <tr><td>StockUniteLegale</td><td class="num">705 090 270</td><td class="num">0,71</td><td class="num">29 922 486</td><td class="num">35</td></tr>
+              <tr><td><strong>Total 4 fichiers retenus</strong></td><td class="num"><strong>4 633 708 758</strong></td><td class="num"><strong>4,63</strong></td><td></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Les 6 fichiers <code>.zip</code> de type stock (les 4 ci-dessus, plus liens de succession et doublons) totalisent 6,44 Go compressés ; les 6 fichiers Parquet correspondants totalisent 4,75 Go. Le nombre de lignes vient de la métadonnée du fichier Parquet, sans lire une seule valeur (<code>pyarrow.parquet.ParquetFile(...).metadata.num_rows</code>) : les analyseurs de data.gouv renvoient une erreur de taille sur ces ressources.</p>
+        <div class="callout ok">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Le total ne dimensionne pas le traitement, la lecture le dimensionne</span>
+            <p>Sur les 43 896 818 lignes de <code>StockEtablissement</code>, les filtres du projet (<code>etat_administratif: A</code>, <code>caractere_employeur: true</code>) n'en retiennent que <strong>2 436 624, soit 5,6 %</strong>. Il faut parcourir la totalité pour savoir lesquelles passent le filtre. Une lecture des 2 seules colonnes utiles au filtre isole d'abord <strong>16 715 258 établissements actifs (38,1 %)</strong>, puis les 2 436 624 actifs et employeurs, en <strong>35,4 secondes</strong>. C'est ce chiffre qui borne le temps qu'un traitement distribué équivalent doit battre pour se justifier (voir <a href="architecture.html#etoile">le modèle en étoile</a> et <a href="decisions.html#adr-0002">l'ADR 0002</a>).</p>
+          </div>
+        </div>
+        <p><strong>Schéma.</strong> <code>StockEtablissement</code> porte un champ <code>activitePrincipaleNAF25Etablissement</code>, ajouté depuis le 16 décembre 2025 en anticipation du basculement vers la nomenclature NAF 2025 (bascule prévue début janvier 2027). C'est la colonne à réconcilier parmi les 9 colonnes utiles du projet.</p>
+        <p><strong>Licence.</strong> Licence Ouverte v2.0 (Etalab), attribution obligatoire (source INSEE, base Sirene, date du stock utilisé).</p>
+
+        <h3 id="referentiels">Référentiels — ONISEP, RNCP, France Travail</h3>
+        <p>Quatre producteurs complètent Parcoursup et Sirene pour construire la chaîne de réconciliation NAF ↔ ROME ↔ formation (détaillée dans <a href="architecture.html#conteneurs">l'architecture</a>).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Jeu</th><th class="num">Taille</th><th class="num">Lignes</th><th class="num">Colonnes</th><th>Licence</th></tr></thead>
+            <tbody>
+              <tr><td>Idéo-Formations (ONISEP)</td><td class="num">2,5 Mo</td><td class="num">5 869</td><td class="num">16</td><td>ODbL</td></tr>
+              <tr><td>Idéo-Métiers (ONISEP)</td><td class="num">0,6 Mo</td><td class="num">1 534</td><td class="num">13</td><td>ODbL</td></tr>
+              <tr><td>Idéo-Structures secondaire (ONISEP)</td><td class="num">7,7 Mo</td><td class="num">15 293</td><td class="num">30</td><td>ODbL</td></tr>
+              <tr><td>Idéo-Structures supérieur (ONISEP)</td><td class="num">5,1 Mo</td><td class="num">8 985</td><td class="num">29</td><td>ODbL</td></tr>
+              <tr><td>RNCP, export du jour (France Compétences)</td><td class="num">—</td><td class="num">30 484 fiches, 7 000 actives</td><td class="num">16</td><td>Licence Ouverte v2.0</td></tr>
+              <tr><td>RNCP, membre ROME de l'archive</td><td class="num">4 353 036 octets</td><td class="num">24 424 fiches</td><td class="num">3</td><td>Licence Ouverte v2.0</td></tr>
+              <tr><td>Table ROME/NAF (France Travail)</td><td class="num">112 896 octets</td><td class="num">—</td><td class="num">—</td><td>Licence Ouverte v2.0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Deux régimes de licence à ne pas confondre</span>
+            <p>Les quatre jeux ONISEP (IDÉO) sont sous <strong>ODbL v1.0</strong>, pas Licence Ouverte : elle impose l'attribution et le <strong>partage à l'identique</strong> de toute base dérivée redistribuée. C'est une contrainte pour <code>naf_rome_formation.csv</code>, qui assemble IDÉO, le membre ROME et le CSV RNCP (Licence Ouverte) et la table France Travail (Licence Ouverte) : la clause de partage à l'identique s'applique potentiellement à cette base dérivée si elle est redistribuée telle quelle.</p>
+          </div>
+        </div>
+        <p>Le comptage du RNCP par <code>wc -l</code> donne un chiffre faux : le fichier contient des champs texte entre guillemets qui s'étendent sur plusieurs lignes. Un parseur qui respecte les guillemets (module <code>csv</code> de Python) donne le compte correct, utilisé aussi pour les fichiers IDÉO par cohérence. Le nom de fichier du connecteur RNCP est daté (<code>rncp_{date_publication_jour}.csv</code>), jamais un nom fixe écrasé à chaque exécution.</p>
+        <p>La table de correspondance ROME/NAF de France Travail s'arrête à la division NAF (2 chiffres), jamais à la sous-classe complète (5 caractères) que porte le champ NAF de l'agrégat Sirene : ce plafond de granularité borne la couverture mesurée dans le pipeline de données.</p>
+
+        <h2 id="label">Le label : définition de la cible</h2>
+        <p>Le label est un taux d'admission observé, calculé par cellule <code>(formation × session × type de bac × boursier)</code> :</p>
+        <pre><code>taux = prop_tot_{bg|bt|bp}[_brs] / nb_voe_pp_{bg|bt|bp}[_brs]</code></pre>
+        <p>Une ligne du fichier Parcoursup est une formation, identifiée par <code>cod_aff_form</code> — clé vérifiée sans doublon ni valeur manquante, 14 252 valeurs distinctes pour 14 252 lignes en 2025. <code>cod_uai</code> (l'établissement) ne suffit pas à identifier une formation : 4 058 établissements pour 14 252 formations, un même établissement en proposant plusieurs. Empilés sur les huit millésimes, la clé devient <code>(session, cod_aff_form)</code>.</p>
+        <p>Six cellules sont possibles par formation et par session : bac général, technologique et professionnel, chacun avec ou sans restriction aux boursiers. Le nombre de cellules exploitables décroît selon le profil : 96,0 % des formations ont une cellule bac général, 83,6 % seulement une cellule bac professionnel boursier. Le numérateur <code>prop_tot_*</code> n'est ventilé par type de baccalauréat qu'à partir de la session 2020 : 2018 et 2019 n'ont pas de cible exploitable. <strong>77 159 cellules pour la session 2025</strong>, <strong>440 030 cellules au total</strong> sur les six sessions exploitables (67 768 · 71 080 · 72 784 · 74 831 · 76 408 · 77 159 selon la session).</p>
+
+        <figure>
+          <img src="../reports/figures/distribution-taux-admission.png" alt="Distribution du taux d'admission par cellule, session 2025, par type de baccalauréat" loading="lazy">
+          <figcaption>Distribution du taux d'admission par cellule, session 2025.</figcaption>
+        </figure>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cellule</th><th class="num">Moyenne</th><th class="num">Médiane</th><th class="num">Taux nul</th><th class="num">Taux à 1</th></tr></thead>
+            <tbody>
+              <tr><td>Bac général</td><td class="num">0,522</td><td class="num">0,498</td><td class="num">1,2 %</td><td class="num">13,1 %</td></tr>
+              <tr><td>Bac technologique</td><td class="num">0,433</td><td class="num">0,381</td><td class="num">12,9 %</td><td class="num">11,8 %</td></tr>
+              <tr><td>Bac professionnel</td><td class="num">0,405</td><td class="num">0,333</td><td class="num">21,6 % (2 779 formations)</td><td class="num">13,1 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>La distribution n'est pas gaussienne : elle est étalée sur tout l'intervalle, avec deux masses non négligeables aux bornes. Ces masses ne sont pas du bruit — une formation très sélective qui n'admet aucun bachelier professionnel produit un vrai zéro, une formation en tension nulle qui accepte tous les vœux produit un vrai un — et le décalage entre moyenne et médiane, plus marqué à mesure que la filière du bac est moins générale, interdit de résumer la sélectivité d'une cellule par sa seule moyenne.</p>
+
+        <h3 id="bornage">Deux alternatives écartées, et le dépassement de 1</h3>
+        <p>J'ai écarté <code>acc / nb_voe_pp</code> : <code>acc</code> compte les candidats qui ont accepté la proposition et se sont inscrits, pas ceux qui ont été admis. Un lycéen qui reçoit une proposition et la décline parce qu'il a mieux ailleurs a bel et bien été admis ; retenir <code>acc</code> mélangerait la sélectivité de la formation et les préférences des candidats. J'ai aussi écarté le dénominateur <code>nb_cla_pp</code> (classés) au lieu de <code>nb_voe_pp</code> (vœux) : il change la population de référence sans changer la nature du problème de bornage, et le vœu est l'unité qui correspond à la question posée au candidat au moment de la formulation de son vœu.</p>
+        <p>Le taux dépasse 1 dans <strong>8,9 % des cellules bac général (1 219 sur 13 685)</strong>, et ce dépassement ne disparaît pas quand les petites cellules sont écartées : à 100 vœux minimum, 483 cellules sur 7 154 dépassent encore 1. <code>nb_voe_pp</code> compte des vœux, donc des candidats ; <code>prop_tot</code> compte des propositions émises, donc des événements — une formation de 100 places émet davantage que 100 propositions au fil de la campagne, chaque désistement libérant une place et déclenchant une nouvelle proposition. Numérateur et dénominateur ne décrivent donc pas la même population : borner à 1 n'est pas une correction de valeurs aberrantes, c'est l'imposition d'une borne sémantique à un rapport qui n'est pas un taux au sens strict (<a href="decisions.html#adr-0009">ADR 0009</a>). La moyenne de 0,522 pour le bac général correspond au taux borné à 1 ; la moyenne brute, sans bornage, vaut 0,545.</p>
+
+        <h3 id="stabilite">La cible n'est pas stable dans le temps</h3>
+        <p>Deux définitions de la difficulté d'admission divergent d'une session à l'autre : le taux agrégé toutes cellules confondues baisse de 40,5 % à 36,7 % entre 2020 et 2025, pendant que la moyenne des taux par formation — la cible réellement apprise par le modèle — monte de 0,491 à 0,522 (avec un pic à 0,534 en 2024). L'explication tient au catalogue : il passe de 12 760 à 14 252 formations sur la période, et les formations nouvelles sont en moyenne plus petites et moins tendues, ce qui tire la moyenne par formation vers le haut sans que chaque formation individuelle ne devienne plus accessible. Un dispositif de surveillance de dérive qui suivrait le seul taux agrégé conclurait à l'inverse de la réalité vécue par un candidat regardant une formation donnée.</p>
+        <p>Deux ruptures de série, distinctes de la cible elle-même : en <strong>2020</strong>, la part de mentions très bien passe de 7,4 % à 11,8 % (barème d'examen modifié), le retour à la normale est lent (encore 29,8 % de sans-mention en 2021) — les variables construites à partir des mentions sont contaminées sur 2020 et 2021, la cible ne l'est pas. En <strong>2019 puis 2025</strong>, la part de vœux boursiers passe de 12,5 % à 13,8 % puis à 16,3 % en 2020, stable quatre ans, avant de retomber à 13,8 % en 2025 : le statut de boursier étant une dimension des cellules de label, les cellules <code>_brs</code> du jeu de test 2025 ne décrivent pas tout à fait la même population que celles de l'entraînement. Conséquence pour le protocole d'évaluation, détaillée dans <a href="modele.html">le modèle</a> et l'<a href="decisions.html#adr-0012">ADR 0012</a> : entraînement 2020-2023, validation 2024, test 2025.</p>
+
+        <h3 id="ponderation">La pondération à l'entraînement</h3>
+        <p>L'<a href="decisions.html#adr-0009">ADR 0009</a> arrête le principe — pondérer par l'effectif de la cellule (<code>nb_voe_pp</code>) plutôt que traiter chaque cellule à poids égal — sans trancher la forme exacte du poids. Avant de retenir l'effectif brut, j'ai mesuré la concentration de poids qu'il fait porter au 1 % de cellules les plus grosses (4 400 sur 440 030), et je l'ai comparée à trois formes alternatives.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Forme du poids</th><th class="num">Part captée par le 1 % de cellules les plus grosses</th></tr></thead>
+            <tbody>
+              <tr><td>Effectif brut (<code>nb_voe_pp</code>) — retenu</td><td class="num"><strong>25,9 %</strong></td></tr>
+              <tr><td>Racine carrée</td><td class="num">7,2 %</td></tr>
+              <tr><td>Plafonné au p99</td><td class="num">15,4 %</td></tr>
+              <tr><td>Log(1 + n)</td><td class="num">2,3 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Effectifs par cellule, pour situer cette concentration : minimum 1, médiane 30, p99 1 868, maximum 16 483. Je retiens l'effectif brut : c'est la seule des quatre formes qui traduit fidèlement l'écart de fiabilité statistique entre une cellule à 3 vœux et une cellule à 500. J'écarte le poids égal (biaiserait l'optimisation vers les petites cellules, nombreuses), la racine carrée et le plafond au p99 (atténuent la concentration, mais aussi l'écart de fiabilité statistique que la pondération est censée refléter). Ce qui ferait reconsidérer ce choix : si l'audit d'équité montrait que cette concentration de poids défavorise structurellement un profil — le bac professionnel, notamment, où 21,6 % des formations n'émettent aucune proposition — il faudrait revoir la pondération, pas la définition du taux (<a href="modele.html">détail de l'audit d'équité</a>).</p>
+
+        <h3 id="lieu-unique">Un seul lieu de définition du taux</h3>
+        <p>La formule <code>taux = prop_tot / nb_voe_pp</code>, bornée à 1, vit dans un seul module (<code>calculer_taux</code>) que la construction de la couche gold appelle plutôt que de la recalculer. J'ai vérifié que l'extraction n'a rien changé au résultat, avant et après, sur la table de faits :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th class="num">Avant</th><th class="num">Après</th></tr></thead>
+            <tbody>
+              <tr><td>Lignes</td><td class="num">440 030</td><td class="num">440 030</td></tr>
+              <tr><td>Somme des taux</td><td class="num">201 404,572 630 955 43</td><td class="num">201 404,572 630 955 43</td></tr>
+              <tr><td>Cellules à <code>taux_depasse_1</code></td><td class="num">31 900</td><td class="num">31 900</td></tr>
+              <tr><td>Empreinte SHA-256 du fichier</td><td class="num"><code>932e2ca7...aa6106fd</code></td><td class="num"><code>932e2ca7...aa6106fd</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Empreinte complète : <code>932e2ca72461f1e896c4bdac5b500cff4425b098589c8114ef0a0c04aa6106fd</code>. Aucune valeur hors de <code>[0, 1]</code> avant comme après. Un test de non-régression fixe ce résultat à deux niveaux : un vecteur de cinq cellules figé sur la fonction isolée (couvre le bornage, la division par zéro et la valeur manquante), et le pipeline complet rejoué sur les échantillons versionnés du dépôt (1 280 cellules, somme des taux 558,742 252 776 133 5, 180 192 d'effectif total).</p>
+
+        <h2 id="echantillons">Échantillons de test versionnés</h2>
+        <p><code>data/samples/</code> est la seule exception versionnée de <code>data/</code> : quelques centaines de lignes par source, suffisantes pour que la suite de tests tourne sans télécharger les sources complètes (82 Mo pour Parcoursup, 4,6 Go pour les quatre fichiers Sirene retenus, quelques dizaines de mégaoctets pour les référentiels).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th class="num">Fichiers</th><th class="num">Lignes / total</th><th>Méthode</th><th>Licence</th></tr></thead>
+            <tbody>
+              <tr><td>Parcoursup, 8 millésimes</td><td class="num">8 CSV</td><td class="num">40 par millésime, sur 10 697 à 14 252</td><td>Systématique</td><td>Licence Ouverte v2.0</td></tr>
+              <tr><td>Sirene — StockEtablissement</td><td class="num">1 Parquet</td><td class="num">500, sur 43 896 818</td><td>Systématique, 9 colonnes sur 54</td><td>Licence Ouverte v2.0</td></tr>
+              <tr><td>Sirene — StockEtablissementHistorique</td><td class="num">1 Parquet</td><td class="num">500, sur 95 865 102</td><td>Systématique, colonnes complètes</td><td>Licence Ouverte v2.0</td></tr>
+              <tr><td>Sirene — StockUniteLegale</td><td class="num">1 Parquet</td><td class="num">500, sur 29 922 486</td><td>Systématique, identité directe exclue</td><td>Licence Ouverte v2.0</td></tr>
+              <tr><td>Sirene — StockUniteLegaleHistorique</td><td class="num">1 Parquet</td><td class="num">500, sur 71 355 318</td><td>Systématique, identité directe exclue</td><td>Licence Ouverte v2.0</td></tr>
+              <tr><td>IDÉO (4 jeux)</td><td class="num">4 CSV</td><td class="num">300 par jeu</td><td>Systématique</td><td>ODbL</td></tr>
+              <tr><td>RNCP</td><td class="num">1 CSV</td><td class="num">300, sur 30 484</td><td>Systématique</td><td>Licence Ouverte v2.0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Total : 17 fichiers, 1,2 Mo</strong>, plafonné à 10 Mo par un test dédié. L'échantillonnage est systématique, à pas fixe, sans graine aléatoire : un index retenu tous les <code>total // cible</code> lignes, à partir de la première — ni les N premières lignes (Sirene est trié par SIREN, ce serait un échantillon des plus anciens numéros), ni un tirage aléatoire (qui pourrait manquer les extrémités du fichier). Un fichier source inchangé produit toujours le même échantillon, vérifié par empreinte SHA-256 identique sur deux générations successives. Les huit millésimes Parcoursup sont tous présents, pas seulement le dernier : c'est ce qui permet de tester la réconciliation de schéma (85 → 118 colonnes) sans télécharger les 8 CSV complets.</p>
+        <p><code>data/raw/</code> et <code>data/external/</code> rendus absents (renommés), la suite de tests tourne quand même :</p>
+        <pre><code>python -m pytest -q
+# 145 passed</code></pre>
+        <p>C'est ce qui rend une exécution en intégration continue possible sans les 4,6 Go de sources Sirene.</p>
+
+        <h3 id="pseudonymisation">Pseudonymisation, pas anonymisation</h3>
+        <p>Les 9 colonnes d'identité directe (<code>sexeUniteLegale</code>, les quatre <code>prenomNUniteLegale</code>, <code>prenomUsuelUniteLegale</code>, <code>pseudonymeUniteLegale</code>, <code>nomUniteLegale</code>, <code>nomUsageUniteLegale</code>) sont exclues de <code>StockUniteLegale</code> et <code>StockUniteLegaleHistorique</code>. Retirer ces colonnes ne rend pas l'échantillon anonyme.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">La ré-identification reste possible par recoupement</span>
+            <p>282 des 500 lignes de <code>StockUniteLegale</code> échantillonné portent la catégorie juridique 1000 (entrepreneur individuel, sans personnalité juridique distincte de la personne). 239 sont en statut diffusible. Une jointure sur le SIREN entre le nom retiré ici et la dénomination ou l'enseigne de l'établissement — conservées sans restriction dans <code>StockEtablissementHistorique</code> — restitue l'identité des 239 sur 239 diffusibles, avec le seul fichier source public déjà téléchargé. Les 43 lignes en statut « non diffusible » restent masquées par l'INSEE à la source (art. A123-96 du code de commerce) : aucune n'a été reconstruite.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Anonymisation</th><th>Pseudonymisation (le cas ici)</th></tr></thead>
+            <tbody>
+              <tr><td>Définition</td><td>Ré-identification impossible, y compris par recoupement</td><td>Ré-identification possible via une information supplémentaire</td></tr>
+              <tr><td>Effet RGPD</td><td>La donnée sort du champ du RGPD</td><td>La donnée reste une donnée personnelle (RGPD art. 4.5, considérant 26)</td></tr>
+              <tr><td>Ici</td><td>—</td><td>L'information supplémentaire est le fichier source public lui-même</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>L'exclusion des 9 colonnes est une mesure de minimisation utile (RGPD art. 5.1.c), mais elle ne change pas le régime juridique de l'ensemble : ces échantillons restent une donnée personnelle au sens du RGPD (détail du registre : <a href="gouvernance.html">la gouvernance</a>).</p>
+
+        <h3 id="base-legale">Base légale de l'échantillon</h3>
+        <p>La Licence Ouverte ne s'y substitue pas. <strong>Base retenue : intérêt légitime (RGPD art. 6.1.f)</strong>, sur cinq points : une suite de tests représentative sans dépendre de 4,6 Go non versionnés ; pas d'alternative, une donnée simulée étant interdite par ailleurs et ne détectant pas une dérive de schéma réelle — déjà arrivé avec la colonne <code>activitePrincipaleNAF25Etablissement</code>, ajoutée sans préavis ; 500 lignes sur 29 à 96 millions par fichier (0,001 à 0,002 %), 9 colonnes personnelles directes retirées, poids total sous 10 Mo ; la source complète étant déjà publique, l'extrait ne rend accessible aucune information supplémentaire ; un entrepreneur individuel inscrit à Sirene sait sa dénomination commerciale publique, et le droit d'opposition (art. 21) s'exerce auprès de l'INSEE.</p>
+        <p>Alternatives écartées : exclure les lignes d'entrepreneur individuel (détruirait la représentativité — 56,4 % des lignes du fichier source complet), hacher le SIREN (9 chiffres, espace forçable en secondes), fabriquer une valeur de substitution (donnée simulée, interdite par ailleurs).</p>
+        <p>Reproduction complète :</p>
+        <pre><code>python -m edumatch.ingestion.echantillons</code></pre>
+        <p>Régénère l'intégralité de <code>data/samples/</code> depuis <code>data/raw/</code> et <code>data/external/</code>, en configuration de production. Nécessite les sources complètes déjà téléchargées.</p>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 2026-09-17.</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>

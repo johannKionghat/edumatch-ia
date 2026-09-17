@@ -96,7 +96,7 @@ edumatch-ia/
 ├── configs/                    YAML par environnement : dev, staging, prod
 ├── docker/                     Dockerfile.train, Dockerfile.serve, Dockerfile.airflow
 ├── reports/                    figures et audit d'accessibilité
-├── docs/sous-docs-projets/     documentation du projet
+├── docs/                       documentation du projet (site HTML)
 │
 ├── pyproject.toml              dépendances et configuration des outils
 ├── Makefile                    commandes courantes
@@ -105,7 +105,7 @@ edumatch-ia/
 └── .gitignore
 ```
 
-Le dossier de certification parle de bronze, silver et gold. Le système de
+La documentation parle de bronze, silver et gold. Le système de
 fichiers suit la convention data science habituelle : `raw = bronze`,
 `interim = silver`, `processed = gold`.
 
@@ -173,11 +173,18 @@ Toute correction de bug embarque un test qui reproduit le bug.
 
 ## Documentation
 
-`docs/sous-docs-projets/` contient la documentation, tenue à jour au fil du
-développement.
+La documentation est un site HTML statique : ouvrir **`docs/index.html`** dans
+un navigateur. Aucune installation n'est nécessaire.
 
-| Dossier | Contenu |
+| Page | Contenu |
 |---|---|
-| `ARCHITECTURE_EduMatch.md` | L'architecture d'ensemble |
-| `01-donnees/` … `05-gouvernance/` | Par domaine |
-| `adr/` | Une décision d'architecture par fichier |
+| `index.html` | Vue d'ensemble, score à trois termes, démarrage |
+| `donnees.html` | Sources, licences, volumes, définition du label |
+| `architecture.html` | Diagrammes C4, modèle en étoile, infrastructure de production |
+| `pipeline.html` | Ingestion, qualité, transformations, orchestration et reprise |
+| `modele.html` | Protocole, évaluation, explicabilité, équité, ablation, dérive |
+| `service.html` | Score, API, journalisation, écran conseiller, accessibilité RGAA |
+| `gouvernance.html`, `registres.html`, `risques-aipd.html`, `ai-act.html`, `model-card.html` | Gouvernance des données |
+| `decisions.html` | Les décisions d'architecture (ADR) |
+
+Les rapports d'audit d'accessibilité et les figures sont dans `reports/`.

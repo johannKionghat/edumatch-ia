@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Pipeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Bloc 3 · Pipelines de données</p>
+        <h1>Le pipeline, de la source publique à l'écran du conseiller</h1>
+        <p class="lead">Trois connecteurs, quatre familles de contrôle qualité, deux transformations dbt, un job de réduction Sirene, une chaîne de réconciliation de nomenclatures et quatre DAG Airflow qui les enchaînent, avec reprise sur erreur et blocage démontrés en production.</p>
+
+        <h2 id="vue">Vue du pipeline</h2>
+        <p>Le chemin d'une donnée va du producteur public à l'écran du conseiller en trois couches — bronze, silver, gold — puis vers le modèle et le service. Deux points sont bloquants : le contrôle qualité juste après l'ingestion, et le contrat anti-fuite entre gold et la table de variables.</p>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart TB
+    subgraph PROD["Producteurs publics"]
+        direction LR
+        P1["MESR<br/>Parcoursup"]
+        P2["INSEE<br/>Sirene"]
+        P3["ONISEP · France Compétences<br/>France Travail"]
+    end
+
+    subgraph BRONZE["BRONZE — data/raw · immuable"]
+        direction LR
+        B1[("Exports Parcoursup<br/>8 millésimes, CSV")]
+        B2[("Stock Sirene<br/>Parquet")]
+        B3[("Référentiels<br/>CSV, XLSX")]
+    end
+
+    Q1{{"STOP — contrôles qualité<br/>schéma · complétude · cohérence · fraîcheur<br/>par source"}}
+
+    subgraph SILVER["SILVER — data/interim · réconcilié"]
+        S1[("8 millésimes harmonisés<br/>fichier DuckDB, via dbt")]
+    end
+
+    subgraph GOLD["GOLD — data/processed · prêt à modéliser"]
+        direction TB
+        G1[("Étoile : 1 table de faits<br/>+ 4 dimensions<br/>Parquet")]
+        G2[("Agrégats Sirene<br/>commune x NAF")]
+        G3[("Chaîne NAF ↔ ROME ↔ formation<br/>couverture mesurée")]
+        G4[("Table de variables<br/>+ label + pondération")]
+    end
+
+    Q2{{"STOP — contrat anti-fuite<br/>liste blanche des colonnes<br/>de la session prédite ;<br/>tout le reste décalé d'une session"}}
+
+    subgraph MODELE["Modèle"]
+        direction TB
+        M0["Baseline<br/>taux de la session précédente"]
+        M1["Entraînement LightGBM<br/>split temporel strict"]
+        M2["Évaluation, calibration,<br/>équité, ablation"]
+        M3["Précalcul TreeSHAP<br/>par cellule"]
+        M4["Dérive<br/>PSI médian, seuil 0,20"]
+    end
+
+    subgraph SERVICE["Service"]
+        direction TB
+        SC["Score à trois termes<br/>affinité x accessibilité x débouchés"]
+        API["Service de matching<br/>+ écran conseiller"]
+        JOURNAL[("Journal d'inférence<br/>article 12, purge par paliers")]
+    end
+
+    MLFLOW["Registre d'expériences<br/>paramètres, métriques, empreinte du commit"]
+
+    P1 --> B1
+    P2 --> B2
+    P3 --> B3
+    B1 --> Q1
+    B2 --> Q1
+    B3 --> Q1
+    Q1 -->|"conforme"| S1
+    Q1 -->|"conforme"| G2
+    Q1 -->|"conforme"| G3
+    Q1 -.->|"non conforme : la chaîne s'arrête ici"| ARRET["Échec de tâche<br/>diagnostic écrit, aucune reprise :<br/>un schéma cassé ne se répare pas<br/>en retentant"]
+    S1 --> G1
+    G1 --> Q2
+    Q2 --> G4
+    G4 --> M0
+    G4 --> M1
+    M0 --> M2
+    M1 --> M2
+    M1 --> M3
+    G4 --> M4
+    M1 --> MLFLOW
+    M2 --> MLFLOW
+    M1 --> SC
+    G2 --> SC
+    G3 --> SC
+    M3 --> API
+    SC --> API
+    API --> JOURNAL
+
+    classDef bronze fill:#8c6239,stroke:#5e4126,color:#fff
+    classDef silver fill:#9aa0a6,stroke:#6b7075,color:#fff
+    classDef gold fill:#c99700,stroke:#8f6c00,color:#fff
+    classDef stop fill:#c0392b,stroke:#8b271c,color:#fff
+    classDef calcul fill:#438dd5,stroke:#2e6295,color:#fff
+    classDef externe fill:#8a8a8a,stroke:#5c5c5c,color:#fff
+    class B1,B2,B3 bronze
+    class S1 silver
+    class G1,G2,G3,G4 gold
+    class Q1,Q2,ARRET stop
+    class M0,M1,M2,M3,M4,SC,API,MLFLOW,JOURNAL calcul
+    class P1,P2,P3 externe
+</pre>
+        </div>
+
+        <h3 id="quatre-dag">Quatre chaînes, quatre cadences</h3>
+        <p>Le pipeline n'est pas un graphe unique, mais quatre graphes indépendants, un par cadence réelle de publication. Une cadence unique alignée sur la source la plus fréquente aurait retéléchargé Parcoursup et Sirene tous les jours — l'idempotence de l'ingestion l'aurait absorbé sans rien casser, un fichier déjà présent et intact n'est pas retéléchargé — mais la chaîne aurait rejoué les contrôles qualité et occupé un créneau d'ordonnancement pour rien 364 jours sur 365 côté Parcoursup, 29 sur 30 côté Sirene. Les cadences sont dans <code>configs/base.yaml</code>, section <code>orchestration.planification</code>, jamais dans le code Python.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>DAG</th><th>Cadence</th><th>Tâches, dans l'ordre</th></tr></thead>
+            <tbody>
+              <tr><td><code>edumatch_parcoursup</code></td><td>annuelle</td><td>ingérer → qualité → silver → gold → variables → dérive → réentraîner → évaluer</td></tr>
+              <tr><td><code>edumatch_sirene</code></td><td>mensuelle</td><td>ingérer → qualité → agréger commune × NAF</td></tr>
+              <tr><td><code>edumatch_referentiels</code></td><td>quotidienne</td><td>ingérer → qualité → réconcilier NAF ↔ ROME ↔ formation</td></tr>
+              <tr><td><code>edumatch_audit_purge</code></td><td>quotidienne</td><td>purger le journal d'inférence</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="proprietes">Les trois propriétés que le pipeline doit tenir</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Propriété</th><th>Mécanisme</th></tr></thead>
+            <tbody>
+              <tr><td>Blocage qualité</td><td>Contrôle placé juste après l'ingestion, avant toute transformation ; une erreur définitive empêche par la règle de déclenchement Airflow (<code>trigger_rule: all_success</code>) toute tâche en aval, sans code supplémentaire</td></tr>
+              <tr><td>Contrat anti-fuite</td><td>Liste blanche des colonnes autorisées sur la session prédite ; toute autre colonne est décalée d'une session ou fait échouer la construction</td></tr>
+              <tr><td>Idempotence et reprise</td><td>Écriture atomique partout ; reprise distinguant erreur transitoire (retentée, temporisation croissante) et définitive (remontée immédiatement)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Ce que le diagramme ne masque pas : deux millésimes sur huit (2018, 2019) ne produisent aucun fait — le numérateur ventilé par type de baccalauréat n'existe pas avant 2020, le label n'est calculable que sur six sessions, limite de la source reportée sur <a href="donnees.html">la page données</a>. La chaîne NAF ↔ ROME ↔ formation ne rejoint pas Parcoursup par une clé — détaillé plus bas. Le modèle n'a pas encore battu sa baseline, comparaison rapportée telle qu'elle est mesurée sur <a href="modele.html">la page modèle</a>. La surveillance d'exécution reste locale : la dérive est calculée et écrite, aucune alerte n'est encore routée vers un système d'observabilité, point également relevé sur <a href="architecture.html">la page architecture</a>.</p>
+
+        <h2 id="ingestion">Ingestion</h2>
+        <p>Trois connecteurs opérationnels — Parcoursup, Sirene, référentiels — partagent des primitives communes (<code>src/edumatch/ingestion/_flux.py</code>) : session HTTP, téléchargement en flux par blocs, empreinte SHA-256, écriture atomique, manifeste. Chacun a sa propre stratégie de résolution d'URL, dictée par la façon dont la source publie ses fichiers, pas par préférence.</p>
+
+        <h3 id="strategies-url">Trois sources, cinq stratégies de résolution d'URL</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Parcoursup</th><th>Sirene</th><th>Référentiels — IDÉO</th><th>Référentiels — RNCP</th><th>Référentiels — France Travail</th></tr></thead>
+            <tbody>
+              <tr><td>Forme de l'URL</td><td>Gabarit fixe + identifiant du millésime</td><td>Résolue par requête au catalogue</td><td>URL fixe, un fichier par jeu</td><td>Résolue par requête au catalogue, puis extraction d'un membre d'archive ZIP</td><td>Résolue par titre de ressource dans le catalogue</td></tr>
+              <tr><td>Ce qui varie</td><td>Un identifiant par millésime, stable une fois publié</td><td>L'URL entière, republiée chaque mois</td><td>Rien</td><td>L'URL de l'archive, republiée chaque jour</td><td>Le nom du fichier, à chaque édition du ROME</td></tr>
+              <tr><td>Grain d'idempotence</td><td>Un fichier par millésime, jamais réécrit</td><td>Un fichier par stock mensuel</td><td>Un fichier par jeu, écrasé si le contenu a changé</td><td>Un fichier par date de publication, jamais écrasé</td><td>Empreinte SHA-256 du contenu</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Parcoursup republie un export par session sous un identifiant qui, une fois connu, ne change plus : un gabarit d'URL en configuration reste vrai d'une exécution à l'autre. Sirene republie un stock complet chaque mois sous un chemin qui contient l'horodatage de publication : coder ce chemin en dur casserait le connecteur dès le mois suivant. Le RNCP cumule deux difficultés : l'URL change à chaque republication (quotidienne) et se résout par requête au catalogue, et le fichier utile est extrait d'une archive ZIP plutôt que téléchargé directement. La résolution dynamique n'est donc pas une préférence uniforme, c'est la stratégie qui survit à la façon dont chaque source publie ses fichiers (<a href="decisions.html#adr-0005">ADR 0005</a>).</p>
+
+        <h3 id="rncp-date">Le RNCP — un fichier daté, jamais écrasé</h3>
+        <p>Le RNCP est un export quotidien dont le contenu évolue chaque jour. Appliquer la même mécanique que Sirene — un seul fichier écrasé à chaque republication — poserait un problème que Sirene ne pose pas : une table dérivée construite un jour donné à partir de l'export RNCP (la chaîne NAF ↔ ROME ↔ formation) doit rester rejouable sans reprocher la source. Le connecteur conserve donc un fichier par date de publication (<code>rncp_AAAA-MM-JJ.csv</code>), avec une entrée de manifeste par date : l'idempotence ne porte pas sur « le contenu a-t-il changé » mais sur « ai-je déjà l'export de ce jour ». L'accumulation dans le temps (~9 Mo par jour) n'a pas de politique de rétention à ce jour — question ouverte, pas hypothétique, puisque le DAG <code>edumatch_referentiels</code> exécute désormais cette ingestion à cadence quotidienne (<a href="decisions.html#adr-0007">ADR 0007</a>).</p>
+        <p>L'archive quotidienne contient dix fichiers ; le connecteur en extrait deux : le CSV standard, et depuis cette étape le second membre <code>rncp_rome_AAAA-MM-JJ.csv</code>, qui relie chaque fiche RNCP à un ou plusieurs codes ROME (mesuré sur l'export du 30 août 2026 : 4 353 036 octets, Licence Ouverte v2.0) — maillon central de la réconciliation des nomenclatures décrite plus bas. France Travail publie par ailleurs, sur data.gouv, une table de correspondance ROME/NAF résolue par titre de ressource plutôt que par nom de jeu ou préfixe (fichier constaté : <code>rome-arborescence-des-secteurs-naf-juin-2026.xlsx</code>, 112 896 octets, Licence Ouverte v2.0), seul format publié pour cette table (xlsx), dont le contrat vérifié après téléchargement est la validité du conteneur ZIP sous-jacent.</p>
+
+        <h3 id="erreur-vocabulaire">Vocabulaire commun d'erreur : transitoire contre définitif</h3>
+        <p>Les connecteurs distinguent deux natures d'échec par un vocabulaire partagé (<code>ErreurTransitoire</code>, <code>ErreurDefinitive</code>) que chaque connecteur combine par héritage à sa propre classe d'erreur : coupure réseau ou catalogue injoignable côté transitoire, catalogue mal formé ou millésime non configuré côté définitif. Sans cette distinction, un DAG qui capturerait une seule classe d'erreur retenterait aveuglément un échec qu'aucun nombre de tentatives ne peut résoudre. Avec elle, l'orchestration écrit une seule fois <code>except ErreurTransitoire: retenter()</code> / <code>except ErreurDefinitive: alerter()</code>, valable pour tous les connecteurs (<a href="decisions.html#adr-0006">ADR 0006</a>).</p>
+
+        <h3 id="volumetries-ingestion">Volumétries mesurées</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th>Lignes / fichiers</th><th>Poids</th></tr></thead>
+            <tbody>
+              <tr><td>Parcoursup, 8 millésimes</td><td class="num">104 274 formations</td><td class="num">82 Mo</td></tr>
+              <tr><td>Sirene, 4 fichiers stock du 01/08/2026</td><td class="num">43 896 818 établissements (StockEtablissement)</td><td class="num">4,63 Go (4 fichiers)</td></tr>
+              <tr><td>Référentiels (IDÉO, RNCP, France Travail)</td><td class="num">—</td><td class="num">quelques Mo</td></tr>
+              <tr><td>Échantillons versionnés (<code>data/samples/</code>)</td><td class="num">17 fichiers</td><td class="num">1,2 Mo</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Sur les 43 896 818 établissements Sirene, seuls 16 715 258 sont actifs (38,1 %) et 2 436 624 sont actifs <strong>et</strong> employeurs (5,6 %) — c'est ce dernier sous-ensemble que retiennent les filtres du projet. Mesuré par lecture de 2 colonnes sur 54 en 35,4 secondes, un temps qui dimensionne le traitement plus que le résultat filtré lui-même et qui justifie le choix d'un traitement Spark local plutôt qu'un service managé pour ce job mensuel (<a href="decisions.html#adr-0002">ADR 0002</a>).</p>
+
+        <h3 id="garanties-ingestion">Les deux garanties de tout connecteur</h3>
+        <p><strong>Idempotence par empreinte.</strong> Avant tout téléchargement, le connecteur compare le fichier déjà présent au manifeste : si le fichier existe, n'est pas vide et que son empreinte SHA-256 correspond à celle enregistrée, le téléchargement est évité. Rejoué sur l'API réelle, configuration de production, les 8 millésimes Parcoursup renvoient <code>telecharge=False</code> sans requête de téléchargement.</p>
+        <p><strong>Écriture atomique.</strong> Chaque fichier est écrit sous un nom temporaire (<code>.part</code>) puis renommé vers son nom définitif une fois l'écriture terminée avec succès. Une interruption laisse un <code>.part</code> orphelin, jamais un fichier tronqué que le reste de la chaîne croirait complet.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Un correctif d'encodage, découvert à la relecture</span>
+            <p>En mode texte, l'écriture atomique n'imposait pas l'encodage UTF-8 et laissait Python retenir celui de la plateforme (<code>cp1252</code> par défaut sous Windows). L'écriture n'échouait pas, mais produisait des octets que la relecture en UTF-8 ne savait pas relire : défaut silencieux à l'écriture, révélé seulement à la lecture. Constaté sur un titre de ressource France Travail contenant un accent (« référentiels »). Corrigé en imposant <code>utf-8</code> explicitement dès qu'un mode sans <code>b</code> est demandé, avec un test de non-régression dédié.</p>
+          </div>
+        </div>
+
+        <h3 id="manifeste">Le manifeste de traçabilité</h3>
+        <p>Chaque source écrit un manifeste (<code>manifeste.json</code>) portant identifiant, URL résolue, date de téléchargement, taille en octets et empreinte SHA-256. Ce n'est pas le manifeste qui garantit l'intégrité — c'est l'empreinte recalculée à chaque passage — mais il évite de recalculer une empreinte sur un fichier déjà connu intact et donne la traçabilité exigée par le pipeline. Un manifeste corrompu n'est jamais silencieusement écrasé : il est déplacé vers un nom horodaté et l'incident est journalisé, le connecteur repart d'un manifeste vide plutôt que de bloquer la chaîne (<a href="decisions.html#adr-0004">ADR 0004</a>).</p>
+
+        <h3 id="echantillons">Les échantillons de test, et ce qu'ils rendent possible</h3>
+        <p>La génération des échantillons (<code>data/samples/</code>, 17 fichiers, 1,2 Mo) lit <code>data/raw/</code> et <code>data/external/</code> sans jamais y accéder par le réseau ni en modifier une ligne. Elle rend possible ce qu'aucun connecteur ne peut rendre possible seul : faire tourner la suite de tests sur un poste, ou en intégration continue, qui n'a jamais téléchargé les 4,6 Go de Sirene ni les 82 Mo de Parcoursup — vérifié en rendant <code>data/raw/</code> et <code>data/external/</code> absents, la suite tourne quand même.</p>
+        <pre><code>python -m pytest -q</code></pre>
+        <p><span class="badge ok">145 passed</span> — rejoué avec <code>data/raw/</code> et <code>data/external/</code> renommés (absents), même résultat, 145 tests passés.</p>
+
+        <h2 id="qualite">Qualité</h2>
+        <p>Un module par source (<code>parcoursup.py</code>, <code>sirene.py</code>, <code>referentiels.py</code>), orchestrés par <code>run.py</code> (<code>make quality</code>). Quatre familles de contrôle sont appliquées, dans la mesure où la source s'y prête.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Famille</th><th>Ce qu'elle vérifie</th></tr></thead>
+            <tbody>
+              <tr><td>Schéma</td><td>Colonnes attendues présentes, avec le type attendu</td></tr>
+              <tr><td>Complétude</td><td>Taux de valeurs renseignées au-delà du seuil configuré, colonne par colonne</td></tr>
+              <tr><td>Cohérence</td><td>Relations internes entre colonnes (somme, ratio, encadrement)</td></tr>
+              <tr><td>Fraîcheur</td><td>Date du manifeste ni absente, ni illisible, ni dans le futur, ni trop ancienne</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Les seuils sont dans <code>configs/base.yaml</code>, section <code>qualite</code>, jamais en dur dans le code.</p>
+
+        <h3 id="frontiere-blocage">La frontière entre bloquer et avertir</h3>
+        <p>Deux gravités seulement : bloquant, qui interrompt la chaîne en levant une erreur rangée du côté définitif du vocabulaire commun, et avertissement, journalisé mais qui ne bloque rien. Un troisième niveau serait le début d'une échelle qu'on ne veut pas. L'exemple qui a guidé cet arbitrage est la date de création dans Sirene :</p>
+        <div class="stats">
+          <div class="stat"><span class="v">10 613</span><span class="l">établissements avec une date de création à moins de 5 ans dans le futur — avertissement, immatriculations anticipées plausibles</span></div>
+          <div class="stat"><span class="v">5</span><span class="l">établissements avec une date de création en 2054, 2116, 2202, 2924 et 5015 — bloquant, fautes de frappe vérifiées une à une</span></div>
+        </div>
+        <p>Un contrôle naïf « date supérieure à aujourd'hui » aurait bloqué sur 10 618 lignes, dont 10 613 saines, et aurait été désactivé à la première exécution réelle. Le seuil retenu, cinq ans, sépare les deux régimes.</p>
+
+        <h3 id="hypotheses-infirmees">Trois hypothèses de contrôle infirmées par la mesure</h3>
+        <p>Chaque contrôle de cohérence a été confronté aux huit millésimes réels avant d'être figé :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hypothèse de départ</th><th>Constat sur les données réelles</th><th>Décision</th></tr></thead>
+            <tbody>
+              <tr><td>Le ratio admission / vœux serait borné à 1</td><td>Compte des propositions réémises après désistement, monte jusqu'à 26 en 2025</td><td>Jamais borné, seule une valeur négative est signalée</td></tr>
+              <tr><td>Un admis aurait formulé un vœu dans sa cellule</td><td>482 cellules en 2025 avec un numérateur positif pour un dénominateur nul</td><td>Non bloqué</td></tr>
+              <tr><td><code>acc_tot</code> égalerait la somme des quatre types de bac</td><td>Faux sur 5 des 8 sessions</td><td>Rétrogradé en avertissement, pas retiré</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Écrire un contrôle sans le confronter aux données réelles produit un contrôle faux, dans un sens ou dans l'autre : trop laxiste (le ratio borné à 1 aurait laissé passer un vrai défaut sans jamais se déclencher sur ce qui est en réalité normal), ou trop strict (bloquer sur les 482 cellules aurait arrêté la chaîne sur un fait structurel du fichier source).</p>
+
+        <h3 id="demonstration-blocage">La démonstration du blocage</h3>
+        <p>Le critère de validation n'est pas affirmé, il est démontré :</p>
+        <pre><code>PYTHONPATH=src python -m edumatch.quality.run
+echo $?</code></pre>
+        <p>Sur les données réelles, la commande sort en <span class="badge bad">code 1</span> : les 5 dates impossibles de Sirene constituent une anomalie bloquante, et la chaîne s'arrête avant d'atteindre dbt. Sur Parcoursup et les référentiels, la même commande ne relève aucune anomalie bloquante, seuls des avertissements (dont les 10 613 immatriculations anticipées).</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Limite assumée</span>
+            <p>Il n'existe pas de contrôle de schéma dédié pour <code>StockEtablissementHistorique</code>, <code>StockUniteLegale</code> et <code>StockUniteLegaleHistorique</code> : seul <code>StockEtablissement</code> porte les 9 colonnes utiles au projet, et aucun traitement du pipeline ne lit encore les trois autres fichiers. Ils sont soumis au seul contrôle de fraîcheur.</p>
+          </div>
+        </div>
+
+        <h2 id="transformation">Transformation</h2>
+        <p>Deux transformations suivent l'ingestion et la qualité : la réconciliation des huit millésimes Parcoursup en une table silver unique, puis la construction du modèle en étoile gold. Le modèle dimensionnel lui-même — grain, tables, volumétrie — est détaillé sur <a href="architecture.html">la page architecture</a> ; cette section traite ce qui relève du pipeline : l'hétérogénéité amont, l'enchaînement, les tests qui bloquent, le lignage.</p>
+
+        <h3 id="bronze-silver">Bronze vers silver — l'hétérogénéité des huit millésimes</h3>
+        <p>Les huit fichiers Parcoursup ne partagent ni le même schéma ni la même clé. Le nombre de colonnes dérive dans le temps : 85 en 2018, 92 en 2019, 115 en 2020, stable à 118 à partir de 2021 — le MESR a ajouté des champs au fil des sessions. La clé de formation <code>cod_aff_form</code> n'existe pas en 2018 et 2019 : elle se retrouve dans un paramètre de l'URL portée par une autre colonne, reconstruite et vérifiée exacte partout où les deux coexistent, avec une couverture mesurée de 92,4 % en 2018 et 94,6 % en 2019 (<a href="decisions.html#adr-0010">ADR 0010</a>).</p>
+        <figure><img src="../reports/figures/ruptures-de-serie.png" alt="Ruptures de série entre les huit millésimes Parcoursup, schéma et couverture de la clé de formation" loading="lazy"><figcaption>Les ruptures de série identifiées entre 2018 et 2025 sont un fait des huit fichiers sources, pas un artefact du traitement.</figcaption></figure>
+        <p>Les 128 colonnes classées forment la référence : chaque colonne apparaît dans le résultat, qu'elle existe ou non dans le millésime traité, une colonne absente devenant une colonne de valeurs manquantes plutôt qu'une colonne absente du schéma final. Le typage est générique plutôt qu'une table de correspondance tenue à la main : une colonne devient numérique seulement si sa conversion ne perd aucune valeur sur les huit millésimes, toute autre colonne reste texte. Les codes de catalogue (comme <code>dep</code>, qui porte <code>2A</code> et <code>2B</code> pour la Corse) sont forcés en texte indépendamment de cette règle.</p>
+        <p>La réconciliation garantit trois choses : le grain <code>(session, cod_aff_form)</code> vérifié unique à la construction (une clé dupliquée lève une erreur définitive), l'idempotence et l'écriture atomique par la même primitive que l'ingestion, et une couverture de reconstruction de clé mesurée et journalisée, pas supposée.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Mesure</th><th>Valeur</th></tr></thead>
+            <tbody>
+              <tr><td>Lignes silver</td><td class="num">104 274</td></tr>
+              <tr><td>Colonnes silver</td><td class="num">128</td></tr>
+              <tr><td><code>silver.parquet</code></td><td class="num">16 247 456 o</td></tr>
+              <tr><td><code>silver.duckdb</code> (base de travail dbt)</td><td class="num">22 294 528 o</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre><code>make transform</code></pre>
+
+        <h3 id="silver-gold">Silver vers gold — ordonnancement et contrôles bloquants</h3>
+        <p><code>run_etoile.py</code> exige que <code>data/interim/parcoursup/silver.parquet</code> existe : à défaut, il s'arrête avec un message indiquant d'exécuter <code>make transform</code> d'abord. La dépendance de gold envers silver est vérifiée à l'exécution, pas seulement déclarée. Trois familles de contrôle bloquent avant l'écriture : un grain <code>(session, sk_formation, sk_profil)</code> dupliqué, une dimension orpheline ou un fait orphelin, et une jointure qui gonfle (une dimension proposant deux versions candidates pour une même clé naturelle) — ce dernier cas rejeté avant même de vérifier le grain final, un simple contrôle « pas de doublon » ne l'aurait pas détecté puisque les lignes fabriquées en trop porteraient par construction des clés de substitution différentes.</p>
+
+        <h3 id="tests-dbt">Les tests dbt qui bloquent</h3>
+        <p>Le projet dbt matérialise silver et les cinq tables gold dans DuckDB et exécute, en plus des tests de colonne déclarés (<code>unique</code>, <code>not_null</code>, <code>accepted_values</code>), deux tests singuliers : le grain <code>(session, cod_aff_form)</code> de silver et le grain <code>(session, sk_formation, sk_profil)</code> de <code>fait_admission</code>. Ils sont redondants avec la vérification déjà faite côté Python — gardés parce que le pipeline exige des tests dbt verts, pas seulement une garantie invisible depuis <code>dbt test</code>. Dernière exécution vérifiée : <span class="badge ok">26 nœuds exécutés, 26 succès</span>.</p>
+
+        <h3 id="reproductibilite-lignage">Reproductibilité et lignage</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Chemin</th><th>Commande</th><th>Rôle</th></tr></thead>
+            <tbody>
+              <tr><td>Production</td><td><code>make transform</code> puis <code>make gold</code></td><td>Pandas d'un bout à l'autre, sans dépendance à dbt</td></tr>
+              <tr><td>Lignage</td><td><code>make transform-lignage</code></td><td>Rejoue silver et gold dans DuckDB via dbt, exécute les tests, génère <code>dbt docs</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Les deux chemins appellent les mêmes fonctions de réconciliation et de construction de l'étoile : ce qui change n'est jamais le calcul, seulement le moteur qui a chargé la table amont. <code>dbt docs generate</code> produit le catalogue sur 6 nœuds — la table silver et les cinq tables gold — et le graphe montre la chaîne complète, déduite des <code>ref()</code> du projet dbt, pas déclarée à la main.</p>
+        <p>Suite de tests complète du dépôt à ce stade : <span class="badge ok">260 passed</span>.</p>
+        <div class="callout ok">
+          <span class="ico" aria-hidden="true">✓</span>
+          <div>
+            <span class="title">Ce que la transformation garantit</span>
+            <p>Reprise correcte après erreur amont (gold refuse de démarrer si silver est absent), idempotence par écriture atomique aux deux étapes, blocage sur donnée invalide avant l'écriture, lignage sans mention manuelle, même code Python pour le chemin de production et le chemin de lignage.</p>
+          </div>
+        </div>
+        <p>Limite assumée : le job d'agrégation Sirene n'est pas raccordé à cette couche gold, voir la section suivante.</p>
+
+        <h2 id="agregat-sirene">Agrégat Sirene</h2>
+        <p>Cette étape réduit le stock Sirene, déjà ingéré et contrôlé, à un agrégat territorial exploitable au grain commune × NAF. Elle ne fait pas partie de la couche gold : les tables dimensionnelles ne portent que Parcoursup. Le terme « débouchés » du score de matching, décrit sur <a href="service.html">la page service</a>, ne consomme d'ailleurs pas directement cet agrégat, mais un module distinct à une maille k-anonymisée plus grossière.</p>
+
+        <h3 id="grain-sirene">Le grain et les colonnes retenues</h3>
+        <p>La source est <code>StockEtablissement.parquet</code> : 43 896 818 lignes, 54 colonnes, 355 row groups, 2,20 Go. Neuf colonnes sur 54 sont lues, la même liste que celle déjà arrêtée par le contrôle qualité, pour qu'un contrôle qualité et l'agrégat qu'il valide ne finissent pas par regarder des colonnes différentes sans que rien ne le signale. Une ligne = un couple (commune, code NAF), avec pour chaque cellule : le nombre d'actifs-employeurs, le nombre de fermés-employeurs, la ventilation sur 6 paliers d'effectifs, la part avec code NAF 2025 renseigné, l'ancienneté moyenne et le nombre de créations récentes — toutes deux calculées par rapport à la date de publication du stock, jamais la date d'exécution.</p>
+
+        <h3 id="filtres-sirene">Filtres appliqués et écart assumé</h3>
+        <p>Deux filtres pilotés par configuration : <code>etat_administratif: A</code> restreint le compteur principal aux établissements actifs (les fermetures ne sont pas exclues pour autant, comptées à côté), et <code>caractere_employeur: true</code> restreint aux établissements employeurs. Un troisième filtre, <code>diffusible: true</code>, est déclaré en configuration mais n'est pas appliqué : il demanderait de lire une dixième colonne. Mesuré sur le fichier complet, 20 501 établissements actifs-employeurs sur 2 436 624 (0,84 %) portent un statut non diffusible — un écart chiffré et assumé, à revoir si la précision au niveau commune devient sensible à ce seuil.</p>
+
+        <h3 id="chiffres-sortie-sirene">Les chiffres de sortie</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Mesure</th><th>Valeur</th></tr></thead>
+            <tbody>
+              <tr><td>Lignes (cellules commune × NAF)</td><td class="num">1 929 179</td></tr>
+              <tr><td>Colonnes</td><td class="num">14</td></tr>
+              <tr><td>Taille sur disque</td><td class="num">12 618 239 o (12,6 Mo)</td></tr>
+              <tr><td>Communes distinctes</td><td class="num">35 664</td></tr>
+              <tr><td>Codes NAF distincts</td><td class="num">1 743</td></tr>
+              <tr><td>Actifs-employeurs agrégés</td><td class="num">2 423 308</td></tr>
+              <tr><td>Fermés-employeurs agrégés</td><td class="num">4 897 540</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Réduction de 2,20 Go à 12,6 Mo, un facteur d'environ 175. Écart avec les 2 436 624 actifs-employeurs du fichier complet : 13 316 lignes n'entrent pas dans l'agrégat, toutes domiciliées à l'étranger, hors du grain territorial du projet. Couverture NAF 2025 : 2 423 294 sur 2 423 308 actifs-employeurs agrégés, soit 100,0 %.</p>
+
+        <h3 id="pushdown">La preuve du filtrage à la lecture</h3>
+        <p>Le moteur Spark expose son plan physique (<code>df.explain(True)</code>) : il porte un schéma de lecture limité aux 9 colonnes utiles, jamais les 54 du fichier, et des filtres déjà traduits en conditions Parquet. Spark ne décompresse jamais les groupes de lignes qui ne peuvent statistiquement pas satisfaire ces filtres, avant même de les charger en mémoire. Un test dédié vérifie que le plan contient les 9 colonnes utiles et jamais la colonne de statut de diffusion, non lue.</p>
+
+        <h3 id="deux-moteurs">Deux moteurs, un seul comportement</h3>
+        <p>Deux implémentations existent, sélectionnées par configuration : Polars en mode local (développement, préproduction), Spark en mode cluster (production). Les deux importent leurs règles métier — grain, colonnes, filtres, correspondance des tranches d'effectifs — d'un seul module, pour qu'une correction appliquée à un moteur ne diverge pas silencieusement de l'autre. Un test compare les deux sorties ligne à ligne sur le même échantillon. La mesure comparative (Polars 18,2 s contre Spark 87,0 s sur le fichier complet) et le seuil qui ferait changer d'avis sont dans l'<a href="decisions.html#adr-0016">ADR 0016</a>.</p>
+
+        <h3 id="taille-cellules">La taille des cellules — question ouverte</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Établissements actifs-employeurs par cellule</th><th>Nombre de cellules</th><th>Part</th></tr></thead>
+            <tbody>
+              <tr><td>Au moins 1</td><td class="num">886 688</td><td class="num">100,0 %</td></tr>
+              <tr><td>Exactement 1</td><td class="num">584 489</td><td class="num">65,9 %</td></tr>
+              <tr><td>Exactement 2</td><td class="num">135 162</td><td class="num">15,2 %</td></tr>
+              <tr><td>Exactement 3</td><td class="num">54 808</td><td class="num">6,2 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Une cellule à effectif 1 identifie l'établissement de façon quasi directe</span>
+            <p>Ces données sont pseudonymisées, pas anonymisées. Les 20 501 établissements non diffusibles ne sont pas filtrés à cette étape : une partie des cellules à effectif 1 ou 2 pourrait donc porter un établissement qui n'a pas vocation à être individuellement identifiable. Décision restant ouverte à trancher avant toute publication individuelle de cellule à faible effectif.</p>
+          </div>
+        </div>
+        <pre><code>make sirene-agregats</code></pre>
+        <p>Limite assumée sur ce poste de développement (Windows) : l'écrivain Parquet natif de Spark échoue faute de <code>winutils.exe</code>. Le résultat, déjà réduit à 12,6 Mo, est ramené au pilote puis écrit par la primitive atomique du projet (<a href="decisions.html#adr-0016">ADR 0016</a>).</p>
+
+        <h2 id="reconciliation">Réconciliation des nomenclatures</h2>
+        <p>Cette étape relie une formation du référentiel ONISEP (IDÉO) à une activité économique (code NAF), pour préparer le terme « débouchés » du score de matching. Aucune table officielle ne relie directement un code NAF à une formation : la chaîne assemble trois sources publiques, chacune vérifiée séparément.</p>
+        <div class="diagram">
+<pre class="mermaid">
+flowchart LR
+  A["Formation IDÉO<br/>code RNCP"] -->|"code RNCP"| B["Fiche RNCP<br/>export quotidien"]
+  B -->|"export ROME de l'archive RNCP"| C["Code(s) ROME"]
+  C -->|"table France Travail ROME/NAF"| D["Division NAF"]
+</pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th>Licence</th><th>Rôle</th></tr></thead>
+            <tbody>
+              <tr><td>ONISEP — IDÉO Formations</td><td>ODbL</td><td>point de départ : une formation portant un code RNCP</td></tr>
+              <tr><td>RNCP — membre ROME de l'archive quotidienne</td><td>Licence Ouverte v2.0</td><td>relie une fiche RNCP à un ou plusieurs codes ROME</td></tr>
+              <tr><td>RNCP — CSV standard de la même archive</td><td>Licence Ouverte v2.0</td><td>expose l'état actif/radié de chaque fiche</td></tr>
+              <tr><td>France Travail — table ROME/NAF</td><td>Licence Ouverte v2.0</td><td>relie un code ROME à une division NAF</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="couverture-chaine">La couverture, maillon par maillon</h3>
+        <p>Mesuré sur les exports du 30 août 2026 :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Maillon</th><th>Retenus / total</th><th>Taux</th></tr></thead>
+            <tbody>
+              <tr><td>Formations IDÉO portant un code RNCP renseigné</td><td class="num">3 857 / 5 869</td><td class="num">65,72 %</td></tr>
+              <tr><td>Fiches de l'export ROME couvrant au moins un code ROME</td><td class="num">24 424 / 24 424</td><td class="num">100 %</td></tr>
+              <tr><td>Formations avec RNCP dont la fiche existe dans l'export ROME du jour</td><td class="num">3 605 / 3 857</td><td class="num">93,47 %</td></tr>
+              <tr><td>Codes ROME de l'export RNCP retrouvés dans la table France Travail</td><td class="num">528 / 572</td><td class="num">92,31 %</td></tr>
+              <tr><td><strong>Chaîne complète, formation IDÉO jusqu'à une division NAF</strong></td><td class="num"><strong>3 605 / 5 869</strong></td><td class="num"><strong>61,42 %</strong></td></tr>
+              <tr><td>Lignes de la table finale rattachées à une certification active</td><td class="num">25 213 / 26 358</td><td class="num">95,66 %</td></tr>
+              <tr><td>Formations distinctes rattachées à une certification active</td><td class="num">3 412 / 3 605</td><td class="num">94,65 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Chaque jointure vers la NAF est une jointure interne : une ligne sans correspondance disparaît plutôt que d'apparaître avec des colonnes nulles. C'est ce tableau qui rend compte de ce qui a été perdu à chaque étape, jamais un taux global unique.</p>
+
+        <h3 id="table-produite">La table produite</h3>
+        <p><code>naf_rome_formation.csv</code> : 26 358 lignes, 8 colonnes (code RNCP, libellé de formation, code NSF, code ROME, libellé ROME, division NAF, libellé de division, état actif/radié), 4 887 629 octets. Une ligne est un triplet (formation IDÉO, code ROME, division NAF) : une formation n'a pas « un » débouché NAF mais un ensemble, la relation étant N:N. La colonne d'état est jointe par une jointure externe gauche, elle ne retire aucune ligne : 25 213 lignes actives, 1 145 radiées (4,3 % des 26 358 lignes), aucune valeur nulle.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Un fait de qualité de source, rapporté tel quel</span>
+            <p>Un cas contrôlé jusqu'à sa source : la formation « BT métiers de la musique » (code RNCP 919) ressort rattachée au code ROME de la vente d'articles de sport et loisirs. L'export officiel du RNCP lui attribue bien ce code, en plus de la danse. La jointure est fidèle, c'est la source qui est bruitée.</p>
+          </div>
+        </div>
+
+        <h3 id="manques-declares">Deux manques déclarés, pas comblés</h3>
+        <p>Aucun des huit millésimes Parcoursup ne porte de code RNCP, NSF ou ROME : la chaîne ne s'y raccorde par aucune clé. Le terme de débouchés utilise donc un appariement exact de libellés, mesuré, qui couvre 1,4 % des cellules ; ailleurs, le terme est déclaré indisponible (<a href="decisions.html#adr-0020">ADR 0020</a>, qui remplace en partie l'<a href="decisions.html#adr-0017">ADR 0017</a>). La correspondance ROME/NAF n'existe par ailleurs qu'au niveau division (2 chiffres), alors que l'agrégat Sirene est à la sous-classe (5 caractères) : le rattachement à un établissement réel perd la granularité fine de l'activité, aucune source publique ne relie ROME à la sous-classe aujourd'hui.</p>
+        <pre><code>make naf-rome</code></pre>
+
+        <h2 id="orchestration">Orchestration, reprise et démonstration de panne</h2>
+        <p>Le graphe compte quatre DAG et treize tâches. Cette section porte l'infrastructure qui l'exécute réellement et la procédure de démonstration filmée.</p>
+
+        <h3 id="ou-tourne-airflow">Où tourne Airflow en production, et pourquoi</h3>
+        <p>Sur une instance Scaleway dédiée, pas sur le cluster Kubernetes qui héberge l'API (<a href="decisions.html#adr-0019">ADR 0019</a>). Deux plans d'exécution, chacun à sa place : le cluster héberge l'API, dont la charge suit la campagne de vœux avec un rapport de 1 à 6, ce qui justifie l'élasticité ; l'instance dédiée exécute le pipeline, dont la charge suit la cadence de publication des sources (annuelle, mensuelle, quotidienne) et n'a aucun pic concurrent à absorber — un cluster élastique n'y ajouterait que de la complexité, la pile Airflow de référence exigeant déjà 4 Go de mémoire à elle seule.</p>
+        <p>Sur cette instance, trois services durables tournent : une base PostgreSQL de métadonnées Airflow, dédiée et distincte de celle qui sert de backend au registre d'expériences ; un ordonnanceur en exécuteur local, qui autorise plusieurs tâches en parallèle sur une base persistante, contrairement au mode autonome (SQLite, une tâche à la fois) de la pile de développement ; et l'interface web, dont le port n'est jamais exposé publiquement, atteignable seulement par tunnel SSH. Ni l'entraînement, ni l'API, ni le registre d'expériences ne tournent sur cette instance : elle n'exécute que l'orchestrateur du pipeline de données, un choix assumé et détaillé dans l'<a href="decisions.html#adr-0019">ADR 0019</a>.</p>
+
+        <h3 id="reprise-transitoire-definitive">La reprise : transitoire contre définitive</h3>
+        <p>La reprise n'est pas confiée au mécanisme natif de retry d'Airflow, désactivé explicitement (<code>retries = 0</code>) : le retry natif retenterait aveuglément n'importe quelle exception, y compris un schéma cassé ou un contrôle qualité bloquant, c'est précisément ce qu'il ne faut jamais retenter. La décision est prise dans le code Python, à partir du même vocabulaire commun que les connecteurs.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nature</th><th>Exemple</th><th>Comportement</th></tr></thead>
+            <tbody>
+              <tr><td>Transitoire</td><td>Coupure réseau, délai dépassé, erreur serveur</td><td>Retentée jusqu'à 3 fois, temporisation croissante : 60 s puis 120 s</td></tr>
+              <tr><td>Définitive</td><td>Schéma Parcoursup cassé, contrôle qualité bloquant, millésime non configuré</td><td>Aucune reprise, échec au premier essai, intervention humaine requise</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">La reprise ne se voit pas dans l'interface</span>
+            <p>Avec les tentatives natives désactivées, une tâche Airflow ne passe jamais par l'état « en attente de nouvel essai » de l'interface, même quand le code retente en interne trois fois de suite. C'est le journal de la tâche qu'il faut ouvrir pour voir les trois tentatives et la temporisation apparaître. Sans ouvrir ce journal, une reprise réussie et une exécution sans incident sont indiscernables à l'écran — c'est le geste précis à filmer.</p>
+          </div>
+        </div>
+
+        <h3 id="reentrainement">Le réentraînement automatique et la porte de promotion</h3>
+        <p>Les deux dernières tâches de la chaîne annuelle réentraînent puis évaluent le modèle, derrière le même contrôle qualité que les tâches qui précèdent : une donnée cassée empêche mécaniquement tout réentraînement sur une table non conforme. L'entraînement suit le même protocole que l'entraînement manuel — split strictement temporel, arrêt anticipé sur la seule validation, jeu de test 2025 touché une seule fois — puis délègue la décision de publication à une porte de promotion.</p>
+        <p>Le modèle n'est publié, c'est-à-dire que l'artefact chargé par l'API n'est réécrit, que si sa MAE pondérée de test est strictement inférieure à celle du plancher (le taux de la session précédente), comparés à couverture égale. Aucune marge de tolérance n'est ajoutée. Mesuré sur ce dépôt, ce seuil se referme dès la première exécution : le modèle vaut 0,0758 de MAE pondérée en test contre 0,0701 pour le plancher, il perd contre la règle triviale. Publier ce résultat automatiquement chaque année remplacerait un plancher qui fonctionne par un modèle qui fait strictement pire — un refus n'est pas une panne, la tâche journalise le verdict et se termine normalement.</p>
+        <p>Ce qui ferait reconsidérer cette porte : si un futur réentraînement bat le plancher de très peu et que ce gain s'avère instable d'une exécution à l'autre, bruit d'échantillonnage plutôt que progrès réel, une marge de tolérance documentée et mesurée sur plusieurs exécutions se justifierait. Pas avant : au moment d'écrire cette page, l'écart va dans le mauvais sens.</p>
+
+        <h3 id="demo-panne">Démonstration de la panne et de la reprise</h3>
+        <p>Deux scénarios distincts, correspondant aux deux natures d'échec.</p>
+        <p><strong>1. Panne transitoire — coupure réseau pendant l'ingestion Sirene.</strong> Couper le trafic sortant des conteneurs pendant le téléchargement, rétablir avant la fin de la temporisation de 60 s, observer dans le journal de la tâche la tentative 1 en échec puis la tentative 2 en succès.</p>
+        <p><strong>2. Arrêt définitif — contrôle qualité bloquant sur Parcoursup.</strong></p>
+        <pre><code># Sur l'instance, dans edumatch-ia, la pile de production levée
+# et le DAG edumatch_parcoursup ingéré au moins une fois :
+
+# 1. Injecter la panne : sauvegarde le millésime le plus récent,
+#    vérifie son empreinte contre le manifeste, retire une colonne
+#    protégée par la liste blanche anti-fuite.
+make demo-panne-qualite
+
+# 2. Déclencher le DAG et filmer l'échec : le contrôle qualité
+#    échoue sans aucune reprise (erreur définitive) ; toutes les
+#    tâches en aval passent en échec amont ; silver.parquet ne
+#    bouge pas, la panne est arrêtée avant toute transformation.
+docker compose -f docker-compose.prod.yml exec airflow-scheduler \
+  airflow dags trigger edumatch_parcoursup
+
+# 3. Restaurer, annoncer qu'il s'agit d'une injection volontaire,
+#    filmer la vérification par empreinte SHA-256 contre le manifeste.
+make demo-restaurer-qualite
+
+# 4. Relancer la chaîne : elle va cette fois jusqu'au bout.</code></pre>
+        <p>Le script de démonstration refuse d'aller plus loin si l'état de départ ne correspond pas déjà au manifeste, et refuse d'annoncer une restauration réussie si l'empreinte recalculée ne coïncide pas avec celle du manifeste — dans les deux cas il s'arrête bruyamment, jamais un succès supposé.</p>
+
+        <h3 id="demo-idempotence">Idempotence — rejouer sans rien changer</h3>
+        <pre><code># Avant de rejouer le pipeline :
+make verifier-idempotence-capturer
+
+# ... déclencher à nouveau le ou les DAG concernés, sans modifier data/raw ...
+
+# Après la seconde exécution :
+make verifier-idempotence-comparer</code></pre>
+        <p>Le script compare le contenu de quatre sorties (silver, table de faits, table de variables, agrégat Sirene) plutôt que leur empreinte binaire : un fichier Parquet réécrit par le même code sur les mêmes données n'est pas garanti identique octet pour octet, et ce n'est pas ce qu'« idempotent » signifie ici. Limite déclarée : ce script ne compare pas encore l'artefact publié par le réentraînement ; l'idempotence de la promotion est démontrée séparément, au niveau du code, pas encore par ce script de production.</p>
+
+        <div class="callout info">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Ce que cette page ne couvre pas</span>
+            <p>La construction de l'instance elle-même (Terraform, coût, provisionnement) vit dans le second dépôt. Le monitoring de cette instance n'est pas encore collecté par la supervision du cluster — point ouvert, déclaré tel quel. Le détail des diagrammes C4 est sur <a href="architecture.html">la page architecture</a>.</p>
+          </div>
+        </div>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>

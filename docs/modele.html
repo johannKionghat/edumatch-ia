@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Modèle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Bloc 4 · Déploiement de la solution IA</p>
+        <h1>Le modèle d'accessibilité</h1>
+        <p class="lead">Le terme accessibilité du score est le seul composant appris du système : un LightGBM entraîné sur les six sessions Parcoursup où le taux d'admission est réellement observé. Cette page réunit ce que j'ai spécifié, entraîné, expliqué et audité — y compris le résultat qui ne m'arrange pas.</p>
+
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Le modèle ne bat pas la baseline sur le test 2025</span>
+            <p>MAE pondérée 0,0758 contre 0,0701 pour le taux de la session précédente, à couverture égale. Sa calibration s'y dégrade aussi. Je le rapporte tel quel dans chaque section concernée, et chaque réponse de <code>/matching</code> porte cette même réserve (<a href="service.html#score">page Service</a>).</p>
+          </div>
+        </div>
+
+        <h2 id="specification">Spécification et cible</h2>
+        <p>La cible est le taux d'admission observé par cellule <code>(formation × session × type de bac × boursier)</code>, définie dans <a href="donnees.html#label">Données et label</a>. Ici je documente quelles variables entrent dans le modèle et selon quel critère je les ai triées : analyse détaillée dans l'<a href="decisions.html#adr-0013">ADR 0013</a>.</p>
+
+        <h3 id="critere-de-tri">Le critère de tri</h3>
+        <p>Je ne me suis pas contenté de me demander si une variable est postérieure à l'admission. Le nombre total de vœux reçus par une formation précède chronologiquement l'admission, mais un lycéen qui formule ses vœux en janvier ne peut pas le connaître : il se construit pendant la campagne.</p>
+        <p>Le critère retenu : <strong>la variable est-elle connue au moment où le lycéen formule ses vœux ?</strong> C'est pour cela que la plupart des compteurs Parcoursup (vœux, propositions, admis, capacité) ne sont pas exclus mais <strong>décalés d'une session</strong> : la même colonne fuite si elle est lue sur la session courante, elle est légitime si elle est lue sur la session précédente.</p>
+
+        <h3 id="classement-colonnes">Le classement des 128 colonnes</h3>
+        <p>Sur les huit millésimes téléchargés : 128 colonnes vues au moins une fois (de 85 en 2018 à 118 en 2021-2025, dont 83 communes aux huit sessions).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Catégorie</th><th class="num">Colonnes</th><th>Principe</th></tr></thead>
+            <tbody>
+              <tr><td>Liste blanche, session prédite</td><td class="num">9</td><td>Attributs de catalogue publiés avant la campagne : filière, type de formation, sélectivité, statut de l'établissement, territoire</td></tr>
+              <tr><td>Décalées d'une session</td><td class="num">35</td><td>Compteurs de capacité, vœux, propositions, admis, académie d'origine, calendrier</td></tr>
+              <tr><td>Mentions, retenues sous réserve</td><td class="num">8</td><td>Écartées par défaut — contamination du contrôle continu 2020</td></tr>
+              <tr><td>Exclusions définitives</td><td class="num">73</td><td>Interdites (4), substituts (3), instables (22), non complètes (10), hors périmètre (10), redondantes (23), à cardinalité excessive (1)</td></tr>
+              <tr><td><strong>Total</strong></td><td class="num"><strong>128</strong></td><td>Chaque colonne vue au moins une fois est classée</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>À ces colonnes s'ajoutent les deux dimensions qui découpent chaque formation en cellules — type de baccalauréat et statut de boursier (<a href="decisions.html#adr-0009">ADR 0009</a>). Sans elles le modèle prédirait une moyenne de six situations très différentes : écart médian de 8,5 points entre bac général et bac professionnel, jusqu'à 42,3 points en CPGE.</p>
+
+        <p>J'ai choisi une <strong>liste blanche</strong> des colonnes autorisées sur la session prédite, plutôt qu'une liste d'exclusion. Une liste d'exclusion laisse passer par défaut une colonne ajoutée par un futur millésime, sans qu'elle ait été examinée ; la liste blanche refuse par défaut. Neuf colonnes seulement sont autorisées sur la session prédite : filière, type de formation, sélectivité, statut du contrat, type d'établissement, département, académie, région. Aucune ne compte de vœux, de propositions ni d'admis.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Motif d'exclusion</th><th class="num">Nb</th><th>Ce qu'il signifie</th></tr></thead>
+            <tbody>
+              <tr><td>Redondance</td><td class="num">23</td><td>Recalculable depuis une colonne retenue</td></tr>
+              <tr><td>Instabilité</td><td class="num">22</td><td>Disponibilité qui change dans la fenêtre 2020-2025</td></tr>
+              <tr><td>Complétude non aléatoire</td><td class="num">10</td><td>Absence qui code une information (filière), pas un manque</td></tr>
+              <tr><td>Hors périmètre</td><td class="num">10</td><td>Décrit une population que le label ne couvre pas (phase complémentaire, autres terminales)</td></tr>
+              <tr><td>Interdite</td><td class="num">4</td><td>Ventilation par sexe — le genre ne sert qu'à l'audit a posteriori</td></tr>
+              <tr><td>Substitut du genre</td><td class="num">3</td><td>Détail dans la section <a href="#equite">Équité</a></td></tr>
+              <tr><td>Cardinalité excessive</td><td class="num">1</td><td>Quasi-identifiant, pas une variable</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="pourcentages">La redondance des pourcentages, une hypothèse fausse corrigée</h3>
+        <p>Ma première hypothèse pour reconstituer les pourcentages était simple : le taux de boursiers rapporté au nombre total d'admis. Vérifiée sur les chiffres, elle était fausse — écart médian de 3,4 points, jusqu'à 97,5 au maximum. Le vrai dénominateur est le nombre de néo-bacheliers, pas l'ensemble des admis.</p>
+        <p>Reconstitution vérifiée des 19 colonnes de pourcentage sur 2025, écart maximal de 0,5 point (l'arrondi, rien de plus). Leçon retenue : un pourcentage ne se rattache pas à son dénominateur par la ressemblance de son nom.</p>
+
+        <h3 id="cod-uai">L'identifiant d'établissement écarté pour deux raisons indépendantes</h3>
+        <p>L'identifiant d'établissement est écarté pour deux raisons qui tiennent chacune seule :</p>
+        <ul>
+          <li><strong>Cardinalité</strong> : 4 058 établissements. Le modèle mémoriserait l'établissement au lieu d'apprendre une règle transférable, et tout établissement absent de l'entraînement deviendrait imprédictible.</li>
+          <li><strong>Substitut du genre</strong> : c'est la variable la plus fortement associée au genre du catalogue, 28,9 % de pouvoir explicatif net une fois la cardinalité corrigée (section <a href="#equite">Équité</a>).</li>
+        </ul>
+        <p>Les deux raisons sont indépendantes : si l'exclusion ne tenait que par l'équité, elle s'effondrerait le jour où l'audit montrerait un impact disparate faible. Elle tient aussi par la cardinalité seule. L'information d'établissement ne disparaît pas totalement : les variables décalées, attachées à la formation, en portent une partie.</p>
+
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">La filière retenue malgré 19,5 % de pouvoir explicatif sur le genre</span>
+            <p>La retirer détruirait l'objet même du système, qui doit comparer des formations entre elles : la ségrégation par filière existe dans le catalogue lui-même, avec ou sans le modèle. C'est compensé par l'audit d'équité a posteriori. Le seuil qui ferait rouvrir cette décision : un impact disparate significatif porté par la filière, mesuré une fois le modèle entraîné — <a href="#equite">seuil désormais observé</a>.</p>
+          </div>
+        </div>
+
+        <p>Le classement des 128 colonnes est écrit dans la configuration du modèle et vérifié par quatre contrôles automatisés : toute colonne citée existe réellement, toute colonne d'un millésime est classée, aucune colonne de résultat de campagne ne figure dans la liste blanche, aucune colonne n'appartient à deux catégories à la fois. Les quatre contrôles ont été vérifiés par mutation du code.</p>
+
+        <h2 id="variables">Variables</h2>
+        <p>Le jeu de variables produit, sur les huit millésimes réels :</p>
+        <div class="stats">
+          <div class="stat"><span class="v">440 030</span><span class="l">lignes (cellules)</span></div>
+          <div class="stat"><span class="v">46</span><span class="l">variables (2 dimensions de cellule, 9 liste blanche, 35 décalées)</span></div>
+          <div class="stat"><span class="v">6,46 %</span><span class="l">cellules sans antécédent décalé (28 425)</span></div>
+          <div class="stat"><span class="v">20,7 %</span><span class="l">taux de manquant de la colonne la plus touchée</span></div>
+        </div>
+        <p>Une ligne en entrée (la table des faits d'admission, <a href="decisions.html#adr-0015">ADR 0015</a>) produit exactement une ligne en sortie : 440 030 en entrée, 440 030 en sortie. La construction arrête le pipeline si une source porte plusieurs lignes pour une même clé, ce qui dupliquerait silencieusement des cellules sinon.</p>
+        <p>Le jeu de mention (huit colonnes liées aux mentions du baccalauréat) reste hors de la table par défaut : une option dédiée les ajoute, réservée à l'ablation qui décide si leur gain justifie le risque de contamination des sessions cibles 2021 et 2022.</p>
+
+        <h3 id="decalage">Le mécanisme du décalage temporel</h3>
+        <p>Le principe (<a href="decisions.html#adr-0010">ADR 0010</a>, <a href="decisions.html#adr-0013">ADR 0013</a>) : une variable n'entre dans le modèle que si elle est connue au moment où le lycéen formule son vœu. Deux traitements :</p>
+        <ul>
+          <li>la <strong>liste blanche</strong> (9 colonnes de catalogue) est lue par jointure directe sur la session prédite elle-même — ce sont des attributs déjà publiés au moment du vœu ;</li>
+          <li>les <strong>35 colonnes décalées</strong> (tous les compteurs de campagne) sont lues sur la session <strong>précédente</strong>. La table réconciliée est translatée d'une session avant la seconde jointure, plutôt que de soustraire un an côté cellules : les deux reviennent au même, ce choix laisse la table de base intacte pour les jointures suivantes.</li>
+        </ul>
+
+        <h3 id="anti-fuite">Le contrat anti-fuite, vérifié par mutation</h3>
+        <p>Un test qui vérifierait juste la <strong>présence</strong> des bonnes colonnes en sortie ne prouve rien : il passerait même si la jointure décalée lisait par erreur la session prédite au lieu de la précédente, tant que les deux sessions portent la même valeur en test. Il faut une donnée où la valeur <strong>diffère franchement</strong> entre les deux sessions.</p>
+        <p>Le test dédié utilise deux colonnes qui portent une valeur ordinaire à la session 2024 (40, 500) et une valeur extrême à la session 2025 (999999, 999999). Il vérifie que la table produite porte 40 et 500, jamais 999999.</p>
+        <p>J'ai vérifié les trois garanties par mutation du code : je casse volontairement le comportement visé, je relance les tests pour voir lequel échoue, puis je restaure.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Mutation</th><th>Résultat observé</th></tr></thead>
+            <tbody>
+              <tr><td>Décalage ramené de un an à zéro (les colonnes « décalées » lues sur la session prédite elle-même)</td><td>4 tests échouent — dont celui qui vérifie que les variables décalées proviennent réellement de la session précédente — et 342 restent verts</td></tr>
+              <tr><td>Le genre et l'identifiant d'établissement réintroduits de force</td><td>Les deux tests qui interdisent leur présence échouent</td></tr>
+              <tr><td>Code restauré après chaque mutation</td><td>Suite revenue à 346 tests, 346 succès</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le premier résultat compte le plus : seuls les tests qui dépendent réellement du décalage échouent, les 342 autres restent verts. Un test qui aurait échoué avec des tests sans rapport n'aurait rien démontré.</p>
+
+        <h3 id="antecedent">L'absence d'antécédent, mesurée, jamais comblée</h3>
+        <p>28 425 cellules sur 440 030 (6,46 %) n'ont aucune ligne de la session précédente, pour deux raisons : la session cible 2020, dont le millésime précédent est 2019 — année où le numérateur du label n'est pas encore ventilé par type de bac — et une formation apparue pour la première fois à la session cible, qui n'a par construction aucune ligne antérieure.</p>
+        <p>Dans les deux cas la valeur reste manquante, jamais imputée. Combler fabriquerait un antécédent qui n'a jamais existé, et LightGBM traite nativement l'absence. La colonne la plus touchée l'est à 20,7 %, pour des raisons de complétude propres à la colonne, sans lien avec le décalage.</p>
+
+        <h3 id="nommage">Un piège de nommage bloqué explicitement</h3>
+        <p>La table des faits d'admission porte déjà, sur la session prédite, le numérateur et le dénominateur bruts du label. Par malchance de nommage, ce sont les mêmes noms que deux colonnes décalées de l'<a href="decisions.html#adr-0013">ADR 0013</a> (la même colonne source, lue à la session précédente).</p>
+        <p>Sans contrôle, une jointure standard aurait résolu ce conflit en renommant silencieusement les deux colonnes plutôt que d'échouer, et une variable de résultat de campagne aurait pu se retrouver du mauvais côté du contrat anti-fuite sans qu'aucun signal ne le révèle. La construction refuse désormais toute homonymie entre les colonnes du classement et les colonnes conservées de la table des faits, avant toute jointure.</p>
+
+        <h3 id="reproduction-variables">Reproduction</h3>
+        <pre><code>PYTHONPATH=src python -m edumatch.features.build</code></pre>
+        <p>Écrit la table de variables au format Parquet et journalise le rapport de volumétrie et de complétude.</p>
+        <pre><code>python -m pytest tests/unit/test_features_build.py tests/data/test_features_build_antifuite.py tests/data/test_features_build_run.py -v</code></pre>
+        <p>Suite complète vérifiée ce jour : 751 tests, tous verts. Les mutations décrites plus haut ont été appliquées puis retirées : elles ne laissent aucun test supplémentaire, seulement la preuve que les tests existants sont discriminants.</p>
+
+        <h2 id="protocole">Protocole et baseline</h2>
+        <p>Le numérateur du label ventilé par type de baccalauréat n'existe qu'à partir de la session 2020, vérifié absent en 2018 et 2019 sur le fichier source. Le label n'est donc calculable que sur six sessions, pas huit. Inclure 2018-2019 dans l'entraînement aurait mis deux sessions sans cible réelle dans le jeu d'apprentissage, ce qui viole l'exigence d'une cible observée, pas simulée.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rôle</th><th>Sessions</th><th class="num">Cellules exploitables</th></tr></thead>
+            <tbody>
+              <tr><td>Entraînement</td><td>2020-2023</td><td class="num">286 463</td></tr>
+              <tr><td>Validation</td><td>2024</td><td class="num">76 408</td></tr>
+              <tr><td>Test</td><td>2025</td><td class="num">77 159</td></tr>
+              <tr><td><strong>Total exploitable</strong></td><td><strong>2020-2025</strong></td><td class="num"><strong>440 030</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le split est strictement temporel (<a href="decisions.html#adr-0012">ADR 0012</a>) : aucune information postérieure à la session d'entraînement n'y entre. C'est ce qu'on appelle une fuite de données — utiliser, même indirectement, une information qui n'existait pas encore au moment de la décision prédite. Ici le split est borné aux six sessions où le label existe réellement.</p>
+
+        <h3 id="reserves">Trois réserves posées avant tout résultat</h3>
+        <p>Je les écris avant l'entraînement pour qu'un résultat bon ou mauvais ne soit pas attribué à tort au modèle alors qu'il tient à la donnée.</p>
+        <ol>
+          <li><strong>Mentions faussées en 2020-2021.</strong> La part de mentions très bien passe de 7,4 % à 11,8 % en 2020 (changement de barème d'examen), et le retour à la normale est lent (29,8 % de sans-mention en 2021, contre 43,4 % avant 2020). Toute variable dérivée des mentions est contaminée pour ces deux sessions d'entraînement.</li>
+          <li><strong>Métriques par statut de boursier.</strong> La part de vœux boursiers passe de 12,5 % à 16,3 % en 2019-2020, puis retombe à 13,8 % en 2025. Les cellules boursières du test 2025 ne décrivent donc pas tout à fait la même population que celles de l'entraînement. La calibration et l'erreur sont rapportées séparément pour ces cellules.</li>
+          <li><strong>Dégradation attendue entre validation et test, à ne pas imputer d'emblée au modèle.</strong> La moyenne des taux par formation monte jusqu'en 2024 puis redescend en 2025 (0,522 → 0,534 → 0,522) : la cible elle-même n'est pas stable dans le temps. Une perte de performance sur le test doit d'abord être confrontée à ce mouvement avant d'être attribuée au modèle.</li>
+        </ol>
+        <p>La session 2020 est conservée dans l'entraînement malgré la rupture sur les mentions : l'anomalie porte sur des variables candidates, pas sur la cible (tension médiane 11,8 vœux par place, alignée sur les autres sessions). L'écarter aurait réduit le jeu d'entraînement d'un quart sans raison mesurée sur le label.</p>
+
+        <h3 id="distribution-label">Ce que la distribution du label impose</h3>
+        <p>Le taux d'admission par cellule n'est pas distribué normalement. Il est étalé sur tout l'intervalle [0, 1], avec deux masses non négligeables aux bornes :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cellule</th><th class="num">Taux nul</th><th class="num">Taux à 1</th></tr></thead>
+            <tbody>
+              <tr><td>Bac général</td><td class="num">1,2 %</td><td class="num">13,1 %</td></tr>
+              <tr><td>Bac technologique</td><td class="num">12,9 %</td><td class="num">11,8 %</td></tr>
+              <tr><td>Bac professionnel</td><td class="num">21,6 % (2 779 formations)</td><td class="num">13,1 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Ces masses ne sont pas du bruit : une formation très sélective qui n'admet aucun bachelier professionnel produit un vrai zéro, une formation en tension nulle produit un vrai un.</p>
+        <p>Conséquences pour les métriques : l'<strong>erreur absolue moyenne pondérée</strong> par l'effectif de la cellule est retenue plutôt qu'une erreur quadratique, moins lisible sur une cible bornée avec masses aux extrêmes et plus sensible aux cellules à faible effectif. La <strong>calibration doit être vérifiée explicitement</strong> : un modèle bien calibré est un modèle dont les probabilités annoncées correspondent aux fréquences réellement observées — s'il annonce 60 % de chances d'admission, environ 60 % des cellules concernées doivent effectivement être admises. Un modèle peut avoir une bonne erreur moyenne tout en plaçant mal les cas extrêmes, ceux qui intéressent le plus un candidat.</p>
+
+        <h3 id="baseline">La baseline, le plancher mesuré avant d'entraîner</h3>
+        <p>La règle de référence n'a aucun paramètre appris : elle applique une règle fixe et note le résultat. C'est la référence que le modèle appris doit battre.</p>
+        <p><strong>Règle retenue</strong> : pour une cellule à la session N, je prédis le taux observé de cette même cellule à la session N-1, avec le même bornage et le même traitement du dénominateur nul que le label lui-même.</p>
+        <p>Une baseline sans paramètre peut légitimement toucher le jeu de test parce qu'elle n'a rien à ajuster : ce qui est interdit, c'est de comparer plusieurs variantes d'un modèle appris sur le test et de retenir la meilleure — cela revient à entraîner sur le test sans le dire.</p>
+
+        <h4>Résultat, par session</h4>
+        <p>MAE pondérée par l'effectif de la cellule, sur les 440 030 cellules réelles :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Périmètre</th><th class="num">Couverture</th><th class="num">MAE pondérée</th><th class="num">MAE brute</th></tr></thead>
+            <tbody>
+              <tr><td>2020</td><td class="num">0 %</td><td class="num">—</td><td class="num">—</td></tr>
+              <tr><td>2021</td><td class="num">89,9 %</td><td class="num">0,0811</td><td class="num">0,1434</td></tr>
+              <tr><td>2022</td><td class="num">91,5 %</td><td class="num">0,0761</td><td class="num">0,1381</td></tr>
+              <tr><td>2023</td><td class="num">92,1 %</td><td class="num">0,0686</td><td class="num">0,1387</td></tr>
+              <tr><td>2024 (validation)</td><td class="num">92,3 %</td><td class="num">0,0676</td><td class="num">0,1364</td></tr>
+              <tr><td>2025 (test)</td><td class="num">92,9 %</td><td class="num">0,0654</td><td class="num">0,1269</td></tr>
+              <tr><td>Validation + test</td><td class="num">92,6 %</td><td class="num"><strong>0,0664</strong></td><td class="num">0,1316</td></tr>
+              <tr><td>Validation + test, repli inclus</td><td class="num">100 %</td><td class="num"><strong>0,0713</strong></td><td class="num">0,1477</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>J'ai recalculé ces chiffres indépendamment du code livré et je retrouve les mêmes valeurs.</p>
+        <p><strong>Le plancher est haut, et c'est une information sur le problème.</strong> Reconduire simplement le taux de l'an dernier prédit à ±6,6 points en moyenne pondérée sur validation + test : la cible est fortement auto-corrélée d'une session à l'autre. Une baseline difficile à battre signifie que la marge de progression pour un modèle appris est plus étroite qu'il n'y paraît.</p>
+        <p>Deux règles plus naïves, mesurées à côté, en fenêtre expansive (la moyenne ne porte jamais sur la session cible ni sur une session future) : la moyenne pondérée par groupe (type de bac, boursier) atteint 0,2098 de MAE pondérée sur validation + test, la moyenne globale sans distinction de groupe 0,2124. Le taux de la session précédente les bat d'un facteur proche de trois : la persistance d'une cellule porte beaucoup plus d'information que la seule appartenance à un groupe large.</p>
+
+        <h4>Le seuil posé avant d'entraîner</h4>
+        <p>Pour justifier d'exister, le modèle appris doit descendre nettement sous 0,0664 de MAE pondérée sur validation + test à couverture comparable (92,6 %), et sous 0,0713 à couverture complète (100 %, repli inclus). Poser ce seuil maintenant, avant de voir le résultat de l'entraînement, rend la comparaison honnête.</p>
+
+        <h4>Deux limites déclarées</h4>
+        <ul>
+          <li><strong>La session 2020 n'est prédictible par aucune baseline temporelle</strong> (couverture 0 %) : aucune session antérieure ne porte le numérateur ventilé par type de bac. C'est une propriété du protocole, pas un défaut du code.</li>
+          <li><strong>Les cellules sans antécédent reçoivent un repli par moyenne de groupe</strong> en fenêtre expansive, jamais une moyenne calculée sur tout l'entraînement (qui utiliserait des labels postérieurs à la session prédite). Avec ce repli la couverture passe de 92,6 % à 100 %, et la MAE pondérée se dégrade de 0,0664 à 0,0713 : c'est le coût exact du repli.</li>
+        </ul>
+
+        <h2 id="evaluation">Évaluation et calibration</h2>
+        <p>L'entraînement sépare la table de variables selon le split ci-dessus, entraîne un LightGBM pondéré par l'effectif de la cellule, et arrête ses hyperparamètres sur la seule MAE pondérée de validation — le test 2025 n'est touché qu'une fois, à la fin.</p>
+        <p>MAE pondérée, comparée au plancher à couverture égale (100 %, plancher avec repli) :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Périmètre</th><th class="num">Modèle</th><th class="num">Plancher (couverture égale)</th><th>Verdict</th></tr></thead>
+            <tbody>
+              <tr><td>Validation 2024</td><td class="num"><strong>0,0690</strong></td><td class="num">0,0727</td><td><span class="badge ok">le modèle passe devant</span></td></tr>
+              <tr><td>Test 2025</td><td class="num"><strong>0,0758</strong></td><td class="num">0,0701</td><td><span class="badge bad">le modèle reste derrière</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le résultat est mitigé : en validation le modèle bat le plancher, en test il perd contre une règle qui ne suppose rien. Donner le taux de la session précédente comme variable explicite plutôt que de laisser le modèle apprendre ce quotient seul réduit l'écart en test de moitié (de 0,0119 à 0,0057) sans le combler ; cette variable arrive première en importance de gain, avec un gain sept fois supérieur à la deuxième. Un ensemble d'arbres n'apprend pas naturellement un quotient — le donner explicitement confirme en partie cette hypothèse.</p>
+        <p>Une erreur de méthode a été trouvée et corrigée dans le code : la première mesure comparait le modèle (qui prédit les 77 159 cellules de test) à un plancher qui n'en couvrait que 92,9 %, jugé sur son seul sous-ensemble facile, ce qui exagérait l'écart en sa faveur. La comparaison à couverture égale fait maintenant partie du rapport d'entraînement.</p>
+        <p>Ce qui reste n'est pas un défaut d'apprentissage, c'est un défaut de généralisation temporelle : le modèle capte des régularités de 2020-2023 qui ne se reconduisent pas en 2025, là où une règle qui ne suppose rien encaisse mieux la dérive — cohérent avec la non-stationnarité de la cible déjà observée (la moyenne des taux par formation remonte jusqu'en 2024 avant de redescendre en 2025).</p>
+
+        <figure>
+          <img src="../reports/figures/calibration.png" alt="Courbe de calibration du modèle et du plancher, validation 2024 et test 2025." loading="lazy">
+          <figcaption>Le modèle est très bien calibré en validation ; en test, il devient sur-confiant sur toute la plage médiane.</figcaption>
+        </figure>
+
+        <h3 id="calibration">Calibration, le modèle perd sur les deux tableaux en test</h3>
+        <p>L'erreur de calibration attendue (ECE), pondérée par l'effectif, est calculée sur 10 tranches de taux prédit. Elle mesure l'écart moyen entre le taux annoncé et le taux réellement observé dans chaque tranche : plus elle est basse, mieux le modèle est calibré.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Périmètre</th><th class="num">ECE modèle</th><th class="num">ECE plancher</th><th>Verdict</th></tr></thead>
+            <tbody>
+              <tr><td>Validation 2024</td><td class="num"><strong>0,0030</strong></td><td class="num">0,0141</td><td><span class="badge ok">dix fois mieux que le plancher</span></td></tr>
+              <tr><td>Test 2025</td><td class="num"><strong>0,0371</strong></td><td class="num">0,0322</td><td><span class="badge bad">la calibration s'effondre, pire que le plancher</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>En validation le modèle est très bien calibré. En test, il devient sur-confiant sur toute la plage médiane : il annonce 0,55 quand la réalité observée est 0,49. Il reste bien calibré aux extrêmes. Le modèle perd donc sur les deux tableaux en test, précision et calibration, sans qu'aucun des deux ne rattrape l'autre. Ventilée par filière, son erreur reste systématiquement supérieure à celle du plancher, l'écart se creusant pour le bac professionnel.</p>
+
+        <h2 id="courbe-apprentissage">Courbe d'apprentissage</h2>
+        <p>La MAE pondérée de validation est mesurée à 10, 25, 50 et 100 % du volume d'entraînement. L'échantillonnage est stratifié par session, pas par recul de la fenêtre temporelle, pour ne pas mélanger l'effet du volume et celui de la proximité temporelle avec la session cible.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Volume</th><th class="num">10 %</th><th class="num">25 %</th><th class="num">50 %</th><th class="num">100 %</th></tr></thead>
+            <tbody>
+              <tr><td>MAE validation</td><td class="num">0,0758</td><td class="num">0,0723</td><td class="num">0,0705</td><td class="num"><strong>0,0698</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <img src="../reports/figures/courbe-apprentissage.png" alt="Courbe d'apprentissage : MAE pondérée de validation selon le volume d'entraînement utilisé." loading="lazy">
+          <figcaption>Le gain marginal se divise par deux à chaque doublement du volume : le modèle a déjà extrait presque tout ce que la fenêtre 2020-2023 peut lui apprendre.</figcaption>
+        </figure>
+        <p>L'écart entre entraînement et validation se referme de 0,0164 à 0,0039, et le gain marginal se divise par deux à chaque doublement du volume (0,0035 puis 0,0018 puis 0,0007). Deux chemins différents — la dégradation en test, et cette courbe — mènent à la même conclusion : ce n'est pas un manque de données, c'est une dérive temporelle. Plus de volume ne comblerait pas l'écart mesuré en test, et la fenêtre labellisée est de toute façon bornée à six sessions. La réponse relève de la surveillance de dérive et du réentraînement régulier, pas de la collecte.</p>
+
+        <h2 id="explicabilite">Explicabilité</h2>
+        <p>J'ai retenu LightGBM plutôt qu'un réseau de neurones pour trois raisons : des données tabulaires et hétérogènes, des valeurs manquantes structurelles, et l'explicabilité exacte que permet TreeSHAP sur un modèle à arbres.</p>
+        <p>SHAP (SHapley Additive exPlanations) attribue à chaque variable une part de la prédiction, en s'appuyant sur les valeurs de Shapley issues de la théorie des jeux : la contribution moyenne d'une variable, calculée sur toutes les façons de la combiner avec les autres. Sur un réseau de neurones, ce calcul exact serait hors de portée (le coût croît de façon exponentielle avec le nombre de variables) et il faudrait se contenter d'une approximation (KernelSHAP, LIME). Sur un modèle à arbres, TreeSHAP calcule les valeurs de Shapley exactement, en temps polynomial, en exploitant la structure des arbres. C'est cet avantage qui a pesé dans le choix de LightGBM.</p>
+        <p>J'ai vérifié l'axiome d'efficacité : la somme des contributions plus la valeur de base doit reconstituer exactement la prédiction. Vérifié à 2,1 × 10⁻¹⁵ près sur le modèle réel (écart résiduel dû à l'arrondi flottant, pas à une erreur de méthode), et confirmé par un test unitaire sur un modèle jouet dont la prédiction est connue par construction.</p>
+        <p>Le nombre de cellules est fini et connu à l'avance — 440 030 sur les six sessions labellisées — ce qui rend un précalcul complet raisonnable, plutôt qu'un calcul à la demande pour un flux de requêtes illimité. Mesuré sur l'exécution réelle : 440 030 cellules, 8,3 minutes, 99,8 Mo d'artefact. C'est une tâche de lot à relancer après chaque réentraînement, pas un calcul par requête de l'API : recalculer SHAP à chaque appel referait ce que le précalcul a déjà produit, pour un coût de latence inutile.</p>
+
+        <h3 id="explicabilite-globale">Classement global</h3>
+        <p>Moyenne des valeurs absolues, pondérée par l'effectif :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Variable</th><th class="num">Part de l'explication</th></tr></thead>
+            <tbody>
+              <tr><td>Taux de la session précédente</td><td class="num"><strong>33,5 %</strong></td></tr>
+              <tr><td>Nombre de vœux, session précédente</td><td class="num">9,1 %</td></tr>
+              <tr><td>Libellé de filière</td><td class="num">8,4 %</td></tr>
+              <tr><td>Département</td><td class="num">7,5 %</td></tr>
+              <tr><td>Capacité de la formation</td><td class="num">6,0 %</td></tr>
+              <tr><td>Nombre d'admis, session précédente</td><td class="num">5,7 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <img src="../reports/figures/importance-globale.png" alt="Importance globale des variables selon la moyenne des valeurs absolues SHAP." loading="lazy">
+          <figcaption>Le taux de la session précédente est un quotient calculé à partir des deux compteurs déjà présents séparément dans les variables : les trois sont corrélées par construction et portent ensemble 48,3 % de l'explication.</figcaption>
+        </figure>
+        <p>TreeSHAP répartit le crédit selon l'usage réel qu'en font les arbres, pas selon une cause première qui n'existe pas dans un ensemble d'arbres — cette part cumulée est une seule information partagée en trois, pas trois signaux indépendants.</p>
+
+        <h3 id="ecart-mesures">Un écart entre deux mesures d'importance</h3>
+        <p>L'importance de gain de LightGBM (sous-produit de l'entraînement) donnait au taux de la session précédente une importance sept fois supérieure à la deuxième variable. TreeSHAP la ramène à 33,5 % de l'explication.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Métrique</th><th>Question posée</th></tr></thead>
+            <tbody>
+              <tr><td>Importance de gain (LightGBM)</td><td>Réduction de perte cumulée sur tous les nœuds de tous les arbres</td></tr>
+              <tr><td>Valeur de Shapley (TreeSHAP)</td><td>Contribution moyenne à une prédiction individuelle</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Une variable très utilisée en profondeur dans l'arbre — c'est le cas du taux précédent, qui sert à raffiner des coupures déjà bien orientées par d'autres variables — voit son gain surestimé par rapport à sa contribution réelle aux prédictions. Aucune des deux mesures n'est fausse, elles ne mesurent simplement pas la même chose.</p>
+
+        <h3 id="limites-shap">Limites de SHAP</h3>
+        <ul>
+          <li>Une valeur de Shapley explique ce que LightGBM a appris à partir des données d'entraînement, pas pourquoi un candidat est effectivement admis. Ce n'est pas une preuve causale.</li>
+          <li>Avec des variables corrélées par construction (le quotient et ses deux composantes), le partage du crédit est défini par les axiomes de Shapley mais peut rester contre-intuitif : il dépend de la structure des arbres, pas d'une hiérarchie de causes.</li>
+          <li>Une explication locale, pour une cellule donnée, ne se généralise pas à une autre — d'où la vue globale, qui répond à une question différente (l'effet moyen, pas l'effet pour un cas précis).</li>
+          <li>La moyenne des valeurs absolues de Shapley n'est pas une importance causale : c'est une moyenne de contributions à des prédictions, pondérée par l'effectif de la cellule comme le reste de l'évaluation.</li>
+        </ul>
+        <p>Le poids des substituts du genre dans l'explication globale (la filière et le département, corrélés au genre) est un signal transmis à l'audit d'équité, pas une conclusion à sa place : SHAP mesure la contribution d'une variable au modèle, l'audit d'équité mesure l'écart de traitement entre groupes sur les prédictions réelles.</p>
+
+        <h2 id="equite">Équité</h2>
+        <p>Ce dispositif couvre deux temps : l'analyse exploratoire sur les données brutes, qui établit où l'inégalité se situe et quels substituts du genre existent parmi les variables candidates, puis l'audit sur les prédictions du modèle réellement entraîné, qui vérifie si l'exclusion du genre à l'entrée suffit en pratique.</p>
+
+        <h3 id="inegalite-observee">Où se situe l'inégalité observée</h3>
+        <p>À l'admission, à formation égale, l'écart entre femmes et hommes est proche de nul. Sur les 11 099 formations recevant au moins 30 vœux de chaque sexe, l'écart médian du taux d'admission est de −0,04 point, inférieur à 5 points dans 83,8 % des cas ; les femmes sont avantagées dans 48,8 % des formations, les hommes dans 50,8 %. L'inégalité observée dans le système d'orientation ne se joue donc pas au moment de l'admission, mais en amont, dans la formulation des vœux — hors du périmètre que le modèle peut corriger, puisqu'il n'intervient pas sur ce choix.</p>
+        <p>Réserve de méthode : le fichier source ne ventile par sexe que les admis, pas l'ensemble des vœux formulés. Cette comparaison porte donc sur une quantité un peu différente de celle qu'utilise le label du modèle (propositions rapportées aux vœux, toutes cellules).</p>
+
+        <figure>
+          <img src="../reports/figures/ecart-admission-femmes-hommes.png" alt="Distribution de l'écart d'admission entre femmes et hommes, par formation." loading="lazy">
+          <figcaption>Écart médian proche de zéro : l'inégalité ne se joue pas à l'admission mais en amont, dans la formulation des vœux.</figcaption>
+        </figure>
+
+        <p>La féminisation du catalogue est polarisée, pas répartie en cloche : 19,7 % des formations comptent moins de 20 % de femmes parmi leurs admis (2 775 formations, sur dénominateur non nul, voir plus bas), 17,9 % en comptent plus de 80 %, et seulement 21,5 % se situent entre 40 % et 60 %. La part globale de femmes admises, toutes formations confondues, est de 56,3 %.</p>
+
+        <figure>
+          <img src="../reports/figures/distribution-feminisation.png" alt="Distribution de la part de femmes parmi les admis, par formation." loading="lazy">
+          <figcaption>Une distribution polarisée aux deux extrêmes, pas centrée en cloche.</figcaption>
+        </figure>
+
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Une correction de chiffre : lire un pourcentage avec son dénominateur</span>
+            <p>Le chiffre de 2 954 formations à moins de 20 % de femmes, retenu jusqu'ici, incluait 179 formations qui n'admettent aucun candidat. Sur un dénominateur nul, le taux vaut mécaniquement 0 %, et ces formations se trouvaient comptées comme extrêmement peu féminisées alors qu'elles ne disent rien sur un processus d'admission qui n'a pas eu lieu. Le chiffre corrigé, dénominateur non nul, est 2 775 (19,7 %). Leçon retenue : tout ratio par sous-groupe doit être accompagné de l'effectif du sous-groupe, et un sous-groupe à effectif nul ou très faible doit être signalé plutôt que rapporté à égalité avec les autres.</p>
+          </div>
+        </div>
+
+        <h3 id="substituts">Les substituts du genre, mesurés, pas supposés</h3>
+        <p>Le genre n'entre jamais dans le modèle. La question posée ici est différente : quelles variables candidates du modèle permettent de reconstituer le genre par un autre chemin ? Une variable fortement corrélée au genre agit comme un substitut, même en l'absence de toute variable de genre déclarée.</p>
+        <p>Mesure retenue : information mutuelle entre chaque variable candidate et le sexe des admis, corrigée du nombre de modalités de la variable par permutation (5 tirages aléatoires, graine fixée à 42, pour estimer la part d'information mutuelle imputable au seul hasard de cardinalité).</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Variable</th><th class="num">Observé</th><th class="num">Hasard (permutation)</th><th class="num">Net</th></tr></thead>
+            <tbody>
+              <tr><td>Identifiant d'établissement</td><td class="num">57,5 %</td><td class="num">28,5 %</td><td class="num"><strong>28,9 %</strong></td></tr>
+              <tr><td>Filière</td><td class="num">19,6 %</td><td class="num">0,1 %</td><td class="num"><strong>19,5 %</strong></td></tr>
+              <tr><td>Ville de l'établissement</td><td class="num">19,1 %</td><td class="num">8,9 %</td><td class="num"><strong>10,2 %</strong></td></tr>
+              <tr><td>Sélectivité</td><td class="num">5,6 %</td><td class="num">0,0 %</td><td class="num"><strong>5,6 %</strong></td></tr>
+              <tr><td>Département</td><td class="num">3,1 %</td><td class="num">0,8 %</td><td class="num"><strong>2,3 %</strong></td></tr>
+              <tr><td>Académie</td><td class="num">1,6 %</td><td class="num">0,2 %</td><td class="num"><strong>1,4 %</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <img src="../reports/figures/substituts-genre.png" alt="Information mutuelle nette entre les variables candidates et le genre, corrigée du hasard de cardinalité." loading="lazy">
+          <figcaption>L'identifiant d'établissement et la filière sont, de loin, les substituts les plus forts.</figcaption>
+        </figure>
+        <p>Sans la correction par permutation, l'identifiant d'établissement — qui compte plusieurs milliers de modalités — aurait affiché un pouvoir explicatif proche du double de sa valeur réelle : une variable à haute cardinalité capte mécaniquement de l'information mutuelle avec n'importe quelle cible, simplement parce qu'elle offre plus de façons de séparer les observations. Leçon retenue pour toute mesure d'association future dans ce projet (ablation, dérive) : ne jamais comparer des variables de cardinalité différente sans corriger ce biais.</p>
+
+        <h3 id="contradiction">La contradiction qui structure le dispositif d'équité</h3>
+        <p>L'hypothèse de départ désignait l'académie et l'établissement d'origine comme substituts principaux à surveiller. La mesure infirme cette hypothèse sur l'académie : elle n'explique que 1,4 % du genre, une fois la cardinalité corrigée. Le deuxième substitut le plus puissant, après l'établissement, est la filière (19,5 %) — une variable qu'on ne peut pas retirer du modèle sans détruire sa capacité à distinguer un BTS d'une CPGE.</p>
+        <figure>
+          <img src="../reports/figures/variables-substituts.png" alt="Comparaison entre importance au modèle et corrélation au genre pour les variables candidates." loading="lazy">
+          <figcaption>Importance pour le modèle et corrélation à un attribut protégé sont deux axes distincts.</figcaption>
+        </figure>
+        <p>Conséquence assumée : le modèle reconstituera partiellement le genre par la filière, quoi qu'il arrive. Exclure la variable de genre à l'entrée est nécessaire mais insuffisant pour garantir l'absence de discrimination indirecte. Le dispositif d'équité repose donc sur trois niveaux :</p>
+        <ol>
+          <li><strong>Exclusion à l'entrée</strong> — le genre n'est jamais une variable du modèle (vérifié par test).</li>
+          <li><strong>Mesure des substituts</strong> — ce carnet, à rejouer à chaque évolution notable du catalogue de variables.</li>
+          <li><strong>Audit a posteriori sur les prédictions</strong> — puisque l'exclusion ne suffit pas, la vérification qui compte porte sur l'écart de prédiction entre sous-groupes de genre, mesuré sur les sorties réelles du modèle entraîné, pas sur ses entrées.</li>
+        </ol>
+
+        <h3 id="audit-predictions">L'audit sur les prédictions réelles</h3>
+        <p>L'audit ne relance rien : il appelle la même fonction d'entraînement (même split, même modèle déjà arrêté sur la validation) pour récupérer les prédictions du test 2025, puis les ventile selon les quatre dimensions retenues : type de baccalauréat, statut de boursier, territoire, genre.</p>
+        <p>Le genre n'entre jamais dans le modèle ; ce module ne le lit que pour l'audit, à partir des compteurs de vœux et d'admissions par sexe déjà présents dans la table réconciliée mais jamais transmis au modèle. Le genre d'une formation est construit sur la composition des candidats, jamais sur celle des admis, qui est en partie ce que le modèle prédit.</p>
+
+        <h4>La définition d'équité retenue, et ce qu'elle sacrifie</h4>
+        <p>Définition privilégiée : la calibration par groupe — un taux prédit de 60 % doit correspondre à un taux observé de 60 % dans chaque groupe, quel que soit le groupe. Ce choix est incompatible avec deux autres définitions courantes d'équité, la parité démographique (même taux de recommandation pour chaque groupe) et les cotes égalisées (même taux de vrais positifs pour chaque groupe), dès que les taux de base diffèrent entre groupes. C'est un théorème d'impossibilité — ces trois critères ne peuvent pas être satisfaits en même temps, sauf cas dégénéré — pas un choix de goût. Ce que ce choix sacrifie : ni l'égalité des taux de recommandation entre groupes, ni l'égalité des vrais positifs entre groupes ne sont garanties par ce dispositif.</p>
+
+        <h4>Le passage d'un taux continu à une décision</h4>
+        <p>Le ratio d'impact disparate (règle des quatre cinquièmes : le taux de sélection du groupe le moins favorisé ne doit pas être inférieur à 80 % de celui du groupe le plus favorisé) se définit sur une décision binaire, alors que la cible du modèle est un taux continu dans [0, 1]. Une cellule est comptée « recommandée » si le taux prédit atteint au moins 50 %, plutôt qu'un partage par médiane qui produirait toujours 50 % de cellules positives dans chaque groupe par construction et masquerait tout écart réel. Le taux de sélection par groupe est pondéré par l'effectif de la cellule, cohérent avec la pondération qui gouverne le reste du projet.</p>
+
+        <h4>Résultat, non atténué : un écart réel qui passe sous le seuil légal</h4>
+        <p>Sur les formations à plus de 80 % de candidates femmes :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th class="num">Modèle</th><th class="num">Plancher</th></tr></thead>
+            <tbody>
+              <tr><td>ECE (formations très féminisées)</td><td class="num"><strong>0,066</strong></td><td class="num">0,048</td></tr>
+              <tr><td>ECE (autres formations)</td><td class="num">0,032 à 0,034</td><td class="num">—</td></tr>
+              <tr><td>Ratio d'impact disparate</td><td class="num"><strong>0,76</strong></td><td class="num">0,63</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <img src="../reports/figures/calibration-genre.png" alt="Calibration comparée entre formations très féminisées et autres formations." loading="lazy">
+          <figcaption>Une erreur de calibration presque deux fois supérieure sur les formations très féminisées : le modèle sur-annonce les chances d'admission.</figcaption>
+        </figure>
+        <figure>
+          <img src="../reports/figures/impact-disparate.png" alt="Ratio d'impact disparate du modèle et du plancher sur les formations très féminisées." loading="lazy">
+          <figcaption>0,76, sous le seuil des quatre cinquièmes, même si le modèle améliore nettement le 0,63 du plancher.</figcaption>
+        </figure>
+        <p>Le modèle sur-annonce les chances d'admission sur les formations très féminisées — une erreur de calibration presque deux fois supérieure à celle mesurée ailleurs — et le plancher y est mieux calibré que le modèle appris. Le ratio d'impact disparate de ce groupe reste sous le seuil des quatre cinquièmes (0,80), à 0,76, même si le modèle améliore nettement le 0,63 du plancher.</p>
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">×</span>
+          <div>
+            <span class="title">Le système n'est pas équitable sur cette dimension</span>
+            <p>Il fait mieux que le plancher sur la sélection, moins bien sur la calibration — les deux verdicts doivent être rapportés ensemble, aucun ne rachète l'autre.</p>
+          </div>
+        </div>
+
+        <h4>Les substituts, mesurés sur les prédictions</h4>
+        <p>Les substituts identifiés plus haut (filière 19,5 % net, département 2,3 % net, sur le genre observé) se retrouvent dans l'explication SHAP du modèle : ensemble ils totalisent 14,2 % de l'explication globale, alors que le genre n'entre jamais en entrée. Le département y pèse le plus lourd dans l'explication du modèle tout en étant le plus faible en corrélation au genre : importance au modèle et corrélation à un attribut protégé sont deux axes distincts. Une variable peut compter beaucoup pour le modèle sans être un vecteur important de discrimination indirecte, et inversement.</p>
+
+        <h4>Ce que confirme le dispositif à trois niveaux</h4>
+        <p>L'exclusion à l'entrée (niveau 1) ne suffisait pas à garantir l'absence de traitement différencié, et cet audit le prouve concrètement. Le seuil qui rouvrirait l'arbitrage sur la filière (« un impact disparate significatif porté par la filière ») est désormais observé — la suite du projet (Model Card, plan de gouvernance) doit porter ce résultat sans l'atténuer.</p>
+
+        <h3 id="equite-ouvert">Ce qui reste ouvert</h3>
+        <ul>
+          <li>Réconcilier l'écart de méthode déjà identifié entre l'analyse exploratoire (83,8 % de formations à moins de 5 points d'écart d'admission) et l'audit (73,4 % rapporté par le module de mesure) — un filtre d'effectif probablement différent entre les deux mesures. Point ouvert.</li>
+          <li>Rejouer la mesure de substituts sur le jeu de variables final si un prochain cycle d'entraînement en change la composition.</li>
+        </ul>
+
+        <h2 id="ablation">Ablation</h2>
+        <p>Cette mesure vérifie ce que chaque bloc de variables apporte réellement au modèle retenu, plutôt que de le supposer, et déclare la seule mesure que je ne peux pas encore faire : l'apport de Sirene.</p>
+
+        <h3 id="protocole-ablation">Le protocole</h3>
+        <p>Sept variantes, entraînées avec exactement les mêmes hyperparamètres et le même split que la configuration de production (<a href="decisions.html#adr-0012">ADR 0012</a> pour le split). Seule la composition du jeu de variables change d'une variante à l'autre.</p>
+        <p>Chaque variante est jugée sur la validation 2024, jamais sur le test 2025 : comparer des configurations sur le jeu de test transformerait ce choix en réglage d'hyperparamètre déguisé, ce que le protocole interdit. Le test n'est consulté qu'une fois, pour la configuration déjà retenue en production — son score est rapporté tel quel, jamais recalculé ici.</p>
+        <p>Pour la même raison, la comparaison d'équité entre le modèle complet et la variante sans les substituts du genre porte elle aussi sur la validation 2024, et non sur le test 2025 déjà consulté par l'audit de production : un second passage sur ce jeu, pour une question différente, reste un second passage.</p>
+        <p>Le genre n'entre dans aucune des sept variantes comme variable d'entrée. Le retrait des substituts (filière, sélectivité, département, académie) est un retrait de variables licites du modèle ; le genre lui-même n'est lu, comme dans l'audit d'équité, que depuis la table réconciliée, pour classer la composition des formations et juger l'équité a posteriori.</p>
+
+        <h3 id="resultats-ablation">Résultats, sept variantes</h3>
+        <p>MAE pondérée de validation :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Variante</th><th class="num">Variables</th><th class="num">MAE validation</th><th class="num">Écart</th><th class="num">ECE</th></tr></thead>
+            <tbody>
+              <tr><td>Modèle complet (référence)</td><td class="num">48</td><td class="num">0,0698</td><td class="num">0,0000</td><td class="num">0,0038</td></tr>
+              <tr><td>Sans les décalées</td><td class="num">11</td><td class="num">0,1120</td><td class="num"><strong>+0,0422</strong></td><td class="num">0,0196</td></tr>
+              <tr><td>Sans le taux précédent</td><td class="num">46</td><td class="num">0,0793</td><td class="num">+0,0095</td><td class="num">0,0109</td></tr>
+              <tr><td>Taux précédent seul</td><td class="num">3</td><td class="num">0,0768</td><td class="num">+0,0071</td><td class="num">0,0088</td></tr>
+              <tr><td>Mentions incluses</td><td class="num">56</td><td class="num">0,0695</td><td class="num">−0,0003</td><td class="num">0,0038</td></tr>
+              <tr><td>Identifiant d'établissement réintroduit</td><td class="num">49</td><td class="num">0,0699</td><td class="num">+0,0001</td><td class="num">0,0029</td></tr>
+              <tr><td>Sans les substituts du genre</td><td class="num">44</td><td class="num">0,0704</td><td class="num">+0,0006</td><td class="num">0,0049</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Score de test de la configuration retenue, rapporté et non recalculé : MAE pondérée 0,0758 (n = 77 159) — valeur enregistrée par le registre d'expériences, 0,075755 avant arrondi, identique à celle des autres sections de cette page.</p>
+
+        <h3 id="ablation-signal">Premier résultat : l'essentiel de la performance vient du signal de l'an dernier</h3>
+        <p>Retirer les 35 variables décalées, et le taux de la session précédente qui en dépend, fait passer la MAE pondérée de validation de 0,0698 à 0,1120, soit +0,0422. C'est de très loin le retrait le plus coûteux.</p>
+        <p>À l'inverse, passer de 3 variables (les deux dimensions de cellule et le taux de la session précédente seul) au jeu complet de 48 ne gagne que 0,0070, soit environ 9 % relatif de l'erreur du modèle réduit.</p>
+        <p>L'essentiel de la performance vient de connaître le taux d'admission de l'an dernier sur la même cellule. Les 45 autres variables affinent la prédiction, elles ne la portent pas. La différence entre le retrait du taux seul (+0,0095, coût du quotient donné en clair plutôt qu'à reconstituer depuis son numérateur et son dénominateur bruts) et le retrait de l'ensemble des décalées (+0,0422, coût du signal N-1 dans son entier) confirme la lecture : ce n'est pas la mise en forme du quotient qui porte le modèle, c'est la disponibilité du signal lui-même.</p>
+        <p>Ce résultat change la lecture de l'exigence d'ablation : le modèle est en grande partie une règle de persistance affinée par le catalogue, pas 48 signaux équivalents.</p>
+
+        <h3 id="ablation-equite">Deuxième résultat : retirer les substituts du genre ne répare pas l'équité</h3>
+        <p>Retirer les quatre substituts du genre encore présents dans le modèle (filière, sélectivité, département, académie, qui totalisent 14,2 % de l'explication SHAP globale) coûte +0,0006 de MAE pondérée en validation, un coût quasi nul.</p>
+        <p>Ce retrait ne rend pas le modèle plus équitable. Sur la validation 2024, le ratio d'impact disparate du groupe de formations à plus de 80 % de candidates femmes passe de 0,66 à 0,62 en retirant les substituts — il se dégrade légèrement, sans franchir le seuil des quatre cinquièmes dans un sens ou dans l'autre. Les deux autres groupes mesurés restent stables : mixte 0,82 → 0,83, minoritaire 1,00 → 1,00.</p>
+        <p>Ce résultat est contre-intuitif et rapporté tel quel : retirer une variable corrélée au genre aggrave ici, très légèrement, l'écart plutôt que de le réduire. L'explication tient à ce que l'<a href="decisions.html#adr-0013">ADR 0013</a> avait déjà anticipé au sujet de l'identifiant d'établissement : l'information qui permet au modèle de reconstituer le genre n'est pas concentrée dans ces quatre colonnes de catalogue, elle est diffuse dans les variables décalées attachées à la même formation — celles qui portent l'essentiel du signal. Retirer quatre colonnes ne retire pas ce canal diffus.</p>
+        <p>L'exclusion de variables ne peut donc pas être le seul levier d'équité du projet. Ce résultat conforte le choix déjà fait de fonder l'équité sur la calibration par groupe, mesurée a posteriori sur les prédictions, plutôt que sur la seule composition du jeu de variables en entrée. Il vient compléter, sans le recouvrir, le résultat déjà rapporté sur le test 2025 dans la section <a href="#equite">Équité</a> (ratio d'impact disparate à 0,76 pour le modèle complet, mesuré sur le périmètre de production) : les deux mesures portent sur des jeux et des comparaisons différents et ne doivent pas être confondues.</p>
+
+        <h3 id="ablation-confirmations">Troisième résultat : deux exclusions confirmées</h3>
+        <p>L'<a href="decisions.html#adr-0013">ADR 0013</a> fixait, pour chacune, un seuil de reconsidération.</p>
+        <p><strong>Mentions</strong> (écartées par défaut à cause de la contamination du baccalauréat en contrôle continu 2020-2021) : les réintroduire apporte un gain de 0,0003 sur la validation. Le seuil de reconsidération de l'ADR est un gain supérieur à 0,01 — non franchi, exclusion confirmée.</p>
+        <p><strong>Identifiant d'établissement</strong> (exclu pour cardinalité et pour être le plus fort substitut du genre mesuré, 28,9 % net) : le réintroduire dégrade légèrement la MAE pondérée de validation, +0,0001. Le seuil de reconsidération de l'ADR est une perte mesurée à l'exclure — c'est l'inverse qui est mesuré : aucune perte n'est constatée à l'exclure, donc l'exclusion reste confirmée.</p>
+        <p>Les deux arbitrages traversent l'ablation sans être ébranlés.</p>
+
+        <h3 id="ablation-sirene">Sirene, ce qui ne peut pas être mesuré aujourd'hui</h3>
+        <p>L'ablation devait mesurer l'apport de Sirene par ablation, au même titre que les autres blocs de variables. Ce n'est pas possible en l'état : la chaîne de nomenclatures NAF ↔ ROME ↔ formation ne relie aucune formation Parcoursup — vérifié sur les huit millésimes, aucun ne porte de code RNCP, NSF ou ROME exploitable par cette chaîne (voir <a href="pipeline.html#reconciliation">Nomenclatures</a>).</p>
+        <p>Sirene n'a donc jamais eu l'occasion d'entrer dans la table de variables ni dans le modèle entraîné. Il n'existe, à ce jour, rien à retirer d'un modèle où cette source n'est pas entrée.</p>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Une ablation impossible n'est pas un résultat sur l'apport de la source</span>
+            <p>Un écart nul mesuré serait un résultat, comme ceux qu'ont produit les mentions ou l'identifiant d'établissement. Une ablation impossible à réaliser est une limite du dispositif : l'exigence de mesurer l'apport de chaque source reste, pour Sirene, à satisfaire une fois la chaîne de nomenclatures rattachée. Ce point reste ouvert.</p>
+          </div>
+        </div>
+
+        <h3 id="ablation-limites">Ce que je n'ai pas fait</h3>
+        <ul>
+          <li>Je n'ai pas rejoué la comparaison d'équité substituts du genre sur le test 2025 : elle reste, par construction du protocole, cantonnée à la validation pour ne pas consommer une seconde fois le jeu déjà audité.</li>
+          <li>Je n'ai pas cherché d'autre variante que les sept prescrites par l'ADR 0013 et par les résultats d'explicabilité et d'équité. Une ablation plus fine, colonne par colonne parmi les décalées, n'a pas été conduite : le résultat dominant (le bloc des décalées porte l'essentiel de la performance) rend cette décomposition secondaire à ce stade.</li>
+          <li>Je n'ai pas mesuré l'apport de Sirene, pour la raison exposée ci-dessus.</li>
+        </ul>
+
+        <h2 id="derive">Détection de dérive</h2>
+        <p>Analyse complète dans l'<a href="decisions.html#adr-0018">ADR 0018</a>. Le seuil de réentraînement figurait déjà dans la configuration avant toute mesure sur des données réelles. Cette mesure a confronté ce chiffre à une dérive observée, et a tranché s'il aurait pu signaler à l'avance le défaut déjà connu du modèle : il bat la baseline en validation 2024 (MAE pondérée 0,0690 contre 0,0727) mais la perd en test 2025 (0,0758 contre 0,0701), et sa calibration s'effondre (ECE 0,0030 → 0,0371, détail dans la section <a href="#evaluation">Évaluation et calibration</a>).</p>
+
+        <h3 id="derive-mesure">Trois dérives distinctes, jamais confondues</h3>
+        <p>Le module de détection distingue trois questions, sur la fenêtre où le label existe (2020-2025, six sessions) :</p>
+        <ol>
+          <li><strong>Dérive des variables</strong> — la distribution des entrées change-t-elle d'une session à l'autre ? Mesurée sur les <strong>46 variables</strong> licites du modèle (les deux dimensions de cellule, les neuf colonnes de catalogue, les 35 colonnes décalées), pas sur les deux colonnes dérivées ajoutées à l'entraînement (le taux de la session précédente et l'indicateur d'antécédent), qui ne sont pas des observations mais un calcul dérivé des variables décalées déjà mesurées.</li>
+          <li><strong>Dérive de la cible</strong> — la distribution du taux observé change-t-elle ?</li>
+          <li><strong>Dérive des prédictions</strong> — la distribution de ce que prédit le modèle déjà entraîné change-t-elle ? Comparée sur sa distribution, pas sur son erreur par rapport à la cible, déjà couverte par l'évaluation.</li>
+        </ol>
+        <p>Deux familles de comparaison : la <strong>comparaison de production</strong> (les quatre sessions d'entraînement 2020-2023 regroupées comme référence, contre chacune des deux sessions non vues, validation 2024 et test 2025) gouverne le déclenchement ; la <strong>comparaison consécutive</strong> (chaque session contre la précédente, cinq paires) est purement diagnostique : elle sert à calibrer ce qu'est une dérive « normale » d'une session sur l'autre, pas à déclencher quoi que ce soit.</p>
+        <p>Deux mesures pour chaque comparaison : l'<strong>indice de stabilité de population</strong> (PSI), sur des tranches pour les variables numériques et sur les catégories (canonisées — accent, casse, séparateur neutralisés — et plafonnées aux 30 plus fréquentes, au-delà regroupées sous « autre ») pour les variables catégorielles ; le test de <strong>Kolmogorov-Smirnov</strong>, purement diagnostique, rapporté à côté du PSI mais retenu ici comme la mesure documentée par la configuration du projet.</p>
+
+        <h3 id="derive-seuil">Le seuil à 0,20, sur la médiane, jamais sur le maximum</h3>
+        <p>Le déclenchement compare le seuil à la <strong>médiane</strong> du PSI des 46 variables pour chaque comparaison de production, jamais à leur maximum. La dérive de la cible et des prédictions gouvernent aussi le déclenchement, à égalité avec la médiane des variables (OU logique) : une dérive du concept pure, où la relation entre les entrées et la cible change sans que la distribution des entrées bouge, ne serait sinon jamais vue.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Comparaison de production</th><th class="num">Médiane PSI (46 variables)</th><th class="num">PSI cible</th><th class="num">PSI prédictions</th></tr></thead>
+            <tbody>
+              <tr><td>Référence contre validation 2024</td><td class="num">0,0061</td><td class="num">0,0115</td><td class="num">0,0174</td></tr>
+              <tr><td>Référence contre test 2025</td><td class="num">0,0096</td><td class="num">0,0115</td><td class="num">0,0296</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Les comparaisons consécutives (session N contre N-1) calibrent le bruit « normal » : entre 0,0007 et 0,0106 selon la famille, à une exception — 2020→2021 (0,063), qui recoupe une anomalie déjà documentée par ailleurs (rupture du barème du baccalauréat en 2020, section <a href="#protocole">Protocole et baseline</a>).</p>
+        <p>Seules trois variables sur 46 dépassent seules le seuil de 0,20 dans au moins une comparaison, et c'est de la dérive amont plutôt qu'un déplacement réel :</p>
+        <ul>
+          <li>le département de rattachement de l'établissement dans son académie (PSI canonisé 0,75) — un renommage de nomenclature entre sessions (« Centre-Val de Loire » devient « Centre », etc.), reléguée au rang 45 sur 48 en importance du modèle ;</li>
+          <li>la sélectivité de la formation (0,35) — un libellé tronqué propre au seul millésime 2020 (« formation non selec »), alors que la proportion réelle ne bouge presque pas (22,7 % en 2020, 23,9 % en 2025) et que la variable compte, rang 6 sur 48 en importance ;</li>
+          <li>le libellé de filière des vœux admis (0,23 à 0,31) — un renouvellement réel des libellés, plafonné à 30 catégories pour ne pas dominer le rapport.</li>
+        </ul>
+        <figure>
+          <img src="../reports/figures/derive-variables.png" alt="PSI par variable, comparaison de production, avec les trois variables au-dessus du seuil de 0,20." loading="lazy">
+          <figcaption>Une seule colonne de nomenclature instable ne dit rien de la distribution du problème dans son ensemble : appliqué au maximum plutôt qu'à la médiane, le seuil se déclencherait en permanence pour un motif qui n'affecte jamais la performance.</figcaption>
+        </figure>
+        <p>Le seuil reste 0,20, appliqué à la médiane. Les variables individuellement au-delà du seuil restent rapportées comme diagnostic de dérive amont, jamais comme déclencheur. Corriger ces deux variables à la source ferait retomber leur PSI sous 0,10, et le seuil pourrait alors s'appliquer au maximum — c'est le seuil de reconsidération posé par l'arbitrage.</p>
+
+        <h3 id="derive-evidently">Pourquoi Evidently a été écarté</h3>
+        <p>Sa dernière version compatible entraîne un conflit de dépendances qui casse FastAPI, reproduit et non contourné. Les fonctions écrites directement pour ce projet produisent le même résultat sans cette dépendance : PSI numérique et catégoriel, test de Kolmogorov-Smirnov, canonisation des catégories. Aucune bibliothèque n'a été retenue pour ce calcul, faute d'en trouver une compatible avec le reste de la pile au moment de la décision.</p>
+
+        <h3 id="derive-limite">La limite déclarée : ce que le PSI n'a pas vu</h3>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Le PSI, à ce seuil, n'aurait pas signalé la dégradation déjà connue entre validation et test</span>
+            <p>La dérive de la cible et des prédictions reste un ordre de grandeur sous 0,20 (0,0115 et 0,0296 au plus, contre un seuil à 0,20). Soit le seuil est correctement calibré et cette dégradation est une dérive du concept trop fine pour que le PSI la capture, soit une partie de l'écart est un défaut de généralisation sur un split court plutôt qu'une dérive. Le PSI est un signal précoce sur les entrées et les sorties, pas un substitut à la mesure de performance réelle, qui reste tranchée une fois la vérité terrain disponible.</p>
+          </div>
+        </div>
+        <figure>
+          <img src="../reports/figures/derive-trajectoire.png" alt="Trajectoire du PSI de la cible et des prédictions sur les sessions successives, comparée au seuil de 0,20." loading="lazy">
+          <figcaption>La dérive mesurée reste très en dessous du seuil, alors que le modèle perd déjà contre la baseline en test : le PSI ne suffit pas seul à couvrir ce défaut.</figcaption>
+        </figure>
+        <figure>
+          <img src="../reports/figures/derive-des-deux-definitions-du-taux.png" alt="Comparaison de la dérive mesurée selon deux définitions du taux d'admission." loading="lazy">
+          <figcaption>La non-stationnarité de la cible elle-même (la moyenne des taux par formation monte jusqu'en 2024 puis redescend en 2025) reste sous le seuil de déclenchement, quelle que soit la définition retenue.</figcaption>
+        </figure>
+        <p>C'est cette limite qui justifie de ne pas s'en remettre au seul PSI : la porte de promotion du réentraînement automatique compare la MAE pondérée de test au plancher avant toute publication, et refuse de publier un modèle qui perd contre la règle triviale — indépendamment de ce que dit la dérive. Si un futur réentraînement bat le plancher de très peu et que ce gain s'avère instable d'une exécution à l'autre, ce serait alors une marge de tolérance, documentée et mesurée sur plusieurs exécutions, qui se justifierait. Pas avant : au moment d'écrire cette page, l'écart va dans le mauvais sens.</p>
+
+        <h3 id="derive-orchestration">Où la tâche s'exécute dans le DAG</h3>
+        <p>La détection de dérive est une tâche du DAG annuel qui suit la fraîcheur de Parcoursup, entre la construction des variables et le réentraînement : construction des variables → <strong>détection de dérive</strong> → réentraînement → évaluation. Une donnée cassée en amont bloque mécaniquement la construction des variables, donc empêche toute exécution de la détection de dérive sur une table non conforme, par le même mécanisme de blocage qualité que le reste de la chaîne.</p>
+        <p>Le réentraînement qui suit rejoue le même protocole que l'entraînement documenté dans cette page (split strictement temporel, arrêt anticipé sur la seule validation, test 2025 touché une seule fois), puis délègue la décision de publication à une porte dédiée : l'artefact que l'API charge au démarrage n'est réécrit que si la MAE pondérée de test du nouveau modèle est strictement inférieure à celle du plancher. Un refus de publication n'est pas une panne : la tâche journalise le verdict au niveau erreur pour rester visible en supervision, et se termine normalement — la comparaison au plancher est un résultat attendu de l'entraînement, pas un incident.</p>
+        <p>Reproduction : <code>make derive</code>, à partir de la table de variables déjà construite.</p>
+
+        <nav class="pager" id="pager" aria-label="Pages voisines"></nav>
+        <p class="foot">KIONGHAT Johann Guewol · Architecte en intelligence artificielle, RNCP38777 · Mise à jour : 17 septembre 2026</p>
+      </article>
+    </main>
+
+    <aside class="toc" id="toc" aria-label="Sur cette page"></aside>
+  </div>
+</body>
+</html>
