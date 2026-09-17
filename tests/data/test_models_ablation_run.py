@@ -1,7 +1,7 @@
-"""Test du point d'entrée `make ablation` (E27), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make ablation`, de bout en bout, sur les échantillons.
 
-Même schéma que `test_models_fairness_run.py` (E26) : un `data_root` jetable,
-silver (E15), gold (E16) et la table de variables (E20) produits depuis les
+Même schéma que `test_models_fairness_run.py` : un `data_root` jetable,
+silver, gold et la table de variables produits depuis les
 huit échantillons versionnés, puis `edumatch.models.ablation` dessus.
 
 `ablation.executer` entraîne sept LightGBM (une par variante) et reconstruit
@@ -172,5 +172,5 @@ def test_executer_ne_journalise_pas_dans_mlflow_sans_tracking_uri(
 def test_source_gold_absente_leve_une_erreur_explicite(tmp_path: Path) -> None:
     base = load_settings("prod")
     settings = base.model_copy(update={"data_root": tmp_path})
-    with pytest.raises(ErreurEntrainement):  # table de variables (E20) absente
+    with pytest.raises(ErreurEntrainement):  # table de variables absente
         ablation.executer(settings)

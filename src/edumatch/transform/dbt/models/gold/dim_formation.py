@@ -1,4 +1,4 @@
-"""Modèle dbt (Python) `dim_formation` (E16) : SCD 2 sur `cod_aff_form`, pour le lignage.
+"""Modèle dbt (Python) `dim_formation` : SCD 2 sur `cod_aff_form`, pour le lignage.
 
 Même principe que `dim_session.py` : aucune logique ici, seulement l'appel
 à `edumatch.transform.etoile.construire_dim_formation`, la fonction déjà

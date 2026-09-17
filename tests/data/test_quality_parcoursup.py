@@ -1,4 +1,4 @@
-"""Tests des contrôles qualité Parcoursup (E14).
+"""Tests des contrôles qualité Parcoursup.
 
 Deux catégories : sur les échantillons versionnés (`data/samples/`), qui
 doivent tous passer sans anomalie bloquante ; sur des fichiers fabriqués

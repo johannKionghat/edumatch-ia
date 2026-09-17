@@ -11,7 +11,7 @@ help:  ## Affiche cette aide
 install:  ## Installe le paquet et ses dépendances de développement
 	pip install -e ".[dev,rag]"
 
-# Séquence complète de la pile locale (E35) : lever, vérifier, arrêter.
+# Séquence complète de la pile locale : lever, vérifier, arrêter.
 #   1. make up             -> construit les images et démarre PostgreSQL, MLflow, Airflow,
 #                              un entraînement unique (train), puis l'API
 #   2. make verifier-pile  -> interroge chaque sonde, affiche un état lisible
@@ -31,7 +31,7 @@ verifier-pile:  ## Interroge la sonde de chaque brique (api, mlflow, airflow, po
 down:  ## Arrête tout et supprime les volumes
 	docker compose down -v
 
-# ─── Production Airflow — instance dédiée (E33, ADR 0019) ─────────────
+# ─── Production Airflow — instance dédiée (ADR 0019) ─────────────
 # À exécuter SUR L'INSTANCE Scaleway provisionnée par terraform/airflow.tf
 # (edumatch-cicd), jamais sur le poste de développement : ces cibles
 # supposent /srv/edumatch/data déjà monté (voir le cloud-init de l'instance)
@@ -77,27 +77,27 @@ data:  ## Régénère TOUTES les données dérivées depuis data/raw
 	$(MAKE) gold
 	$(MAKE) sirene-agregats
 	$(MAKE) features
-	# naf-rome (E18) n'est pas enchaînée ici : elle suppose data/external/referentiels/
+	# naf-rome n'est pas enchaînée ici : elle suppose data/external/referentiels/
 	# déjà peuplé par edumatch.ingestion.referentiels, qui n'a pas encore de cible
-	# dédiée dans ce Makefile (gap antérieur à E18, pas corrigé ici). Lancer
+	# dédiée dans ce Makefile (gap connu, pas corrigé ici). Lancer
 	# `make naf-rome` séparément une fois les référentiels téléchargés.
 
 quality:  ## Exécute les contrôles qualité (bloquants)
 	python -m edumatch.quality.run
 
-transform:  ## Réconcilie les huit millésimes Parcoursup (bronze -> silver, E15)
+transform:  ## Réconcilie les huit millésimes Parcoursup (bronze -> silver)
 	python -m edumatch.transform.run
 
-gold:  ## Construit le modèle en étoile (silver -> gold, E16) : faits et dimensions
+gold:  ## Construit le modèle en étoile (silver -> gold) : faits et dimensions
 	python -m edumatch.transform.run_etoile
 
 transform-lignage:  ## Rejoue silver ET gold via dbt, génère le graphe de lignage complet (dbt docs)
 	python -m edumatch.transform.run_dbt
 
-sirene-agregats:  ## Agrège Sirene par commune x NAF (E17) : projection 9 colonnes, filtrage à la lecture
+sirene-agregats:  ## Agrège Sirene par commune x NAF : projection 9 colonnes, filtrage à la lecture
 	python -m edumatch.spark.run_sirene_agregats
 
-naf-rome:  ## Réconcilie NAF -> ROME -> formation (E18) : couverture mesurée et déclarée
+naf-rome:  ## Réconcilie NAF -> ROME -> formation : couverture mesurée et déclarée
 	python -m edumatch.referentiel.naf_rome_formation
 
 samples:  ## Régénère data/samples/ depuis data/raw et data/external (config prod)
@@ -107,7 +107,7 @@ features:  ## Construit la table de variables
 	python -m edumatch.features.build
 
 # ─── Modèle ─────────────────────────────────────────────────────────
-baseline:  ## Mesure la baseline (taux de la session précédente, E21) : le plancher à battre
+baseline:  ## Mesure la baseline (taux de la session précédente) : le plancher à battre
 	python -m edumatch.models.baseline
 
 train:  ## Entraîne le modèle et enregistre l'exécution dans MLflow
@@ -116,39 +116,39 @@ train:  ## Entraîne le modèle et enregistre l'exécution dans MLflow
 evaluate:  ## Évalue sur le jeu de test, produit calibration et équité
 	python -m edumatch.models.evaluate
 
-explain:  ## Explicabilité TreeSHAP (E25) : importance globale, exemples locaux, précalcul par cellule
+explain:  ## Explicabilité TreeSHAP : importance globale, exemples locaux, précalcul par cellule
 	python -m edumatch.models.explain
 
-ablation:  ## Ablation (E27) : apport de chaque source de variables, écart mesuré même s'il est nul
+ablation:  ## Ablation : apport de chaque source de variables, écart mesuré même s'il est nul
 	python -m edumatch.models.ablation
 
-derive:  ## Dérive (E34) : PSI/KS variables, cible et prédictions, seuil de réentraînement (ADR 0018)
+derive:  ## Dérive : PSI/KS variables, cible et prédictions, seuil de réentraînement (ADR 0018)
 	python -m edumatch.models.derive
 
 register-model:  ## Enregistre la dernière exécution d'entraînement au registre de modèles (4.10)
 	python -m edumatch.models.registre
 
 # ─── Matching ───────────────────────────────────────────────────────
-debouches:  ## Terme de débouchés (E28) : agrégat Sirene département x NAF k-anonymisé, correspondance formation -> IDÉO
+debouches:  ## Terme de débouchés : agrégat Sirene département x NAF k-anonymisé, correspondance formation -> IDÉO
 	python -m edumatch.matching.debouches
 
-matching-exemple:  ## Score à trois termes (E28) : exemple de bout en bout sur données réelles, pour un profil donné
+matching-exemple:  ## Score à trois termes : exemple de bout en bout sur données réelles, pour un profil donné
 	python -m edumatch.matching.exemple
 
 # ─── Service ────────────────────────────────────────────────────────
 api:  ## Lance l'API en local
 	uvicorn edumatch.api.main:app --reload --port 8000
 
-audit-purge:  ## Purge du journal d'inférence (E30, article 12) : SIMULATION, rien n'est modifié
+audit-purge:  ## Purge du journal d'inférence (article 12) : SIMULATION, rien n'est modifié
 	PYTHONPATH=src python -m edumatch.api.audit_purge
 
 audit-purge-appliquer:  ## Purge du journal d'inférence : exécution RÉELLE (journal réécrit, agrégats mis à jour)
 	PYTHONPATH=src python -m edumatch.api.audit_purge --appliquer
 
-ecran-verifier:  ## Vérifie la syntaxe de l'écran conseiller (E31) : `node --check` sur app.js
+ecran-verifier:  ## Vérifie la syntaxe de l'écran conseiller : `node --check` sur app.js
 	node --check src/edumatch/api/static/app.js
 
-assistant-exemple:  ## Assistant documentaire (E32) : question d'exemple sur le corpus IDÉO réel, réponse et citations
+assistant-exemple:  ## Assistant documentaire : question d'exemple sur le corpus IDÉO réel, réponse et citations
 	python -m edumatch.rag.exemple
 
 # ─── Qualité du code ────────────────────────────────────────────────

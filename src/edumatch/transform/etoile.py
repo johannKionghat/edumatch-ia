@@ -1,8 +1,8 @@
-"""Modèle en étoile de la couche gold Parcoursup (E16) : silver -> faits et dimensions.
+"""Modèle en étoile de la couche gold Parcoursup : silver -> faits et dimensions.
 
 ## Le grain — la décision qui commande tout le reste
 
-Silver (`stg_parcoursup`, E15) a une ligne par **formation-session**
+Silver (`stg_parcoursup`) a une ligne par **formation-session**
 (`session`, `cod_aff_form`). Ce n'est pas le grain de l'analyse : le label
 (ADR 0009) vit à la maille de la **cellule**, c'est-à-dire une formation
 croisée avec un type de baccalauréat et un statut de boursier. Une
@@ -77,19 +77,19 @@ retour Jedha (§5 de mes notes de cadrage) sanctionne explicitement la
 surarchitecture : une dimension sans second grain qui la justifie n'est
 qu'une colonne de plus dans `dim_formation`.
 
-## Le label : la formule vit dans `features/label.py` (E19), pas ici
+## Le label : la formule vit dans `features/label.py`, pas ici
 
 `fait_admission` porte `nb_voe_pp` (effectif, sert aussi de pondération),
 `prop_tot` (brut) et `taux` — `prop_tot / nb_voe_pp`, **borné à 1**, formule
 arrêtée par l'ADR 0009. Ce module ne la recalcule plus lui-même : il appelle
 `edumatch.features.label.calculer_taux`, qui en porte l'unique définition
-depuis E19. Avant E19, elle était codée ici même, le gold en avait besoin
+depuis le calcul du label. Avant, elle était codée ici même, le gold en avait besoin
 avant que l'étape dédiée n'existe ; la garder dupliquée à deux endroits
 aurait fait courir le risque qu'elle y diverge un jour sans que personne ne
 le remarque. `taux_depasse_1` conserve, en clair, les cellules où le brut
 dépassait 1 avant bornage (8,9 % sur le bac général en 2025, ADR 0009).
 
-Ce module ne porte plus, et `features/label.py` (E19) porte désormais : la
+Ce module ne porte plus, et `features/label.py` porte désormais : la
 pondération à l'entraînement (poids = effectif de la cellule, ADR 0009), et
 toute décision non encore arrêtée (seuil d'exclusion de petites cellules —
 actuellement aucun, ADR 0009).
@@ -447,7 +447,7 @@ class Etoile:
 
 
 def construire_etoile(silver: pd.DataFrame) -> Etoile:
-    """Construit les cinq tables gold à partir de la table silver réconciliée (E15)."""
+    """Construit les cinq tables gold à partir de la table silver réconciliée."""
     base = base_exploitable(silver)
 
     dim_session = construire_dim_session(silver, base)

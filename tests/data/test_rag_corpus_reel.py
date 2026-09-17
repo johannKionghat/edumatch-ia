@@ -1,6 +1,6 @@
-"""Corpus documentaire de l'assistant (E32) sur les échantillons réels de `data/samples/`.
+"""Corpus documentaire de l'assistant sur les échantillons réels de `data/samples/`.
 
-Comme `tests/data/test_matching_debouches_run.py` (E28) : extraits réels,
+Comme `tests/data/test_matching_debouches_run.py` : extraits réels,
 aucun téléchargement, aucun appel réseau — seulement que la lecture des CSV
 IDÉO échantillonnés produit des documents bien formés et cités.
 """

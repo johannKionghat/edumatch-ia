@@ -1,5 +1,5 @@
-# Image de service (E29, E35) : sert l'API FastAPI (/health, /matching, /explain, /feedback,
-# écran conseiller). Destinée à tourner comme Deployment Kubernetes (E37, Scaleway Kapsule) :
+# Image de service : sert l'API FastAPI (/health, /matching, /explain, /feedback,
+# écran conseiller). Destinée à tourner comme Deployment Kubernetes (Scaleway Kapsule) :
 # plusieurs réplicas identiques et interchangeables, aucun état local, arrêt propre sur SIGTERM
 # (Uvicorn le gère nativement, rien à ajouter ici).
 #
@@ -66,7 +66,7 @@ COPY configs ./configs
 #     lu par api/state.py) : sans lui, l'API entraîne le modèle au démarrage — dette
 #     documentée dans api/state.py, traitée pour l'usage courant, pas pour le rechargement à
 #     chaud d'un modèle pendant que le processus tourne ;
-#   - data/processed/explicabilite/explications_locales.parquet (E25, precalcul SHAP).
+#   - data/processed/explicabilite/explications_locales.parquet (precalcul SHAP).
 # `docker-compose.yml` illustre ce montage en local.
 
 ENV PYTHONPATH=/app/src \

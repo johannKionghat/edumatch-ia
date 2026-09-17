@@ -1,4 +1,4 @@
-"""Tests unitaires de l'entraînement (E22) : fonctions pures, sur des tables fabriquées.
+"""Tests unitaires de l'entraînement : fonctions pures, sur des tables fabriquées.
 
 Pas besoin de `data/samples/` ici — contrairement au test de contrat
 (`tests/data/test_models_train_run.py`) qui rejoue le pipeline complet et
@@ -158,7 +158,7 @@ def test_ajouter_taux_precedent_recalcule_le_quotient_jamais_ne_lit_le_label() -
 def test_ajouter_taux_precedent_reutilise_la_fonction_de_la_baseline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Une seule formule pour la baseline (E21) et la variable (E22), jamais deux implémentations."""
+    """Une seule formule pour la baseline et la variable, jamais deux implémentations."""
     appels: list[pd.DataFrame] = []
 
     def _espion(table: pd.DataFrame) -> pd.Series:

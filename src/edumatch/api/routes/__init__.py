@@ -1,1 +1,1 @@
-"""Routeurs de l'API (E29) : un module par ressource — `health`, `matching`, `explain`, `feedback`."""
+"""Routeurs de l'API : un module par ressource — `health`, `matching`, `explain`, `feedback`."""

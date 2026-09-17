@@ -1,4 +1,4 @@
-"""Détection de dérive du modèle d'accessibilité (E34) : `make derive`.
+"""Détection de dérive du modèle d'accessibilité : `make derive`.
 
 ## Ce que ce module mesure, et sur quelle fenêtre
 
@@ -11,11 +11,11 @@ confondues dans le rapport :
    colonnes dérivées de `models.train` (`taux_session_precedente`, `a_antecedent`), qui ne
    sont pas des observations mais un calcul dérivé des variables décalées déjà mesurées.
 2. **Dérive de la cible** — P(Y) change-t-il ? Sur `taux`, la même colonne que
-   `models.metrics.calibration` (E23) lit pour comparer prédiction et réalité.
+   `models.metrics.calibration` lit pour comparer prédiction et réalité.
 3. **Dérive des prédictions** — P(Ŷ) change-t-il ? Le modèle déjà entraîné
    (`models.train.entrainer_et_evaluer`, jamais réentraîné une seconde fois ici) prédit sur
    chaque session ; ce module compare la distribution de ces prédictions, pas leur erreur
-   par rapport à la cible (déjà couverte par E23).
+   par rapport à la cible (déjà couverte par l'évaluation).
 
 Fenêtre : les six sessions où le label existe (2020-2025, ADR 0012) — le fichier
 Parcoursup brut en couvre huit (2018-2025), mais les deux premières n'ont pas de cible
@@ -47,7 +47,7 @@ parce que la nomenclature des régions Parcoursup change de libellé plusieurs f
 période (« Centre-Val de Loire » devient « Centre », etc.), la seconde à cause d'un
 libellé tronqué propre au seul millésime 2020 (« formation non selec »). Une seule colonne
 de nomenclature instable ne dit rien de la distribution du problème dans son ensemble —
-elle apparaît d'ailleurs au rang 45 sur 48 de l'importance du modèle (E22) pour
+elle apparaît d'ailleurs au rang 45 sur 48 de l'importance du modèle pour
 `region_etab_aff`. Prendre le maximum aurait fait dépasser le seuil en permanence pour un
 motif qui n'affecte jamais la performance : exactement l'écueil que la consigne de cette
 étape demande d'éviter. La liste des variables individuellement au-delà du seuil reste
@@ -151,7 +151,7 @@ def _mesurer_colonnes(
 
 @dataclass(frozen=True)
 class RapportDerive:
-    """Ce que `make derive` (E34) a produit : trois familles de dérive, à déclarer telles quelles."""
+    """Ce que `make derive` a produit : trois familles de dérive, à déclarer telles quelles."""
 
     seuil_reentrainement: float
     derive_variables_production: list[ScoreDerive]
@@ -221,7 +221,7 @@ def _tracer_figure_variables(scores_test: list[ScoreDerive], seuil: float, desti
     axe.barh([score.variable for score in classement], [score.psi for score in classement], color=couleurs)
     axe.axvline(seuil, color="black", linestyle="--", label=f"seuil de réentraînement ({seuil:.2f})")
     axe.set_xlabel("PSI (entraînement 2020-2023 -> test 2025)")
-    axe.set_title("Dérive des variables — 15 plus fortes (E34)")
+    axe.set_title("Dérive des variables — 15 plus fortes")
     axe.legend(loc="lower right")
     figure.tight_layout()
 
@@ -254,7 +254,7 @@ def _tracer_figure_trajectoire(
     axe.plot(comparaisons, predictions, marker="^", label="prédictions du modèle")
     axe.axhline(seuil, color="black", linestyle="--", label="seuil de réentraînement")
     axe.set_ylabel("PSI")
-    axe.set_title("Dérive session par session, comparaisons consécutives (E34)")
+    axe.set_title("Dérive session par session, comparaisons consécutives")
     axe.tick_params(axis="x", rotation=30)
     axe.legend(loc="upper left")
     figure.tight_layout()
@@ -272,7 +272,7 @@ def _journaliser_mlflow(rapport: RapportDerive, settings: Settings) -> None:
     `mlflow_tracking_uri` ou du paquet est journalisée, jamais masquée.
     """
     if not settings.mlflow_tracking_uri:
-        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : dérive non journalisée dans MLflow (E34).")
+        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : dérive non journalisée dans MLflow.")
         return
     try:
         import mlflow
@@ -283,7 +283,7 @@ def _journaliser_mlflow(rapport: RapportDerive, settings: Settings) -> None:
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment(NOM_EXPERIENCE_MLFLOW)
     with mlflow.start_run(run_name="derive-psi-ks"):
-        mlflow.set_tag("etape", "E34")
+        mlflow.set_tag("etape", "derive")
         mlflow.log_param("seuil_reentrainement", rapport.seuil_reentrainement)
         mlflow.log_param("reentrainement_recommande", rapport.reentrainement_recommande)
         for comparaison, mediane in rapport.mediane_variables_par_comparaison.items():
@@ -380,7 +380,7 @@ def _derive_predictions(
 
 
 def executer(settings: Settings | None = None, dossier_figures: Path | None = None) -> RapportDerive:
-    """Point d'entrée de `make derive` (E34) : entraîne (E22, jamais une seconde fois après)
+    """Point d'entrée de `make derive` : entraîne (jamais une seconde fois après)
     puis mesure les trois dérives sur la fenêtre labellisée (voir docstring du module).
     """
     settings = settings or get_settings()
@@ -431,7 +431,7 @@ def executer(settings: Settings | None = None, dossier_figures: Path | None = No
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Détection de dérive (E34) terminée.\n%s", rapport.resume())
+    LOGGER.info("Détection de dérive terminée.\n%s", rapport.resume())
     if rapport.reentrainement_recommande:
         LOGGER.warning("Dérive au-delà du seuil de réentraînement : voir le rapport ci-dessus.")
     return 0

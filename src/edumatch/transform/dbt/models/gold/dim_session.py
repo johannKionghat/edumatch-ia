@@ -1,4 +1,4 @@
-"""Modèle dbt (Python) `dim_session` (E16) : le lignage bronze -> silver -> gold.
+"""Modèle dbt (Python) `dim_session` : le lignage bronze -> silver -> gold.
 
 Comme `../silver/stg_parcoursup.py`, ce fichier ne recalcule rien : il
 délègue à `edumatch.transform.etoile`, la même fonction qu'utilise

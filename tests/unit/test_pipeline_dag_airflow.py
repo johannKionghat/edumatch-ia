@@ -1,4 +1,4 @@
-"""Structure du graphe Airflow (E33) : dépendances entre tâches, un DAG par cadence.
+"""Structure du graphe Airflow : dépendances entre tâches, un DAG par cadence.
 
 Conditionné à la présence d'Airflow (`pytest.importorskip`) : ce paquet n'est
 pas une dépendance du projet par défaut (voir l'extra `airflow` de
@@ -10,7 +10,7 @@ vérifiée sans conditionner quoi que ce soit (`tests/unit/test_orchestration_*.
 
 Ce que ce test NE prouve PAS : que le DAG s'exécute avec succès dans un vrai
 conteneur Airflow planifié (base de métadonnées, workers, connexions). Cela
-reste à démontrer sur l'environnement Airflow complet (E39, panne provoquée
+reste à démontrer sur l'environnement Airflow complet (panne provoquée
 filmée) — voir le docstring de `pipelines/edumatch_pipeline.py` sur la
 lacune assumée du `docker-compose.yml` actuel (image sans le paquet
 `edumatch` installé).
@@ -80,7 +80,7 @@ def test_dag_parcoursup_enchaine_les_huit_etapes_dans_l_ordre(module_pipeline) -
 def test_dag_parcoursup_le_reentrainement_depend_transitivement_du_controle_qualite(
     module_pipeline,
 ) -> None:
-    """Le blocage qualité (E14) doit couvrir le réentraînement : `trigger_rule` par défaut
+    """Le blocage qualité doit couvrir le réentraînement : `trigger_rule` par défaut
     (`all_success`) empêche `reentrainer_modele` de s'exécuter si `controler_qualite` a
     échoué, sans code supplémentaire ici — c'est ce que ce test vérifie au niveau du
     graphe plutôt que de le supposer."""

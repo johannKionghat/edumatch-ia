@@ -1,6 +1,6 @@
-"""Tests de la réconciliation bronze -> silver Parcoursup (E15).
+"""Tests de la réconciliation bronze -> silver Parcoursup.
 
-Deux catégories, sur le modèle des tests qualité (E14) : les huit
+Deux catégories, sur le modèle des tests qualité : les huit
 échantillons versionnés (`data/samples/parcoursup/`), qui doivent tous se
 réconcilier en un seul bloc sans erreur ; des millésimes fabriqués dans
 `tmp_path`, un par piège déjà documenté.

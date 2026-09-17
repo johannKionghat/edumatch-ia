@@ -1,4 +1,4 @@
-"""Modèle dbt (Python) `dim_profil_candidat` (E16).
+"""Modèle dbt (Python) `dim_profil_candidat`.
 
 Seule dimension sans dépendance à `stg_parcoursup` dans le graphe de
 lignage : ses six lignes (type de baccalauréat x boursier) ne viennent

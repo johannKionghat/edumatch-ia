@@ -1,4 +1,4 @@
-"""DAG Airflow (E33) : orchestre exactement la chaîne déjà portée par `Makefile`.
+"""DAG Airflow : orchestre exactement la chaîne déjà portée par `Makefile`.
 
 Ce fichier n'est chargé que par le planificateur Airflow (le conteneur
 `airflow` de `docker-compose.yml`) : il importe `airflow`, une dépendance
@@ -90,7 +90,7 @@ with DAG(
     dag_id="edumatch_parcoursup",
     description=(
         "Ingestion, qualité, étoile, variables, dérive, réentraînement et évaluation "
-        "Parcoursup (E05, E14-E16, E20, E22-E23, E33, E34)."
+        "Parcoursup."
     ),
     schedule=_PLANIFICATION.parcoursup,
     start_date=DATE_DEPART,
@@ -110,13 +110,13 @@ with DAG(
         dag_parcoursup, "construire_variables", taches.construire_variables
     )
     t_derive = _construire_operateur(dag_parcoursup, "detecter_derive", taches.detecter_derive)
-    # Le réentraînement (E22) et son évaluation (E23) ferment la chaîne annuelle : ils ne
+    # Le réentraînement et son évaluation ferment la chaîne annuelle : ils ne
     # démarrent que si `controler_qualite` est passé (blocage qualité en amont, hérité de
-    # la même `trigger_rule` que les tâches qui précèdent), et seulement après la dérive
-    # (E34), lue en diagnostic avant de rejouer un entraînement sur les mêmes données. La
+    # la même `trigger_rule` que les tâches qui précèdent), et seulement après la dérive,
+    # lue en diagnostic avant de rejouer un entraînement sur les mêmes données. La
     # publication de l'artefact est elle-même conditionnelle : voir
     # `orchestration.promotion`, qui refuse de remplacer le modèle déjà servi tant que le
-    # réentraînement ne bat pas le plancher E21 en test.
+    # réentraînement ne bat pas le plancher (baseline) en test.
     t_reentrainement = _construire_operateur(
         dag_parcoursup, "reentrainer_modele", taches.reentrainer_modele
     )
@@ -127,7 +127,7 @@ with DAG(
 
 with DAG(
     dag_id="edumatch_sirene",
-    description="Ingestion et agrégat commune x NAF de Sirene (E06, E14, E17).",
+    description="Ingestion et agrégat commune x NAF de Sirene.",
     schedule=_PLANIFICATION.sirene,
     start_date=DATE_DEPART,
     catchup=False,
@@ -144,7 +144,7 @@ with DAG(
     dag_id="edumatch_referentiels",
     description=(
         "Ingestion des référentiels ONISEP/RNCP/France Travail et réconciliation "
-        "NAF -> ROME -> formation (E07, E14, E18)."
+        "NAF -> ROME -> formation."
     ),
     schedule=_PLANIFICATION.referentiels,
     start_date=DATE_DEPART,
@@ -166,7 +166,7 @@ with DAG(
 
 with DAG(
     dag_id="edumatch_audit_purge",
-    description="Purge planifiée du journal d'inférence, article 12 du règlement sur l'IA (E30).",
+    description="Purge planifiée du journal d'inférence, article 12 du règlement sur l'IA.",
     schedule=_PLANIFICATION.purge_audit,
     start_date=DATE_DEPART,
     catchup=False,

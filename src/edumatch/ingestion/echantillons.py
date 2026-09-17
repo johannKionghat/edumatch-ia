@@ -1,4 +1,4 @@
-"""Génère les échantillons versionnés de `data/samples/` (E08).
+"""Génère les échantillons versionnés de `data/samples/`.
 
 `data/samples/` est la seule exception versionnée de `data/` (voir
 `.gitignore`) : quelques centaines de lignes par source, suffisantes pour que
@@ -113,7 +113,7 @@ COLONNES_PERSONNELLES_UNITE_LEGALE: frozenset[str] = frozenset(
 )
 
 # Les 9 colonnes utiles de StockEtablissement pour le job Spark d'agrégation
-# (E17) — voir docs/sous-docs-projets/01-donnees/sources.md. L'échantillon
+# — voir docs/sous-docs-projets/01-donnees/sources.md. L'échantillon
 # n'a pas besoin des 45 autres : elles ne seront jamais lues en production.
 COLONNES_ETABLISSEMENT: tuple[str, ...] = (
     "siret",

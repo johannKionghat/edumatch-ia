@@ -1,6 +1,6 @@
-"""Contrôles qualité du fichier brut Parcoursup, un millésime à la fois (E14).
+"""Contrôles qualité du fichier brut Parcoursup, un millésime à la fois.
 
-Quatre familles, dans l'ordre du plan d'exécution : schéma, complétude,
+Quatre familles, dans l'ordre attendu : schéma, complétude,
 cohérence, fraîcheur. Le schéma et la complétude des colonnes de la liste
 blanche (`modele.variables.session_courante`) sont exprimés avec **Pandera**,
 retenu plutôt que Great Expectations pour ce contrôle précis : un seul

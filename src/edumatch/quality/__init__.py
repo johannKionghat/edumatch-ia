@@ -1,7 +1,7 @@
-"""Contrôles qualité des données (E14) : schéma, complétude, cohérence, fraîcheur.
+"""Contrôles qualité des données : schéma, complétude, cohérence, fraîcheur.
 
 Point d'entrée : `python -m edumatch.quality.run` (cible `make quality`).
-Organisé par source, conformément au plan d'exécution du projet :
+Organisé par source :
 `parcoursup.py`, `sirene.py`, `referentiels.py`, orchestrés par `run.py`. Le
 vocabulaire commun (anomalie, gravité, rapport, erreur de blocage) vit dans
 `_diagnostic.py` ; le contrôle générique de fraîcheur, dans `_fraicheur.py`.

@@ -33,7 +33,7 @@ def _uri_magasin(tmp_path: Path) -> str:
 
 
 def _journaliser_run_entrainement_factice(uri_magasin: str, *, commit: str = "abc1234") -> str:
-    """Reproduit la forme minimale d'une exécution `models.train` (E22) : mêmes tags,
+    """Reproduit la forme minimale d'une exécution `models.train` : mêmes tags,
     mêmes métriques utiles, un vrai modèle LightGBM en artefact `modele` — sans
     passer par la table de variables réelle, hors de propos ici."""
     import mlflow
@@ -48,7 +48,7 @@ def _journaliser_run_entrainement_factice(uri_magasin: str, *, commit: str = "ab
     modele.fit(x, y)
 
     with mlflow.start_run(run_name="lightgbm-pondere-avec-taux-precedent") as run:
-        mlflow.set_tag("etape", "E22")
+        mlflow.set_tag("etape", "train")
         mlflow.set_tag("variante", "avec-taux-precedent")
         mlflow.set_tag("commit_git", commit)
         mlflow.log_metric("test_mae_ponderee", 0.0758)
@@ -68,8 +68,8 @@ def _settings_registre(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         get_settings.cache_clear()
 
 
-def test_enregistrer_version_modele_trouve_la_derniere_execution_e22(_settings_registre) -> None:
-    """Sans `run_id`, la fonction retrouve la dernière exécution `E22` de la variante active."""
+def test_enregistrer_version_modele_trouve_la_derniere_execution_entrainement(_settings_registre) -> None:
+    """Sans `run_id`, la fonction retrouve la dernière exécution `train` de la variante active."""
     uri_magasin, settings = _settings_registre
     run_id = _journaliser_run_entrainement_factice(uri_magasin)
 
@@ -85,7 +85,7 @@ def test_enregistrer_version_modele_trouve_la_derniere_execution_e22(_settings_r
 
 def test_enregistrer_version_modele_declare_le_statut_non_retenu(_settings_registre) -> None:
     """La version enregistrée porte l'étiquette et la description honnêtes : ce modèle perd
-    contre le plancher E21 et n'est promu à aucun alias."""
+    contre le plancher et n'est promu à aucun alias."""
     import mlflow
     from mlflow.tracking import MlflowClient
 
@@ -99,7 +99,7 @@ def test_enregistrer_version_modele_declare_le_statut_non_retenu(_settings_regis
     version = client.get_model_version(NOM_MODELE_REGISTRE, "1")
 
     assert version.tags[ETIQUETTE_STATUT] == (
-        "ne bat pas le plancher (E21, session precedente a couverture egale) sur le test 2025 : "
+        "ne bat pas le plancher (session precedente a couverture egale) sur le test 2025 : "
         "non retenu pour un usage reel, enregistre pour la tracabilite du registre (critere 4.10)"
     )
     assert "0.0758" in version.description
@@ -111,7 +111,7 @@ def test_enregistrer_version_modele_declare_le_statut_non_retenu(_settings_regis
 
 
 def test_enregistrer_version_modele_leve_sans_execution(_settings_registre) -> None:
-    """Aucune exécution `E22` journalisée : erreur explicite, jamais un registre créé à vide."""
+    """Aucune exécution `train` journalisée : erreur explicite, jamais un registre créé à vide."""
     _, settings = _settings_registre
 
     with pytest.raises(ErreurRegistreModele, match="Aucune expérience"):

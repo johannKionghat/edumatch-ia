@@ -1,4 +1,4 @@
-"""Contrôles qualité des référentiels ONISEP (IDÉO) et RNCP/RS (E14).
+"""Contrôles qualité des référentiels ONISEP (IDÉO) et RNCP/RS.
 
 Volumétrie modeste (quelques Mo, quelques dizaines de milliers de lignes au
 plus) : chaque fichier est chargé entièrement, comme pour Parcoursup. Les

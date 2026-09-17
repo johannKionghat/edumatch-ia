@@ -1,7 +1,7 @@
 """Échantillons versionnés des référentiels — IDÉO, RNCP (standard et ROME), France Travail.
 
-Extrait de `echantillons.py` (E08, puis E18) : ce dernier dépassait la limite
-de 500 lignes du projet une fois les deux sources d'E18 (RNCP ROME, France
+Extrait de `echantillons.py` : ce dernier dépassait la limite
+de 500 lignes du projet une fois les deux sources de la réconciliation NAF/ROME (RNCP ROME, France
 Travail) ajoutées. Le découpage suit la même frontière que
 `_referentiels_communs.py` / `_referentiels_rncp.py` côté ingestion : un
 module pour Parcoursup et Sirene (volumétrie, échantillonnage Parquet en
@@ -28,7 +28,7 @@ from edumatch.ingestion.echantillons import (
 
 LOGGER = logging.getLogger(__name__)
 
-# E18 : le dossier `external/referentiels/rncp/` porte deux familles de
+# Le dossier `external/referentiels/rncp/` porte deux familles de
 # fichiers depuis l'ajout du membre ROME de l'archive quotidienne (voir
 # `ingestion._referentiels_rncp`). Un motif `rncp_*.csv` trop large aurait
 # silencieusement pris le fichier ROME pour « le dernier export standard » :
@@ -144,7 +144,7 @@ def _provenance_rncp_rome(settings: Settings, chemin_source: Path) -> dict[str, 
 
 
 def generer_echantillon_rncp_rome(settings: Settings) -> list[EchantillonResultat]:
-    """Un échantillon du fichier de correspondance fiche RNCP -> ROME (E18), même méthode que RNCP standard."""
+    """Un échantillon du fichier de correspondance fiche RNCP -> ROME, même méthode que RNCP standard."""
     cfg = settings.donnees.referentiels.rncp
     dossier_rncp = settings.external_dir / "referentiels" / "rncp"
     exports = sorted(dossier_rncp.glob(MOTIF_EXPORT_RNCP_ROME)) if dossier_rncp.exists() else []
@@ -190,7 +190,7 @@ def _provenance_france_travail(settings: Settings) -> dict[str, str]:
 
 
 def generer_echantillon_france_travail(settings: Settings) -> list[EchantillonResultat]:
-    """Copie intégrale de la table ROME/NAF (E18) : pas d'échantillonnage systématique ici.
+    """Copie intégrale de la table ROME/NAF : pas d'échantillonnage systématique ici.
 
     À la différence des CSV texte échantillonnés ligne à ligne ailleurs dans
     ce module, ce fichier est un classeur Excel dont la structure est

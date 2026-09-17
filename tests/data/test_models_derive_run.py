@@ -1,9 +1,9 @@
-"""Test du point d'entrée `make derive` (E34), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make derive`, de bout en bout, sur les échantillons.
 
-Même schéma que `test_models_evaluate_run.py` (E23) : un `data_root` jetable dans
-`tmp_path`, silver (E15), gold (E16) puis la table de variables (E20) produits depuis les
+Même schéma que `test_models_evaluate_run.py` : un `data_root` jetable dans
+`tmp_path`, silver, gold puis la table de variables produits depuis les
 huit échantillons versionnés, puis `edumatch.models.derive` dessus — qui entraîne le
-modèle (E22) avant de mesurer la dérive. Les figures sont écrites dans `tmp_path`, jamais
+modèle avant de mesurer la dérive. Les figures sont écrites dans `tmp_path`, jamais
 dans `reports/figures/` du dépôt (module partagé par tous les tests de ce fichier :
 `scope="module"`, coûteux à répéter — un seul entraînement pour toutes les assertions).
 """

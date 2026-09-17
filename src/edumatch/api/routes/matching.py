@@ -1,4 +1,4 @@
-"""Route `/matching` (E29) : le score à trois termes pour un profil, réutilisant
+"""Route `/matching` : le score à trois termes pour un profil, réutilisant
 `matching/score.recommander` — cette route ne recalcule rien, elle filtre le catalogue déjà
 en mémoire (`api.state.EtatMatching`) puis délègue le scoring.
 """
@@ -67,7 +67,7 @@ MOTIFS_DEBOUCHES: dict[str, str] = {
 }
 MOTIF_PAR_DEFAUT = "Motif non documenté pour ce statut."
 
-# Signal métier (E38, non couvert par l'instrumentation HTTP générique) : combinaisons trop
+# Signal métier (non couvert par l'instrumentation HTTP générique) : combinaisons trop
 # restrictives, pas une panne d'infrastructure — voir monitoring/README.md côté edumatch-cicd.
 _MATCHING_SANS_RESULTAT = Counter(
     "edumatch_matching_sans_resultat_total",

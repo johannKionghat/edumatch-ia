@@ -1,4 +1,4 @@
-"""Tests des contrôles qualité des référentiels ONISEP (IDÉO) et RNCP (E14)."""
+"""Tests des contrôles qualité des référentiels ONISEP (IDÉO) et RNCP."""
 
 from __future__ import annotations
 

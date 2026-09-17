@@ -1,4 +1,4 @@
-"""Définitions partagées de l'agrégat Sirene commune x NAF (E17) — sans dépendance lourde.
+"""Définitions partagées de l'agrégat Sirene commune x NAF — sans dépendance lourde.
 
 Ce module ne dépend ni de PySpark ni de Polars : deux moteurs implémentent la
 même agrégation (`sirene_agregats.py` pour Spark, `sirene_agregats_polars.py`
@@ -25,7 +25,7 @@ utilisé comme clé de regroupement : au 01/08/2026 il n'est renseigné que sur
 18 638 750 des 43 896 818 lignes du fichier complet (42,5 %), mais sur
 2 436 610 des 2 436 624 actifs-employeurs (99,9994 %) — sa couverture est
 mesurée et exposée en sortie (`nb_naf25_renseigne`) pour que la réconciliation
-NAF -> ROME -> formation de l'étape suivante (E18) sache, sans le
+NAF -> ROME -> formation de l'étape suivante sache, sans le
 redécouvrir, sur quelle proportion de chaque cellule elle peut s'appuyer.
 
 ## Ce qui est compté, et pourquoi les fermetures ne sont pas exclues
@@ -51,7 +51,7 @@ délibérément ajouté à côté, pas à la place.
 `filtres.diffusible` est déclaré dans la configuration mais **n'est pas
 appliqué ici** : l'appliquer demanderait de lire une dixième colonne
 (`statutDiffusionEtablissement`), absente des neuf colonnes déjà arrêtées à
-l'E06 et reprises telles quelles par le contrôle qualité (E14,
+l'ingestion Sirene et reprises telles quelles par le contrôle qualité (
 `edumatch.quality.sirene.COLONNES_UTILES`). Mesuré sur le fichier complet :
 20 501 établissements actifs-employeurs sur 2 436 624 (0,84 %) portent un
 statut non diffusible (`P`), et seulement 13 d'entre eux ont par ailleurs une
@@ -70,7 +70,7 @@ from dataclasses import dataclass
 from edumatch.config import Settings
 from edumatch.quality.sirene import COLONNES_UTILES
 
-# Les 9 colonnes utiles, réexportées depuis le contrôle qualité (E14) : même
+# Les 9 colonnes utiles, réexportées depuis le contrôle qualité : même
 # projection pour valider le fichier et pour l'agréger, une seule liste à
 # tenir à jour.
 COLONNES_PROJECTION: tuple[str, ...] = COLONNES_UTILES
@@ -93,14 +93,14 @@ ETAT_FERME = "F"
 # comme « récemment créé » (`nb_crees_moins_3ans`) : signal de dynamique,
 # distinct de l'âge moyen. Pas de source externe à ce seuil — c'est un ordre
 # de grandeur usuel (un cycle de scolarité post-bac court) plutôt qu'une
-# valeur mesurée ; à revoir si l'usage aval (E18, matching) en réclame un
+# valeur mesurée ; à revoir si l'usage aval (matching) en réclame un
 # autre.
 SEUIL_ANNEES_CREATION_RECENTE = 3
 
 # Codes INSEE de tranche d'effectifs salariés (documentation Sirene),
 # regroupés en six paliers pour la ventilation exposée en sortie. `NN` est un
 # code documenté (« non renseignée »), jamais une valeur manquante au sens
-# d'une anomalie — déjà noté ainsi par le contrôle qualité (E14).
+# d'une anomalie — déjà noté ainsi par le contrôle qualité.
 TRANCHES_VERS_PALIER: dict[str, str] = {
     "00": "0",
     "01": "1_9",

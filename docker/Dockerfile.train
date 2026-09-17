@@ -1,4 +1,4 @@
-# Image d'entraînement (E22, E35) : exécute `python -m edumatch.models.train` jusqu'au bout,
+# Image d'entraînement : exécute `python -m edumatch.models.train` jusqu'au bout,
 # puis quitte. Séparée de l'image de service parce qu'elle n'a ni le même cycle de vie (un
 # Job Kubernetes qui se termine, pas un Deployment qui reste vivant) ni tout à fait les mêmes
 # dépendances d'usage (elle écrit dans MLflow et sur `processed_dir`, elle ne sert jamais de
@@ -13,8 +13,8 @@ COPY pyproject.toml ./
 COPY src ./src
 
 # Mêmes dépendances de base que l'image de service (lightgbm, mlflow, shap, pandas...) : cette
-# image ne charge aucun extra — spark et airflow servent d'autres étapes du pipeline
-# (E17, E33), pas l'entraînement du modèle lui-même.
+# image ne charge aucun extra — spark et airflow servent d'autres étapes du pipeline,
+# pas l'entraînement du modèle lui-même.
 RUN pip install --no-cache-dir --prefix=/install .
 
 FROM python:3.11-slim AS runtime
@@ -44,7 +44,7 @@ COPY src ./src
 COPY configs ./configs
 
 # `data/` en volume monté, jamais copiée (voir .dockerignore et Dockerfile.serve) : ce
-# conteneur lit `data/processed/*.parquet` (la table de variables, E20) et écrit deux
+# conteneur lit `data/processed/*.parquet` (la table de variables) et écrit deux
 # artefacts au même volume — `data/processed/matching/catalogue_predictions.parquet`
 # (models/train.exporter_catalogue_predictions, lu par l'image de service) et l'exécution
 # MLflow (paramètres, métriques, modèle), pointée par MLFLOW_TRACKING_URI, jamais en dur ici.
@@ -59,6 +59,6 @@ USER edumatch
 # qui se termine (succès ou échec), pas un processus qui reste vivant pour répondre à des
 # requêtes. Un HEALTHCHECK suppose un service interrogé périodiquement ; un travail par lots a
 # un code de sortie, et c'est ce code que l'orchestrateur (Airflow via KubernetesPodOperator,
-# ou un Job Kubernetes, E37) surveille pour décider d'une reprise — pas une sonde HTTP qui
+# ou un Job Kubernetes) surveille pour décider d'une reprise — pas une sonde HTTP qui
 # n'aurait personne à qui répondre.
 CMD ["python", "-m", "edumatch.models.train"]

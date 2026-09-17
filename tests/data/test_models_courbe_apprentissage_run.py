@@ -1,7 +1,7 @@
-"""Test de contrat de la courbe d'apprentissage (E24), de bout en bout, sur les échantillons.
+"""Test de contrat de la courbe d'apprentissage, de bout en bout, sur les échantillons.
 
-Même schéma que `test_models_train_run.py` (E22) : un `data_root` jetable
-dans `tmp_path`, silver (E15), gold (E16) puis la table de variables (E20)
+Même schéma que `test_models_train_run.py` : un `data_root` jetable
+dans `tmp_path`, silver, gold puis la table de variables
 produits depuis les huit échantillons versionnés, puis
 `edumatch.models.courbe_apprentissage` dessus. Aucune écriture dans
 `reports/figures/` du dépôt : la figure est écrite dans un dossier jetable.

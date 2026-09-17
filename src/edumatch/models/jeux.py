@@ -1,4 +1,4 @@
-"""Les jeux du split temporel : préparation partagée par l'entraînement (E22) et l'évaluation (E23).
+"""Les jeux du split temporel : préparation partagée par l'entraînement et l'évaluation.
 
 ## Pourquoi un module séparé
 
@@ -8,7 +8,7 @@ spécifiques ni à l'entraînement ni à l'évaluation : les deux étapes doiven
 construire *exactement* le même jeu de validation et le même jeu de test à
 partir de la même table, avec la même conversion de types. Les regrouper ici
 plutôt que les dupliquer, ou les laisser dans `train.py` au prix d'une
-dépendance d'`evaluate.py` (E23) vers `train.py` pour des raisons de pure
+dépendance d'`evaluate.py` vers `train.py` pour des raisons de pure
 organisation du code, rend visible que c'est un socle commun aux deux étapes.
 
 `models/train.py` réexporte ces noms (`from edumatch.models.jeux import ...`)
@@ -45,7 +45,7 @@ class JeuDonnees:
 
 
 def chemin_table_variables(settings: Settings) -> Path:
-    """Emplacement de la table de variables (E20) que l'entraînement et l'évaluation partagent."""
+    """Emplacement de la table de variables que l'entraînement et l'évaluation partagent."""
     return settings.processed_dir / SOUS_DOSSIER / NOM_FICHIER_VARIABLES
 
 

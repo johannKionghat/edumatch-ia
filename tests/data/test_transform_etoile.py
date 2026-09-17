@@ -1,6 +1,6 @@
-"""Tests du modèle en étoile gold (E16), sur des millésimes fabriqués.
+"""Tests du modèle en étoile gold, sur des millésimes fabriqués.
 
-Isolé de la réconciliation (E15, déjà testée par
+Isolé de la réconciliation (déjà testée par
 `test_transform_reconciliation.py`) : les fixtures construisent directement
 une table au format silver — typée, un `DataFrame` par cas — pour ne
 vérifier qu'une chose à la fois : le dépliage en cellules, le grain de

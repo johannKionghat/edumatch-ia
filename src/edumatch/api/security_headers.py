@@ -1,10 +1,10 @@
-"""En-têtes de sécurité HTTP (revue de sécurité, post-E35) : ajoutés à chaque réponse.
+"""En-têtes de sécurité HTTP (revue de sécurité) : ajoutés à chaque réponse.
 
 ## Ce qui est ajouté, et pourquoi
 
 - `X-Content-Type-Options: nosniff` — empêche un navigateur de deviner un type de
   contenu différent de celui déclaré (protection contre le détournement de type MIME).
-- `X-Frame-Options: DENY` — interdit d'inclure l'écran conseiller (E31) dans une
+- `X-Frame-Options: DENY` — interdit d'inclure l'écran conseiller dans une
   `<iframe>` d'un autre site (protection contre le détournement de clic).
 - `Content-Security-Policy: default-src 'self'` — l'écran conseiller ne charge que ses
   propres ressources (`/static/style.css`, `/static/app.js`) : aucune source externe

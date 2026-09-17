@@ -1,8 +1,8 @@
-"""Ablation du modèle d'accessibilité (E27) : l'apport de chaque source de variables, mesuré.
+"""Ablation du modèle d'accessibilité : l'apport de chaque source de variables, mesuré.
 
 ## Ce que ce module fait, et ce qu'il ne refait pas
 
-`models/train.py` (E22) a arrêté une configuration de production : le jeu de
+`models/train.py` a arrêté une configuration de production : le jeu de
 variables classé par l'ADR 0013, `taux_session_precedente` inclus comme
 variable dérivée. Ce module ne discute pas ce choix, il le **mesure** :
 chaque variante ci-dessous retire ou ajoute un bloc de variables, entraîne un
@@ -11,22 +11,22 @@ LightGBM avec exactement les mêmes hyperparamètres (`configs/base.yaml`,
 absolue moyenne pondérée de validation à celle de la configuration complète.
 
 L'ADR 0013 prescrit trois retraits (mentions, `cod_uai`, variables décalées
-dans leur ensemble). L'explicabilité (E25) et l'audit d'équité (E26), une
+dans leur ensemble). L'explicabilité et l'audit d'équité, une
 fois mesurés, en appellent trois autres : `taux_session_precedente` retirée
 seule, `taux_session_precedente` conservée seule, et les substituts du genre
 retirés. Sirene n'entre dans aucune variante : la chaîne NAF -> ROME ->
-formation (E18) n'atteint aucune formation Parcoursup (voir
+formation n'atteint aucune formation Parcoursup (voir
 `referentiel/naf_rome_formation.py`, `manques_declares`), son ablation est
 donc **impossible à mesurer aujourd'hui**, pas nulle — la nuance est déclarée
 dans `RapportAblation.declaration_sirene` plutôt que simulée.
 
-## Le protocole, repris strictement d'E22
+## Le protocole, repris strictement de l'entraînement de production
 
 Toute variante est jugée sur la **validation 2024**, jamais sur le test 2025
 (ADR 0012) : une ablation qui comparerait des configurations sur le test
 ferait de ce choix un réglage d'hyperparamètre déguisé, ce que le protocole
 interdit. Le test n'est consulté qu'une fois pour la **configuration
-retenue** — celle déjà en production, arrêtée par E22 — et son score est
+retenue** — celle déjà en production — et son score est
 celui déjà journalisé alors (`resultat_complet.rapport.scores_test`), jamais
 recalculé ici : le recalculer serait une seconde consultation du test pour
 rien, puisque la configuration ne change pas.
@@ -34,8 +34,8 @@ rien, puisque la configuration ne change pas.
 Pour la même raison, la comparaison d'équité entre « avec » et « sans »
 substituts du genre (question centrale de cette étape) porte elle aussi sur
 la **validation 2024**, et non sur le test 2025 déjà utilisé par l'audit de
-production (E26) : ce module doit pouvoir comparer deux modèles sans
-consommer une seconde fois le jeu que E26 a déjà consulté.
+production : ce module doit pouvoir comparer deux modèles sans
+consommer une seconde fois le jeu que l'audit d'équité a déjà consulté.
 
 ## Le genre n'entre jamais dans le modèle, même ici
 
@@ -86,13 +86,13 @@ class ErreurAblation(RuntimeError):
 
 
 def _charger_gold_et_silver(settings: Settings) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Recharge silver (E15) et le gold (E16) depuis le disque, pour reconstruire une table de
-    variables (E20) avec un classement différent de celui de `configs/base.yaml`.
+    """Recharge silver et le gold depuis le disque, pour reconstruire une table de
+    variables avec un classement différent de celui de `configs/base.yaml`.
 
     Nécessaire uniquement pour les deux variantes qui ajoutent une colonne
     absente de `data/processed/parcoursup/variables.parquet` (mentions,
     `cod_uai`) : toutes les autres variantes se contentent de restreindre les
-    colonnes de la table déjà construite par `make features` (E20).
+    colonnes de la table déjà construite par `make features`.
     """
     dossier_gold = settings.processed_dir / build.SOUS_DOSSIER
     chemin_silver = settings.interim_dir / build.SOUS_DOSSIER / build.NOM_FICHIER_SILVER
@@ -107,7 +107,7 @@ def _charger_gold_et_silver(settings: Settings) -> tuple[pd.DataFrame, pd.DataFr
         raise ErreurAblation(
             "Fichier(s) manquant(s) pour reconstruire une variante de la table de variables : "
             + ", ".join(f"{nom} ({chemin})" for nom, chemin in manquants.items())
-            + ". Exécuter `make transform` (E15) et `make gold` (E16) avant l'ablation."
+            + ". Exécuter `make transform` et `make gold` avant l'ablation."
         )
     silver = pq.read_table(chemins["silver"]).to_pandas()
     fait_admission = pq.read_table(chemins["fait_admission"]).to_pandas()
@@ -140,7 +140,7 @@ def _variables_avec_cod_uai(variables: VariablesConfig) -> VariablesConfig:
 def _construire_table_variante(
     settings: Settings, variables: VariablesConfig, *, inclure_sous_reserve: bool
 ) -> pd.DataFrame:
-    """Une table de variables (E20) reconstruite avec un classement autre que celui de production,
+    """Une table de variables reconstruite avec un classement autre que celui de production,
     puis enrichie de `taux_session_precedente` exactement comme `models.train.charger_table`.
     """
     fait_admission, dim_formation, dim_profil, silver = _charger_gold_et_silver(settings)
@@ -190,7 +190,7 @@ def _entrainer_variante(table: pd.DataFrame, colonnes: list[str], settings: Sett
 
 @dataclass(frozen=True)
 class ResultatVariante:
-    """Le score d'une variante d'ablation, à déclarer tel quel — écart nul compris (E27)."""
+    """Le score d'une variante d'ablation, à déclarer tel quel — écart nul compris."""
 
     nom: str
     description: str
@@ -358,17 +358,17 @@ def _variante_sans_substituts_genre(
 
 
 def _composition_genre_session(settings: Settings, session: int) -> pd.DataFrame:
-    """La composition candidate par genre de chaque formation d'une session donnée (silver, E15).
+    """La composition candidate par genre de chaque formation d'une session donnée (silver).
 
     Même formule que `fairness.charger_composition_genre` (ADR 0011), mais
     paramétrée sur `session` plutôt que figée sur la session de test : cette
     ablation compare deux modèles sur la **validation** 2024 (voir le
     docstring du module), sans jamais retoucher au test 2025 que
-    `models.fairness` (E26) a déjà consulté pour la configuration complète.
+    `models.fairness` a déjà consulté pour la configuration complète.
     """
     chemin = fairness.chemin_silver(settings)
     if not chemin.exists():
-        raise ErreurAblation(f"{chemin} est introuvable : exécuter `make silver` (E15) avant l'ablation.")
+        raise ErreurAblation(f"{chemin} est introuvable : exécuter `make silver` avant l'ablation.")
     colonnes = ["session", "cod_aff_form", "voe_tot", "voe_tot_f"]
     silver = pq.read_table(chemin, columns=colonnes).to_pandas()
     silver = silver.loc[silver["session"] == session].copy()
@@ -436,7 +436,7 @@ class ComparaisonEquiteGenre:
 
 
 def _baseline_validation(resultat: train.ResultatEntrainement, settings: Settings) -> pd.Series:
-    """La prédiction du plancher (E21), à couverture égale, sur la seule validation 2024.
+    """La prédiction du plancher, à couverture égale, sur la seule validation 2024.
 
     Réutilisée pour comparer, à équité égale, le modèle complet et la
     variante sans substituts au même repère — jamais recalculée séparément.
@@ -476,7 +476,7 @@ def _comparaison_equite_genre(
 # ─── Assemblage du rapport ───────────────────────────────────────────────────
 
 DECLARATION_SIRENE = (
-    "Ablation impossible à mesurer, pas nulle : la chaîne NAF -> ROME -> formation (E18) ne "
+    "Ablation impossible à mesurer, pas nulle : la chaîne NAF -> ROME -> formation ne "
     "relie aucune formation Parcoursup (dim_formation) — huit millésimes vérifiés, aucun ne porte "
     "de code RNCP, NSF ou ROME (referentiel/naf_rome_formation.py, manques_declares). Sirene n'a "
     "donc aucune colonne à retirer d'un modèle où elle n'est déjà pas entrée : ce n'est pas un "
@@ -486,7 +486,7 @@ DECLARATION_SIRENE = (
 
 @dataclass(frozen=True)
 class RapportAblation:
-    """Ce que `make ablation` (E27) a produit : sept variantes, l'arbitrage genre, à déclarer telles quelles."""
+    """Ce que `make ablation` a produit : sept variantes, l'arbitrage genre, à déclarer telles quelles."""
 
     variantes: list[ResultatVariante]
     equite_genre: ComparaisonEquiteGenre
@@ -494,14 +494,14 @@ class RapportAblation:
     declaration_sirene: str = field(default=DECLARATION_SIRENE)
 
     def resume(self) -> str:
-        lignes = ["Ablation (E27) — écart mesuré par variante, sur la validation 2024 :", ""]
+        lignes = ["Ablation — écart mesuré par variante, sur la validation 2024 :", ""]
         lignes += [variante.resume() for variante in self.variantes]
         lignes.append("")
         lignes.append(self.equite_genre.resume())
         lignes.append("")
         lignes.append(
-            "Configuration retenue (production, E22) — score de test 2025, touché une seule "
-            f"fois par E22, non recalculé ici : {self.scores_test_configuration_retenue.resume()}"
+            "Configuration retenue (production) — score de test 2025, touché une seule "
+            f"fois par l'entraînement de production, non recalculé ici : {self.scores_test_configuration_retenue.resume()}"
         )
         lignes.append("")
         lignes.append(f"Sirene : {self.declaration_sirene}")
@@ -509,11 +509,11 @@ class RapportAblation:
 
 
 def _journaliser_mlflow(rapport: RapportAblation, settings: Settings) -> None:
-    """Enregistre chaque variante comme un run MLflow taggé (E27) : même politique que les
+    """Enregistre chaque variante comme un run MLflow taggé : même politique que les
     autres étapes du module `models` — absence de tracking journalisée, jamais masquée.
     """
     if not settings.mlflow_tracking_uri:
-        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : ablation non journalisée dans MLflow (E27).")
+        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : ablation non journalisée dans MLflow.")
         return
     try:
         import mlflow
@@ -525,7 +525,7 @@ def _journaliser_mlflow(rapport: RapportAblation, settings: Settings) -> None:
     mlflow.set_experiment(NOM_EXPERIENCE_MLFLOW)
     for variante in rapport.variantes:
         with mlflow.start_run(run_name=f"ablation-{variante.nom}"):
-            mlflow.set_tag("etape", "E27")
+            mlflow.set_tag("etape", "ablation")
             mlflow.set_tag("variante", variante.nom)
             mlflow.log_param("n_variables", variante.n_variables)
             mlflow.log_param("description", variante.description)
@@ -533,7 +533,7 @@ def _journaliser_mlflow(rapport: RapportAblation, settings: Settings) -> None:
             mlflow.log_metric("ecart_mae_vs_complet", variante.ecart_mae_vs_complet)
             mlflow.log_metric("ece_validation", variante.ece_validation)
     with mlflow.start_run(run_name="ablation-equite-genre"):
-        mlflow.set_tag("etape", "E27")
+        mlflow.set_tag("etape", "ablation")
         # `nanmin` : un ratio `NaN` (aucune sélection dans aucun groupe fiable,
         # voir `fairness._ratios_relatifs_au_maximum`) ne doit pas invalider
         # tout le minimum — même politique que `fairness._journaliser_mlflow`.
@@ -548,12 +548,12 @@ def _journaliser_mlflow(rapport: RapportAblation, settings: Settings) -> None:
 
 
 def executer(settings: Settings | None = None) -> RapportAblation:
-    """Point d'entrée de `make ablation` (E27) : entraîne les sept variantes, compare, journalise."""
+    """Point d'entrée de `make ablation` : entraîne les sept variantes, compare, journalise."""
     settings = settings or get_settings()
     variables = settings.modele.variables
 
     # Référence : la configuration de production, déjà entraînée et évaluée
-    # par E22. Son score de test est celui rapporté pour "la configuration
+    # par l'entraînement de production. Son score de test est celui rapporté pour "la configuration
     # retenue" — jamais recalculé, seulement reporté (voir docstring du module).
     resultat_complet = train.entrainer_et_evaluer(settings)
     table = resultat_complet.table
@@ -570,7 +570,7 @@ def executer(settings: Settings | None = None) -> RapportAblation:
     reference = ResultatVariante(
         nom="modele_complet",
         description=(
-            "Référence de production (E22) : 9 colonnes de catalogue, 35 décalées, "
+            "Référence de production : 9 colonnes de catalogue, 35 décalées, "
             "taux_session_precedente inclus ; mentions et cod_uai exclus (ADR 0013)."
         ),
         n_variables=len(colonnes),
@@ -615,7 +615,7 @@ def executer(settings: Settings | None = None) -> RapportAblation:
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Ablation (E27) terminée.\n%s", rapport.resume())
+    LOGGER.info("Ablation terminée.\n%s", rapport.resume())
     return 0
 
 

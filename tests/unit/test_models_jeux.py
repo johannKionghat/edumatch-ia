@@ -1,4 +1,4 @@
-"""Tests unitaires de `models/jeux.py` : la préparation des jeux, partagée par E22 et E23.
+"""Tests unitaires de `models/jeux.py` : la préparation des jeux, partagée par l'entraînement et l'évaluation.
 
 `preparer_matrice` et `evaluer_sur_perimetre` sont déjà exercées indirectement
 via `tests/unit/test_models_train.py` (qui les importe depuis

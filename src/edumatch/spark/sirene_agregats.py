@@ -1,4 +1,4 @@
-"""Agrégat Sirene commune x NAF (E17), moteur Spark — le chemin du cluster de production.
+"""Agrégat Sirene commune x NAF, moteur Spark — le chemin du cluster de production.
 
 Même agrégation, même grain, mêmes neuf colonnes et mêmes règles métier que
 `sirene_agregats_polars.py` (les deux importent leurs définitions communes de

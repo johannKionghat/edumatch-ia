@@ -320,7 +320,7 @@ def test_aucun_identifiant_ni_url_de_jeu_de_donnees_en_dur() -> None:
 
 # ─── Transitoire contre définitif — même vocabulaire que Sirene ─────────────
 #
-# Le DAG Airflow (E33) doit pouvoir choisir entre retenter et alerter sans
+# Le DAG Airflow doit pouvoir choisir entre retenter et alerter sans
 # connaître le connecteur en cause : ces tests prouvent que Parcoursup lève
 # la même hiérarchie que Sirene (`ErreurTransitoire` / `ErreurDefinitive` de
 # `_flux.py`), pas seulement sa propre base `ErreurTelechargementParcoursup`.

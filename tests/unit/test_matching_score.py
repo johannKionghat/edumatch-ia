@@ -63,7 +63,7 @@ def test_le_score_est_le_produit_exact_des_trois_termes() -> None:
     [(0.0, 0.9, 0.9), (0.9, 0.0, 0.9), (0.9, 0.9, 0.0)],
 )
 def test_un_terme_nul_supprime_le_score(affinite_valeur: float, accessibilite: float, debouches_valeur: float) -> None:
-    """Le critère de validation de l'E28 : un terme nul, quel qu'il soit, ramène le score à 0."""
+    """Le critère de validation du score à trois termes : un terme nul, quel qu'il soit, ramène le score à 0."""
     resultat = calculer_score(
         _terme_affinite(affinite_valeur), accessibilite, _terme_debouches(debouches_valeur), "cellule-1"
     )

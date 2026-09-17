@@ -1,4 +1,4 @@
-"""Schémas Pydantic de l'API (E29) : contrat d'entrée et de sortie, validation stricte.
+"""Schémas Pydantic de l'API : contrat d'entrée et de sortie, validation stricte.
 
 Aucune logique métier ici : ce module traduit les dataclasses de `matching/`
 et de `models/explain.py` vers un contrat HTTP stable et documenté (OpenAPI).
@@ -153,7 +153,7 @@ class ReponseExplication(BaseModel):
     prediction: float
     valeur_base: float = Field(description="Moyenne de la cible sur l'échantillon d'arrière-plan (TreeSHAP).")
     contributions: list[ContributionReponse] = Field(
-        description="Triées par contribution absolue décroissante, précalculées (E25) — jamais recalculées ici."
+        description="Triées par contribution absolue décroissante, précalculées — jamais recalculées ici."
     )
     avertissement_accessibilite: str
     avis_assistance: str = AVIS_ASSISTANCE
@@ -201,7 +201,7 @@ class ReponseFeedback(BaseModel):
     enregistre: bool = True
 
 
-# ─── /assistant (E32, brique secondaire) ──────────────────────────────────────
+# ─── /assistant (brique secondaire) ──────────────────────────────────────
 
 
 class RequeteAssistant(BaseModel):

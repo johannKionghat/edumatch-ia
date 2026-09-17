@@ -1,7 +1,7 @@
-# Image du planificateur Airflow (E33, E35) : `apache/airflow:2.9.3` complétée avec le paquet
+# Image du planificateur Airflow : `apache/airflow:2.9.3` complétée avec le paquet
 # du projet. Sans elle, `pipelines/edumatch_pipeline.py` ne s'importe pas dans le conteneur
 # `airflow` de `docker-compose.yml` — l'image de base ne contient ni `edumatch` ni ses
-# dépendances (pandas, lightgbm, mlflow...) — et aucun des quatre DAG (E33) n'apparaît dans
+# dépendances (pandas, lightgbm, mlflow...) — et aucun des quatre DAG n'apparaît dans
 # l'interface. C'est exactement la lacune déclarée à l'étape précédente ; ce fichier la comble.
 #
 # ⚠️ Ni JRE, ni extra `[spark]`, volontairement — deux essais réels, dans l'ordre, avant cette

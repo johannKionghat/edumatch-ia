@@ -1,4 +1,4 @@
-# Pile de production de l'orchestrateur (E33, E35, ADR 0019 amendé) — l'instance
+# Pile de production de l'orchestrateur (ADR 0019 amendé) — l'instance
 # Scaleway DEV1-L dédiée à Airflow, PAS le cluster Kapsule qui héberge l'API. Voir
 # `docs/sous-docs-projets/adr/0019-airflow-en-production-sur-instance-dediee.md`
 # pour l'arbitrage complet et `docs/sous-docs-projets/03-pipeline/orchestration.md`

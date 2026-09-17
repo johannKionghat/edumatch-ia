@@ -1,7 +1,7 @@
-"""Test du point d'entrée `make baseline` (E21), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make baseline`, de bout en bout, sur les échantillons.
 
-Même schéma que `test_features_build_run.py` (E20) : un `data_root` jetable
-dans `tmp_path`, silver (E15), gold (E16) puis la table de variables (E20)
+Même schéma que `test_features_build_run.py` : un `data_root` jetable
+dans `tmp_path`, silver, gold puis la table de variables
 produits depuis les huit échantillons versionnés, puis `edumatch.models.baseline`
 dessus. Aucune écriture dans `data/processed/` du dépôt.
 """

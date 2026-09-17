@@ -1,5 +1,5 @@
-"""Métriques d'évaluation partagées entre la baseline (E21), l'entraînement (E22) et
-l'évaluation (E23).
+"""Métriques d'évaluation partagées entre la baseline, l'entraînement et
+l'évaluation.
 
 ## Pourquoi un module séparé
 
@@ -7,8 +7,8 @@ l'évaluation (E23).
 ligne, mêlée à la logique propre aux variantes de baseline
 (`_score_sur_sous_ensemble`). Ce module en extrait la seule partie
 générique — le calcul d'un écart absolu moyen, pondéré ou non, sur des
-`pandas.Series` alignées par index — pour que `train.py` (E22) ne la
-réécrive pas et que `evaluate.py` (E23) l'utilise à l'identique. Le calcul de
+`pandas.Series` alignées par index — pour que `train.py` ne la
+réécrive pas et que `evaluate.py` l'utilise à l'identique. Le calcul de
 la baseline lui-même n'est pas modifié : la fonction publique de
 `baseline.py` (`_score_sur_sous_ensemble`) continue d'exister telle quelle,
 seule la formule qu'elle partage avec l'entraînement est désormais unique.
@@ -22,10 +22,10 @@ pèse pas autant dans l'entraînement (poids d'effectif, ADR 0009).
 
 `ScoreSession` et `score_baseline_couverture_egale` vivent ici pour la même
 raison : `models.train` (le modèle) et le plancher qu'il faut lui comparer
-(E21) doivent produire le même type de score, sur le même périmètre, avec la
+ doivent produire le même type de score, sur le même périmètre, avec la
 même formule — sinon la comparaison mélange des mesures qui ne se
-répondent pas (voir le compte rendu de l'étape E22, correction de la
-comparaison à couverture égale).
+répondent pas (correction de la comparaison à couverture égale, voir
+l'entraînement).
 """
 
 from __future__ import annotations
@@ -90,10 +90,10 @@ def predictions_baseline_couverture_egale(
     moyenne_groupe: pd.Series,
     sessions: list[int],
 ) -> pd.Series:
-    """La prédiction du plancher (E21), avec repli, sur `sessions` — sans la noter.
+    """La prédiction du plancher, avec repli, sur `sessions` — sans la noter.
 
     Extrait de `score_baseline_couverture_egale` pour qu'`models.evaluate`
-    (E23) puisse comparer cette même prédiction, cellule par cellule, à la
+    puisse comparer cette même prédiction, cellule par cellule, à la
     cible observée dans le diagramme de calibration et la ventilation par
     type de baccalauréat, pas seulement en tirer une MAE agrégée. Voir cette
     fonction pour la raison du repli par la moyenne de groupe.
@@ -110,7 +110,7 @@ def score_baseline_couverture_egale(
     sessions: list[int],
     perimetre: str,
 ) -> ScoreSession:
-    """Le plancher (E21) sur `sessions`, avec repli, jugé sur EXACTEMENT le même périmètre qu'un modèle.
+    """Le plancher sur `sessions`, avec repli, jugé sur EXACTEMENT le même périmètre qu'un modèle.
 
     `table[colonne_prediction]` porte la prédiction `session_precedente`
     (sans repli, `models.baseline.predire_session_precedente`) ; cette
@@ -157,7 +157,7 @@ def score(y: pd.Series, poids: pd.Series, prediction: np.ndarray, perimetre: str
 @dataclass(frozen=True)
 class PointCalibration:
     """Un point du diagramme de fiabilité : une tranche de valeur prédite, sa moyenne
-    prédite et sa moyenne observée, toutes deux pondérées par l'effectif (E23).
+    prédite et sa moyenne observée, toutes deux pondérées par l'effectif.
     """
 
     tranche: int
@@ -274,7 +274,7 @@ def classement_importance(modele: object, colonnes: list[str]) -> list[tuple[str
     typé `object` plutôt que `lgb.LGBMRegressor` pour ne pas faire de ce
     module purement numérique une dépendance de LightGBM : seul
     `modele.booster_.feature_importance` est requis. Ce n'est **pas** une
-    valeur de Shapley (E25) : c'est une vue globale, pas une décomposition
+    valeur de Shapley : c'est une vue globale, pas une décomposition
     additive d'une prédiction individuelle, et elle ne dit rien sur la
     direction de l'effet ni sur les interactions entre variables.
     """

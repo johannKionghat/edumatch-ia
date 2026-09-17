@@ -1,4 +1,4 @@
-"""Reprise sur erreur pour l'orchestrateur (E33, critère 3.4).
+"""Reprise sur erreur pour l'orchestrateur (critère 3.4).
 
 Rejoue une tâche entière avec temporisation croissante quand elle échoue
 d'une manière transitoire, et abandonne immédiatement — sans nouvelle

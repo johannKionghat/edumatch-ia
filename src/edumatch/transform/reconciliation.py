@@ -1,4 +1,4 @@
-"""Réconciliation bronze vers silver des huit millésimes Parcoursup (E15).
+"""Réconciliation bronze vers silver des huit millésimes Parcoursup.
 
 Ce module ne connaît qu'un DataFrame par millésime — chargé depuis un CSV
 (`reconcilier`) ou déjà chargé par un moteur tiers, DuckDB en particulier
@@ -38,7 +38,7 @@ Trois opérations, dans l'ordre, appliquées à chaque millésime avant l'union 
    explicite n'est donc pas redondant avec le hasard des données, il rend la
    décision indépendante de ce hasard.
 
-Ce que ce module ne fait pas : il ne calcule pas le label (E19), il ne décide
+Ce que ce module ne fait pas : il ne calcule pas le label, il ne décide
 pas quelles colonnes entrent dans le modèle (déjà fait, ADR 0013) — il rend
 disponible, sous un schéma stable et typé, la totalité des colonnes déjà
 classées, pour que ces deux étapes n'aient plus à lire un CSV brut.
@@ -87,7 +87,7 @@ class ErreurReconciliationParcoursup(RuntimeError):
 class RapportReconciliation:
     """Ce que la réconciliation a réellement constaté, millésime par millésime.
 
-    Sert à la fois de preuve (E15 exige une couverture « mesurée et
+    Sert à la fois de preuve (la réconciliation exige une couverture « mesurée et
     déclarée », pas supposée) et de journal d'exécution : `run.py` l'affiche
     à la fin de chaque passage.
     """
@@ -303,7 +303,7 @@ def ecrire_silver(table: pd.DataFrame, destination: Path) -> None:
     de cette garantie pour les connecteurs : un lecteur concurrent ne voit
     jamais un fichier à moitié écrit, et une interruption au milieu de
     l'écriture ne laisse aucun fichier tronqué sous le nom final. Le format
-    Parquet est retenu pour silver comme pour bronze Sirene (E06) : colonnaire,
+    Parquet est retenu pour silver comme pour bronze Sirene : colonnaire,
     typé, compressé — silver est déjà destiné à être relu par colonnes,
     jamais réécrit ligne à ligne.
     """

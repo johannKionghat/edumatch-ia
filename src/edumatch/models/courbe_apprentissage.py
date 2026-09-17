@@ -1,8 +1,8 @@
-"""Courbe d'apprentissage du modèle d'accessibilité (E24) : le volume suffit-il ?
+"""Courbe d'apprentissage du modèle d'accessibilité : le volume suffit-il ?
 
 ## La question posée, et pourquoi une courbe plutôt qu'une affirmation
 
-L'entraînement (E22) montre un modèle qui bat le plancher en validation 2024
+L'entraînement montre un modèle qui bat le plancher en validation 2024
 mais reste derrière en test 2025 (voir `models/train.py`,
 `HYPERPARAMETRES_EXPLORES`). Deux causes distinctes produisent le même
 symptôme et ne se soignent pas de la même façon :
@@ -45,9 +45,9 @@ validation.
 
 ## Ce que ce module réutilise, et ne recalcule jamais deux fois
 
-La table de variables (E20), les colonnes licites (E22, `colonnes_features`),
+La table de variables, les colonnes licites (`colonnes_features`),
 la préparation des types (`preparer_matrice`), l'ajout du taux précédent
-(`ajouter_taux_precedent`) et la formule de MAE pondérée (`metrics.py`, E22)
+(`ajouter_taux_precedent`) et la formule de MAE pondérée (`metrics.py`)
 sont importés tels quels depuis `models.train` et `models.metrics` — jamais
 réécrits ici. Seuls le sous-échantillonnage par palier et le tracé sont
 propres à ce module.
@@ -56,7 +56,7 @@ propres à ce module.
 
 Les paliers (10, 25, 50, 100 %) sont des constantes de ce module plutôt
 qu'une entrée de `configs/base.yaml` : un travail parallèle modifie ce
-fichier au moment de l'écriture de ce module (E23, évaluation et
+fichier au moment de l'écriture de ce module (évaluation et
 calibration). Les y ajouter est un simple déplacement, sans risque
 d'incohérence — mais qui doit attendre que ce fichier ne soit plus en cours
 de modification par un autre travail.
@@ -86,8 +86,8 @@ LOGGER = logging.getLogger(__name__)
 DOSSIER_FIGURES_DEFAUT = PROJECT_ROOT / "reports" / "figures"
 NOM_FIGURE = "courbe-apprentissage.png"
 
-# Les quatre paliers demandés par le plan d'exécution (E24). 1.0 rejoue
-# exactement l'entraînement complet de E22 : aucune donnée n'est retirée.
+# Les quatre paliers requis pour la courbe d'apprentissage. 1.0 rejoue
+# exactement l'entraînement complet : aucune donnée n'est retirée.
 PALIERS: tuple[float, ...] = (0.10, 0.25, 0.50, 1.00)
 
 GRAINE_ECHANTILLONNAGE = 42
@@ -119,13 +119,13 @@ class PointCourbe:
 
 @dataclass(frozen=True)
 class RapportCourbeApprentissage:
-    """Ce que `make courbe-apprentissage` (E24) produit, à déclarer tel quel."""
+    """Ce que `make courbe-apprentissage` produit, à déclarer tel quel."""
 
     points: list[PointCourbe]
     chemin_figure: Path
 
     def resume(self) -> str:
-        lignes = ["Courbe d'apprentissage (E24), MAE pondérée par palier de volume d'entraînement :"]
+        lignes = ["Courbe d'apprentissage, MAE pondérée par palier de volume d'entraînement :"]
         lignes.extend(f"  {point.resume()}" for point in self.points)
         lignes.append(f"  figure : {self.chemin_figure}")
         return "\n".join(lignes)
@@ -145,7 +145,7 @@ def echantillonner_par_session(
 
     `fraction == 1.0` retourne la table telle quelle plutôt que de rappeler
     `sample` : un tirage à 100 % doit être identique, ligne pour ligne, à
-    l'entraînement complet de E22, jamais un réordonnancement aléatoire de
+    l'entraînement complet, jamais un réordonnancement aléatoire de
     la même table.
     """
     if not 0.0 < fraction <= 1.0:
@@ -174,7 +174,7 @@ def _jeu_depuis_table(table: pd.DataFrame, colonnes: list[str]) -> JeuDonnees:
 def calculer_courbe(settings: Settings) -> list[PointCourbe]:
     """Entraîne le modèle sur chaque palier de `PALIERS` et mesure les deux MAE pondérées.
 
-    Mêmes hyperparamètres et même arrêt anticipé sur la validation qu'en E22
+    Mêmes hyperparamètres et même arrêt anticipé sur la validation qu'à l'entraînement
     (`settings.modele.hyperparametres`) : seul le volume d'entraînement
     varie d'un palier à l'autre, jamais le réglage du modèle — sinon la
     courbe mêlerait l'effet du volume à un effet de réglage, et perdrait sa
@@ -216,7 +216,7 @@ def tracer_courbe(points: list[PointCourbe], chemin: Path) -> Path:
     axe.plot(fractions_pct, [p.mae_validation for p in points], marker="o", label="MAE pondérée — validation 2024")
     axe.set_xlabel("Part du jeu d'entraînement utilisée (%)")
     axe.set_ylabel("Erreur absolue moyenne pondérée par l'effectif")
-    axe.set_title("Courbe d'apprentissage (E24) — le volume d'entraînement suffit-il ?")
+    axe.set_title("Courbe d'apprentissage — le volume d'entraînement suffit-il ?")
     axe.set_xticks(fractions_pct)
     axe.legend()
     axe.grid(True, alpha=0.3)
@@ -233,7 +233,7 @@ def _journaliser_mlflow(points: list[PointCourbe], settings: Settings, chemin_fi
     masquée — la courbe est déjà calculée et tracée avant cet appel.
     """
     if not settings.mlflow_tracking_uri:
-        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : courbe d'apprentissage non journalisée dans MLflow (E24).")
+        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : courbe d'apprentissage non journalisée dans MLflow.")
         return
     try:
         import mlflow
@@ -244,7 +244,7 @@ def _journaliser_mlflow(points: list[PointCourbe], settings: Settings, chemin_fi
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment(NOM_EXPERIENCE_MLFLOW)
     with mlflow.start_run(run_name="courbe-apprentissage-e24"):
-        mlflow.set_tag("etape", "E24")
+        mlflow.set_tag("etape", "courbe_apprentissage")
         for point in points:
             suffixe = f"{int(point.fraction * 100)}pct"
             mlflow.log_metric(f"mae_entrainement_{suffixe}", point.mae_entrainement)
@@ -254,7 +254,7 @@ def _journaliser_mlflow(points: list[PointCourbe], settings: Settings, chemin_fi
 
 
 def executer(settings: Settings | None = None, dossier_figures: Path | None = None) -> RapportCourbeApprentissage:
-    """Point d'entrée de `make courbe-apprentissage` (E24) : le rapport complet, figure comprise.
+    """Point d'entrée de `make courbe-apprentissage` : le rapport complet, figure comprise.
 
     `dossier_figures` : `reports/figures/` du dépôt par défaut ; paramétrable
     pour que les tests écrivent dans un répertoire jetable plutôt que dans le
@@ -273,7 +273,7 @@ def executer(settings: Settings | None = None, dossier_figures: Path | None = No
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Courbe d'apprentissage (E24) terminée.\n%s", rapport.resume())
+    LOGGER.info("Courbe d'apprentissage terminée.\n%s", rapport.resume())
     return 0
 
 

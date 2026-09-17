@@ -1,4 +1,4 @@
-# Ce qui ne doit jamais entrer dans une image (E35).
+# Ce qui ne doit jamais entrer dans une image.
 #
 # Deux raisons distinctes se mélangent ici : la taille (une image qui
 # embarque data/ dépasserait 4,6 Go pour un service qui n'en a pas besoin

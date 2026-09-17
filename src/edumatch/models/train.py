@@ -1,8 +1,8 @@
-"""Entraînement du modèle d'accessibilité (E22) : LightGBM pondéré, tracé dans MLflow.
+"""Entraînement du modèle d'accessibilité : LightGBM pondéré, tracé dans MLflow.
 
 ## Ce que ce module fait, et rien de plus
 
-`features/build.py` (E20) a produit la table de variables, une ligne par
+`features/build.py` a produit la table de variables, une ligne par
 cellule `(session, formation, type de baccalauréat, boursier)`, avec son
 label (`taux`) et son effectif (`effectif`). Ce module :
 
@@ -23,7 +23,7 @@ arrêtés par `configs/base.yaml` — jamais pour choisir entre configurations
 ## Le plancher, comparé à couverture égale, et le taux précédent comme variable
 
 `RapportEntrainement.baseline_validation` / `.baseline_test` mesurent le
-plancher E21 (`session_precedente_avec_repli`) sur EXACTEMENT le périmètre du
+plancher (`session_precedente_avec_repli`) sur EXACTEMENT le périmètre du
 modèle (100 % des cellules) : le juger à couverture partielle exagérerait
 l'écart, voir `HYPERPARAMETRES_EXPLORES` pour les chiffres. `ajouter_taux_precedent`
 calcule ce même plancher (sans repli, `a_antecedent` signale l'absence) et le
@@ -54,7 +54,7 @@ LightGBM plutôt qu'un réseau de neurones, pour la même raison qu'à l'étape
 de conception (`04-modele/specification.md`) : données tabulaires et
 hétérogènes, valeurs manquantes structurelles (ADR 0013 §6) — un réseau
 n'apporterait rien sur ce volume (286 463 cellules d'entraînement) et
-coûterait l'explicabilité exacte que permet TreeSHAP (E25).
+coûterait l'explicabilité exacte que permet TreeSHAP.
 """
 
 from __future__ import annotations
@@ -109,7 +109,7 @@ COLONNES_NON_FEATURES: tuple[str, ...] = (
 #
 # `prop_tot_{cat}` et `nb_voe_pp_{cat}` (colonnes décalées, ADR 0013 §2) sont
 # déjà des variables licites du modèle : le numérateur et le dénominateur du
-# taux de la baseline (E21) sont donc déjà visibles, séparément, par cellule.
+# taux de la baseline sont donc déjà visibles, séparément, par cellule.
 # Un ensemble d'arbres n'apprend pas nativement une division ; il l'approxime
 # par des coupures successives, ce qui coûte de la précision sur la relation
 # la plus forte du problème. `ajouter_taux_precedent` calcule le quotient une
@@ -157,7 +157,7 @@ COLONNES_DERIVEES: tuple[str, ...] = (COLONNE_TAUX_PRECEDENT, COLONNE_A_ANTECEDE
 # plancher) et 0,0758 test (encore au-dessus, mais l'écart passe de 0,0119 à
 # 0,0057). Elle domine `classement_importance` d'un ordre de grandeur —
 # lecture développée dans le compte rendu de l'étape, utile à l'ablation
-# (E27).
+#.
 HYPERPARAMETRES_EXPLORES = "voir le commentaire ci-dessus : recherche conduite hors module, sur validation uniquement"
 
 
@@ -174,7 +174,7 @@ class ErreurEntrainement(ErreurJeuxDonnees):
 
 @dataclass(frozen=True)
 class RapportEntrainement:
-    """Ce que `make train` (E22) a produit, à déclarer tel quel."""
+    """Ce que `make train` a produit, à déclarer tel quel."""
 
     colonnes_categorielles: list[str]
     colonnes_numeriques: list[str]
@@ -184,7 +184,7 @@ class RapportEntrainement:
     scores_test: ScoreSession
     scores_par_session: list[ScoreSession]
     importance_variables: list[tuple[str, float]]
-    # Le plancher (E21), à COUVERTURE ÉGALE avec le modèle (100 %, grâce au
+    # Le plancher, à COUVERTURE ÉGALE avec le modèle (100 %, grâce au
     # repli sur la moyenne de groupe) : sans lui, le plancher serait jugé sur
     # le seul sous-ensemble le plus facile, un biais qui exagère l'écart.
     baseline_validation: ScoreSession
@@ -198,8 +198,8 @@ class RapportEntrainement:
             ),
             f"  {self.scores_validation.resume()}  (choix des hyperparamètres et du nombre d'arbres)",
             f"  {self.scores_test.resume()}  (touché une seule fois, à la fin)",
-            f"  {self.baseline_validation.resume()}  (plancher E21, à couverture égale)",
-            f"  {self.baseline_test.resume()}  (plancher E21, à couverture égale)",
+            f"  {self.baseline_validation.resume()}  (plancher, à couverture égale)",
+            f"  {self.baseline_test.resume()}  (plancher, à couverture égale)",
         ]
         for score in self.scores_par_session:
             lignes.append(f"    {score.resume()}")
@@ -243,7 +243,7 @@ def ajouter_taux_precedent(table: pd.DataFrame) -> pd.DataFrame:
     (ADR 0013 §2), jamais recalculée séparément — pour que la variable donnée
     au modèle soit *exactement* le plancher qu'elle est censée l'aider à
     dépasser, pas une resucée qui pourrait diverger de lui. Ces deux colonnes
-    sources sont déjà décalées d'une session par `features.build` (E20, contrat
+    sources sont déjà décalées d'une session par `features.build` (contrat
     anti-fuite vérifié par mutation) : ajouter ce dérivé ici ne lit donc rien
     de plus tôt que ce que ce contrat autorise déjà.
 
@@ -337,7 +337,7 @@ def _journaliser_mlflow(
     dépend jamais de MLflow.
     """
     if not settings.mlflow_tracking_uri:
-        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : entraînement non journalisé dans MLflow (E22).")
+        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : entraînement non journalisé dans MLflow.")
         return
     try:
         import mlflow
@@ -350,7 +350,7 @@ def _journaliser_mlflow(
     mlflow.set_experiment(NOM_EXPERIENCE_MLFLOW)
     variante = "avec-taux-precedent" if settings.modele.inclure_taux_precedent else "sans-taux-precedent"
     with mlflow.start_run(run_name=f"lightgbm-pondere-{variante}"):
-        mlflow.set_tag("etape", "E22")
+        mlflow.set_tag("etape", "train")
         mlflow.set_tag("variante", variante)
         commit = _commit_git()
         if commit:
@@ -380,14 +380,14 @@ def _journaliser_mlflow(
 def charger_table(settings: Settings) -> pd.DataFrame:
     """Charge la table de variables et y ajoute le taux de la session précédente.
 
-    Partagé avec `models.evaluate` (E23) : les deux modules doivent lire
+    Partagé avec `models.evaluate` : les deux modules doivent lire
     exactement la même table, avec la même colonne dérivée, pour que les
     prédictions qu'`evaluate.py` recalcule s'alignent, ligne à ligne, sur
     celles évaluées ici.
     """
     chemin = chemin_table_variables(settings)
     if not chemin.exists():
-        raise ErreurEntrainement(f"{chemin} est introuvable : exécuter `make features` (E20) avant `make train`.")
+        raise ErreurEntrainement(f"{chemin} est introuvable : exécuter `make features` avant `make train`.")
     table = pq.read_table(chemin).to_pandas()
     return ajouter_taux_precedent(table)
 
@@ -409,7 +409,7 @@ def preparer_jeux(
 
 @dataclass(frozen=True)
 class ResultatEntrainement:
-    """Tout ce que produit un entraînement complet (E22), y compris ce que l'évaluation (E23)
+    """Tout ce que produit un entraînement complet, y compris ce que l'évaluation
     réutilise pour ne jamais recalculer un modèle ou une prédiction déjà obtenus ici.
     """
 
@@ -424,7 +424,7 @@ class ResultatEntrainement:
     moyenne_groupe: pd.Series
 
 
-# ─── L'artefact que sert l'API, sans jamais réentraîner (E29, E35) ─────────
+# ─── L'artefact que sert l'API, sans jamais réentraîner ─────────
 #
 # Colonnes du catalogue de la session courante retenues pour le matching :
 # les six colonnes requises par `matching.score.recommander`
@@ -466,7 +466,7 @@ def construire_catalogue_predictions(resultat: ResultatEntrainement) -> pd.DataF
 
 
 def exporter_catalogue_predictions(resultat: ResultatEntrainement, settings: Settings) -> Path:
-    """Écrit l'artefact que l'API charge au démarrage (E29, E35) : sans lui, `construire_etat_matching`
+    """Écrit l'artefact que l'API charge au démarrage : sans lui, `construire_etat_matching`
     retombe sur un entraînement complet — acceptable en développement, pas en production, où cet
     artefact est produit par `make train` (ou `docker/Dockerfile.train`) et monté en volume au
     même chemin (`processed_dir`, dérivé de `EDUMATCH_DATA_ROOT`) que l'API lit.
@@ -485,7 +485,7 @@ def exporter_catalogue_predictions(resultat: ResultatEntrainement, settings: Set
 
 
 def entrainer_et_evaluer(settings: Settings | None = None) -> ResultatEntrainement:
-    """Charge la table de variables, entraîne le modèle et l'évalue selon le protocole (E22).
+    """Charge la table de variables, entraîne le modèle et l'évalue selon le protocole.
 
     Le test n'est chargé et prédit qu'une fois le modèle définitivement
     entraîné (arrêt anticipé décidé sur la seule validation) : aucune boucle
@@ -541,9 +541,9 @@ def entrainer_et_evaluer(settings: Settings | None = None) -> ResultatEntraineme
 
 
 def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, RapportEntrainement]:
-    """Point d'entrée de `make train` (E22) : le modèle entraîné et son rapport, rien de plus.
+    """Point d'entrée de `make train` : le modèle entraîné et son rapport, rien de plus.
 
-    `evaluate.py` (E23) appelle `entrainer_et_evaluer` directement plutôt que
+    `evaluate.py` appelle `entrainer_et_evaluer` directement plutôt que
     cette fonction, pour récupérer aussi les jeux et les prédictions sans les
     recalculer une seconde fois.
     """
@@ -552,7 +552,7 @@ def executer(settings: Settings | None = None) -> tuple[lgb.LGBMRegressor, Rappo
 
 
 def main() -> int:
-    """Point d'entrée de `make train` et de `docker/Dockerfile.train` (E22, E35).
+    """Point d'entrée de `make train` et de `docker/Dockerfile.train`.
 
     Exporte aussi le catalogue de prédictions (`exporter_catalogue_predictions`) : c'est cet
     artefact, monté en volume au même chemin par l'image de service, qui évite à l'API de
@@ -560,7 +560,7 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     settings = get_settings()
     resultat = entrainer_et_evaluer(settings)
-    LOGGER.info("Entraînement (E22) terminé.\n%s", resultat.rapport.resume())
+    LOGGER.info("Entraînement terminé.\n%s", resultat.rapport.resume())
     chemin = exporter_catalogue_predictions(resultat, settings)
     LOGGER.info("Catalogue de prédictions exporté vers %s : l'API le charge au démarrage, sans réentraîner.", chemin)
     return 0

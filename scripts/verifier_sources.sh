@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Vérification des métadonnées des sources — E03.
+# Vérification des métadonnées des sources.
 #
 # Interroge uniquement les catalogues (API opendatasoft, API data.gouv), ne
 # télécharge jamais les fichiers volumineux (8 CSV Parcoursup, 11 Go Sirene).

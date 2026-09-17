@@ -1,9 +1,9 @@
-"""Route `/assistant` (E32) : assistant documentaire qui répond à une question en citant ses
+"""Route `/assistant` : assistant documentaire qui répond à une question en citant ses
 sources.
 
 Brique secondaire : contrairement à `/matching` et `/explain`, cette route ne
 sert aucune prédiction du modèle appris. Elle n'entre dans le périmètre ni de
-l'audit d'équité (E26), ni de la détection de dérive (E34) — voir le
+l'audit d'équité, ni de la détection de dérive — voir le
 docstring de `edumatch.rag`.
 """
 

@@ -1,6 +1,6 @@
-"""Terme de débouchés (E28) sur les échantillons réels de `data/samples/`.
+"""Terme de débouchés sur les échantillons réels de `data/samples/`.
 
-Comme `tests/data/test_referentiel_naf_rome_formation_reel.py` (E18) dont ce
+Comme `tests/data/test_referentiel_naf_rome_formation_reel.py` dont ce
 module réutilise la chaîne : extraits réels, aucun téléchargement, aucune
 garantie de taux d'appariement précis (l'échantillonnage indépendant des
 sources réduit mécaniquement les correspondances trouvées) — seulement que
@@ -9,13 +9,13 @@ du résultat est celle attendue.
 
 L'agrégat Sirene département x NAF (`construire_agregat_departement_naf`)
 n'est volontairement pas exercé ici : `data/samples/sirene/StockEtablissement.parquet`
-ne porte pas `statutDiffusionEtablissement` (l'échantillon E08 retient les 9
-colonnes utiles à l'E17, qui n'inclut pas le filtre diffusible — voir le
+ne porte pas `statutDiffusionEtablissement` (l'échantillon versionné retient les 9
+colonnes utiles à l'agrégat Sirene, qui n'inclut pas le filtre diffusible — voir le
 docstring de `matching/debouches.py`). Cette fonction est testée sur une
 fixture construite à la main dans `tests/unit/test_matching_debouches.py`,
 avec les 5 colonnes réellement nécessaires ; l'étendre à
 `data/samples/sirene/` est un gap déclaré, pas masqué, à traiter par une
-régénération de l'échantillon (E08) si ce terme doit un jour être démontré
+régénération de l'échantillon si ce terme doit un jour être démontré
 de bout en bout sur des échantillons versionnés plutôt que sur le fichier
 Sirene complet (`data/raw/sirene/`, non versionné, ~4,4 Go).
 """

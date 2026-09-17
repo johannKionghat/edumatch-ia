@@ -1,4 +1,4 @@
-"""Test de contrat du journal d'audit (E30) : `/matching` doit journaliser chaque inférence
+"""Test de contrat du journal d'audit : `/matching` doit journaliser chaque inférence
 (horodatage, exécution, version du modèle, entrées, sortie — article 12), sans jamais écrire
 cette trace via `logging` (voir le docstring de `api/audit.py` et `api/errors.py`)."""
 

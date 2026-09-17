@@ -1,4 +1,4 @@
-"""Tests de la purge du journal d'audit (E30) : les trois paliers de conservation décidés par la
+"""Tests de la purge du journal d'audit : les trois paliers de conservation décidés par la
 gouvernance (`registre-traitements.md`, T5) doivent être **exécutables**, pas seulement écrits —
 voir le docstring de `api/audit_purge.py`.
 """

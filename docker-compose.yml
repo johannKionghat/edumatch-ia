@@ -1,4 +1,4 @@
-# Pile locale complète (E33, E35) : `make up` (ou `docker compose up -d`) lève PostgreSQL,
+# Pile locale complète : `make up` (ou `docker compose up -d`) lève PostgreSQL,
 # MLflow, Airflow (avec les quatre DAG réellement importés), un entraînement unique, puis
 # l'API — sans jamais réentraîner au démarrage de l'API elle-même (voir le service `train`
 # ci-dessous et src/edumatch/api/state.py). `make verifier-pile` interroge chaque sonde et
@@ -6,7 +6,7 @@
 #
 # Ce fichier sert la démonstration locale, pas la production : les images sont construites
 # sur place (`build:`), taguées implicitement par Compose (`edumatch-<service>:latest` en
-# interne, jamais poussé nulle part). En production (E37, Scaleway Kapsule), les mêmes
+# interne, jamais poussé nulle part). En production (Scaleway Kapsule), les mêmes
 # `docker/Dockerfile.*` sont construits par la CI, tagués par l'empreinte courte du commit et
 # poussés vers le registre de conteneurs Scaleway — jamais `latest` dans ce cas-là, voir
 # `docker/Dockerfile.serve` et le dépôt CI/CD pour l'automatisation.
@@ -19,7 +19,7 @@
 name: edumatch
 
 services:
-  # Base relationnelle du backend MLflow (registre d'expériences et de modèles, E22).
+  # Base relationnelle du backend MLflow (registre d'expériences et de modèles).
   # Port 5432 exposé uniquement pour l'inspection locale (`psql`) ; les autres services
   # l'atteignent par le nom de service `postgres`, jamais par `localhost`.
   postgres:
@@ -35,7 +35,7 @@ services:
       interval: 5s
       retries: 10
 
-  # Suivi d'expériences et registre de modèles (E22, critère 4.10). Interface sur le port 5000.
+  # Suivi d'expériences et registre de modèles (critère 4.10). Interface sur le port 5000.
   # `--default-artifact-root /mlartifacts` : les artefacts (modèle LightGBM sérialisé) vivent
   # dans le volume `mlartifacts`, jamais dans l'image ni sur l'hôte hors volume nommé.
   # Registre d'expériences. Deux défauts prouvés à l'exécution, et corrigés ensemble :
@@ -70,13 +70,13 @@ services:
       retries: 10
       start_period: 15s
 
-  # Planificateur Airflow (E33), construit depuis docker/Dockerfile.airflow — c'est cette
+  # Planificateur Airflow, construit depuis docker/Dockerfile.airflow — c'est cette
   # construction qui installe le paquet `edumatch` et ses dépendances par-dessus l'image
   # officielle : sans elle, aucun des quatre DAG de `pipelines/edumatch_pipeline.py` ne
   # s'importe et l'interface (port 8080) les afficherait en erreur. `command: standalone`
   # démarre planificateur, serveur web et base SQLite embarquée dans un seul processus —
-  # suffisant pour une démonstration locale, pas pour la production (E37 y substitue une base
-  # dédiée et des réplicas).
+  # suffisant pour une démonstration locale, pas pour la production (une base
+  # dédiée et des réplicas y sont substitués).
   airflow:
     build:
       context: .
@@ -112,7 +112,7 @@ services:
       retries: 10
       start_period: 60s  # le serveur web Airflow met du temps à répondre au premier démarrage
 
-  # Entraînement unique (E22), exécuté une fois au lever de la pile : c'est lui qui produit
+  # Entraînement unique, exécuté une fois au lever de la pile : c'est lui qui produit
   # `data/processed/matching/catalogue_predictions.parquet`, l'artefact que l'API charge au
   # démarrage pour ne jamais réentraîner elle-même (voir src/edumatch/api/state.py). Un
   # service qui se termine (code de sortie 0), pas un service qui reste vivant — Compose
@@ -128,11 +128,11 @@ services:
       EDUMATCH_DATA_ROOT: /app/data
       MLFLOW_TRACKING_URI: http://mlflow:5000
     volumes:
-      - "./data:/app/data"  # lit la table de variables (E20), écrit l'artefact de prédictions
+      - "./data:/app/data"  # lit la table de variables, écrit l'artefact de prédictions
     depends_on:
       mlflow: { condition: service_healthy }
 
-  # API de matching (E29) — sert aussi l'écran conseiller sous `/` (E31, fichiers statiques de
+  # API de matching — sert aussi l'écran conseiller sous `/` (fichiers statiques de
   # src/edumatch/api/static/). Ne démarre qu'une fois `train` terminé avec succès
   # (`service_completed_successfully`, pas seulement démarré) : c'est cette dépendance qui
   # garantit que l'artefact de prédictions existe avant que l'API ne le cherche — sans elle,
@@ -164,7 +164,7 @@ services:
       # précalculés (catalogue de prédictions, précalcul SHAP). Deux sous-dossiers dérogent,
       # remontés par des montages plus spécifiques qui l'emportent sur le montage parent en
       # lecture seule : `api/audit.py` (journal article 12) et `api/feedback_store.py` (écran
-      # conseiller, E31) y écrivent en fonctionnement — sans ces deux exceptions, ces deux
+      # conseiller) y écrivent en fonctionnement — sans ces deux exceptions, ces deux
       # écritures échoueraient (répertoire en lecture seule) et l'appelant ne verrait qu'un 500
       # opaque, la cause réelle restant dans les seuls journaux du conteneur. Moindre privilège :
       # on écrit large en lecture, étroit en écriture, plutôt que de retirer `:ro` en bloc.

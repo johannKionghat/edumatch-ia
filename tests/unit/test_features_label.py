@@ -1,4 +1,4 @@
-"""Tests unitaires de la formule du label et de sa pondération (E19).
+"""Tests unitaires de la formule du label et de sa pondération.
 
 Fonctions pures, testées sur des `pd.Series` fabriquées : pas besoin de
 `data/samples/` ici, contrairement aux tests de contrat qui rejouent le
@@ -82,7 +82,7 @@ def test_poids_effectif_conserve_les_valeurs_manquantes() -> None:
     assert pd.isna(poids.iloc[1])
 
 
-# ─── verifier_label : les garanties du plan d'exécution ────────────────────
+# ─── verifier_label : les garanties attendues du label ────────────────────
 
 
 def test_verifier_label_accepte_un_label_valide() -> None:
@@ -92,7 +92,7 @@ def test_verifier_label_accepte_un_label_valide() -> None:
 
 
 def test_verifier_label_tolere_un_taux_manquant() -> None:
-    """Un taux `<NA>` est filtré en amont par `base_exploitable` (E16), pas une erreur ici."""
+    """Un taux `<NA>` est filtré en amont par `base_exploitable`, pas une erreur ici."""
     taux = pd.Series([0.6, pd.NA], dtype="Float64")
     poids = pd.Series([10.0, 20.0], dtype="Float64")
     verifier_label(taux, poids)  # ne lève pas

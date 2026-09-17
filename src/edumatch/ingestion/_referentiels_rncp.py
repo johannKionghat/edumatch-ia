@@ -147,7 +147,7 @@ def chemin_destination(settings: Settings, date_publication_jour: str) -> Path:
 def chemin_destination_rome(settings: Settings, date_publication_jour: str) -> Path:
     """Fichier de correspondance fiche RNCP -> codes ROME, membre distinct de la même archive.
 
-    Utilisé par E18 pour relier une certification (code RNCP) à un ou
+    Utilisé par la réconciliation NAF/ROME pour relier une certification (code RNCP) à un ou
     plusieurs métiers ROME. Une ligne par couple (fiche, code ROME) : une
     fiche RNCP peut couvrir plusieurs métiers.
     """
@@ -351,7 +351,7 @@ def telecharger_rome(
 ) -> ResultatTelechargementReferentiel:
     """Télécharge le fichier de correspondance fiche RNCP -> codes ROME, membre de la même archive.
 
-    Maillon central d'E18 : chaque ligne associe un `Numero_Fiche` RNCP à un
+    Maillon central de la réconciliation NAF/ROME : chaque ligne associe un `Numero_Fiche` RNCP à un
     `Codes_Rome_Code` (une fiche peut apparaître sur plusieurs lignes, un
     code ROME par ligne). Sans ce fichier, aucune fiche RNCP ne peut être
     reliée à un métier ROME — le CSV standard n'en porte aucune trace.

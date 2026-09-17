@@ -1,8 +1,8 @@
-"""Terme « débouchés » du score de matching (E28) : un dénombrement Sirene, jamais un modèle.
+"""Terme « débouchés » du score de matching : un dénombrement Sirene, jamais un modèle.
 
 ## L'obstacle, et la mesure qui a tranché
 
-`referentiel/naf_rome_formation.py` (E18) relie une **formation IDÉO**
+`referentiel/naf_rome_formation.py` relie une **formation IDÉO**
 (ONISEP, via son code RNCP) à une division NAF (2 caractères). Aucun des
 huit millésimes Parcoursup ne porte de code RNCP, NSF ou ROME (vérifié par
 inspection des colonnes) : cette chaîne ne rattache donc **pas** une
@@ -102,7 +102,7 @@ NOM_FICHIER_RAPPORT = "debouches_couverture.json"
 
 # Statuts déclarés du terme de débouchés — jamais une valeur neutre non
 # expliquée : chaque statut porte une raison différente, lisible par un
-# conseiller (`api/static/`, E31) sans avoir à relire ce module.
+# conseiller (`api/static/`) sans avoir à relire ce module.
 STATUT_MESURE = "mesure"
 STATUT_INDISPONIBLE_TERRITOIRE_NON_RENSEIGNE = "indisponible_territoire_non_renseigne"
 STATUT_INDISPONIBLE_CHAINE_ROMPUE = "indisponible_chaine_rompue"
@@ -175,7 +175,7 @@ def construire_correspondance_formation_ideo(
     normalisé est écarté (jointure 1:N ambiguë, jamais résolue par un choix arbitraire).
 
     `catalogue_parcoursup` : une colonne `fil_lib_voe_acc` au moins (une ligne
-    par cellule de la table de variables, E20 — le taux d'appariement est
+    par cellule de la table de variables — le taux d'appariement est
     mesuré aussi bien par libellé distinct que par ligne, cette dernière
     reflétant le poids réel dans le catalogue).
     `formations_ideo` : la sortie de `referentiel.naf_rome_formation.charger_formations_ideo`
@@ -258,9 +258,9 @@ def calculer_terme_debouches(
 
     `correspondance_formation` : sortie de `construire_correspondance_formation_ideo`
     (colonnes `fil_lib_voe_acc`, `code_rncp_ideo`).
-    `table_naf_rome_formation` : sortie de `construire_table` (E18), **déjà
+    `table_naf_rome_formation` : sortie de `construire_table`, **déjà
     filtrée sur `rncp_actif`** par l'appelant (`executer`) — une certification
-    radiée n'est jamais un débouché actuel (voir le docstring de l'E18).
+    radiée n'est jamais un débouché actuel (voir le docstring de la réconciliation NAF/ROME).
     `agregat_conserve`, `cellules_non_vides` : sorties de `appliquer_k_anonymat`.
     """
     if departement_candidat is None:
@@ -341,7 +341,7 @@ def _chemin_source_sirene(settings: Settings) -> Path:
 
 
 def construire_table_naf_rome_formation_active(settings: Settings) -> tuple[pl.DataFrame, pl.DataFrame]:
-    """Réutilise la chaîne NAF/ROME/formation de l'E18 (`referentiel.naf_rome_formation`,
+    """Réutilise la chaîne NAF/ROME/formation (`referentiel.naf_rome_formation`,
     même sources, même construction) et filtre sur `rncp_actif` : une certification radiée
     n'est jamais un débouché actuel (voir le docstring du module).
 
@@ -373,13 +373,13 @@ def construire_artefacts(catalogue_parcoursup: pl.DataFrame, settings: Settings 
     """Point d'entrée réel : construit tout ce que `calculer_terme_debouches` consomme.
 
     `catalogue_parcoursup` : au moins la colonne `fil_lib_voe_acc`, une ligne
-    par cellule (la table de variables, E20, ou un sous-ensemble de test).
+    par cellule (la table de variables, ou un sous-ensemble de test).
     """
     settings = settings or get_settings()
     chemin_sirene = _chemin_source_sirene(settings)
     if not chemin_sirene.exists():
         raise ErreurDebouches(
-            f"{chemin_sirene} introuvable : exécuter `python -m edumatch.ingestion.sirene` (E06) "
+            f"{chemin_sirene} introuvable : exécuter `python -m edumatch.ingestion.sirene` "
             "avant le terme de débouchés."
         )
 
@@ -427,7 +427,7 @@ def executer(settings: Settings | None = None) -> ArtefactsDebouches:
     settings = settings or get_settings()
     chemin_variables = settings.processed_dir / "parcoursup" / "variables.parquet"
     if not chemin_variables.exists():
-        raise ErreurDebouches(f"{chemin_variables} introuvable : exécuter `make features` (E20) avant ce module.")
+        raise ErreurDebouches(f"{chemin_variables} introuvable : exécuter `make features` avant ce module.")
     catalogue = pl.read_parquet(chemin_variables, columns=["fil_lib_voe_acc"])
     artefacts = construire_artefacts(catalogue, settings)
     chemin_agregat, chemin_correspondance, chemin_rapport = ecrire_artefacts(settings, artefacts)

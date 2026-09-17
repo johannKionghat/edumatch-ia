@@ -6,7 +6,7 @@
 -- Redondant avec la vérification déjà faite par
 -- `edumatch.transform.reconciliation.reconcilier_dataframes` (qui lèverait
 -- avant même que ce modèle ne se matérialise) : gardé malgré cette
--- redondance parce que E15 exige des « tests dbt verts », pas seulement une
+-- redondance parce que la réconciliation exige des « tests dbt verts », pas seulement une
 -- garantie côté Python invisible depuis `dbt test`.
 select session, cod_aff_form, count(*) as occurrences
 from {{ ref('stg_parcoursup') }}

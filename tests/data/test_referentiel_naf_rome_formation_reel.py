@@ -1,9 +1,9 @@
-"""Réconciliation NAF/ROME/formation (E18) sur les échantillons réels de `data/samples/`.
+"""Réconciliation NAF/ROME/formation sur les échantillons réels de `data/samples/`.
 
 Contrairement à `tests/unit/test_referentiel_naf_rome_formation.py` (fixtures
 minuscules et construites à la main pour isoler chaque règle), ce module fait
 tourner la chaîne complète sur des extraits réels des trois sources — sans
-téléchargement, seulement `data/samples/`, comme l'exige E08.
+téléchargement, seulement `data/samples/`.
 
 L'échantillonnage systématique des deux CSV (IDÉO, RNCP ROME) réduit
 mécaniquement le nombre de correspondances trouvées par rapport aux

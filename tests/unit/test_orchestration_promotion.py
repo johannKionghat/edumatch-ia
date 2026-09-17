@@ -1,4 +1,4 @@
-"""Tests unitaires de `orchestration.promotion` (E33, critères 3.3 et 4.12) : la porte de
+"""Tests unitaires de `orchestration.promotion` (critères 3.3 et 4.12) : la porte de
 promotion refuse de publier un modèle qui ne bat pas le plancher, sans jamais réentraîner.
 
 Le `ResultatEntrainement` réel (`models.train`) porte un modèle LightGBM, des DataFrames de
@@ -103,7 +103,7 @@ def test_promouvoir_refuse_et_n_exporte_rien_si_le_modele_perd(
 def test_promouvoir_est_idempotent_rejouer_sur_le_meme_resultat_donne_la_meme_decision(
     monkeypatch: pytest.MonkeyPatch, settings_test: Settings
 ) -> None:
-    """Rejouer la tâche (reprise sur erreur, E33 critère 3.4) doit reproduire exactement
+    """Rejouer la tâche (reprise sur erreur, critère 3.4) doit reproduire exactement
     le même verdict — jamais un doublon, jamais une décision différente au hasard."""
     compteur = {"appels": 0}
 

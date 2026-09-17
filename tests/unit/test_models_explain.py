@@ -1,4 +1,4 @@
-"""Tests unitaires de l'explicabilité (E25) : fonctions pures, sur des données fabriquées.
+"""Tests unitaires de l'explicabilité : fonctions pures, sur des données fabriquées.
 
 Le test de contrat (`tests/data/test_models_explain_run.py`) rejoue le
 pipeline complet et entraîne réellement un LightGBM sur `data/samples/` ;
@@ -242,7 +242,7 @@ def test_shap_verifie_laxiome_defficacite() -> None:
     contributions doit exactement combler l'écart entre la prédiction et la
     valeur de base. TreeSHAP le garantit exactement (contrairement à une
     approximation comme KernelSHAP) — ce test le vérifie à la précision
-    flottante près, sur un modèle jouet plutôt que le modèle réel (E22),
+    flottante près, sur un modèle jouet plutôt que le modèle réel,
     pour rester rapide et indépendant de `data/samples/`.
     """
     rng = np.random.default_rng(42)

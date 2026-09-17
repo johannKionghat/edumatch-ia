@@ -1,4 +1,4 @@
-"""Point d'entrée de l'agrégat Sirene commune x NAF (E17) : `make sirene-agregats`.
+"""Point d'entrée de l'agrégat Sirene commune x NAF : `make sirene-agregats`.
 
 Résout la source (`data/raw/sirene/StockEtablissement.parquet`), la date de
 référence de l'ancienneté (`date_publication_stock` du manifeste — jamais la
@@ -45,7 +45,7 @@ NOM_FICHIER_MANIFESTE = "manifeste.json"
 
 
 class ErreurSireneAgregatsSourceAbsente(RuntimeError):
-    """`StockEtablissement.parquet` n'est pas encore téléchargé : l'étape E06 doit tourner d'abord.
+    """`StockEtablissement.parquet` n'est pas encore téléchargé : l'ingestion Sirene doit tourner d'abord.
 
     Définitive au sens de `edumatch.ingestion._flux.ErreurDefinitive` :
     relancer ce module à l'identique ne fait pas apparaître le fichier.
@@ -75,7 +75,7 @@ def resoudre_date_reference(settings: Settings) -> date:
     chemin = _chemin_manifeste(settings)
     if not chemin.exists():
         raise ErreurSireneAgregatsManifesteInvalide(
-            f"{chemin} introuvable : exécuter `python -m edumatch.ingestion.sirene` (E06) avant "
+            f"{chemin} introuvable : exécuter `python -m edumatch.ingestion.sirene` avant "
             "cet agrégat, il écrit ce manifeste."
         )
     manifeste = json.loads(chemin.read_text(encoding="utf-8"))
@@ -97,7 +97,7 @@ def executer(settings: Settings | None = None) -> RapportAgregation:
     if not chemin_source.exists():
         raise ErreurSireneAgregatsSourceAbsente(
             f"{chemin_source} introuvable : exécuter `python -m edumatch.ingestion.sirene` "
-            "(E06) avant `make sirene-agregats`."
+            " avant `make sirene-agregats`."
         )
 
     date_reference = resoudre_date_reference(settings)
@@ -140,7 +140,7 @@ def executer(settings: Settings | None = None) -> RapportAgregation:
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Agrégat Sirene commune x NAF (E17) terminé.\n%s", rapport.resume())
+    LOGGER.info("Agrégat Sirene commune x NAF terminé.\n%s", rapport.resume())
     return 0
 
 

@@ -1,4 +1,4 @@
-"""Non-régression du label (E19) : la formule ne doit jamais dériver silencieusement.
+"""Non-régression du label : la formule ne doit jamais dériver silencieusement.
 
 Deux niveaux, complémentaires :
 
@@ -7,7 +7,7 @@ Deux niveaux, complémentaires :
    dur cessent de correspondre et le test échoue — c'est le filet explicite
    demandé par `tests/data` (contrats de données).
 2. Le pipeline complet sur `data/samples/parcoursup/` (les huit millésimes
-   échantillonnés, E08) : silver (E15) puis gold (E16), qui appelle
+   échantillonnés) : silver puis gold, qui appelle
    désormais `edumatch.features.label.calculer_taux`. Vérifie que
    l'extraction n'a rien changé au résultat de bout en bout, pas seulement à
    la fonction isolée.

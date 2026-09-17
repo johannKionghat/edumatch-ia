@@ -47,7 +47,7 @@ def test_import_mlflow_reussit() -> None:
 def test_aller_retour_experience_parametre_metrique(tmp_path: Path) -> None:
     """Créer une expérience, journaliser un paramètre et une métrique, relire.
 
-    C'est le geste que fait réellement `models/train.py` (E22) :
+    C'est le geste que fait réellement `models/train.py` :
     `set_tracking_uri`, `set_experiment`, `start_run`, `log_params`,
     `log_metric`. Le magasin est une base SQLite jetable, dans `tmp_path` —
     jamais `mlflow.db` ni `mlruns/` du dépôt. C'est aussi le type de magasin

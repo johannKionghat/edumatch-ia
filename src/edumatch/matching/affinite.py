@@ -1,4 +1,4 @@
-"""Terme « affinité » du score de matching (E28) : des règles déclaratives, jamais un modèle.
+"""Terme « affinité » du score de matching : des règles déclaratives, jamais un modèle.
 
 ## Ce que ce terme représente
 

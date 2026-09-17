@@ -1,15 +1,15 @@
-"""Point d'entrée des contrôles qualité (E14) : `make quality` ou `python -m edumatch.quality.run`.
+"""Point d'entrée des contrôles qualité : `make quality` ou `python -m edumatch.quality.run`.
 
 Contrôle les trois sources — Parcoursup, Sirene, référentiels — sur les
 fichiers réellement présents dans `data/raw/` et `data/external/`, agrège
 les anomalies, journalise les avertissements et **bloque** au premier
 ensemble d'anomalies bloquantes rencontré : une chaîne qui journalise sans
-jamais interrompre laisserait une donnée corrompue atteindre `dbt` (E15) et,
+jamais interrompre laisserait une donnée corrompue atteindre `dbt` et,
 de là, le modèle : les données se valident comme du code.
 
 `ErreurQualiteBloquante` (voir `_diagnostic.py`) est volontairement rangée
 du côté définitif du vocabulaire commun d'erreurs (`ingestion._flux`) : un
-futur DAG Airflow (E33) qui capte `ErreurDefinitive` sur cette tâche sait
+futur DAG Airflow qui capte `ErreurDefinitive` sur cette tâche sait
 qu'il doit alerter un humain, pas retenter — retenter ne change rien tant
 que la donnée ou le contrôle n'ont pas été corrigés.
 """
@@ -29,7 +29,7 @@ LOGGER = logging.getLogger(__name__)
 def executer(settings: Settings | None = None) -> RapportControle:
     """Exécute les trois contrôles de source et retourne le rapport agrégé, sans lever.
 
-    Séparée de `main()` pour que l'orchestration future (E33) puisse
+    Séparée de `main()` pour que l'orchestration future puisse
     inspecter le rapport avant de décider quoi faire de chaque anomalie, sans
     dépendre du comportement `sys.exit` de ce module.
     """

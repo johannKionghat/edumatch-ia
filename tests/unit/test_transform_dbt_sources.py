@@ -1,4 +1,4 @@
-"""Contrat entre la liste des millésimes et ses trois copies (E15).
+"""Contrat entre la liste des millésimes et ses trois copies.
 
 `configs/base.yaml` (`donnees.parcoursup.millesimes`) est la référence
 unique en Python. dbt ne permet pas de déclarer des sources ni des appels

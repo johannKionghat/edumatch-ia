@@ -1,7 +1,7 @@
-// Écran conseiller (E31) : voir, comprendre, écarter avec motif.
+// Écran conseiller : voir, comprendre, écarter avec motif.
 //
 // Vanilla JS, sans framework ni dépendance : décision d'architecture arrêtée
-// dès E29 (voir routes/ecran.py). Ce fichier ne fait que consommer l'API déjà
+// dès la conception de l'API (voir routes/ecran.py). Ce fichier ne fait que consommer l'API déjà
 // testée (`/matching`, `/explain`, `/feedback`) et construire le DOM.
 //
 // Règle stricte : aucune construction de HTML par concaténation de chaînes ni

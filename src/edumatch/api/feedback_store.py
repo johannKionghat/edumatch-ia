@@ -1,4 +1,4 @@
-"""Journal des décisions du conseiller (E29) : écartement motivé, horodaté (R6, `risques.md`).
+"""Journal des décisions du conseiller : écartement motivé, horodaté (R6, `risques.md`).
 
 Un écran de contrôle humain qui n'écarte jamais rien n'est pas un contrôle
 (article 14 de l'AI Act) — R6 exige que l'écartement soit **motivé**,
@@ -9,7 +9,7 @@ conseiller. **Aucune donnée du candidat n'y est écrite** — ni son profil, ni
 la saisie qui a produit la recommandation, cohérent avec l'AIPD (§2.3 :
 « aucune conservation de la saisie »).
 
-**Précurseur d'E30, pas son remplaçant.** Ce journal n'a ni durée de
+**Précurseur du journal d'inférence article 12, pas son remplaçant.** Ce journal n'a ni durée de
 conservation ni purge automatisée — les deux obligations que l'AIPD relève
 comme non exécutées (R1) restent à construire par la journalisation article 12
 complète. Écrit ici tel quel plutôt que présenté comme complet.
@@ -94,7 +94,7 @@ class JournalFeedback:
         return enregistrement
 
     def lire_tout(self) -> list[EnregistrementFeedback]:
-        """Relit le journal — utilisé par les tests et par le futur écran de supervision (E31)."""
+        """Relit le journal — utilisé par les tests et par le futur écran de supervision."""
         if not self._chemin.exists():
             return []
         lignes = self._chemin.read_text(encoding="utf-8").splitlines()

@@ -1,4 +1,4 @@
-"""Tests de l'agrégat Sirene commune x NAF (E17), moteurs Polars et Spark.
+"""Tests de l'agrégat Sirene commune x NAF, moteurs Polars et Spark.
 
 Trois familles de test, toutes sur `data/samples/sirene/StockEtablissement.parquet`
 (500 lignes) ou sur des tables fabriquées : jamais sur le fichier complet
@@ -311,7 +311,7 @@ def test_spark_reproduit_le_resultat_polars(spark_session) -> None:
 
 
 def test_explain_montre_projection_et_pushdown(spark_session, capsys) -> None:
-    """Preuve du critère E17 : 9 colonnes lues sur 54, filtrage appliqué à la lecture."""
+    """Preuve du critère de projection/pushdown : 9 colonnes lues sur 54, filtrage appliqué à la lecture."""
     from edumatch.spark.sirene_agregats import lire_projection
 
     df = lire_projection(spark_session, CHEMIN_ECHANTILLON)

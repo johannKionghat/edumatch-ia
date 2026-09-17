@@ -1,4 +1,4 @@
-"""Point d'entrée de la réconciliation Parcoursup (E15) : `make transform`.
+"""Point d'entrée de la réconciliation Parcoursup : `make transform`.
 
 Résout les chemins des millésimes réellement présents sur disque depuis la
 configuration (`donnees.parcoursup.millesimes`, `Settings.raw_dir`), délègue
@@ -26,7 +26,7 @@ def _chemins_disponibles(settings: Settings) -> dict[int, Path]:
     """Les millésimes configurés dont le fichier bronze existe réellement sur disque.
 
     Un millésime configuré mais pas encore téléchargé n'est pas une erreur de
-    ce module : l'ingestion (E05) est responsable de la présence des
+    ce module : l'ingestion est responsable de la présence des
     fichiers, pas la transformation. Silver reflète ce qui est disponible.
     """
     dossier = settings.raw_dir / "parcoursup"

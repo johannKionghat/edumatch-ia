@@ -1,6 +1,6 @@
-"""Test de contrat de `/explain` (E29) de bout en bout, sur les échantillons réels.
+"""Test de contrat de `/explain` de bout en bout, sur les échantillons réels.
 
-Même schéma que `tests/data/test_models_explain_run.py` (E25) : un `data_root` jetable
+Même schéma que `tests/data/test_models_explain_run.py` : un `data_root` jetable
 construit depuis les huit échantillons versionnés, jusqu'au précalcul SHAP complet, puis
 `api.state.construire_etat_explicabilite` le charge tel quel — jamais recalculé par l'API.
 """

@@ -1,11 +1,11 @@
-"""Porte de promotion du modèle réentraîné (E33, critères 3.3 et 4.12).
+"""Porte de promotion du modèle réentraîné (critères 3.3 et 4.12).
 
 ## Le problème que ce module referme
 
-`models.train.entrainer_et_evaluer` (E22) mesure déjà, à couverture égale, l'écart entre
-le modèle et le plancher (E21, `session_precedente_avec_repli`) sur la session de test —
+`models.train.entrainer_et_evaluer` mesure déjà, à couverture égale, l'écart entre
+le modèle et le plancher (`session_precedente_avec_repli`) sur la session de test —
 `rapport.scores_test` (le modèle) contre `rapport.baseline_test` (la règle triviale). Ce
-que E22 ne fait pas, c'est en tirer une décision de publication : `models.train.main()`
+que l'entraînement ne fait pas, c'est en tirer une décision de publication : `models.train.main()`
 exporte le catalogue de prédictions (`exporter_catalogue_predictions`) quel que soit le
 résultat de cette comparaison, ce qui est le comportement voulu pour une exécution manuelle
 d'inspection, mais qui serait dangereux automatisé dans un DAG.
@@ -41,7 +41,7 @@ une marge de tolérance, documentée et mesurée, qui se justifierait, pas avant
 Il ne réentraîne rien : il reçoit un `ResultatEntrainement` déjà produit par
 `models.train.entrainer_et_evaluer` et se contente de décider s'il doit être publié. Un
 refus de promotion n'est pas une panne du pipeline — il est journalisé au niveau ERREUR
-pour rester visible en supervision (E33, critère 3.7), mais la tâche qui appelle ce module
+pour rester visible en supervision (critère 3.7), mais la tâche qui appelle ce module
 (`orchestration.taches.reentrainer_modele`) ne lève pas : c'est un résultat légitime et
 attendu tant que le modèle ne généralise pas mieux que la baseline, pas un état à masquer
 ni à faire échouer artificiellement.
@@ -61,7 +61,7 @@ LOGGER = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class RapportPromotion:
-    """La décision de publication du réentraînement (E33), à déclarer telle quelle."""
+    """La décision de publication du réentraînement, à déclarer telle quelle."""
 
     promu: bool
     mae_modele: float
@@ -72,7 +72,7 @@ class RapportPromotion:
         verdict = "PROMU" if self.promu else "REFUSÉ"
         return (
             f"Promotion : {verdict} — modèle MAE pondérée test={self.mae_modele:.4f} "
-            f"contre plancher E21 (couverture égale)={self.mae_baseline:.4f}."
+            f"contre plancher (couverture égale)={self.mae_baseline:.4f}."
         )
 
 
@@ -104,8 +104,8 @@ def promouvoir_si_meilleur(resultat: ResultatEntrainement, settings: Settings) -
 
     if not decider_promotion(resultat):
         LOGGER.error(
-            "Promotion refusée (E33) : MAE pondérée de test du modèle réentraîné (%.4f) "
-            "non inférieure au plancher E21 à couverture égale (%.4f). L'artefact déjà "
+            "Promotion refusée : MAE pondérée de test du modèle réentraîné (%.4f) "
+            "non inférieure au plancher à couverture égale (%.4f). L'artefact déjà "
             "servi par l'API (%s) n'est pas remplacé.",
             mae_modele,
             mae_baseline,
@@ -117,7 +117,7 @@ def promouvoir_si_meilleur(resultat: ResultatEntrainement, settings: Settings) -
 
     chemin = exporter_catalogue_predictions(resultat, settings)
     LOGGER.info(
-        "Promotion acceptée (E33) : MAE pondérée de test %.4f < plancher %.4f. "
+        "Promotion acceptée : MAE pondérée de test %.4f < plancher %.4f. "
         "Catalogue de prédictions publié vers %s.",
         mae_modele,
         mae_baseline,

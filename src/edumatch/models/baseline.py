@@ -1,4 +1,4 @@
-"""La baseline (E21) : le taux de la même cellule à la session précédente.
+"""La baseline : le taux de la même cellule à la session précédente.
 
 ## Pourquoi cette étape, et pourquoi elle compte
 
@@ -42,7 +42,7 @@ joue, exactement comme la règle qu'elle sert de repli.
 
 ## Ce que ce module ne fait pas
 
-Il ne choisit pas la baseline officielle pour E23 à la place du lecteur : il
+Il ne choisit pas la baseline officielle pour l'évaluation à la place du lecteur : il
 mesure les quatre variantes (`session_precedente`, sa version à couverture
 complète, et les deux moyennes), sur chaque session et sur les périmètres
 agrégés utiles (les six sessions labellisées, et le périmètre
@@ -83,7 +83,7 @@ VARIANTE_MOYENNE_GLOBALE = "moyenne_globale_expansive"
 class ErreurBaseline(RuntimeError):
     """La table de variables ne porte pas les colonnes que la baseline exige.
 
-    Définitive : `make features` (E20) doit avoir produit une table conforme
+    Définitive : `make features` doit avoir produit une table conforme
     au classement de `modele.variables` avant que ce module ne puisse
     s'exécuter.
     """
@@ -123,7 +123,7 @@ def predire_session_precedente(table: pd.DataFrame) -> pd.Series:
         if colonne_numerateur not in table.columns or colonne_denominateur not in table.columns:
             raise ErreurBaseline(
                 f"Colonne(s) {colonne_numerateur!r} / {colonne_denominateur!r} absente(s) de "
-                "la table de variables : `make features` (E20) doit produire les colonnes "
+                "la table de variables : `make features` doit produire les colonnes "
                 "décalées de `modele.variables.decalees` (ADR 0013)."
             )
         numerateur = table.loc[masque, colonne_numerateur]
@@ -202,7 +202,7 @@ class ScoreBaseline:
 
 @dataclass(frozen=True)
 class RapportBaseline:
-    """L'ensemble des scores mesurés, à déclarer tels quels (E21)."""
+    """L'ensemble des scores mesurés, à déclarer tels quels."""
 
     scores: list[ScoreBaseline]
 
@@ -241,7 +241,7 @@ def _perimetres(table: pd.DataFrame, settings: Settings) -> dict[str, pd.Series]
     l'autre), plus deux agrégats : toutes les sessions sauf la première de la
     fenêtre labellisée (structurellement sans plancher possible, voir le
     docstring du module), et le périmètre validation + test du protocole
-    arrêté par l'ADR 0012 — celui qui compte pour la comparaison à E22/E23.
+    arrêté par l'ADR 0012 — celui qui compte pour la comparaison à l'entraînement et à l'évaluation.
     """
     sessions = sorted(table["session"].unique())
     perimetres = {str(session): table["session"] == session for session in sessions}
@@ -277,12 +277,12 @@ def _chemin_variables(settings: Settings) -> Path:
 
 
 def executer(settings: Settings | None = None) -> RapportBaseline:
-    """Charge la table de variables (E20) et mesure la baseline. Retourne le rapport complet."""
+    """Charge la table de variables et mesure la baseline. Retourne le rapport complet."""
     settings = settings or get_settings()
     chemin = _chemin_variables(settings)
     if not chemin.exists():
         raise ErreurBaseline(
-            f"{chemin} est introuvable : exécuter `make features` (E20) avant `make baseline`."
+            f"{chemin} est introuvable : exécuter `make features` avant `make baseline`."
         )
 
     colonnes_requises = {"session", "type_bac", "boursier", "taux", "effectif"}
@@ -308,7 +308,7 @@ def _journaliser_mlflow(rapport: RapportBaseline, settings: Settings) -> None:
     """
     if not settings.mlflow_tracking_uri:
         LOGGER.warning(
-            "MLFLOW_TRACKING_URI non configuré : baseline non journalisée dans MLflow (E21)."
+            "MLFLOW_TRACKING_URI non configuré : baseline non journalisée dans MLflow."
         )
         return
     try:
@@ -322,7 +322,7 @@ def _journaliser_mlflow(rapport: RapportBaseline, settings: Settings) -> None:
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment("edumatch-accessibilite")
     with mlflow.start_run(run_name="baseline-session-precedente"):
-        mlflow.set_tag("etape", "E21")
+        mlflow.set_tag("etape", "baseline")
         variantes_a_journaliser = (
             VARIANTE_PRECEDENTE_AVEC_REPLI,
             VARIANTE_MOYENNE_GROUPE,
@@ -340,7 +340,7 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     settings = get_settings()
     rapport = executer(settings)
-    LOGGER.info("Baseline (E21) mesurée.\n%s", rapport.resume())
+    LOGGER.info("Baseline mesurée.\n%s", rapport.resume())
     _journaliser_mlflow(rapport, settings)
     return 0
 

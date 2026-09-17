@@ -1,6 +1,6 @@
-"""Test du point d'entrée `make gold` (E16), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make gold`, de bout en bout, sur les échantillons.
 
-Même schéma que `test_transform_run.py` (E15) : un `data_root` jetable dans
+Même schéma que `test_transform_run.py` : un `data_root` jetable dans
 `tmp_path`, silver produit par `edumatch.transform.run` depuis les huit
 échantillons versionnés, puis `edumatch.transform.run_etoile` dessus.
 Aucune écriture dans `data/interim/` ni `data/processed/` du dépôt.

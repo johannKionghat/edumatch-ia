@@ -1,4 +1,4 @@
-"""Génération optionnelle par un modèle de langage externe (E32).
+"""Génération optionnelle par un modèle de langage externe.
 
 Le mode extractif (`assistant._reponse_extractive`) ne dépend d'aucun secret
 et fonctionne toujours. Ce module ajoute, seulement si `MISTRAL_API_KEY` est

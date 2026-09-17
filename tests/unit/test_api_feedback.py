@@ -1,4 +1,4 @@
-"""Test de contrat de `/feedback` (E29) : l'écartement doit être motivé, horodaté, journalisé
+"""Test de contrat de `/feedback` : l'écartement doit être motivé, horodaté, journalisé
 (R6, `docs/sous-docs-projets/05-gouvernance/risques.md`).
 
 Depuis la revue de sécurité, `/feedback` exige une authentification HTTP Basic

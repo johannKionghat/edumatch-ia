@@ -1,6 +1,6 @@
-"""Point d'entrée du modèle en étoile gold (E16) : `make gold`.
+"""Point d'entrée du modèle en étoile gold : `make gold`.
 
-Lit `data/interim/parcoursup/silver.parquet` (E15), délègue la construction
+Lit `data/interim/parcoursup/silver.parquet`, délègue la construction
 à `etoile.py`, écrit les cinq tables dans `data/processed/parcoursup/` et
 journalise les volumétries mesurées, à confronter aux chiffres déjà connus
 (440 030 cellules exploitables sur 2020-2025). N'avale jamais une erreur : un
@@ -27,7 +27,7 @@ SOUS_DOSSIER = "parcoursup"
 
 
 class ErreurEtoileSourceAbsente(RuntimeError):
-    """Silver n'est pas encore disponible : l'étape E15 doit tourner d'abord.
+    """Silver n'est pas encore disponible : la réconciliation doit tourner d'abord.
 
     Définitive au sens de `edumatch.ingestion._flux.ErreurDefinitive` : relancer
     ce module à l'identique ne fait pas apparaître le fichier manquant.
@@ -44,7 +44,7 @@ def executer(settings: Settings | None = None) -> RapportEtoile:
     chemin = _chemin_silver(settings)
     if not chemin.exists():
         raise ErreurEtoileSourceAbsente(
-            f"{chemin} introuvable : exécuter `make transform` (E15) avant `make gold`."
+            f"{chemin} introuvable : exécuter `make transform` avant `make gold`."
         )
     silver: pd.DataFrame = pq.read_table(chemin).to_pandas()
     etoile: Etoile = construire_etoile(silver)

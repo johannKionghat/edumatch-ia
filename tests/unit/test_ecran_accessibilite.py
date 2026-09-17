@@ -1,4 +1,4 @@
-"""Contrôles automatisés d'accessibilité de l'écran conseiller (E31, critère 4.18).
+"""Contrôles automatisés d'accessibilité de l'écran conseiller (critère 4.18).
 
 ## Ce que ces tests prouvent, et ce qu'ils ne prouvent pas
 

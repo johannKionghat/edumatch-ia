@@ -1,4 +1,4 @@
-"""Test de contrat de `/explain` (E29) : sert le précalcul SHAP (E25), jamais un recalcul.
+"""Test de contrat de `/explain` : sert le précalcul SHAP, jamais un recalcul.
 
 Le précalcul est construit à la main plutôt que via `models.explain.executer` (coûteux —
 entraînement complet) : `tests/data/test_api_explain_run.py` couvre le chemin de bout en bout

@@ -1,4 +1,4 @@
-"""Dépendances FastAPI (E29) : accès à l'état chargé au démarrage, jamais reconstruit par requête.
+"""Dépendances FastAPI : accès à l'état chargé au démarrage, jamais reconstruit par requête.
 
 Chaque fonction lit `request.app.state`, peuplé par le cycle de vie de
 l'application (`api.main._cycle_de_vie`) ou, dans les tests, directement par
@@ -40,7 +40,7 @@ def get_etat_explicabilite(request: Request) -> EtatExplicabilite:
     if etat is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Précalcul d'explicabilité non chargé : exécuter `make explain` (E25) puis redémarrer l'API.",
+            detail="Précalcul d'explicabilité non chargé : exécuter `make explain` puis redémarrer l'API.",
         )
     return etat
 
@@ -99,7 +99,7 @@ def get_limiteur_feedback(request: Request) -> LimiteurDebit:
 
 
 def get_assistant_rag(request: Request) -> AssistantRAG:
-    """Construit l'assistant documentaire (E32) au premier appel, comme `get_journal_feedback` :
+    """Construit l'assistant documentaire au premier appel, comme `get_journal_feedback` :
     un référentiel IDÉO absent (poste sans `data/external/referentiels/`) n'est pas une raison
     d'empêcher tout le service de démarrer, seule cette route répond 503."""
     assistant = getattr(request.app.state, "assistant_rag", None)

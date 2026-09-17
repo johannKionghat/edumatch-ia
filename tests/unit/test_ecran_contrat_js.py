@@ -1,4 +1,4 @@
-"""Contrat entre l'écran conseiller (`api/static/app.js`, E31) et les réponses réelles de l'API.
+"""Contrat entre l'écran conseiller (`api/static/app.js`) et les réponses réelles de l'API.
 
 `app.js` ne peut pas être testé par `pytest` (ce n'est pas du Python) : ce test vérifie, côté
 serveur, que chaque champ que `app.js` lit dans les réponses de `/matching` et `/explain`, et

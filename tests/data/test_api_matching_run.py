@@ -1,6 +1,6 @@
-"""Test de contrat de `/matching` (E29) de bout en bout, sur les échantillons réels.
+"""Test de contrat de `/matching` de bout en bout, sur les échantillons réels.
 
-Même schéma que `tests/data/test_models_explain_run.py` (E25) pour la table de variables.
+Même schéma que `tests/data/test_models_explain_run.py` pour la table de variables.
 `data/samples/sirene/StockEtablissement.parquet` ne porte pas `statutDiffusionEtablissement`
 (voir `tests/data/test_matching_debouches_run.py`) : `construire_etat_matching` doit donc
 dégrader le terme de débouchés proprement, jamais planter — c'est cela que ce test vérifie,

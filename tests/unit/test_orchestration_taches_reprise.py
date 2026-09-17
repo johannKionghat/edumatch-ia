@@ -1,4 +1,4 @@
-"""Reprise sur erreur, de bout en bout avec un vrai connecteur (E33, critère 3.4).
+"""Reprise sur erreur, de bout en bout avec un vrai connecteur (critère 3.4).
 
 `test_orchestration_reprise.py` prouve la mécanique de `executer_avec_reprise`
 avec des erreurs factices. Ce test-ci referme la boucle avec le code réel

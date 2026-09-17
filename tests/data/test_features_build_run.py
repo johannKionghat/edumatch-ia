@@ -1,7 +1,7 @@
-"""Test du point d'entrée `make features` (E20), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make features`, de bout en bout, sur les échantillons.
 
-Même schéma que `test_transform_run_etoile.py` (E16) : un `data_root` jetable
-dans `tmp_path`, silver (E15) puis gold (E16) produits depuis les huit
+Même schéma que `test_transform_run_etoile.py` : un `data_root` jetable
+dans `tmp_path`, silver puis gold produits depuis les huit
 échantillons versionnés, puis `edumatch.features.build` dessus. Aucune
 écriture dans `data/processed/` du dépôt.
 """
