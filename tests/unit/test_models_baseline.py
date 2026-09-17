@@ -1,4 +1,4 @@
-"""Tests unitaires de la baseline (E21) : fonctions pures, sur des tables fabriquées.
+"""Tests unitaires de la baseline : fonctions pures, sur des tables fabriquées.
 
 Pas besoin de `data/samples/` ici — contrairement au test de contrat
 (`tests/data/test_models_baseline_run.py`) qui rejoue le pipeline complet.

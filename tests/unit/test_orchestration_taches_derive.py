@@ -1,4 +1,4 @@
-"""Tests unitaires de `orchestration.taches.detecter_derive` (E34) : le contrat de la
+"""Tests unitaires de `orchestration.taches.detecter_derive` : le contrat de la
 tâche (jamais bloquante, journalise sur dérive) — sans entraîner un vrai modèle,
 `edumatch.models.derive.executer` est remplacé par un rapport fabriqué.
 

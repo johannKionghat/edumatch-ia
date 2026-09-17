@@ -1,4 +1,4 @@
-"""Corpus documentaire de l'assistant (E32) : les formations et métiers IDÉO, chacun
+"""Corpus documentaire de l'assistant : les formations et métiers IDÉO, chacun
 associé à sa citation vérifiable — jeu, licence, URL, date de collecte.
 
 Deux jeux IDÉO sont indexables aujourd'hui (`COLONNES_TEXTE`) : `formations`

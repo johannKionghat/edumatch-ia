@@ -1,4 +1,4 @@
-"""Agrégat Sirene département x division NAF, k-anonymisé (E28) — le grain territorial du
+"""Agrégat Sirene département x division NAF, k-anonymisé — le grain territorial du
 terme de débouchés (`matching/debouches.py`, qui consomme ce module et documente la mesure
 d'ensemble : l'obstacle de la chaîne NAF/ROME/formation, le choix d'appariement textuel, ce
 que le terme expose ou pas).
@@ -12,7 +12,7 @@ protection). Ce module construit directement l'agrégat à ce grain, sans
 jamais matérialiser ni exposer le grain commune.
 
 Une contrainte, pas un choix, réduit encore la finesse : la chaîne
-NAF/ROME/formation (E18) ne résout jamais plus finement que la **division**
+NAF/ROME/formation ne résout jamais plus finement que la **division**
 NAF (2 caractères) — limite de la table France Travail ROME/NAF. Le terme
 de débouchés ne peut donc jamais exploiter le grain département x NAF à 5
 caractères que R2 mesure par ailleurs : il n'y a rien à y rattacher. Le
@@ -21,7 +21,7 @@ que R2 identifie comme le plus sûr (10,4 % des cellules perdues à k=5,
 contre 35,0 % à 5 caractères, sur le même département).
 
 `filtres.diffusible` (`configs/base.yaml`, `donnees.sirene.filtres`) est
-déclaré mais **non appliqué** par l'agrégat commune x NAF de l'E17
+déclaré mais **non appliqué** par l'agrégat commune x NAF
 (`spark/definitions.py` le documente explicitement). Ce module l'applique :
 mesuré sur le fichier Sirene complet, 20 488 établissements
 actifs-employeurs (0,85 % des 2 423 308 rattachés à une commune) portent un
@@ -114,7 +114,7 @@ class RapportKAnonymat:
 def construire_agregat_departement_naf(chemin_sirene: Path) -> pl.DataFrame:
     """Lit `StockEtablissement.parquet` en projection sur 5 colonnes et agrège au grain
     (département, division NAF) — actif, employeur, **diffusible** (voir le docstring du module
-    pour l'écart mesuré avec l'agrégat commune x NAF de l'E17, qui n'applique pas ce filtre).
+    pour l'écart mesuré avec l'agrégat commune x NAF, qui n'applique pas ce filtre).
     """
     lf = pl.scan_parquet(chemin_sirene).select(list(COLONNES_SIRENE_DEBOUCHES))
     lf = lf.filter(

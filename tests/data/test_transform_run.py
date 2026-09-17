@@ -1,4 +1,4 @@
-"""Test du point d'entrée `make transform` (E15), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make transform`, de bout en bout, sur les échantillons.
 
 Construit un `data_root` jetable dans `tmp_path`, y copie les huit
 échantillons versionnés sous le nom que `run.py` attend

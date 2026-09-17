@@ -1,4 +1,4 @@
-"""Route `/feedback` (E29) : la décision motivée d'un conseiller (article 14, contrôle humain).
+"""Route `/feedback` : la décision motivée d'un conseiller (article 14, contrôle humain).
 
 Voir `matching/score.py` (§« ce que le système ne fait jamais ») et
 `feedback_store.py` : ce n'est pas la recommandation qui décide, c'est le
@@ -18,7 +18,7 @@ from edumatch.api.schemas import ReponseFeedback, RequeteFeedback
 
 router = APIRouter(tags=["supervision"])
 
-# Signal métier (E38) le plus direct du contrôle humain exigé par l'article 14 de l'AI Act —
+# Signal métier le plus direct du contrôle humain exigé par l'article 14 de l'AI Act —
 # voir monitoring/README.md côté edumatch-cicd.
 _FEEDBACK_DECISIONS = Counter(
     "edumatch_feedback_decisions_total",

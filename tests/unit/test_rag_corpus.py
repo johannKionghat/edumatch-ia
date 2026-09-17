@@ -94,7 +94,7 @@ def test_le_texte_reprend_les_colonnes_declarees_dans_l_ordre(
     (document,) = documents
     assert document.texte.startswith("BTS comptabilité et gestion — formation de BTS — 2 ans")
     # Le code RNCP n'est pas une colonne de COLONNES_TEXTE : il ne doit pas apparaître dans le
-    # texte indexé, seulement servir de clé de réconciliation ailleurs (E18).
+    # texte indexé, seulement servir de clé de réconciliation ailleurs.
     assert "RNCP12345" not in document.texte
 
 

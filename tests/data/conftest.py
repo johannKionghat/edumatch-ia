@@ -1,4 +1,4 @@
-"""Fixtures communes aux tests des contrôles qualité (E14).
+"""Fixtures communes aux tests des contrôles qualité.
 
 Fabrique des fichiers Parcoursup minimaux et volontairement invalides dans
 `tmp_path` : jamais dans `data/`, conformément à la consigne de l'étape.

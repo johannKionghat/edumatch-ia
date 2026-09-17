@@ -1,14 +1,14 @@
-"""Évaluation et calibration du modèle d'accessibilité (E23) : la comparaison à la baseline,
+"""Évaluation et calibration du modèle d'accessibilité : la comparaison à la baseline,
 rapportée telle quelle, et le contrôle de calibration qu'une seule MAE ne peut pas remplacer.
 
 ## Ce que ce module fait, et ce qu'il ne refait pas
 
-`models/train.py` (E22) entraîne le modèle, l'arrête sur la validation et
+`models/train.py` entraîne le modèle, l'arrête sur la validation et
 mesure déjà une MAE pondérée modèle contre plancher. Ce module ne relance
 aucun entraînement : il appelle `train.entrainer_et_evaluer` — même
 protocole, même split temporel, même random_state — pour récupérer le
 modèle, les jeux de validation et de test déjà construits, et les
-prédictions déjà calculées, puis il y ajoute ce que E22 ne mesure pas :
+prédictions déjà calculées, puis il y ajoute ce que l'entraînement ne mesure pas :
 
 1. **La calibration** (`models.metrics.calibration`) : la cible est un taux
    dans [0, 1] (ADR 0009), pas une classe — un modèle peut bien ordonner les
@@ -18,13 +18,13 @@ prédictions déjà calculées, puis il y ajoute ce que E22 ne mesure pas :
 2. **La ventilation par type de baccalauréat** — l'erreur moyenne peut
    cacher une erreur très inégale selon le profil (`04-modele/evaluation.md`,
    réserve sur la progression bac général -> technologique -> professionnel).
-   Nécessaire à l'audit d'équité (E26), qui suit.
-3. **La même mesure pour la baseline (E21)**, jamais seulement pour le
+   Nécessaire à l'audit d'équité, qui suit.
+3. **La même mesure pour la baseline**, jamais seulement pour le
    modèle : un score isolé ne se juge pas, et un modèle peut être moins
    précis en MAE tout en étant mieux calibré — ce serait alors un argument
    pour le garder malgré une MAE moins bonne, pas un résultat à taire.
 
-Le test 2025 est déjà touché une fois par `train.entrainer_et_evaluer` (E22) ;
+Le test 2025 est déjà touché une fois par `train.entrainer_et_evaluer` ;
 ce module ne le regarde pas une seconde fois pour choisir quoi que ce soit,
 il ne fait que décrire, sous des angles supplémentaires, la même prédiction
 déjà figée.
@@ -87,7 +87,7 @@ class ScoreVentile:
 
 @dataclass(frozen=True)
 class RapportEvaluation:
-    """Ce que `make evaluate` (E23) a produit : comparaison, calibration, ventilation — à déclarer telles quelles."""
+    """Ce que `make evaluate` a produit : comparaison, calibration, ventilation — à déclarer telles quelles."""
 
     scores_validation: ScoreSession
     scores_test: ScoreSession
@@ -103,7 +103,7 @@ class RapportEvaluation:
 
     def resume(self) -> str:
         lignes = [
-            "Comparaison au plancher (E21), à couverture égale :",
+            "Comparaison au plancher, à couverture égale :",
             f"  modele    {self.scores_validation.resume()}",
             f"  baseline  {self.baseline_validation.resume()}",
             f"  modele    {self.scores_test.resume()}",
@@ -136,8 +136,8 @@ def ventiler_par_type_bac(
     """Le score du modèle et celui de la baseline, séparément pour chaque type de baccalauréat.
 
     Une erreur moyenne peut masquer une erreur très inégale selon le profil
-    (`04-modele/evaluation.md`) : nécessaire ici avant l'audit d'équité
-    (E26), qui s'appuiera sur cette même ventilation.
+    (`04-modele/evaluation.md`) : nécessaire ici avant l'audit d'équité,
+    qui s'appuiera sur cette même ventilation.
     """
     type_bac = _type_bac(jeu)
     prediction_baseline_array = prediction_baseline.to_numpy(dtype="float64")
@@ -193,7 +193,7 @@ def _tracer_calibration(
     axe.set_ylabel("Taux observé moyen (par tranche, pondéré par l'effectif)")
     axe.set_xlim(0.0, 1.0)
     axe.set_ylim(0.0, 1.0)
-    axe.set_title("Calibration — test 2025 (E23)")
+    axe.set_title("Calibration — test 2025")
     axe.legend(loc="upper left")
     figure.tight_layout()
 
@@ -211,7 +211,7 @@ def _journaliser_mlflow(rapport: RapportEvaluation, settings: Settings) -> None:
     l'évaluation déjà calculée ne dépend jamais de ce suivi pour exister.
     """
     if not settings.mlflow_tracking_uri:
-        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : évaluation non journalisée dans MLflow (E23).")
+        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : évaluation non journalisée dans MLflow.")
         return
     try:
         import mlflow
@@ -222,7 +222,7 @@ def _journaliser_mlflow(rapport: RapportEvaluation, settings: Settings) -> None:
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment(NOM_EXPERIENCE_MLFLOW)
     with mlflow.start_run(run_name="evaluation-calibration"):
-        mlflow.set_tag("etape", "E23")
+        mlflow.set_tag("etape", "evaluate")
         for score_session, prefixe in (
             (rapport.scores_validation, "modele_validation"),
             (rapport.scores_test, "modele_test"),
@@ -245,7 +245,7 @@ def _journaliser_mlflow(rapport: RapportEvaluation, settings: Settings) -> None:
 
 
 def executer(settings: Settings | None = None, dossier_figures: Path | None = None) -> RapportEvaluation:
-    """Entraîne (E22) puis évalue (E23) : calibration, ECE, ventilation par type de baccalauréat.
+    """Entraîne puis évalue : calibration, ECE, ventilation par type de baccalauréat.
 
     `dossier_figures` : `reports/figures/` du dépôt par défaut ; paramétrable
     pour que les tests écrivent dans un répertoire jetable plutôt que dans le
@@ -308,7 +308,7 @@ def executer(settings: Settings | None = None, dossier_figures: Path | None = No
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Évaluation (E23) terminée.\n%s", rapport.resume())
+    LOGGER.info("Évaluation terminée.\n%s", rapport.resume())
     return 0
 
 

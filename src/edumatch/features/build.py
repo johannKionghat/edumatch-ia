@@ -1,10 +1,10 @@
-"""Construction de la table de variables d'entraînement (E20) : `make features`.
+"""Construction de la table de variables d'entraînement : `make features`.
 
 ## Ce que ce module fait, et rien de plus
 
-`transform/etoile.py` (E16) a produit le grain de l'apprentissage — une ligne
+`transform/etoile.py` a produit le grain de l'apprentissage — une ligne
 `fait_admission` par cellule `(session, formation, type de baccalauréat,
-boursier)`, avec son label (`taux`, `features/label.py`, E19). Ce module lui
+boursier)`, avec son label (`taux`, `features/label.py`). Ce module lui
 attache les variables explicatives, en respectant **exactement** le
 classement colonne par colonne arrêté par l'ADR 0013 et porté par
 `configs/base.yaml`, section `modele.variables` (`VariablesConfig`). Il ne
@@ -31,7 +31,7 @@ Trois familles de colonnes, jamais mélangées :
   test passerait même si la translation était absente.
 
 Les huit colonnes de mention (`decalees_sous_reserve`) restent, par défaut,
-hors de la table produite : l'ADR 0013 les écarte tant que l'ablation (E27)
+hors de la table produite : l'ADR 0013 les écarte tant que l'ablation
 n'a pas démontré un gain. `inclure_sous_reserve=True` les réintroduit sans
 dupliquer le classement — c'est le seul paramètre que ce module expose au delà
 de la configuration.
@@ -97,12 +97,12 @@ class ErreurConstructionVariables(RuntimeError):
 
 
 class ErreurVariablesSourceAbsente(RuntimeError):
-    """Silver ou le gold ne sont pas encore disponibles : E15/E16 doivent tourner d'abord."""
+    """Silver ou le gold ne sont pas encore disponibles : la réconciliation et l'étoile doivent tourner d'abord."""
 
 
 @dataclass(frozen=True)
 class RapportVariables:
-    """Volumétrie et complétude réellement obtenues, à déclarer telles quelles (E20)."""
+    """Volumétrie et complétude réellement obtenues, à déclarer telles quelles."""
 
     lignes: int
     nombre_variables: int
@@ -132,7 +132,7 @@ class RapportVariables:
 def _joindre_sans_fan_out(gauche: pd.DataFrame, droite: pd.DataFrame, cles: list[str], nom: str) -> pd.DataFrame:
     """`gauche.merge(droite, on=cles, how="left")`, mais lève si `droite` fait gonfler le nombre de lignes.
 
-    Même garde-fou que `transform.etoile._joindre_sans_fan_out` (E16), réécrit
+    Même garde-fou que `transform.etoile._joindre_sans_fan_out`, réécrit
     ici plutôt qu'importé : c'est une fonction privée de ce module-là, et la
     dupliquer coûte moins cher que de rendre publique une API interne d'un
     autre module pour un usage aussi ponctuel. Une jointure qui change le
@@ -157,7 +157,7 @@ def _verifier_colonnes_licites(colonnes: list[str], variables: VariablesConfig) 
     Défense en profondeur : la construction ne lit déjà que les colonnes
     listées par `VariablesConfig`, donc ce contrôle ne devrait jamais se
     déclencher en usage normal. Il existe pour la même raison que les
-    contrôles qualité du plan d'exécution du projet — un échec doit bloquer,
+    contrôles qualité du projet — un échec doit bloquer,
     pas être supposé impossible.
     """
     licites = (
@@ -278,7 +278,7 @@ def _colonnes_a_construire(variables: VariablesConfig, inclure_sous_reserve: boo
 def _rapport_variables(
     table: pd.DataFrame, colonnes_variables: list[str], a_antecedent: pd.Series
 ) -> RapportVariables:
-    """Volumétrie et complétude mesurées sur la table produite, à déclarer telles quelles (E20)."""
+    """Volumétrie et complétude mesurées sur la table produite, à déclarer telles quelles."""
     cellules_par_session = {
         int(session): int(compte) for session, compte in table[COLONNE_SESSION].value_counts().sort_index().items()
     }
@@ -352,7 +352,7 @@ def executer(settings: Settings | None = None) -> RapportVariables:
         raise ErreurVariablesSourceAbsente(
             "Fichier(s) manquant(s) : "
             + ", ".join(f"{nom} ({chemin})" for nom, chemin in manquants.items())
-            + ". Exécuter `make transform` (E15) puis `make gold` (E16) avant `make features`."
+            + ". Exécuter `make transform` puis `make gold` avant `make features`."
         )
 
     silver = pq.read_table(chemins_requis["silver"]).to_pandas()
@@ -374,7 +374,7 @@ def executer(settings: Settings | None = None) -> RapportVariables:
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Construction des variables (E20) terminée.\n%s", rapport.resume())
+    LOGGER.info("Construction des variables terminée.\n%s", rapport.resume())
     return 0
 
 

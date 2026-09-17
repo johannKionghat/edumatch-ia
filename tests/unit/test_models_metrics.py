@@ -1,4 +1,4 @@
-"""Tests unitaires des métriques partagées (E22/E23) : `models/metrics.py`."""
+"""Tests unitaires des métriques partagées : `models/metrics.py`."""
 
 from __future__ import annotations
 

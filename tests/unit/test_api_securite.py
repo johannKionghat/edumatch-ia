@@ -1,4 +1,4 @@
-"""Tests de la revue de sécurité (post-E35) qui ne relèvent d'aucune route existante en
+"""Tests de la revue de sécurité qui ne relèvent d'aucune route existante en
 particulier : en-têtes de sécurité HTTP sur toute réponse, et disponibilité de `/metrics`
 sans authentification.
 """

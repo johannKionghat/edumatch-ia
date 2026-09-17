@@ -1,4 +1,4 @@
-"""Transformation bronze vers silver (E15) : réconciliation des huit millésimes Parcoursup.
+"""Transformation bronze vers silver : réconciliation des huit millésimes Parcoursup.
 
 Bronze (`data/raw/parcoursup/`) est huit fichiers CSV hétérogènes — de 85
 colonnes (2018) à 118 (2021-2025), 128 colonnes vues au moins une fois,

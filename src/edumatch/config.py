@@ -143,7 +143,7 @@ class IdeoJeuConfig(_Strict):
 
     Chaque jeu porte sa propre licence par prudence, même si les quatre valent
     aujourd'hui ODbL : c'est le manifeste, alimenté depuis ce champ, qui
-    permettra en E18 de savoir si une table dérivée est contaminée par le
+    permettra de savoir si une table dérivée est contaminée par le
     partage à l'identique obligatoire de l'ODbL, sans relire la documentation.
     """
 
@@ -172,7 +172,7 @@ class RncpConfig(_Strict):
     prefixe_ressource: str  # préfixe du titre des ressources d'export quotidien
     format_ressource: str  # "zip" : l'export est distribué sous forme d'archive
     nom_fichier_gabarit: str  # motif (glob) du CSV standard à l'intérieur de l'archive
-    # E18 : deuxième membre de la même archive, la correspondance fiche RNCP
+    # Deuxième membre de la même archive, la correspondance fiche RNCP
     # -> codes ROME (voir ingestion/_referentiels_rncp.telecharger_rome).
     nom_fichier_rome_gabarit: str
     encodage: str
@@ -191,7 +191,7 @@ class RncpConfig(_Strict):
 
 
 class FranceTravailConfig(_Strict):
-    """Résolution de la table de correspondance ROME/NAF de France Travail (E18).
+    """Résolution de la table de correspondance ROME/NAF de France Travail.
 
     Contrairement à Sirene et RNCP, ce n'est pas un export périodique : la
     ressource existe en permanence dans le catalogue data.gouv, mais son nom
@@ -225,7 +225,7 @@ class ReferentielsConfig(_Strict):
 
 
 class EchantillonsTestConfig(_Strict):
-    """Tailles cibles des échantillons versionnés de `data/samples/` (E08).
+    """Tailles cibles des échantillons versionnés de `data/samples/`.
 
     Distinct de `DonneesConfig.echantillonnage` : celui-ci réduit le volume
     réellement traité en dev (une fraction du flux de production), alors que
@@ -394,10 +394,9 @@ class ModeleConfig(_Strict):
     variables: VariablesConfig
     split: SplitConfig
     hyperparametres: HyperparametresConfig
-    # Le taux de la même cellule à la session précédente (la baseline, E21)
-    # comme variable explicite plutôt que comme seul concurrent (E22, comparaison
-    # à couverture égale). Décidé sur la seule validation 2024 : voir le
-    # compte rendu de l'étape pour le chiffre qui a tranché.
+    # Le taux de la même cellule à la session précédente (la baseline)
+    # comme variable explicite plutôt que comme seul concurrent (comparaison
+    # à couverture égale). Décidé sur la seule validation 2024.
     inclure_taux_precedent: bool
 
 
@@ -405,7 +404,7 @@ class EvaluationConfig(_Strict):
     metrique_principale: str
     calibration: bool
     # Nombre de tranches également espacées sur [0, 1] pour le diagramme de
-    # fiabilité (E23) : la cible est un taux borné (ADR 0009), pas une classe,
+    # fiabilité : la cible est un taux borné (ADR 0009), pas une classe,
     # donc la calibration se lit par tranches de valeur prédite plutôt que par
     # les déciles habituels d'une probabilité de classification.
     n_tranches_calibration: int = Field(ge=2)
@@ -421,7 +420,7 @@ class EquiteConfig(_Strict):
 
 
 class AblationConfig(_Strict):
-    """Seuils de reconsidération de l'ablation (E27, adr/0013 § « Ce qui ferait reconsidérer »).
+    """Seuils de reconsidération de l'ablation (adr/0013 § « Ce qui ferait reconsidérer »).
 
     `seuil_gain_mentions` : gain d'erreur absolue moyenne pondérée, mesuré sur
     la validation, au-delà duquel les variables de mention (écartées par
@@ -435,7 +434,7 @@ class AblationConfig(_Strict):
 
 
 class ExplicabiliteConfig(_Strict):
-    """Paramètres de l'explicabilité TreeSHAP (E25), tous des choix de présentation,
+    """Paramètres de l'explicabilité TreeSHAP, tous des choix de présentation,
     jamais des seuils qui changent un résultat.
 
     `top_n_figure` : nombre de variables affichées sur le diagramme d'importance
@@ -446,7 +445,7 @@ class ExplicabiliteConfig(_Strict):
     d'exemple local commenté (haut, bas) — sous ce seuil, une seule
     proposition supplémentaire ou en moins fait basculer le taux observé, et
     l'exemple illustrerait le bruit plutôt que le modèle. Même valeur que le
-    plancher retenu par l'analyse d'équité (E11, "formations recevant au moins
+    plancher retenu par l'analyse d'équité ("formations recevant au moins
     trente vœux") : pas une coïncidence, la même raison — en dessous, une
     cellule ne dit rien de stable.
     """
@@ -456,7 +455,7 @@ class ExplicabiliteConfig(_Strict):
 
 
 class QualiteParcoursupConfig(_Strict):
-    """Seuils du contrôle qualité Parcoursup (E14), tous mesurés sur le fichier source.
+    """Seuils du contrôle qualité Parcoursup, tous mesurés sur le fichier source.
 
     `seuil_completude` : le taux en dessous duquel une colonne de la liste
     blanche (`modele.variables.session_courante`) est jugée incomplète.
@@ -484,7 +483,7 @@ class QualiteParcoursupConfig(_Strict):
 
 
 class QualiteSireneConfig(_Strict):
-    """Seuils du contrôle qualité Sirene (E14).
+    """Seuils du contrôle qualité Sirene.
 
     `seuil_completude` : appliqué aux seules colonnes structurellement
     complètes par construction (`siret`, `etatAdministratifEtablissement`) —
@@ -505,7 +504,7 @@ class QualiteSireneConfig(_Strict):
 
 
 class QualiteReferentielsConfig(_Strict):
-    """Seuils du contrôle qualité des référentiels ONISEP (IDÉO) et RNCP (E14).
+    """Seuils du contrôle qualité des référentiels ONISEP (IDÉO) et RNCP.
 
     `age_max_jours_avertissement_ideo` : IDÉO n'expose aucune date de
     publication par l'API — seule `date_telechargement` (dernière
@@ -531,7 +530,7 @@ class QualiteConfig(_Strict):
 
 
 class MatchingConfig(_Strict):
-    """Paramètres du score à trois termes (E28) : affinité x accessibilité x débouchés.
+    """Paramètres du score à trois termes : affinité x accessibilité x débouchés.
 
     `k_anonymat_debouches` : seuil de k-anonymat appliqué à l'agrégat Sirene
     (département x division NAF) qui porte le terme « débouchés ». Arrêté à
@@ -566,11 +565,11 @@ class MatchingConfig(_Strict):
 
 
 class RagConfig(_Strict):
-    """Paramètres de l'assistant documentaire (E32), brique secondaire de restitution.
+    """Paramètres de l'assistant documentaire, brique secondaire de restitution.
 
     Choix délibérément sobre : l'assistant retrouve les passages pertinents
     par similarité lexicale (TF-IDF, `scikit-learn`, déjà une dépendance du
-    projet depuis E22) plutôt que par un index vectoriel dédié (embeddings +
+    projet) plutôt que par un index vectoriel dédié (embeddings +
     base vectorielle). Le corpus indexé — quelques milliers de lignes IDÉO —
     est très en dessous du volume où un index approximatif apporterait un
     gain de latence mesurable ; voir `src/edumatch/rag/index.py`.
@@ -598,11 +597,11 @@ class RagConfig(_Strict):
 
 
 class DeriveConfig(_Strict):
-    """Détection de dérive (E34) : `models/derive.py`.
+    """Détection de dérive : `models/derive.py`.
 
     `n_tranches_psi` : nombre de tranches de quantile de la référence pour le
     PSI d'une variable numérique — même granularité que
-    `evaluation.n_tranches_calibration` (E23), pour la même raison : assez
+    `evaluation.n_tranches_calibration`, pour la même raison : assez
     fin pour distinguer une translation de distribution, pas au point de
     multiplier des tranches quasi vides.
 
@@ -636,7 +635,7 @@ class AutoscalingConfig(_Strict):
 
 
 class AuditConfig(_Strict):
-    """Durées de conservation du journal d'inférence, article 12 du règlement sur l'IA (E30).
+    """Durées de conservation du journal d'inférence, article 12 du règlement sur l'IA.
 
     Conciliation entre le plancher de l'article 12 (conserver, au moins six
     mois pour un système à haut risque) et le plafond de l'article 5.1.e du
@@ -676,12 +675,12 @@ class AuditConfig(_Strict):
 
 
 class ApiConfig(_Strict):
-    """Paramètres de l'API de matching (E29).
+    """Paramètres de l'API de matching.
 
     `max_formations_evaluees` : plafond de lignes du catalogue soumises à
     `matching.score.recommander` pour une seule requête `/matching`.
     `recommander` boucle ligne à ligne, délibérément non vectorisé (voir son
-    docstring, E28) : au-delà de ce plafond, le temps de calcul menacerait
+    docstring) : au-delà de ce plafond, le temps de calcul menacerait
     `slo_latence_p95_ms`. Au-delà, l'API répond 422 et demande de préciser un
     département ou un domaine plutôt que de tronquer silencieusement le
     catalogue — aucune formation écartée sans que l'appelant en soit informé.
@@ -721,7 +720,7 @@ class ExecutionConfig(_Strict):
 
 
 class PlanificationConfig(_Strict):
-    """Cadence de chaque chaîne du DAG (E33), une entrée par étoile du plan
+    """Cadence de chaque chaîne du DAG, une entrée par étoile du plan
     d'exécution : Parcoursup (annuel), Sirene (mensuel), référentiels
     (quotidien, tiré par l'export RNCP), purge du journal d'audit (quotidien,
     article 12). Une chaîne de planification Airflow (cron ou préréglage
@@ -737,7 +736,7 @@ class PlanificationConfig(_Strict):
 
 
 class OrchestrationConfig(_Strict):
-    """Paramètres de reprise et de planification du DAG Airflow (E33).
+    """Paramètres de reprise et de planification du DAG Airflow.
 
     `tentatives_max` : nombre total d'essais (le premier plus les reprises).
     Au-delà, une erreur transitoire qui persiste n'est plus transitoire au

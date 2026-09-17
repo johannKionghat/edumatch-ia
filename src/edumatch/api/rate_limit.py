@@ -1,4 +1,4 @@
-"""Limitation de débit (revue de sécurité, post-E35) : `deps.get_limiteur_matching` en
+"""Limitation de débit (revue de sécurité) : `deps.get_limiteur_matching` en
 consomme une instance sur `/matching`, `deps.get_limiteur_feedback` sur `/feedback`.
 
 ## Le motif corrigé

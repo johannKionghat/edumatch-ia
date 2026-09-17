@@ -1,4 +1,4 @@
-# Projet dbt de la couche silver Parcoursup (E15).
+# Projet dbt de la couche silver Parcoursup.
 #
 # Ce fichier ne porte aucune connaissance métier (millésimes, colonnes,
 # seuils) : elle reste dans configs/base.yaml, lue par le modèle Python via

@@ -1,4 +1,4 @@
-"""Tests unitaires de la construction des variables (E20), sur des tables fabriquées.
+"""Tests unitaires de la construction des variables, sur des tables fabriquées.
 
 Isolé des vraies données Parcoursup : chaque test construit directement les
 quatre entrées de `construire_table_apprentissage` (fait, dim_formation,

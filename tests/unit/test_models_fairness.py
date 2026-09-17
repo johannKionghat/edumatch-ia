@@ -1,4 +1,4 @@
-"""Tests unitaires de l'audit d'équité (E26) : fonctions pures, sur des tables fabriquées.
+"""Tests unitaires de l'audit d'équité : fonctions pures, sur des tables fabriquées.
 
 Pas besoin de `data/samples/` ici — contrairement au test de contrat
 (`tests/data/test_models_fairness_run.py`) qui rejoue le pipeline complet.

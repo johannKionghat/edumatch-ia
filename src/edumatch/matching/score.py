@@ -1,4 +1,4 @@
-"""Score de matching à trois termes (E28) : affinité x accessibilité x débouchés.
+"""Score de matching à trois termes : affinité x accessibilité x débouchés.
 
     score = affinité  x  accessibilité  x  débouchés
             règles        MODÈLE APPRIS    agrégats Sirene
@@ -27,14 +27,14 @@ sans voir qu'aucun des trois facteurs n'est en cause à lui seul.
 
 ## L'accessibilité : bornée, et sa mise en garde rappelée à chaque score
 
-Le modèle (E22) est une régression LightGBM, non contrainte à [0, 1] par
+Le modèle est une régression LightGBM, non contrainte à [0, 1] par
 construction, alors que le label qu'il prédit l'est structurellement (ADR
 0009). `borner_accessibilite` ramène toute prédiction dans [0, 1] par un
 simple écrêtage — la correction naturelle liée à la définition du label,
 pas un choix de mise à l'échelle arbitraire.
 
 **Ce terme n'a pas encore battu son plancher.** Mesuré sur le test 2025
-(`04-modele/evaluation.md`, E22-E23) : MAE pondérée 0,0758 pour le modèle
+(`04-modele/evaluation.md`) : MAE pondérée 0,0758 pour le modèle
 contre 0,0701 pour la baseline (le taux de la session précédente, à
 couverture égale) — le modèle reste au-dessus du plancher qu'il doit
 battre, et sa calibration s'y dégrade également. `MISE_EN_GARDE_ACCESSIBILITE`
@@ -59,7 +59,7 @@ LOGGER = logging.getLogger(__name__)
 MISE_EN_GARDE_ACCESSIBILITE = (
     "L'accessibilité prédite ne bat pas encore la baseline sur le jeu de test 2025 : "
     "MAE pondérée 0,0758 (modèle) contre 0,0701 (taux de la session précédente, à couverture "
-    "égale) — voir 04-modele/evaluation.md (E22-E23). La calibration du modèle s'y dégrade "
+    "égale) — voir 04-modele/evaluation.md. La calibration du modèle s'y dégrade "
     "également. Ce terme est utilisable mais pas encore validé au sens du protocole "
     "d'évaluation : à lire comme un ordre de grandeur, pas comme une probabilité fiable, "
     "tant que ce résultat n'a pas été renversé."
@@ -91,7 +91,7 @@ def borner_accessibilite(taux_predit: float) -> float:
 class ScoreFormation:
     """Le score d'une formation pour un profil, et le détail des trois termes qui le composent —
     jamais un nombre seul : c'est ce détail qu'un conseiller lit pour expliquer une recommandation
-    ou son absence (E31, l'écran de supervision)."""
+    ou son absence (l'écran de supervision)."""
 
     identifiant_cellule: str
     score: float
@@ -141,14 +141,14 @@ def recommander(
 
     `catalogue` : une ligne par cellule (formation x type de bac x boursier),
     colonnes `COLONNES_CATALOGUE_REQUISES` — typiquement un sous-ensemble de
-    la table de variables (E20) enrichi de `taux_predit` (la prédiction du
-    modèle d'accessibilité, E22, jamais recalculée ici : voir
+    la table de variables enrichi de `taux_predit` (la prédiction du
+    modèle d'accessibilité, jamais recalculée ici : voir
     `matching/score.py` au niveau du module pour le pourquoi de la
     séparation entraînement / scoring).
 
     Implémentation ligne à ligne, délibérément simple pour rester lisible et
     défendable devant un jury : à vectoriser (jointures Polars plutôt qu'une
-    boucle Python) si l'API (E29) doit scorer un catalogue de dizaines de
+    boucle Python) si l'API doit scorer un catalogue de dizaines de
     milliers de lignes en dessous du SLO de latence (`api.slo_latence_p95_ms`,
     `configs/base.yaml`) — non fait ici, hors périmètre de ce module.
     """

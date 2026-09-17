@@ -77,7 +77,7 @@ donnees:
       prefixe_ressource: "export-fiches-csv-"
       format_ressource: zip
       nom_fichier_gabarit: "export_fiches_CSV_Standard_*.csv"
-      # E18 : membre de la même archive, fiche RNCP -> codes ROME. Vérifié le
+      # Membre de la même archive que la fiche RNCP -> codes ROME. Vérifié le
       # 2026-08-30 en listant les membres réels de l'archive du jour (voir
       # docs/sous-docs-projets/01-donnees) : présent aux côtés du CSV
       # standard, du fichier Nsf, et de sept autres membres non retenus ici.
@@ -104,7 +104,7 @@ donnees:
       sous_chaine_titre_ressource: "ROME/NAF"
       format_ressource: xlsx
       licence: "Licence Ouverte v2.0"
-  # Tailles cibles des échantillons versionnés de data/samples/ (E08) — un
+  # Tailles cibles des échantillons versionnés de data/samples/ — un
   # jeu figé, distinct de `echantillonnage` ci-dessus, qui ne sert qu'à
   # faire tourner les tests sans télécharger les sources complètes.
   echantillons_test:
@@ -300,7 +300,7 @@ modele:
     reg_lambda: 0.1
     n_estimators: 2000
     early_stopping_rounds: 100
-  # Le taux de la session précédente (la baseline mesurée en E21) donné au
+  # Le taux de la session précédente (la baseline mesurée) donné au
   # modèle comme variable explicite, plutôt que laissé comme seul concurrent.
   # Un ensemble d'arbres n'apprend pas nativement une division : sans cette
   # variable, il ne dispose que du numérateur et du dénominateur séparés
@@ -320,7 +320,7 @@ evaluation:
   courbe_apprentissage: [0.10, 0.25, 0.50, 1.00]
   baseline: taux_session_precedente
 
-# Seuils des contrôles qualité (E14, src/edumatch/quality/). Un contrôle qui
+# Seuils des contrôles qualité (src/edumatch/quality/). Un contrôle qui
 # journalise sans bloquer laisse une donnée corrompue atteindre le modèle
 # — c'est le cinquième des principes que je me suis fixés pour ce dépôt :
 # les données se valident comme du code. La distinction entre ce qui bloque et
@@ -345,7 +345,7 @@ equite:
   substituts_a_tester: [academie, etablissement_origine]
   seuil_impact_disparate: 0.80       # règle des quatre cinquièmes
 
-# Seuils de reconsidération de l'ablation (E27, adr/0013). Le seul retrait
+# Seuils de reconsidération de l'ablation (adr/0013). Le seul retrait
 # dont la décision (ADR 0013) fixe un seuil chiffré est celui des mentions ;
 # celui de cod_uai se déclenche dès qu'une perte est mesurée, sans valeur à
 # régler (voir `models/ablation.py`).
@@ -353,11 +353,11 @@ ablation:
   seuil_gain_mentions: 0.01
 
 explicabilite:
-  top_n_figure: 15                   # variables affichées sur le diagramme d'importance globale (E25)
-  effectif_minimal_exemple: 30       # même plancher que l'analyse d'équité (E11) : sous ce seuil, une
+  top_n_figure: 15                   # variables affichées sur le diagramme d'importance globale
+  effectif_minimal_exemple: 30       # même plancher que l'analyse d'équité : sous ce seuil, une
                                       # cellule ne dit rien de stable pour servir d'exemple commenté
 
-# Score à trois termes (E28) : affinité x accessibilité x débouchés.
+# Score à trois termes : affinité x accessibilité x débouchés.
 # Voir src/edumatch/matching/ pour le détail de chaque terme et
 # src/edumatch/config.py (MatchingConfig) pour la justification de chaque
 # valeur ci-dessous.
@@ -373,7 +373,7 @@ matching:
   seuil_saturation_etablissements: 100
   facteur_territoire_hors_zone: 0.6        # atténuation, jamais une exclusion
 
-# Assistant documentaire (E32), brique secondaire : voir RagConfig dans
+# Assistant documentaire, brique secondaire : voir RagConfig dans
 # src/edumatch/config.py pour la justification de chaque valeur.
 rag:
   jeux_indexes: [formations, metiers]
@@ -381,7 +381,7 @@ rag:
   seuil_similarite_minimale: 0.05
   modele_generation: mistral-small-latest
 
-# Détection de dérive (E34, src/edumatch/models/derive.py). Seuil et granularité
+# Détection de dérive (src/edumatch/models/derive.py). Seuil et granularité
 # arrêtés par l'ADR 0018, sur la mesure réelle des six sessions labellisées
 # (2020-2025, ADR 0012) : voir l'ADR pour le détail par famille de dérive
 # (variables, cible, prédictions) et pour la raison du regroupement en
@@ -390,10 +390,10 @@ derive:
   reference: distribution_entrainement
   tests: [psi, kolmogorov_smirnov]
   seuil_reentrainement: 0.20         # PSI au-delà duquel on réentraîne (médiane des variables, ADR 0018)
-  n_tranches_psi: 10                 # même granularité que evaluation.n_tranches_calibration (E23)
+  n_tranches_psi: 10                 # même granularité que evaluation.n_tranches_calibration
   top_k_categories_psi: 30           # au-delà, catégories les moins fréquentes regroupées sous "autre"
 
-# Orchestration du DAG (E33, Airflow). Les tâches enchaînent exactement la
+# Orchestration du DAG (Airflow). Les tâches enchaînent exactement la
 # chaîne déjà portée par le Makefile (make data, make sirene-agregats,
 # make naf-rome, make audit-purge-appliquer) ; ce bloc ne porte que les
 # paramètres de reprise et de planification, jamais un seuil métier.
@@ -414,7 +414,7 @@ orchestration:
   # source (voir qualite.*.age_max_jours_avertissement ci-dessus, mesurée
   # sur les fichiers sources) : Parcoursup publie une campagne par an,
   # Sirene republie son stock chaque mois, l'export RNCP est quotidien. La
-  # purge du journal d'audit (E30, article 12) est planifiée à la même
+  # purge du journal d'audit (article 12) est planifiée à la même
   # cadence que les référentiels : une durée de conservation qu'aucune
   # tâche planifiée n'applique n'est pas une durée, c'est une intention.
   planification:
@@ -425,12 +425,12 @@ orchestration:
 
 api:
   slo_latence_p95_ms: 300
-  max_formations_evaluees: 500       # plafond du catalogue scoré par requête /matching (recommander non vectorisé, E28)
+  max_formations_evaluees: 500       # plafond du catalogue scoré par requête /matching (recommander non vectorisé)
   top_n_max: 50                      # plafond du nombre de recommandations demandables
   # Revue de sécurité : fenêtre glissante de 60 s, par adresse IP sur /matching et par
   # identifiant de conseiller authentifié sur /feedback (src/edumatch/api/rate_limit.py).
   limite_requetes_par_minute: 120
-  # Journal d'inférence article 12 (E30) : conciliation avec le plafond du RGPD (art. 5.1.e),
+  # Journal d'inférence article 12 : conciliation avec le plafond du RGPD (art. 5.1.e),
   # voir registre-traitements.md T5 et src/edumatch/config.py:AuditConfig.
   audit:
     delai_pseudonymisation_jours: 365    # 12 mois — palier 1 -> 2

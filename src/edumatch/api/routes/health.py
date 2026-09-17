@@ -1,4 +1,4 @@
-"""Sonde de vivacité (`liveness`) : E29, critère 4.7.
+"""Sonde de vivacité (`liveness`), critère 4.7.
 
 Volontairement sans dépendance lourde — ni lecture du catalogue, ni modèle,
 ni fichier : un orchestrateur (Kubernetes) doit pouvoir distinguer un

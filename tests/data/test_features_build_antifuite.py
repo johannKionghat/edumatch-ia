@@ -1,4 +1,4 @@
-"""Test anti-fuite de la construction des variables (E20) — le critère du plan d'exécution.
+"""Test anti-fuite de la construction des variables — le critère de non-fuite du projet.
 
 Ce fichier porte le contrat le plus critique de l'étape : **aucune variable ne
 contient d'information postérieure à la décision prédite**. Il s'appuie sur le

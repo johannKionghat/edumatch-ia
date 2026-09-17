@@ -1,4 +1,4 @@
-"""Vocabulaire commun des contrôles qualité (E14) : anomalie, gravité, rapport.
+"""Vocabulaire commun des contrôles qualité : anomalie, gravité, rapport.
 
 Ce module ne connaît aucune source précise (ni Parcoursup, ni Sirene, ni
 référentiels) : il porte uniquement la mécanique répétée par tout contrôle,
@@ -43,7 +43,7 @@ class Anomalie:
     """Une violation constatée par un contrôle, sur une source et une famille données.
 
     `famille` vaut l'une de « schema », « completude », « coherence » ou
-    « fraicheur » (les quatre familles retenues à l'étape E14) : elle sert à
+    « fraicheur » (les quatre familles retenues pour les contrôles qualité) : elle sert à
     regrouper le rapport à l'affichage, pas à la logique de blocage, qui ne
     dépend que de `gravite`.
     """
@@ -75,7 +75,7 @@ class ErreurQualiteBloquante(ErreurControleQualite, ErreurDefinitive):
     la même anomalie. Ce n'est pas un incident réseau ni une indisponibilité
     passagère — c'est la donnée elle-même qui viole son contrat. Seule une
     nouvelle collecte, ou une correction du contrôle s'il s'avère trop
-    strict, peut changer l'issue. Un futur DAG (E33) peut donc traiter tout
+    strict, peut changer l'issue. Un futur DAG peut donc traiter tout
     échec de ce module comme il traite un échec de connecteur : alerter un
     humain, ne jamais retenter en boucle.
     """

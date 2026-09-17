@@ -1,4 +1,4 @@
-"""Exemple de bout en bout de l'assistant documentaire (E32), sur données réelles.
+"""Exemple de bout en bout de l'assistant documentaire, sur données réelles.
 
 `make assistant-exemple` : construit l'assistant depuis
 `data/external/referentiels/ideo/` (corpus complet), pose une question

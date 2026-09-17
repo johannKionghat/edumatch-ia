@@ -1,4 +1,4 @@
-"""Logique d'orchestration du pipeline (E33), indépendante d'Airflow.
+"""Logique d'orchestration du pipeline, indépendante d'Airflow.
 
 Ce paquet porte tout ce qui doit rester testable sans installer Airflow :
 la politique de reprise (`reprise.py`) et les tâches unitaires (`taches.py`),

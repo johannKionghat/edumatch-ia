@@ -1,4 +1,4 @@
-"""Gestion des erreurs de l'API (E29) : codes HTTP justes, messages qui n'exposent ni chemin
+"""Gestion des erreurs de l'API : codes HTTP justes, messages qui n'exposent ni chemin
 interne ni trace : c'est la règle de sécurité que je me suis fixée pour ce
 service.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Vérification de la pile locale — E35.
+# Vérification de la pile locale.
 #
 # Interroge la sonde de chaque brique de `docker-compose.yml` et affiche un
 # état lisible, une ligne par service : jamais un mur de journaux à

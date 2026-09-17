@@ -1,4 +1,4 @@
-"""Index de similarité lexicale (TF-IDF) sur le corpus documentaire (E32).
+"""Index de similarité lexicale (TF-IDF) sur le corpus documentaire.
 
 ## Le choix, et son seuil de bascule
 

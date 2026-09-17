@@ -1,4 +1,4 @@
-"""Test de contrat de `/assistant` (E32) : l'assistant documentaire répond en citant ses
+"""Test de contrat de `/assistant` : l'assistant documentaire répond en citant ses
 sources, ou explique explicitement qu'il n'en a pas trouvé — jamais un plantage, jamais un
 silence quand le service n'est pas disponible."""
 
@@ -83,7 +83,7 @@ def test_assistant_non_initialise_repond_503(monkeypatch: pytest.MonkeyPatch) ->
     répondre 503 plutôt que de planter tout le processus — même politique que `/matching` et
     `/explain` (voir `api/deps.py`). `construire_assistant` est ici forcé en échec plutôt que de
     dépendre de l'état réel de `data/external/` sur le poste d'exécution, qui varie selon que
-    E18 a déjà été joué ou non."""
+    la réconciliation NAF/ROME a déjà été jouée ou non."""
     from edumatch.api import deps
 
     def _echoue(settings: object) -> None:

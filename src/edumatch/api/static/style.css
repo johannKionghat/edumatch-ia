@@ -1,4 +1,4 @@
-/* Écran conseiller (E31) — feuille de style de l'écran de supervision.
+/* Écran conseiller — feuille de style de l'écran de supervision.
 
    Palette choisie et vérifiée pour un contraste WCAG 2.1 AA (RGAA) :
    voir tests/unit/test_ecran_accessibilite.py::test_contrastes_declares_respectent_le_seuil_aa

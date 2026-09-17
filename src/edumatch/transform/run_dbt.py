@@ -1,4 +1,4 @@
-"""Invocation du projet dbt de la couche silver Parcoursup (E15) : le lignage.
+"""Invocation du projet dbt de la couche silver Parcoursup : le lignage.
 
 Point d'entrée distinct de `make transform` (`run.py`) : celui-ci est le
 chemin de production, sans dépendance à dbt, un DataFrame pandas d'un bout à

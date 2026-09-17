@@ -1,4 +1,4 @@
-"""Statistiques de dérive (E34) : indice de stabilité de population (PSI) et test de
+"""Statistiques de dérive : indice de stabilité de population (PSI) et test de
 Kolmogorov-Smirnov, séparées de `models/derive.py` pour la même raison que `metrics.py`
 est séparé de `train.py` — un calcul générique, indépendant de la table de variables et
 du modèle, réutilisable et testable seul.
@@ -29,7 +29,7 @@ précaution théorique : sans cette neutralisation, le PSI de `region_etab_aff` 
 l'entraînement et le test 2025 vaut 4,99 (une dérive massive), et 0,76 après
 neutralisation — la moitié de l'écart mesuré n'est qu'un changement de graphie d'une
 session à l'autre, pas un déplacement géographique réel des formations. C'est la
-dérive amont du plan de détection (E34) : une source qui change de format produit
+dérive amont du plan de détection : une source qui change de format produit
 exactement les mêmes symptômes qu'un changement du monde réel (voir `derive.py` pour la
 suite du diagnostic sur ces deux variables, et le compte rendu de l'étape pour le
 détail des modalités en cause).

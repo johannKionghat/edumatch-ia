@@ -1,4 +1,4 @@
-"""Tests unitaires de la détection de dérive (E34) : `mesurer_variable`, l'agrégation en
+"""Tests unitaires de la détection de dérive : `mesurer_variable`, l'agrégation en
 médiane et le déclenchement du réentraînement — fonctions pures ou quasi, sur des séries et
 des rapports fabriqués. Le contrat de bout en bout (`make derive` sur les échantillons)
 est dans `tests/data/test_models_derive_run.py`.

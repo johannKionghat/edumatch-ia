@@ -1,4 +1,4 @@
-"""Assistant documentaire (E32) de bout en bout sur les échantillons réels de `data/samples/`.
+"""Assistant documentaire de bout en bout sur les échantillons réels de `data/samples/`.
 
 Construit le vrai index TF-IDF sur le corpus échantillonné et pose une
 question réelle : aucun réseau (mode extractif, `client_generation=None`),

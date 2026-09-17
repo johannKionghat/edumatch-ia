@@ -1,4 +1,4 @@
-"""Assistant documentaire (E32) : orchestre recherche et génération, jamais l'inverse.
+"""Assistant documentaire : orchestre recherche et génération, jamais l'inverse.
 
 Voir le docstring de `edumatch.rag` pour la portée de cette brique et ce
 qu'elle ne fait jamais.

@@ -1,4 +1,4 @@
-"""Authentification HTTP Basic de l'écran conseiller (revue de sécurité, post-E35).
+"""Authentification HTTP Basic de l'écran conseiller (revue de sécurité).
 
 ## Le motif corrigé
 
@@ -15,7 +15,7 @@ l'appelant.
 ## Pourquoi HTTP Basic plutôt qu'OAuth2/OIDC
 
 Un seul rôle (« conseiller »), un seul point d'accès protégé (`POST
-/feedback`, consommé par l'écran de supervision, E31), aucune fédération
+/feedback`, consommé par l'écran de supervision), aucune fédération
 d'identité avec un système tiers, aucune session longue à révoquer
 indépendamment du mot de passe lui-même. OAuth2/OIDC ajouterait un
 fournisseur d'identité, un flux d'échange de jeton et sa bibliothèque, pour

@@ -2,7 +2,7 @@
 
 ## Ce que ce module fait, et ce qu'il ne fait pas
 
-`models/train.py` (E22) journalise déjà chaque exécution dans le **suivi
+`models/train.py` journalise déjà chaque exécution dans le **suivi
 d'expériences** MLflow : paramètres, métriques, artefact modèle. Ce que le
 suivi ne fait pas, c'est le **registre de modèles** — un objet distinct, où
 une exécution devient une *version nommée*, comparable dans le temps,
@@ -13,7 +13,7 @@ configuration courante (`settings.modele.inclure_taux_precedent`) et
 l'enregistre comme version du modèle `edumatch-accessibilite`, avec :
 
 - une étiquette (`ETIQUETTE_STATUT`) qui déclare, en clair, que ce modèle
-  **ne bat pas le plancher** (E21, `session_precedente_avec_repli`, mesuré à
+  **ne bat pas le plancher** (`session_precedente_avec_repli`, mesuré à
   couverture égale) sur le test 2025 — MAE pondérée 0,0758 contre 0,0701,
   calibration ECE 0,0371 contre 0,0322 ;
 - une description qui reprend ces chiffres, lus depuis l'exécution elle-même
@@ -33,7 +33,7 @@ modèle qui n'est pas encore prêt.
 `enregistrer_version_modele` accepte un `run_id` explicite pour les tests et
 pour rejouer un enregistrement précis, mais son usage normal (`make
 register-model`) ne le connaît pas : il retrouve la dernière exécution
-`FINISHED` de `models.train` (`tags.etape == "E22"`) dont la variante
+`FINISHED` de `models.train` (`tags.etape == "train"`) dont la variante
 correspond à la configuration active (`tags.variante`), dans l'expérience
 `edumatch-accessibilite`. C'est la même logique de sélection que
 `models.evaluate` applique déjà à l'entraînement lui-même (même protocole,
@@ -62,7 +62,7 @@ ETIQUETTE_COMMIT = "commit_git"
 ETIQUETTE_RUN_SOURCE = "run_id_source"
 
 VALEUR_STATUT_NON_RETENU = (
-    "ne bat pas le plancher (E21, session precedente a couverture egale) sur le test 2025 : "
+    "ne bat pas le plancher (session precedente a couverture egale) sur le test 2025 : "
     "non retenu pour un usage reel, enregistre pour la tracabilite du registre (critere 4.10)"
 )
 
@@ -72,7 +72,7 @@ class ErreurRegistreModele(RuntimeError):
 
     Définitive au sens de `models.jeux.ErreurJeuxDonnees` : relancer à
     l'identique sans corriger la cause (MLflow non configuré, aucune
-    exécution `E22` journalisée) donnerait la même erreur.
+    exécution `train` journalisée) donnerait la même erreur.
     """
 
 
@@ -95,7 +95,7 @@ class RapportEnregistrement:
             f"Version {self.version} de « {self.nom_modele} » enregistrée depuis l'exécution {self.run_id}.",
             f"  Commit source     : {self.commit_git or 'inconnu'}",
             f"  MAE pondérée test : {self.test_mae_ponderee!r} (modèle) contre "
-            f"{self.baseline_test_mae_ponderee!r} (plancher E21, couverture égale)"
+            f"{self.baseline_test_mae_ponderee!r} (plancher, couverture égale)"
             + (f" — écart {ecart:+.4f}" if ecart is not None else ""),
             "  Aucun alias, aucun stade de production attribué : le modèle ne bat pas le plancher.",
         ]
@@ -108,18 +108,18 @@ def _dernier_run_entrainement(client: mlflow.tracking.MlflowClient, settings: Se
     if experience is None:
         raise ErreurRegistreModele(
             f"Aucune expérience « {NOM_EXPERIENCE_MLFLOW} » dans ce magasin MLflow : "
-            "exécuter `make train` (E22) avant `make register-model`."
+            "exécuter `make train` avant `make register-model`."
         )
     variante = "avec-taux-precedent" if settings.modele.inclure_taux_precedent else "sans-taux-precedent"
     runs = client.search_runs(
         experiment_ids=[experience.experiment_id],
-        filter_string=(f"tags.etape = 'E22' and tags.variante = '{variante}' and status = 'FINISHED'"),
+        filter_string=(f"tags.etape = 'train' and tags.variante = '{variante}' and status = 'FINISHED'"),
         order_by=["start_time DESC"],
         max_results=1,
     )
     if not runs:
         raise ErreurRegistreModele(
-            f"Aucune exécution `E22` terminée pour la variante « {variante} » : exécuter `make train`."
+            f"Aucune exécution `train` terminée pour la variante « {variante} » : exécuter `make train`."
         )
     return runs[0]
 
@@ -127,7 +127,7 @@ def _dernier_run_entrainement(client: mlflow.tracking.MlflowClient, settings: Se
 def enregistrer_version_modele(
     run_id: str | None = None, settings: Settings | None = None
 ) -> RapportEnregistrement:
-    """Enregistre au registre l'artefact `modele` d'une exécution `models.train` (E22).
+    """Enregistre au registre l'artefact `modele` d'une exécution `models.train`.
 
     Sans `run_id`, retrouve la dernière exécution qui correspond à la
     configuration active (voir `_dernier_run_entrainement`). Avec un
@@ -164,9 +164,9 @@ def enregistrer_version_modele(
     baseline_test_mae = run.data.metrics.get("baseline_test_mae_ponderee")
 
     description = (
-        "LightGBM pondéré (E22), issu de l'exécution "
+        "LightGBM pondéré, issu de l'exécution "
         f"{run_id} (commit {commit or 'inconnu'}). "
-        f"MAE pondérée sur le test 2025 : {test_mae!r} ; plancher E21 (session précédente, "
+        f"MAE pondérée sur le test 2025 : {test_mae!r} ; plancher (session précédente, "
         f"repli sur moyenne de groupe, couverture égale) sur le même périmètre : "
         f"{baseline_test_mae!r}. Ce modèle ne bat pas le plancher sur le test : il est "
         "enregistré pour la traçabilité du registre, jamais promu, jamais servi en production."

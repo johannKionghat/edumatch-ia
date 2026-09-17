@@ -1,4 +1,4 @@
-"""Modèle dbt (Python) `fait_admission` (E16) : la table de faits, pour le lignage.
+"""Modèle dbt (Python) `fait_admission` : la table de faits, pour le lignage.
 
 Seul modèle gold qui dépend des trois autres (`dim_formation`,
 `dim_territoire`, `dim_profil_candidat`) en plus de `stg_parcoursup` : le

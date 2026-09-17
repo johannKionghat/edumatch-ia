@@ -1,4 +1,4 @@
-"""Modèle dbt (Python) de la couche silver Parcoursup (E15) : `dbt run`.
+"""Modèle dbt (Python) de la couche silver Parcoursup : `dbt run`.
 
 ## L'arbitrage d'outillage : DuckDB plutôt que PostgreSQL
 
@@ -28,11 +28,11 @@ verrouille le fichier en écriture, un seul processus écrivain à la fois), ou
 l'entrepôt doit rester interrogeable en continu par un service tiers (API,
 tableau de bord branché en direct) plutôt que reconstruit à la demande. Aucun
 des deux ne s'applique à cette étape : la réconciliation est un job batch,
-exécuté par un DAG (E33), pas un service.
+exécuté par un DAG, pas un service.
 
 **Ce que je ne tranche pas moi-même** : PostgreSQL reste la base retenue pour
 tout ce qui n'est pas de la transformation par lots — le modèle en étoile
-final (E16), le stockage des scores servis par l'API. Le choix ci-dessus ne
+final, le stockage des scores servis par l'API. Le choix ci-dessus ne
 porte que sur le moteur d'exécution de *cette* transformation, et mérite
 d'être revu si le projet décide un jour de servir silver directement, sans
 passer par le modèle en étoile de gold.

@@ -1,9 +1,9 @@
-"""Test du point d'entrée `make fairness` (E26), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make fairness`, de bout en bout, sur les échantillons.
 
-Même schéma que `test_models_evaluate_run.py` (E23) : un `data_root` jetable
-dans `tmp_path`, silver (E15), gold (E16) puis la table de variables (E20)
+Même schéma que `test_models_evaluate_run.py` : un `data_root` jetable
+dans `tmp_path`, silver, gold puis la table de variables
 produits depuis les huit échantillons versionnés, puis
-`edumatch.models.fairness` dessus — qui entraîne à son tour (E22) avant
+`edumatch.models.fairness` dessus — qui entraîne à son tour avant
 d'auditer. Les échantillons versionnés (quelques dizaines de lignes par
 millésime) ne comptent jamais 30 cellules dans le moindre groupe : le seuil
 de fiabilité de production (`N_CELLULES_MIN_FIABLE`) est donc abaissé à 1

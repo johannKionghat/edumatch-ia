@@ -9,7 +9,7 @@ models:
       une ligne = une formation, sur une session, pour un type de
       baccalauréat et un statut de boursier — les deux dernières dimensions
       ne sont pas des colonnes, elles sont portées par le label (ADR 0009) et
-      appliquées en aval (E19).
+      appliquées en aval.
     columns:
       - name: session
         description: Le millésime (2018 à 2025), ajouté par la réconciliation, jamais lu tel quel du fichier source.

@@ -1,4 +1,4 @@
-"""Tests d'intégration du pipeline (E33) : idempotence de l'enchaînement et blocage qualité.
+"""Tests d'intégration du pipeline : idempotence de l'enchaînement et blocage qualité.
 
 Ces tests appellent les fonctions de `edumatch.orchestration.taches` — celles
 que `pipelines/edumatch_pipeline.py` assemble en graphe Airflow — directement,
@@ -58,7 +58,7 @@ def test_enchainement_silver_gold_variables_est_idempotent(settings_jetables: Se
     l'ordre où le DAG les appelle) qui est testé ici — l'idempotence de
     chaque étape prise séparément est déjà démontrée par
     `tests/data/test_transform_run.py`, `test_transform_run_etoile.py` et
-    `test_features_build_run.py` (E15, E16, E20).
+    `test_features_build_run.py`.
     """
     taches.transformer_silver(settings_jetables)
     taches.construire_gold(settings_jetables)

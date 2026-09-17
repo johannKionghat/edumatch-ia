@@ -1,4 +1,4 @@
-"""Test de contrat de `/matching` (E29).
+"""Test de contrat de `/matching`.
 
 Fixtures reprises de `tests/unit/test_matching_score.py` : un `EtatMatching`
 construit à la main plutôt que par `api.state.construire_etat_matching`

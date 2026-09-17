@@ -1,4 +1,4 @@
-"""Tests des contrôles qualité Sirene (E14), sur `data/samples/` et sur des fichiers fabriqués."""
+"""Tests des contrôles qualité Sirene, sur `data/samples/` et sur des fichiers fabriqués."""
 
 from __future__ import annotations
 

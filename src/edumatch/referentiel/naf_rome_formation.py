@@ -1,4 +1,4 @@
-"""Réconciliation NAF (Sirene) -> ROME (métiers) -> formation (E18).
+"""Réconciliation NAF (Sirene) -> ROME (métiers) -> formation.
 
 Diagnostic préalable, mené avant d'écrire une ligne de ce module — voir
 `docs/sous-docs-projets/01-donnees/nomenclatures.md` pour le détail complet :
@@ -30,7 +30,7 @@ Deux pertes de granularité, déclarées, pas masquées :
   qu'à la division NAF (ex. « 62 » — Programmation, conseil et autres
   activités informatiques), pas à la sous-classe complète (5 caractères, ex.
   « 62.01Z ») que porte `activitePrincipaleEtablissement` dans l'agrégat
-  Sirene (E17). Le rattachement à un établissement réel exige de tronquer
+  Sirene. Le rattachement à un établissement réel exige de tronquer
   son code NAF à ses deux premiers caractères — un calcul exact, la division
   étant par construction le préfixe de toute sous-classe, pas une
   approximation inventée.
@@ -38,7 +38,7 @@ Deux pertes de granularité, déclarées, pas masquées :
   apparaître sous plusieurs divisions NAF : la table finale est donc en
   relation N:N, pas 1:1. Une formation n'a pas « un » débouché NAF mais un
   ensemble, pondérable ou non selon l'usage qui en sera fait en aval (score
-  de débouchés, E28).
+  de débouchés).
 
 État de la certification, exposé et non filtré : le répertoire RNCP mêle des
 fiches actives et des fiches radiées (colonne `Actif` du CSV standard de
@@ -47,7 +47,7 @@ l'export, valeurs `ACTIVE`/`INACTIVE`). Mesuré sur l'export du 2026-08-30 :
 fiche `INACTIVE`, soit 4,3 % des 26 358 lignes. Une certification radiée
 n'est pas un débouché actuel, mais ce n'est pas à cette table d'en décider :
 elle expose l'état par une colonne (`rncp_actif`) et le calcul des débouchés
-(E28) choisira d'en tenir compte ou non, comme il le fait déjà pour la
+ choisira d'en tenir compte ou non, comme il le fait déjà pour la
 pondération N:N ci-dessus.
 
 La double nomenclature NAF (2008/2025) : la table France Travail est
@@ -62,7 +62,7 @@ Travail équivalente n'est republiée sous la nouvelle nomenclature.
 Licence : IDÉO est sous ODbL (partage à l'identique obligatoire sur toute
 base dérivée redistribuée) ; RNCP et France Travail sont en Licence Ouverte
 v2.0. Cette table dérivée, qui intègre des données IDÉO, est donc concernée
-par l'ODbL — signalé ici pour que la gouvernance (E40-E44) le reprenne,
+par l'ODbL — signalé ici pour que la gouvernance le reprenne,
 cette question relevant d'elle, pas de ce module.
 """
 
@@ -287,8 +287,8 @@ def construire_table(
     trois jointures ci-dessus, aucune ligne n'est retirée faute de
     correspondance. L'état d'une certification (active ou radiée) est une
     information à exposer, pas un critère de sélection décidé à cette étape
-    — le choix d'exclure les fiches radiées relève du calcul des débouchés
-    (E28). Une fiche présente dans l'export ROME du jour mais absente du CSV
+    — le choix d'exclure les fiches radiées relève du calcul des débouchés.
+    Une fiche présente dans l'export ROME du jour mais absente du CSV
     standard du même jour (aucun cas observé sur les exports du 2026-08-30,
     les deux fichiers provenant de la même archive) laisserait `rncp_actif`
     à `null` — un état inconnu déclaré comme tel, jamais confondu avec
@@ -402,7 +402,7 @@ def mesurer_couverture_naf_sirene(codes_naf: list[str], divisions_couvertes: set
     """Couverture de la table France Travail vis-à-vis des codes NAF réellement présents dans Sirene.
 
     `codes_naf` : les codes NAF distincts de `activitePrincipaleEtablissement`
-    dans l'agrégat commune x NAF (E17) — pas un échantillon, la population
+    dans l'agrégat commune x NAF — pas un échantillon, la population
     réelle du champ. `divisions_couvertes` : les divisions présentes dans la
     table France Travail (`naf_division` de `charger_correspondance_rome_naf`).
 

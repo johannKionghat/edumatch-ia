@@ -1,12 +1,12 @@
-"""Calcul du label et de sa pondération d'entraînement (E19).
+"""Calcul du label et de sa pondération d'entraînement.
 
 ## Ce que ce module porte, et pourquoi il existe
 
 Deux choses, décidées ensemble par l'ADR 0009 mais nées à deux moments
-différents du plan d'exécution du projet :
+différents de la construction du projet :
 
 1. **La formule du taux** — `prop_tot / nb_voe_pp`, bornée à 1 — était déjà
-   codée dans `edumatch.transform.etoile` (E16), qui en avait besoin avant que
+   codée dans `edumatch.transform.etoile`, qui en avait besoin avant que
    cette étape n'existe. Ce module en devient l'unique définition : `etoile.py`
    l'importe désormais au lieu de la recalculer, pour qu'une formule ne
    diverge jamais silencieusement entre la couche gold et les étapes en aval
@@ -48,7 +48,7 @@ et retient l'effectif brut (option 5). Retenu tel quel : la mesure confirme
 la décision, elle ne la rouvre pas.
 
 **Le seuil qui ferait reconsidérer** (déjà écrit dans l'ADR) : si l'audit
-d'équité (E26) montre que ce quart de poids concentré défavorise
+d'équité montre que ce quart de poids concentré défavorise
 structurellement un profil (bac professionnel, notamment, où 21,6 % des
 formations n'émettent aucune proposition) — il faudrait alors revoir la
 pondération, pas la définition du taux.
@@ -76,7 +76,7 @@ def calculer_taux(numerateur: pd.Series, denominateur: pd.Series) -> tuple[pd.Se
     """Le taux d'admission d'une cellule : `numerateur / denominateur`, borné à 1 (ADR 0009).
 
     Extrait à l'identique de `edumatch.transform.etoile.construire_fait_admission`
-    (E16) : même expression, même comportement aux limites, y compris ceux
+    : même expression, même comportement aux limites, y compris ceux
     que la construction du gold ne rencontre jamais en pratique parce que
     `base_exploitable` filtre en amont (dénominateur nul ou manquant,
     numérateur manquant) mais que cette fonction, réutilisable, doit tout de
@@ -102,13 +102,13 @@ def poids_effectif(effectif: pd.Series) -> pd.Series:
     Ni racine, ni plafond : voir la mesure de concentration dans le docstring
     du module, qui confirme ce choix plutôt que de le rouvrir. Le poids n'est
     pas normalisé ici (somme à 1, division par la moyenne) — la normalisation,
-    si elle est utile, relève de l'entraînement (E22), pas du calcul du label.
+    si elle est utile, relève de l'entraînement, pas du calcul du label.
     """
     return effectif.astype("Float64")
 
 
 def verifier_label(taux: pd.Series, poids: pd.Series) -> None:
-    """Les garanties du label exigées par le plan d'exécution : lève `ErreurLabel` sinon.
+    """Les garanties attendues du label : lève `ErreurLabel` sinon.
 
     - `taux` dans [0, 1] pour toute valeur renseignée (les valeurs manquantes
       sont tolérées ici : c'est `base_exploitable`, en amont, qui décide

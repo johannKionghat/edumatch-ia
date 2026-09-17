@@ -88,7 +88,7 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
                 "caractereEmployeurEtablissement": "N",
                 "statutDiffusionEtablissement": "O",
             },
-            # exclu : non diffusible (le filtre que l'E17 n'applique pas, ce module si)
+            # exclu : non diffusible (le filtre que l'agrégat Sirene n'applique pas, ce module si)
             {
                 "codeCommuneEtablissement": "75056",
                 "activitePrincipaleEtablissement": "6201Z",
@@ -115,7 +115,7 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
 
 
 def test_agregat_regroupe_par_division_naf_pas_par_sous_classe(tmp_path: Path) -> None:
-    """La chaîne NAF/ROME/formation (E18) ne résout jamais plus finement que la division :
+    """La chaîne NAF/ROME/formation ne résout jamais plus finement que la division :
     deux sous-classes de la même division se regroupent dans la même cellule de restitution."""
     chemin = tmp_path / "sirene.parquet"
     _ecrire_sirene(

@@ -1,4 +1,4 @@
-"""Modèle dbt (Python) `dim_territoire` (E16) : pour le lignage — voir `dim_session.py`."""
+"""Modèle dbt (Python) `dim_territoire` : pour le lignage — voir `dim_session.py`."""
 
 from edumatch.transform.etoile import base_exploitable, construire_dim_territoire
 

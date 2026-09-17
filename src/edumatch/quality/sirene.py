@@ -1,11 +1,11 @@
-"""Contrôles qualité de `StockEtablissement` (E14), en flux, projection sur 9 colonnes.
+"""Contrôles qualité de `StockEtablissement`, en flux, projection sur 9 colonnes.
 
 Le fichier complet porte 43,9 millions de lignes et 54 colonnes (2,2 Go en
 Parquet) : on ne le charge jamais entièrement en mémoire pour le valider, pas
 plus qu'on ne le nettoie ligne à ligne. Ce module lit par lots
 (`pyarrow.ParquetFile.iter_batches`), en ne décodant que les 9 colonnes utiles
 au projet (`01-donnees/sources.md`) — la même projection que le job Spark
-d'agrégation (E17), appliquée ici à la validation plutôt qu'au calcul.
+d'agrégation, appliquée ici à la validation plutôt qu'au calcul.
 
 Grâce à cette projection, les contrôles ne s'appuient pas sur Pandera comme
 `quality/parcoursup.py` : un DataFrame Pandera couvrirait un lot, pas le
@@ -240,13 +240,13 @@ def controler_fraicheur_sirene(settings: Settings, manifeste: dict[str, dict[str
 
 
 # Seul StockEtablissement porte les 9 colonnes utiles au projet (débouchés,
-# job Spark E17) : les schémas/complétude/cohérence de ce module lui sont
+# l'agrégat Spark) : les schémas/complétude/cohérence de ce module lui sont
 # spécifiques. `StockEtablissementHistorique`, `StockUniteLegale` et
 # `StockUniteLegaleHistorique` ont des colonnes différentes (`siren`, pas de
 # `siret` pour l'unité légale...) et ne sont, à ce stade du projet, soumis
 # qu'au contrôle de fraîcheur (même cadence de republication mensuelle) — un
 # contrôle de schéma dédié à ces trois fichiers n'est pas construit tant
-# qu'aucun traitement du pipeline ne les lit encore (voir E18).
+# qu'aucun traitement du pipeline ne les lit encore (voir la réconciliation NAF/ROME).
 FICHIER_CONTROLE_APPROFONDI = "StockEtablissement"
 
 

@@ -1,6 +1,6 @@
-"""France Travail — table de correspondance ROME / NAF (E18).
+"""France Travail — table de correspondance ROME / NAF.
 
-Recherche menée en E18 : NAF (Sirene) décrit une activité d'établissement,
+Recherche menée pour la réconciliation NAF/ROME : NAF (Sirene) décrit une activité d'établissement,
 ROME (France Travail) décrit un métier. Aucune table officielle ne les relie
 directement à l'échelle demandée ; la seule trouvée qui relie réellement les
 deux univers est celle-ci, publiée par France Travail au sein du jeu de
@@ -13,7 +13,7 @@ Deux limites, vérifiées et à assumer, pas à masquer :
 - La correspondance est au niveau **division NAF** (2 chiffres, ex. « 62 » —
   Programmation, conseil et autres activités informatiques), pas à la
   sous-classe complète (5 caractères, ex. « 62.01Z ») que porte
-  `activitePrincipaleEtablissement` dans l'agrégat Sirene (E17). Le
+  `activitePrincipaleEtablissement` dans l'agrégat Sirene. Le
   rattachement exige donc de tronquer le code Sirene à ses deux premiers
   caractères — une perte de granularité déclarée, pas une invention : la
   division est par construction le préfixe de toute sous-classe NAF.

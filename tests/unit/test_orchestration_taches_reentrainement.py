@@ -1,11 +1,11 @@
 """Tests unitaires de `orchestration.taches.reentrainer_modele` et `.evaluer_modele`
-(E22, E23, E33) : le contrat des deux tâches — l'une décide de la publication, l'autre ne
+ : le contrat des deux tâches — l'une décide de la publication, l'autre ne
 bloque jamais — sans entraîner un vrai modèle. `edumatch.models.train.entrainer_et_evaluer`,
 `edumatch.orchestration.promotion.promouvoir_si_meilleur` et `edumatch.models.evaluate.executer`
 sont remplacés par des doubles factices.
 
 Le contrat de bout en bout (entraînement réel sur les échantillons) est couvert par
-`tests/data/`, si présent, et par la démonstration de production (E39) ; l'enchaînement
+`tests/data/`, si présent, et par la démonstration de production ; l'enchaînement
 réel dans le graphe Airflow, par `tests/unit/test_pipeline_dag_airflow.py`.
 """
 
@@ -49,8 +49,8 @@ def test_reentrainer_modele_retourne_le_rapport_de_promotion(
 def test_reentrainer_modele_ne_leve_pas_quand_la_promotion_est_refusee(
     monkeypatch: pytest.MonkeyPatch, settings_test: Settings
 ) -> None:
-    """Un modèle qui perd contre le plancher (E21) est un résultat attendu, pas une panne
-    du graphe : la tâche doit se terminer normalement, la reprise (E33) ne doit jamais
+    """Un modèle qui perd contre le plancher est un résultat attendu, pas une panne
+    du graphe : la tâche doit se terminer normalement, la reprise ne doit jamais
     rejouer une comparaison déjà tranchée."""
     rapport_refuse = RapportPromotion(promu=False, mae_modele=0.0758, mae_baseline=0.0701, chemin_catalogue=None)
     monkeypatch.setattr(taches.models_train, "entrainer_et_evaluer", lambda settings: object())

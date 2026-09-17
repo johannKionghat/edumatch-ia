@@ -1,4 +1,4 @@
-"""Test de contrat de `/health` (E29) : sonde de vivacité, sans dépendance lourde."""
+"""Test de contrat de `/health` : sonde de vivacité, sans dépendance lourde."""
 
 from __future__ import annotations
 

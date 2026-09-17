@@ -1,4 +1,4 @@
-"""Journal des inférences (E30) : horodatage, exécution, version du modèle, entrées et sortie
+"""Journal des inférences : horodatage, exécution, version du modèle, entrées et sortie
 (article 12 du règlement sur l'IA, R1 de `docs/sous-docs-projets/05-gouvernance/risques.md`).
 
 ## Pourquoi un journal distinct des logs applicatifs

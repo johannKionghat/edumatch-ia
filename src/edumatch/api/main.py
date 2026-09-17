@@ -1,4 +1,4 @@
-"""Point d'entrée de l'API (E29) : `/health`, `/matching`, `/explain`, `/feedback`.
+"""Point d'entrée de l'API : `/health`, `/matching`, `/explain`, `/feedback`.
 
 ## Ce que cette API fait, et ce qu'elle ne fait jamais
 
@@ -61,7 +61,7 @@ async def _cycle_de_vie(app: FastAPI) -> AsyncIterator[None]:
 
     app.state.journal_feedback = None  # construit paresseusement au premier POST /feedback
     app.state.journal_audit = None  # construit paresseusement à la première inférence /matching
-    app.state.assistant_rag = None  # construit paresseusement au premier POST /assistant (E32)
+    app.state.assistant_rag = None  # construit paresseusement au premier POST /assistant
     yield
 
 
@@ -90,7 +90,7 @@ def create_app() -> FastAPI:
     app.include_router(assistant.router)
     app.include_router(ecran.router)
 
-    # Instrumentation Prometheus (E38) : doit être appelée après que toutes les routes dont on
+    # Instrumentation Prometheus : doit être appelée après que toutes les routes dont on
     # veut mesurer la latence sont enregistrées, sinon `handler` resterait "none" pour elles dans
     # les métriques. `/metrics` n'exige jamais l'authentification conseiller (le collecteur
     # Prometheus n'en porte aucune) et n'expose que des compteurs et histogrammes agrégés par
@@ -98,7 +98,7 @@ def create_app() -> FastAPI:
     # `include_in_schema=False` : ce n'est pas une route fonctionnelle pour un conseiller.
     Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
-    # Assets de l'écran conseiller (E31) : `style.css` et `app.js`, servis sous `/static/...`.
+    # Assets de l'écran conseiller : `style.css` et `app.js`, servis sous `/static/...`.
     # `routes.ecran` reste seule responsable de ce qui répond sur `/` — monté en dernier, ce
     # mount ne peut donc jamais capturer les routes déclarées ci-dessus (`/health`, `/matching`...).
     app.mount("/static", StaticFiles(directory=DOSSIER_STATIQUE), name="static")

@@ -1,8 +1,8 @@
-"""Route de l'écran de supervision du conseiller (E31) : sert le document HTML statique.
+"""Route de l'écran de supervision du conseiller : sert le document HTML statique.
 
 ## Le cadre retenu — HTML servi par FastAPI, pas de framework front
 
-Décision d'architecture arrêtée dès E29 : le contrôle du RGAA (référentiel
+Décision d'architecture arrêtée dès la conception de l'API : le contrôle du RGAA (référentiel
 d'accessibilité, qui s'appuie sur WCAG 2.1 niveau AA) prime sur le confort de
 développement qu'apporterait React ou un autre framework. Cette route ne fait
 que renvoyer `index.html` ; toute la logique (voir une recommandation, la
@@ -28,6 +28,6 @@ DOSSIER_STATIQUE = Path(__file__).resolve().parent.parent / "static"
 
 @router.get("/")
 def ecran_conseiller() -> FileResponse:
-    """L'écran de supervision (E31) : voir les recommandations, comprendre une explication
+    """L'écran de supervision : voir les recommandations, comprendre une explication
     SHAP, écarter avec motif — voir `api/static/app.js` pour le détail des trois fonctions."""
     return FileResponse(DOSSIER_STATIQUE / "index.html", media_type="text/html")

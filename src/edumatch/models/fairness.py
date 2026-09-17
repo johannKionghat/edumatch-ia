@@ -1,8 +1,8 @@
-"""Audit d'équité du modèle d'accessibilité (E26) : quatre dimensions, ratio d'impact disparate.
+"""Audit d'équité du modèle d'accessibilité : quatre dimensions, ratio d'impact disparate.
 
 ## Ce que ce module fait, et ce qu'il ne refait pas
 
-`models/train.py` (E22) entraîne le modèle et le juge globalement ; ce module
+`models/train.py` entraîne le modèle et le juge globalement ; ce module
 ne relance rien : il appelle `train.entrainer_et_evaluer` — même protocole,
 même split temporel, même modèle déjà arrêté sur la validation — pour
 récupérer les prédictions déjà calculées sur le seul test 2025, puis les
@@ -12,7 +12,7 @@ type de baccalauréat, statut de boursier, territoire, genre.
 Le genre **n'est jamais une variable du modèle** (ADR 0011, invariant du
 projet) : il n'apparaît dans aucune colonne de `modele.variables` et n'a donc
 jamais l'occasion d'entrer dans l'entraînement. Ce module ne le lit que pour
-l'audit, directement dans la table silver (E15), qui porte — comme toute
+l'audit, directement dans la table silver, qui porte — comme toute
 colonne source Parcoursup, y compris celles classées `exclues` — les
 compteurs de candidatures et d'admissions par sexe (`voe_tot_f`, `acc_tot_f`)
 que la liste blanche de `train.py` ne laisse jamais atteindre le modèle.
@@ -87,7 +87,7 @@ NOM_FIGURE_CALIBRATION_GENRE = "calibration-genre.png"
 NOM_FIGURE_SUBSTITUTS = "substituts-genre.png"
 
 # Réutilise le nom de fichier déjà fixé par `transform.run` / `features.build`
-# (E15) — redéfini ici plutôt qu'importé, par le même principe que ces deux
+# — redéfini ici plutôt qu'importé, par le même principe que ces deux
 # modules : celui qui consomme un chemin ne doit pas dépendre de celui qui
 # l'écrit pour une simple constante de nom de fichier.
 NOM_FICHIER_SILVER = "silver.parquet"
@@ -155,7 +155,7 @@ class ErreurAuditEquite(RuntimeError):
 
 
 def chemin_silver(settings: Settings) -> Path:
-    """Emplacement de la table silver (E15) — seule source qui porte encore les colonnes de genre."""
+    """Emplacement de la table silver — seule source qui porte encore les colonnes de genre."""
     return settings.interim_dir / "parcoursup" / NOM_FICHIER_SILVER
 
 
@@ -164,7 +164,7 @@ def _session_test(settings: Settings) -> int:
     sessions = settings.modele.split.test
     if len(sessions) != 1:
         raise ErreurAuditEquite(
-            f"L'audit d'équité (E26) suppose un test réduit à une seule session ; "
+            f"L'audit d'équité suppose un test réduit à une seule session ; "
             f"`modele.split.test` en porte {len(sessions)} ({sessions})."
         )
     return sessions[0]
@@ -190,18 +190,18 @@ def classer_composition_genre(composition_candidate: pd.Series) -> pd.Series:
 
 
 def charger_composition_genre(settings: Settings) -> pd.DataFrame:
-    """La composition par genre de chaque formation de la session de test, lue dans la table silver (E15).
+    """La composition par genre de chaque formation de la session de test, lue dans la table silver.
 
     Deux ratios distincts, jamais confondus (voir docstring du module) :
     `composition_candidate` (`voe_tot_f / voe_tot`), qui sert à classer le
     genre de la formation, et `composition_admise` (`acc_tot_f / acc_tot`),
     gardée à titre descriptif pour vérifier, sur la session de test, l'écart
-    d'admission entre sexes déjà mesuré en phase d'exploration (E11).
+    d'admission entre sexes déjà mesuré en phase d'exploration.
     """
     session_test = _session_test(settings)
     chemin = chemin_silver(settings)
     if not chemin.exists():
-        raise ErreurAuditEquite(f"{chemin} est introuvable : exécuter `make silver` (E15) avant l'audit d'équité.")
+        raise ErreurAuditEquite(f"{chemin} est introuvable : exécuter `make silver` avant l'audit d'équité.")
 
     colonnes = ["session", "cod_aff_form", "voe_tot", "voe_tot_f", "acc_tot", "acc_tot_f"]
     silver = pq.read_table(chemin, columns=colonnes).to_pandas()
@@ -226,10 +226,10 @@ def charger_composition_genre(settings: Settings) -> pd.DataFrame:
 def construire_table_predictions(settings: Settings) -> tuple[pd.DataFrame, train.ResultatEntrainement]:
     """Une ligne par cellule de test, avec la prédiction du modèle et celle de la baseline à couverture égale.
 
-    Rejoue exactement le protocole d'entraînement (E22) via
+    Rejoue exactement le protocole d'entraînement via
     `train.entrainer_et_evaluer` — même modèle, même split, même
     `random_state` — pour que cet audit ne juge jamais un modèle différent de
-    celui qu'E22/E23 rapportent. `cod_aff_form` n'est pas une variable du
+    celui que l'entraînement et l'évaluation rapportent. `cod_aff_form` n'est pas une variable du
     modèle (ADR 0013, catégorie `cles`) : elle est relue depuis
     `resultat.table`, alignée par index sur `jeu_test.X`, jamais depuis une
     colonne de `jeu_test.X` lui-même qui ne la porte pas.
@@ -242,7 +242,7 @@ def construire_table_predictions(settings: Settings) -> tuple[pd.DataFrame, trai
     manquantes = [colonne for colonne in colonnes_requises if colonne not in lignes.columns]
     if manquantes:
         raise ErreurAuditEquite(
-            f"Colonne(s) {manquantes} absente(s) de la table de variables (E20) : "
+            f"Colonne(s) {manquantes} absente(s) de la table de variables : "
             "audit d'équité impossible sans elles."
         )
 
@@ -489,7 +489,7 @@ def _tracer_impact_disparate(ratios: dict[str, RatioImpactDisparate], destinatio
         axe.set_title(nom_dimension)
         axe.set_ylabel("Ratio d'impact disparate")
         axe.legend(fontsize=7)
-    figure.suptitle("Ratio d'impact disparate par dimension — test 2025 (E26)")
+    figure.suptitle("Ratio d'impact disparate par dimension — test 2025")
     figure.tight_layout()
     destination.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(destination, dpi=150)
@@ -527,7 +527,7 @@ def _tracer_calibration_genre(table_audit: pd.DataFrame, n_tranches: int, destin
     axe.set_ylabel("Taux observé moyen (par tranche, pondéré par l'effectif)")
     axe.set_xlim(0.0, 1.0)
     axe.set_ylim(0.0, 1.0)
-    axe.set_title("Calibration du modèle par composition de genre — test 2025 (E26)")
+    axe.set_title("Calibration du modèle par composition de genre — test 2025")
     axe.legend(loc="upper left", fontsize=7)
     figure.tight_layout()
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -544,7 +544,7 @@ def _tracer_substituts(correlations: dict[str, float], destination: Path) -> Pat
     axe.bar(noms, valeurs, color="tab:blue")
     axe.set_ylim(0.0, 1.0)
     axe.set_ylabel("Rapport de corrélation (eta²) avec la composition de genre")
-    axe.set_title("Substituts du genre parmi les variables licites du modèle (E26)")
+    axe.set_title("Substituts du genre parmi les variables licites du modèle")
     for indice, valeur in enumerate(valeurs):
         axe.text(indice, valeur + 0.01, f"{valeur:.1%}", ha="center", fontsize=8)
     figure.tight_layout()
@@ -556,7 +556,7 @@ def _tracer_substituts(correlations: dict[str, float], destination: Path) -> Pat
 
 @dataclass(frozen=True)
 class RapportEquite:
-    """Ce que `make fairness` (E26) a produit, à déclarer tel quel — modèle discriminant ou non."""
+    """Ce que `make fairness` a produit, à déclarer tel quel — modèle discriminant ou non."""
 
     ventilations: dict[str, list[VentilationGroupe]]
     ratios: dict[str, RatioImpactDisparate]
@@ -605,7 +605,7 @@ def mesurer_ecart_admission_genre(settings: Settings) -> tuple[float, float, int
     """L'écart d'admission entre sexes à l'intérieur d'une même formation, sur la seule session de test.
 
     Reproduit, restreint au test 2025, la vérification déjà conduite en
-    phase d'exploration (E11) : `écart = taux d'admission des femmes -
+    phase d'exploration : `écart = taux d'admission des femmes -
     taux d'admission des hommes`, tous deux calculés sur `acc_tot_f` /
     `voe_tot_f` et `(acc_tot - acc_tot_f)` / `(voe_tot - voe_tot_f)`. Une
     formation où l'un des deux sexes n'a émis aucun vœu (dénominateur nul)
@@ -632,7 +632,7 @@ def mesurer_ecart_admission_genre(settings: Settings) -> tuple[float, float, int
 
 
 def executer(settings: Settings | None = None, dossier_figures: Path | None = None) -> RapportEquite:
-    """Point d'entrée de `make fairness` (E26) : entraîne (E22), ventile, calcule les ratios, trace les figures.
+    """Point d'entrée de `make fairness` : entraîne, ventile, calcule les ratios, trace les figures.
 
     `dossier_figures` : `reports/figures/` du dépôt par défaut ; paramétrable
     pour que les tests écrivent dans un répertoire jetable.
@@ -686,7 +686,7 @@ def _journaliser_mlflow(rapport: RapportEquite, settings: Settings) -> None:
     déjà calculé ne dépend jamais de ce suivi pour exister.
     """
     if not settings.mlflow_tracking_uri:
-        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : audit d'équité non journalisé dans MLflow (E26).")
+        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : audit d'équité non journalisé dans MLflow.")
         return
     try:
         import mlflow
@@ -697,7 +697,7 @@ def _journaliser_mlflow(rapport: RapportEquite, settings: Settings) -> None:
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment("edumatch-accessibilite")
     with mlflow.start_run(run_name="audit-equite"):
-        mlflow.set_tag("etape", "E26")
+        mlflow.set_tag("etape", "fairness")
         mlflow.log_param("definition_equite_retenue", DEFINITION_EQUITE_RETENUE)
         mlflow.log_param("seuil_decision_recommandation", SEUIL_DECISION_RECOMMANDATION)
         mlflow.log_metric("ecart_admission_genre_median", rapport.ecart_admission_genre_median)
@@ -720,7 +720,7 @@ def _journaliser_mlflow(rapport: RapportEquite, settings: Settings) -> None:
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Audit d'équité (E26) terminé.\n%s", rapport.resume())
+    LOGGER.info("Audit d'équité terminé.\n%s", rapport.resume())
     return 0
 
 

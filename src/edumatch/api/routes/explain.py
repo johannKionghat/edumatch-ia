@@ -1,4 +1,4 @@
-"""Route `/explain` (E29) : l'explication SHAP **précalculée** d'une cellule (E25).
+"""Route `/explain` : l'explication SHAP **précalculée** d'une cellule.
 
 Jamais un recalcul TreeSHAP à la demande — le précalcul complet (99,8 Mo,
 440 030 cellules, ~8,3 minutes) rend le calcul à la demande déraisonnable

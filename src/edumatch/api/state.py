@@ -1,4 +1,4 @@
-"""État du service de matching et d'explicabilité (E29) : construit une fois au démarrage de
+"""État du service de matching et d'explicabilité : construit une fois au démarrage de
 l'API, jamais recalculé par requête.
 
 ## Pourquoi un artefact précalculé, et pas un modèle chargé à chaque démarrage
@@ -22,7 +22,7 @@ souvent — un pod recréé par le `HorizontalPodAutoscaler`, un retour arrière
 ne réentraîne plus rien tant que l'artefact est monté. La dette qui demeure
 est en amont : rien ne recharge cet artefact *pendant* que l'API tourne si un
 nouvel entraînement le remplace ; un redémarrage du pod reste nécessaire.
-Cela reste hors périmètre de E29/E35, qui portent la mise à disposition du
+Cela reste hors périmètre de ce module, qui porte la mise à disposition du
 score, pas le rechargement à chaud d'un modèle vivant.
 
 **Le repli qui subsiste, volontairement** : si l'artefact est absent —
@@ -50,7 +50,7 @@ noyée dans le détail par formation.
 ## L'explicabilité : lue depuis le précalcul, jamais recalculée
 
 `construire_etat_explicabilite` charge le fichier produit par `make explain`
-(E25) — `explications_locales.parquet`, ~99,8 Mo pour 440 030 cellules,
+ — `explications_locales.parquet`, ~99,8 Mo pour 440 030 cellules,
 ~8,3 minutes à produire. Aucun appel à `models.explain` n'a lieu ici : le
 calcul à la demande n'est pas réaliste pour une API (voir le docstring de
 `models/explain.py`).
@@ -99,7 +99,7 @@ class EtatMatching:
 
 @dataclass(frozen=True)
 class EtatExplicabilite:
-    """Le précalcul SHAP par cellule (E25), chargé une fois — voir le docstring du module."""
+    """Le précalcul SHAP par cellule, chargé une fois — voir le docstring du module."""
 
     precalcul: pd.DataFrame
     colonnes_shap: tuple[str, ...]
@@ -184,7 +184,7 @@ def _charger_catalogue_predictions(settings: Settings) -> pd.DataFrame:
 
 def construire_etat_matching(settings: Settings | None = None) -> EtatMatching:
     """Charge le catalogue de la session courante (déjà prédit, voir ci-dessus) et construit les
-    artefacts de débouchés (E28). Appelé une seule fois, au démarrage du processus."""
+    artefacts de débouchés. Appelé une seule fois, au démarrage du processus."""
     settings = settings or get_settings()
 
     sessions_test = settings.modele.split.test
@@ -208,13 +208,13 @@ def construire_etat_matching(settings: Settings | None = None) -> EtatMatching:
 
 
 def construire_etat_explicabilite(settings: Settings | None = None) -> EtatExplicabilite:
-    """Charge le précalcul SHAP (E25) écrit par `make explain` — jamais recalculé ici."""
+    """Charge le précalcul SHAP écrit par `make explain` — jamais recalculé ici."""
     settings = settings or get_settings()
     chemin = settings.processed_dir / SOUS_DOSSIER_PRECALCUL / NOM_FICHIER_PRECALCUL
     if not chemin.exists():
         raise ErreurEtatAPI(
             f"Précalcul d'explicabilité introuvable sous {settings.processed_dir.name}/{SOUS_DOSSIER_PRECALCUL}/ : "
-            "exécuter `make explain` (E25) avant de démarrer l'API."
+            "exécuter `make explain` avant de démarrer l'API."
         )
     precalcul = pd.read_parquet(chemin)
     precalcul["cod_aff_form"] = precalcul["cod_aff_form"].astype(str)

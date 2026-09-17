@@ -1,4 +1,4 @@
-"""Tests de la reprise sur erreur de l'orchestrateur (E33, critère 3.4).
+"""Tests de la reprise sur erreur de l'orchestrateur (critère 3.4).
 
 Aucune dépendance à Airflow ici : `executer_avec_reprise` est du Python pur,
 c'est précisément ce qui permet de la tester sans installer le paquet. Le

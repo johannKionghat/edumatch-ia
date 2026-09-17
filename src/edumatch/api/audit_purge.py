@@ -1,4 +1,4 @@
-"""Purge du journal d'inférence (E30) : exécute les trois paliers de conservation décidés par
+"""Purge du journal d'inférence : exécute les trois paliers de conservation décidés par
 la gouvernance — voir `audit.py` et `docs/sous-docs-projets/05-gouvernance/registre-traitements.md`
 (T5), pour la conciliation entre le plancher de l'article 12 du règlement sur l'IA et le
 plafond de l'article 5.1.e du RGPD.
@@ -91,7 +91,7 @@ def chemins_audit(settings: Settings) -> CheminsAudit:
 
 
 def _ecrire_texte_atomique(chemin: Path, contenu: str) -> None:
-    """Un fichier `.part` renommé une fois complet — même principe que l'ingestion (E05/E06) :
+    """Un fichier `.part` renommé une fois complet — même principe que l'ingestion :
     jamais de fichier tronqué visible sous son nom définitif si la purge est interrompue."""
     chemin.parent.mkdir(parents=True, exist_ok=True)
     temporaire = chemin.with_suffix(chemin.suffix + ".part")

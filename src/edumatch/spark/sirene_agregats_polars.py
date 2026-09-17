@@ -1,9 +1,9 @@
-"""Agrégat Sirene commune x NAF (E17), moteur Polars — le chemin réellement emprunté en local.
+"""Agrégat Sirene commune x NAF, moteur Polars — le chemin réellement emprunté en local.
 
 ## Pourquoi ce module existe à côté d'un vrai job Spark
 
 `sirene_agregats.py` (même dossier) porte l'implémentation PySpark exigée par
-le plan d'exécution du projet et par le critère « structures adaptées au
+le cahier des charges du projet et par le critère « structures adaptées au
 volume » : elle est réelle, testée, et c'est elle qui tourne sur un cluster.
 Mais l'honnêteté du choix technique impose de le confronter à l'alternative la
 plus simple, pas de l'écarter par principe.
@@ -110,7 +110,7 @@ def _colonne_palier() -> pl.Expr:
     """`trancheEffectifsEtablissement` -> son palier (§ `TRANCHES_VERS_PALIER`), sinon `None`.
 
     `NN` (non renseignée) et tout code non listé (aucun observé à ce jour,
-    voir le contrôle qualité E14) tombent dans `None` : ils ne comptent dans
+    voir le contrôle qualité) tombent dans `None` : ils ne comptent dans
     aucun des six paliers de sortie, ce qui laisse leur nombre calculable par
     différence (`nb_actifs_employeurs` moins la somme des six paliers) plutôt
     que de forcer une hypothèse sur un code qui n'existe pas encore.

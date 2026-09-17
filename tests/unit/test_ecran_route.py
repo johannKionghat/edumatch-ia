@@ -1,4 +1,4 @@
-"""Test de contrat de l'écran conseiller (E31) : `/` sert le document, `/static/*` sert les
+"""Test de contrat de l'écran conseiller : `/` sert le document, `/static/*` sert les
 assets — sans dépendance lourde (même politique que `/health`, voir `test_api_health.py`)."""
 
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""Explicabilité du modèle d'accessibilité (E25) : TreeSHAP, précalculé par cellule.
+"""Explicabilité du modèle d'accessibilité : TreeSHAP, précalculé par cellule.
 
 ## Pourquoi TreeSHAP, et pourquoi précalculé
 
@@ -20,15 +20,15 @@ recommandation dans `RapportExplicabilite.recommandation_precalcul`.
 
 ## Ce que ce module ne fait pas
 
-Il n'entraîne rien : il appelle `train.entrainer_et_evaluer` (E22), comme
-`evaluate.py` (E23) et `courbe_apprentissage.py` (E24) avant lui. Il ne
-conduit pas l'audit d'équité (E26) : le poids des substituts du genre dans
+Il n'entraîne rien : il appelle `train.entrainer_et_evaluer`, comme
+`evaluate.py` et `courbe_apprentissage.py` avant lui. Il ne
+conduit pas l'audit d'équité : le poids des substituts du genre dans
 l'explication globale, plus bas, est un **signal transmis** à cet audit, pas
 une conclusion à sa place — voir l'ADR 0011.
 
 ## Le cas des variables corrélées, à surveiller ici précisément
 
-`taux_session_precedente` (E22) est le quotient de deux variables déjà
+`taux_session_precedente` est le quotient de deux variables déjà
 présentes séparément : `prop_tot` (numérateur, admis N-1) et `nb_voe_pp`
 (dénominateur, vœux N-1) — les trois sont corrélées par construction. Un
 ensemble d'arbres retrouve la même information en coupant sur le quotient ou
@@ -105,7 +105,7 @@ class ErreurExplicabilite(RuntimeError):
 @dataclass(frozen=True)
 class ContributionVariable:
     """Le poids d'une variable dans l'explication globale : moyenne des valeurs
-    absolues de SHAP, pondérée par l'effectif de la cellule (E25).
+    absolues de SHAP, pondérée par l'effectif de la cellule.
     """
 
     nom: str
@@ -118,7 +118,7 @@ class ContributionVariable:
 
 @dataclass(frozen=True)
 class ExempleLocal:
-    """Une cellule réelle, sa prédiction et les variables qui l'expliquent (E25).
+    """Une cellule réelle, sa prédiction et les variables qui l'expliquent.
 
     `contributions` : les variables triées par contribution absolue
     décroissante, chacune avec sa valeur brute et sa contribution SHAP signée
@@ -155,7 +155,7 @@ class ExempleLocal:
 
 @dataclass(frozen=True)
 class RapportExplicabilite:
-    """Ce que `make explain` (E25) a produit, à déclarer tel quel."""
+    """Ce que `make explain` a produit, à déclarer tel quel."""
 
     importance_globale: list[ContributionVariable]
     part_substituts_genre: dict[str, float]
@@ -189,7 +189,7 @@ class RapportExplicabilite:
         )
 
     def resume(self) -> str:
-        lignes = ["Explicabilité globale (E25), TreeSHAP, moyenne pondérée par l'effectif :"]
+        lignes = ["Explicabilité globale, TreeSHAP, moyenne pondérée par l'effectif :"]
         for contribution in self.importance_globale[:10]:
             lignes.append(f"  {contribution.resume()}")
         lignes.append("")
@@ -210,7 +210,7 @@ class RapportExplicabilite:
 
 
 def construire_explainer(modele: lgb.LGBMRegressor) -> shap.TreeExplainer:
-    """L'explainer TreeSHAP du modèle entraîné (E22).
+    """L'explainer TreeSHAP du modèle entraîné.
 
     `shap.TreeExplainer` calcule les valeurs de Shapley **exactement** sur un
     modèle à base d'arbres, en parcourant leur structure — c'est l'algorithme
@@ -274,7 +274,7 @@ def importance_globale(
 def part_substituts_genre(importance: list[ContributionVariable]) -> dict[str, float]:
     """La part de l'explication globale portée par chaque substitut du genre encore dans le modèle.
 
-    Signal transmis à l'audit d'équité (E26), pas une conclusion : l'ADR 0011
+    Signal transmis à l'audit d'équité, pas une conclusion : l'ADR 0011
     mesure la corrélation de ces variables avec le genre, pas leur poids dans
     le modèle — deux questions différentes, à ne pas confondre.
     """
@@ -285,7 +285,7 @@ def part_substituts_genre(importance: list[ContributionVariable]) -> dict[str, f
 def tracer_importance_globale(
     importance: list[ContributionVariable], chemin: Path, top_n: int
 ) -> Path:
-    """Diagramme en barres horizontales des `top_n` variables les plus contributives (E25)."""
+    """Diagramme en barres horizontales des `top_n` variables les plus contributives."""
     retenues = importance[:top_n]
     chemin.parent.mkdir(parents=True, exist_ok=True)
 
@@ -294,7 +294,7 @@ def tracer_importance_globale(
     valeurs = [contribution.importance for contribution in reversed(retenues)]
     axe.barh(noms, valeurs, color="tab:blue")
     axe.set_xlabel("Moyenne des |valeurs de Shapley|, pondérée par l'effectif")
-    axe.set_title(f"Explicabilité globale — TreeSHAP (E25), {len(importance)} variables")
+    axe.set_title(f"Explicabilité globale — TreeSHAP, {len(importance)} variables")
     figure.tight_layout()
 
     figure.savefig(chemin, dpi=150)
@@ -395,7 +395,7 @@ def _journaliser_mlflow(rapport: RapportExplicabilite, settings: Settings) -> No
     `mlflow_tracking_uri` ou du paquet est journalisée, pas masquée.
     """
     if not settings.mlflow_tracking_uri:
-        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : explicabilité non journalisée dans MLflow (E25).")
+        LOGGER.warning("MLFLOW_TRACKING_URI non configuré : explicabilité non journalisée dans MLflow.")
         return
     try:
         import mlflow
@@ -406,7 +406,7 @@ def _journaliser_mlflow(rapport: RapportExplicabilite, settings: Settings) -> No
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment(NOM_EXPERIENCE_MLFLOW)
     with mlflow.start_run(run_name="explicabilite-shap-e25"):
-        mlflow.set_tag("etape", "E25")
+        mlflow.set_tag("etape", "explain")
         for rang, contribution in enumerate(rapport.importance_globale[:20], start=1):
             mlflow.log_metric(f"shap_importance_rang_{rang:02d}_{contribution.nom}", contribution.importance)
         for nom, part in rapport.part_substituts_genre.items():
@@ -422,7 +422,7 @@ def executer(
     dossier_figures: Path | None = None,
     dossier_precalcul: Path | None = None,
 ) -> RapportExplicabilite:
-    """Entraîne (E22), explique par TreeSHAP et précalcule par cellule (E25).
+    """Entraîne, explique par TreeSHAP et précalcule par cellule.
 
     `dossier_figures` / `dossier_precalcul` : `reports/figures/` et
     `data/processed/explicabilite/` du dépôt par défaut ; paramétrables pour
@@ -482,7 +482,7 @@ def executer(
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     rapport = executer()
-    LOGGER.info("Explicabilité (E25) terminée.\n%s", rapport.resume())
+    LOGGER.info("Explicabilité terminée.\n%s", rapport.resume())
     return 0
 
 

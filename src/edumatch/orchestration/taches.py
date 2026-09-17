@@ -1,4 +1,4 @@
-"""Tâches unitaires du DAG (E33) : la frontière stable entre l'orchestration et le code métier.
+"""Tâches unitaires du DAG : la frontière stable entre l'orchestration et le code métier.
 
 Chaque fonction appelle directement le point d'entrée déjà testé du module
 correspondant — `telecharger_tous()` pour l'ingestion, `executer()` pour la
@@ -46,7 +46,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def ingerer_parcoursup(settings: Settings | None = None) -> list[Any]:
-    """Télécharge les millésimes Parcoursup manquants ou modifiés (E05).
+    """Télécharge les millésimes Parcoursup manquants ou modifiés.
 
     Idempotente par construction : un millésime déjà présent et intact
     (empreinte SHA-256 identique au manifeste) n'est pas retéléchargé.
@@ -56,19 +56,19 @@ def ingerer_parcoursup(settings: Settings | None = None) -> list[Any]:
 
 
 def ingerer_sirene(settings: Settings | None = None) -> list[Any]:
-    """Résout le catalogue Sirene et télécharge les quatre fichiers stock (E06)."""
+    """Résout le catalogue Sirene et télécharge les quatre fichiers stock."""
     settings = settings or get_settings()
     return sirene.telecharger_tous(settings=settings)
 
 
 def ingerer_referentiels(settings: Settings | None = None) -> list[Any]:
-    """Télécharge IDÉO, l'export RNCP du jour et la table ROME/NAF France Travail (E07)."""
+    """Télécharge IDÉO, l'export RNCP du jour et la table ROME/NAF France Travail."""
     settings = settings or get_settings()
     return referentiels.telecharger_tous(settings=settings)
 
 
 def controler_qualite(settings: Settings | None = None) -> RapportControle:
-    """Exécute les contrôles qualité des trois sources et arrête la chaîne s'ils bloquent (E14).
+    """Exécute les contrôles qualité des trois sources et arrête la chaîne s'ils bloquent.
 
     `RapportControle.lever_si_bloquant()` lève `ErreurQualiteBloquante`, qui
     hérite d'`ErreurDefinitive` (`quality/_diagnostic.py`) : la reprise
@@ -85,25 +85,25 @@ def controler_qualite(settings: Settings | None = None) -> RapportControle:
 
 
 def transformer_silver(settings: Settings | None = None) -> Any:
-    """Réconcilie les huit millésimes Parcoursup, bronze vers silver (E15)."""
+    """Réconcilie les huit millésimes Parcoursup, bronze vers silver."""
     settings = settings or get_settings()
     return transform_run.executer(settings)
 
 
 def construire_gold(settings: Settings | None = None) -> Any:
-    """Construit le modèle en étoile gold depuis silver (E16)."""
+    """Construit le modèle en étoile gold depuis silver."""
     settings = settings or get_settings()
     return run_etoile.executer(settings)
 
 
 def agreger_sirene(settings: Settings | None = None) -> Any:
-    """Agrège Sirene par commune x NAF, projection et filtrage à la lecture (E17)."""
+    """Agrège Sirene par commune x NAF, projection et filtrage à la lecture."""
     settings = settings or get_settings()
     return run_sirene_agregats.executer(settings)
 
 
 def reconcilier_naf_rome(settings: Settings | None = None) -> Any:
-    """Construit la table NAF -> ROME -> formation et mesure sa couverture (E18)."""
+    """Construit la table NAF -> ROME -> formation et mesure sa couverture."""
     settings = settings or get_settings()
     table, rapport = naf_rome_formation.construire_et_mesurer(settings)
     naf_rome_formation.ecrire_table_et_rapport(settings, table, rapport)
@@ -111,13 +111,13 @@ def reconcilier_naf_rome(settings: Settings | None = None) -> Any:
 
 
 def construire_variables(settings: Settings | None = None) -> Any:
-    """Construit la table de variables d'apprentissage depuis gold (E20)."""
+    """Construit la table de variables d'apprentissage depuis gold."""
     settings = settings or get_settings()
     return features_build.executer(settings)
 
 
 def detecter_derive(settings: Settings | None = None) -> models_derive.RapportDerive:
-    """Mesure la dérive des variables, de la cible et des prédictions (E34).
+    """Mesure la dérive des variables, de la cible et des prédictions.
 
     N'échoue jamais sur une dérive détectée : contrairement à `controler_qualite`
     (une donnée cassée bloque la chaîne), une dérive au-delà du seuil est un
@@ -129,12 +129,12 @@ def detecter_derive(settings: Settings | None = None) -> models_derive.RapportDe
     settings = settings or get_settings()
     rapport = models_derive.executer(settings)
     if rapport.reentrainement_recommande:
-        LOGGER.warning("Dérive au-delà du seuil de réentraînement (E34) : %s", rapport.resume())
+        LOGGER.warning("Dérive au-delà du seuil de réentraînement : %s", rapport.resume())
     return rapport
 
 
 def reentrainer_modele(settings: Settings | None = None) -> models_promotion.RapportPromotion:
-    """Réentraîne le modèle d'accessibilité et ne publie l'artefact que s'il bat le plancher (E22, E33).
+    """Réentraîne le modèle d'accessibilité et ne publie l'artefact que s'il bat le plancher.
 
     Appelle `models.train.entrainer_et_evaluer` — même protocole que `make train` : split
     strictement temporel, arrêt anticipé sur la seule validation, test 2025 touché une
@@ -154,7 +154,7 @@ def reentrainer_modele(settings: Settings | None = None) -> models_promotion.Rap
 
 
 def evaluer_modele(settings: Settings | None = None) -> models_evaluate.RapportEvaluation:
-    """Évalue le modèle réentraîné : calibration, ECE, ventilation par type de baccalauréat (E23).
+    """Évalue le modèle réentraîné : calibration, ECE, ventilation par type de baccalauréat.
 
     Rejoue le même protocole que `reentrainer_modele` (`models.evaluate.executer` appelle
     lui-même `models.train.entrainer_et_evaluer`, même random_state, même split) pour
@@ -169,7 +169,7 @@ def evaluer_modele(settings: Settings | None = None) -> models_evaluate.RapportE
 
 
 def purger_audit(settings: Settings | None = None) -> Any:
-    """Applique réellement les trois paliers de conservation du journal d'inférence (E30, art. 12).
+    """Applique réellement les trois paliers de conservation du journal d'inférence (art. 12).
 
     `simulation=False` explicite : le mode par défaut de `audit_purge.purger`
     est une simulation qui ne modifie rien, précisément pour qu'un appel

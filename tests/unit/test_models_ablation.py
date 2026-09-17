@@ -1,4 +1,4 @@
-"""Tests unitaires de `models.ablation` (E27) : logique pure, sans entraînement ni disque.
+"""Tests unitaires de `models.ablation` : logique pure, sans entraînement ni disque.
 
 Complète `tests/data/test_models_ablation_run.py`, qui couvre le protocole de
 bout en bout sur les échantillons — coûteux à répéter, donc réservé aux

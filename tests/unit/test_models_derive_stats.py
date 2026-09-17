@@ -1,4 +1,4 @@
-"""Tests unitaires des statistiques de dérive (E34) : PSI, KS, canonisation — fonctions pures,
+"""Tests unitaires des statistiques de dérive : PSI, KS, canonisation — fonctions pures,
 sur des séries fabriquées, sans dépendre de `data/samples/`.
 """
 

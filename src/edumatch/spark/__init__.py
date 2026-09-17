@@ -1,4 +1,4 @@
-"""Agrégation Sirene commune x NAF (E17).
+"""Agrégation Sirene commune x NAF.
 
 Deux implémentations, un seul jeu de règles métier partagé
 (`definitions.py`) :

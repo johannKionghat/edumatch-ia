@@ -1,4 +1,4 @@
-"""Démonstration du blocage de bout en bout (E14, critère central de l'étape).
+"""Démonstration du blocage de bout en bout (critère central de l'étape).
 
 Construit un environnement de données complet et valide dans `tmp_path`
 (jamais dans `data/`), à partir des échantillons versionnés, puis y insère un

@@ -1,7 +1,7 @@
 """Contrat de `data/samples/` — l'échantillon versionné, pas les sources complètes.
 
 Ce fichier ne lit jamais `data/raw/` ni `data/external/` : c'est précisément
-la preuve attendue par l'étape E08. La suite entière doit pouvoir tourner sur
+la preuve attendue par les échantillons versionnés. La suite entière doit pouvoir tourner sur
 un poste qui n'a jamais téléchargé les 4,6 Go de sources.
 
 Contrôle de colonnes (R5) — liste blanche, pas liste noire importée du code
@@ -194,7 +194,7 @@ def test_aucune_colonne_hors_liste_blanche_dans_les_fichiers_sirene() -> None:
 
 
 def test_parcoursup_couvre_les_huit_millesimes_et_la_derive_de_schema() -> None:
-    """Sans les huit millésimes, la réconciliation de schéma (E15) ne serait pas testable sur cet échantillon."""
+    """Sans les huit millésimes, la réconciliation de schéma ne serait pas testable sur cet échantillon."""
     dossier = SAMPLES_DIR / "parcoursup"
     millesimes_presents = {int(p.stem.split("_")[-1]) for p in dossier.glob("parcoursup_*.csv")}
     assert millesimes_presents == set(range(2018, 2026))

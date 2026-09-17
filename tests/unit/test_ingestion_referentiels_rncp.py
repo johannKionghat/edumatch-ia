@@ -56,7 +56,7 @@ def _zip_avec_deux_membres(membres: dict[str, bytes]) -> bytes:
     return tampon.getvalue()
 
 
-# Contient les deux membres réels de l'archive quotidienne (voir E18) : le
+# Contient les deux membres réels de l'archive quotidienne (voir la réconciliation NAF/ROME) : le
 # CSV standard et le fichier de codes ROME. Les tests du CSV standard, plus
 # haut dans ce fichier, restent valides puisqu'ils ne filtrent que sur le
 # motif du membre standard — ajouter le membre ROME ne les affecte pas.
@@ -390,7 +390,7 @@ def test_aucune_url_rncp_en_dur() -> None:
     assert "repertoire-national-des-certifications" not in source
 
 
-# ─── Membre ROME de la même archive (E18) ──────────────────────────────────
+# ─── Membre ROME de la même archive ──────────────────────────────────
 
 
 def test_telecharger_rome_extrait_le_fichier_rome_et_ecrit_le_manifeste(settings_test) -> None:

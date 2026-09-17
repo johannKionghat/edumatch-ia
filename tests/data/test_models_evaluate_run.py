@@ -1,9 +1,9 @@
-"""Test du point d'entrée `make evaluate` (E23), de bout en bout, sur les échantillons.
+"""Test du point d'entrée `make evaluate`, de bout en bout, sur les échantillons.
 
-Même schéma que `test_models_train_run.py` (E22) : un `data_root` jetable
-dans `tmp_path`, silver (E15), gold (E16) puis la table de variables (E20)
+Même schéma que `test_models_train_run.py` : un `data_root` jetable
+dans `tmp_path`, silver, gold puis la table de variables
 produits depuis les huit échantillons versionnés, puis
-`edumatch.models.evaluate` dessus — qui entraîne à son tour (E22) avant
+`edumatch.models.evaluate` dessus — qui entraîne à son tour avant
 d'évaluer. La figure de calibration est écrite dans `tmp_path`, jamais dans
 `reports/figures/` du dépôt.
 """

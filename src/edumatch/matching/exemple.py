@@ -1,8 +1,8 @@
-"""Exemple de bout en bout du score à trois termes (E28), sur données réelles.
+"""Exemple de bout en bout du score à trois termes, sur données réelles.
 
-`make matching-exemple` : entraîne le modèle d'accessibilité (E22, ~20 s sur
+`make matching-exemple` : entraîne le modèle d'accessibilité (~20 s sur
 ce poste, voir `models/train.py`), construit l'agrégat Sirene département x
-NAF k-anonymisé et la correspondance formation -> IDÉO (E28, ~20 s), puis
+NAF k-anonymisé et la correspondance formation -> IDÉO (~20 s), puis
 score et affiche les formations recommandées à un profil de candidat donné,
 avec le détail des trois termes.
 
@@ -35,7 +35,7 @@ LOGGER = logging.getLogger(__name__)
 # le docstring de `matching.score.recommander`, l'assemblage n'est pas
 # vectorisé et reste pensé pour un catalogue de la taille d'une recherche
 # candidate (quelques centaines de lignes), pas les 92 000 cellules du test
-# 2025 entier — un travail de vectorisation pour l'API (E29), hors périmètre
+# 2025 entier — un travail de vectorisation pour l'API, hors périmètre
 # ici.
 DEPARTEMENT_EXEMPLE = "75"
 
@@ -44,7 +44,7 @@ PROFIL_EXEMPLE = ProfilCandidat(type_formation="BTS", domaine="informatique", de
 
 def _construire_catalogue(table: pd.DataFrame, index_test: pd.Index, prediction_test: np.ndarray) -> pd.DataFrame:
     """Assemble le catalogue attendu par `recommander` : les colonnes de la table de variables
-    (E20) déjà alignées sur l'index du jeu de test, plus la prédiction du modèle (E22)."""
+    déjà alignées sur l'index du jeu de test, plus la prédiction du modèle."""
     catalogue = table.loc[index_test, ["cod_aff_form", "fili", "fil_lib_voe_acc", "form_lib_voe_acc", "dep"]].copy()
     catalogue["taux_predit"] = prediction_test
     return catalogue[catalogue["dep"] == DEPARTEMENT_EXEMPLE].reset_index(drop=True)
@@ -67,7 +67,7 @@ def _afficher(resultats: list[ScoreFormation]) -> None:
 def executer() -> list[ScoreFormation]:
     settings = get_settings()
 
-    LOGGER.info("Entraînement du modèle d'accessibilité (E22)...")
+    LOGGER.info("Entraînement du modèle d'accessibilité...")
     resultat_entrainement = train.entrainer_et_evaluer(settings)
 
     catalogue = _construire_catalogue(
@@ -77,7 +77,7 @@ def executer() -> list[ScoreFormation]:
     )
     LOGGER.info("Catalogue restreint au département %s : %d cellules.", DEPARTEMENT_EXEMPLE, len(catalogue))
 
-    LOGGER.info("Construction des artefacts de débouchés (E28)...")
+    LOGGER.info("Construction des artefacts de débouchés...")
     artefacts = construire_artefacts(
         catalogue_parcoursup=pl.from_pandas(catalogue[["fil_lib_voe_acc"]]),
         settings=settings,

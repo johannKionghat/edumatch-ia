@@ -1,4 +1,4 @@
-"""Tests unitaires de l'évaluation (E23) : fonctions pures, sur des tables fabriquées.
+"""Tests unitaires de l'évaluation : fonctions pures, sur des tables fabriquées.
 
 Le test de contrat (`tests/data/test_models_evaluate_run.py`) rejoue le
 pipeline complet et entraîne réellement un LightGBM ; ici, seules la
