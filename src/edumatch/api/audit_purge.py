@@ -1,11 +1,11 @@
 """Purge du journal d'inférence : exécute les trois paliers de conservation décidés par
-la gouvernance — voir `audit.py` et `docs/sous-docs-projets/05-gouvernance/registre-traitements.md`
+la gouvernance — voir `audit.py` et `docs/registres.html#traitements`
 (T5), pour la conciliation entre le plancher de l'article 12 du règlement sur l'IA et le
 plafond de l'article 5.1.e du RGPD.
 
 ## Pourquoi ce module existe
 
-La gouvernance l'écrit noir sur blanc (`registre-traitements.md`, section
+La gouvernance l'écrit noir sur blanc (`docs/registres.html`, section
 « Ce qui rend la durée vérifiable et non déclarative ») : une durée de
 conservation qu'aucune tâche planifiée n'applique n'est pas une durée, c'est
 une intention. Ce module est cette tâche. Il est idempotent — l'exécuter

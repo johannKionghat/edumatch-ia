@@ -14,7 +14,7 @@ vers `<dépôt>/data`, sauf `data/samples/` qui y reste toujours, quelle que
 soit cette variable. Les arbitrages détaillés — pourquoi Pydantic Settings,
 pourquoi cette précédence à trois couches, pourquoi `EDUMATCH_DATA_ROOT` est
 pilotable malgré ce défaut — sont dans
-`docs/sous-docs-projets/adr/0003-configuration-centralisee.md`.
+`docs/decisions.html#adr-0003`.
 
 Seule exception assumée à « aucun chemin en dur » : le défaut de
 `_defaut_racine_donnees()`. Ce n'est pas un paramètre métier venant de
@@ -326,7 +326,7 @@ class VariablesConfig(_Strict):
     l'inverse d'une liste noire, qui l'admettrait en silence.
 
     Les arbitrages, colonne par colonne, sont dans
-    `docs/sous-docs-projets/adr/0013-decision-des-variables.md`.
+    `docs/decisions.html#adr-0013`.
     """
 
     cles: list[str] = Field(min_length=1)
@@ -534,7 +534,7 @@ class MatchingConfig(_Strict):
 
     `k_anonymat_debouches` : seuil de k-anonymat appliqué à l'agrégat Sirene
     (département x division NAF) qui porte le terme « débouchés ». Arrêté à
-    5 par la gouvernance (`docs/sous-docs-projets/05-gouvernance/risques.md`,
+    5 par la gouvernance (`docs/risques-aipd.html`,
     R2) : au grain commune, ce seuil supprimerait 90,6 % des cellules et
     46,9 % des établissements réels ; au grain département, seulement 35,0 %
     des cellules pour 1,6 % des établissements — c'est ce renversement qui a
@@ -641,7 +641,7 @@ class AuditConfig(_Strict):
     mois pour un système à haut risque) et le plafond de l'article 5.1.e du
     RGPD (ne pas conserver au-delà du nécessaire) — arrêtée par la
     gouvernance et reprise ici telle quelle (voir
-    `docs/sous-docs-projets/05-gouvernance/registre-traitements.md`, T5) :
+    `docs/registres.html#traitements`, T5) :
     trois paliers datés, jamais une conservation indéfinie.
 
     `delai_pseudonymisation_jours` : durée du palier 1 (journal en clair).

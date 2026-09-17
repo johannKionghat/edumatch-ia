@@ -7,12 +7,12 @@
 # entièrement nettoyé en fin d'exécution (trap) : c'est le seul moyen
 # d'obtenir un nombre de lignes exact à cette taille de fichier.
 #
-# Sortie : un résumé, une ligne par chiffre annoncé dans sources.md.
+# Sortie : un résumé, une ligne par chiffre annoncé dans docs/donnees.html.
 #
 # ⚠️ Le nombre de fiches RNCP/RS (section C) varie d'un jour sur l'autre :
 # l'export est republié chaque jour. La commande est stable et reproductible,
 # mais son résultat exact est daté du jour d'exécution — il ne "reproduit" pas
-# le chiffre figé dans sources.md, il en reproduit la MÉTHODE.
+# le chiffre figé dans docs/donnees.html, il en reproduit la MÉTHODE.
 set -euo pipefail
 
 TMP="$(mktemp -d)"
@@ -172,4 +172,4 @@ PY
 fi
 
 echo
-echo "Vérification terminée. Comparer ces chiffres à docs/sous-docs-projets/01-donnees/sources.md."
+echo "Vérification terminée. Comparer ces chiffres à docs/donnees.html."

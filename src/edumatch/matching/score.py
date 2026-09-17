@@ -34,7 +34,7 @@ simple écrêtage — la correction naturelle liée à la définition du label,
 pas un choix de mise à l'échelle arbitraire.
 
 **Ce terme n'a pas encore battu son plancher.** Mesuré sur le test 2025
-(`04-modele/evaluation.md`) : MAE pondérée 0,0758 pour le modèle
+(`docs/modele.html`) : MAE pondérée 0,0758 pour le modèle
 contre 0,0701 pour la baseline (le taux de la session précédente, à
 couverture égale) — le modèle reste au-dessus du plancher qu'il doit
 battre, et sa calibration s'y dégrade également. `MISE_EN_GARDE_ACCESSIBILITE`
@@ -59,7 +59,7 @@ LOGGER = logging.getLogger(__name__)
 MISE_EN_GARDE_ACCESSIBILITE = (
     "L'accessibilité prédite ne bat pas encore la baseline sur le jeu de test 2025 : "
     "MAE pondérée 0,0758 (modèle) contre 0,0701 (taux de la session précédente, à couverture "
-    "égale) — voir 04-modele/evaluation.md. La calibration du modèle s'y dégrade "
+    "égale) — voir docs/modele.html. La calibration du modèle s'y dégrade "
     "également. Ce terme est utilisable mais pas encore validé au sens du protocole "
     "d'évaluation : à lire comme un ordre de grandeur, pas comme une probabilité fiable, "
     "tant que ce résultat n'a pas été renversé."

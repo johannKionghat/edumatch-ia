@@ -1,5 +1,5 @@
 """Test de contrat de `/feedback` : l'écartement doit être motivé, horodaté, journalisé
-(R6, `docs/sous-docs-projets/05-gouvernance/risques.md`).
+(R6, `docs/risques-aipd.html`).
 
 Depuis la revue de sécurité, `/feedback` exige une authentification HTTP Basic
 (`api/auth.py`) : `identifiant_conseiller` n'est plus un champ du corps de la requête,

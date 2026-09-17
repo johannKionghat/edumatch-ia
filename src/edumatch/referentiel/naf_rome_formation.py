@@ -1,7 +1,7 @@
 """Réconciliation NAF (Sirene) -> ROME (métiers) -> formation.
 
 Diagnostic préalable, mené avant d'écrire une ligne de ce module — voir
-`docs/sous-docs-projets/01-donnees/nomenclatures.md` pour le détail complet :
+`docs/pipeline.html#reconciliation` pour le détail complet :
 il n'existe aucune table officielle unique reliant directement un code NAF
 (l'activité d'un établissement) à un code ROME (un métier France Travail).
 La chaîne construite ici assemble donc trois sources publiques réelles,

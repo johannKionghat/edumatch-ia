@@ -4,7 +4,7 @@ Le fichier complet porte 43,9 millions de lignes et 54 colonnes (2,2 Go en
 Parquet) : on ne le charge jamais entièrement en mémoire pour le valider, pas
 plus qu'on ne le nettoie ligne à ligne. Ce module lit par lots
 (`pyarrow.ParquetFile.iter_batches`), en ne décodant que les 9 colonnes utiles
-au projet (`01-donnees/sources.md`) — la même projection que le job Spark
+au projet (`docs/donnees.html`) — la même projection que le job Spark
 d'agrégation, appliquée ici à la validation plutôt qu'au calcul.
 
 Grâce à cette projection, les contrôles ne s'appuient pas sur Pandera comme

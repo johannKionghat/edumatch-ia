@@ -12,7 +12,7 @@ donc délibérément exclus.
 
 IDÉO est sous licence ODbL, qui impose une attribution portant le
 producteur *et* la date de la donnée réutilisée (voir
-`docs/sous-docs-projets/05-gouvernance/registre-sources.md`). Un document de
+`docs/registres.html#sources`). Un document de
 ce corpus est donc une ligne du CSV source, jamais un extrait de plusieurs
 lignes fusionnées : la citation reste alignée avec l'URL Onisep qui identifie
 cette formation ou ce métier précis, pas avec le fichier entier.

@@ -113,7 +113,7 @@ COLONNES_PERSONNELLES_UNITE_LEGALE: frozenset[str] = frozenset(
 )
 
 # Les 9 colonnes utiles de StockEtablissement pour le job Spark d'agrégation
-# — voir docs/sous-docs-projets/01-donnees/sources.md. L'échantillon
+# — voir docs/donnees.html. L'échantillon
 # n'a pas besoin des 45 autres : elles ne seront jamais lues en production.
 COLONNES_ETABLISSEMENT: tuple[str, ...] = (
     "siret",

@@ -11,7 +11,7 @@ donnees:
     millesimes: [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
     effectif_minimal_cellule: 1      # sous ce seuil, la cellule est écartée
     # Identifiants du jeu de données par millésime sur le portail du MESR,
-    # vérifiés le 2026-08-26 (voir docs/sous-docs-projets/01-donnees/sources.md).
+    # vérifiés le 2026-08-26 (voir docs/donnees.html).
     # La forme change d'une année à l'autre : tiret jusqu'en 2019, souligné à
     # partir de 2020, aucun suffixe pour le millésime en cours (2025).
     identifiants:
@@ -79,7 +79,7 @@ donnees:
       nom_fichier_gabarit: "export_fiches_CSV_Standard_*.csv"
       # Membre de la même archive que la fiche RNCP -> codes ROME. Vérifié le
       # 2026-08-30 en listant les membres réels de l'archive du jour (voir
-      # docs/sous-docs-projets/01-donnees) : présent aux côtés du CSV
+      # docs/donnees.html) : présent aux côtés du CSV
       # standard, du fichier Nsf, et de sept autres membres non retenus ici.
       nom_fichier_rome_gabarit: "export_fiches_CSV_Rome_*.csv"
       # Vérifié le 2026-08-29 par décodage effectif du fichier téléchargé :
@@ -362,7 +362,7 @@ explicabilite:
 # src/edumatch/config.py (MatchingConfig) pour la justification de chaque
 # valeur ci-dessous.
 matching:
-  k_anonymat_debouches: 5                  # tranché par la gouvernance (risques.md, R2)
+  k_anonymat_debouches: 5                  # tranché par la gouvernance (docs/risques-aipd.html, R2)
   # Repère, pas une valeur mesurée : la médiane des cellules département x
   # division NAF conservées après k-anonymat est de 71 établissements
   # (25e centile 23, 75e centile 291, sur data/processed/matching/
@@ -431,7 +431,7 @@ api:
   # identifiant de conseiller authentifié sur /feedback (src/edumatch/api/rate_limit.py).
   limite_requetes_par_minute: 120
   # Journal d'inférence article 12 : conciliation avec le plafond du RGPD (art. 5.1.e),
-  # voir registre-traitements.md T5 et src/edumatch/config.py:AuditConfig.
+  # voir docs/registres.html T5 et src/edumatch/config.py:AuditConfig.
   audit:
     delai_pseudonymisation_jours: 365    # 12 mois — palier 1 -> 2
     delai_agregation_jours: 1095         # 36 mois (365 x 3) — palier 2 -> 3

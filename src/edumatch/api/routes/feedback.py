@@ -40,7 +40,7 @@ def feedback(
     limiteur: LimiteurDebit = Depends(get_limiteur_feedback),
 ) -> ReponseFeedback:
     """Un écartement doit être motivé — validé par le schéma (`RequeteFeedback`) avant d'arriver
-    ici — et journalisé, horodaté : la mesure exigée par R6 (`risques.md`) contre le contrôle
+    ici — et journalisé, horodaté : la mesure exigée par R6 (`docs/risques-aipd.html`) contre le contrôle
     humain de façade.
 
     Authentifiée depuis la revue de sécurité (`api/auth.py`) : `conseiller` est le principal HTTP
