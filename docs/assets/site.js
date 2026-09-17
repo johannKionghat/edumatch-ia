@@ -168,6 +168,9 @@
   }
 
   appliquerTheme(lireTheme());
+  // Mermaid lance sinon son propre rendu au chargement, sur le texte brut,
+  // avant que les libellés soient préparés : on le coupe tout de suite.
+  if (window.mermaid) window.mermaid.initialize({ startOnLoad: false });
   document.addEventListener("DOMContentLoaded", function () {
     construireNavigation();
     construirePager();
