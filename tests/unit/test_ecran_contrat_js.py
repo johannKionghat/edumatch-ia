@@ -18,6 +18,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from edumatch.api.audit import JournalAudit
+from edumatch.api.auth import calculer_empreinte
 from edumatch.api.deps import (
     get_etat_explicabilite,
     get_etat_matching,
@@ -154,8 +155,7 @@ def _etat_explicabilite() -> EtatExplicabilite:
 
 @pytest.fixture()
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    monkeypatch.setenv("CONSEILLER_IDENTIFIANT", IDENTIFIANT_TEST)
-    monkeypatch.setenv("CONSEILLER_MOT_DE_PASSE", MOT_DE_PASSE_TEST)
+    monkeypatch.setenv("CONSEILLER_COMPTES", f"{IDENTIFIANT_TEST}:{calculer_empreinte(MOT_DE_PASSE_TEST)}")
     get_settings.cache_clear()
     app = create_app()
     app.dependency_overrides[get_etat_matching] = lambda: _etat_matching()

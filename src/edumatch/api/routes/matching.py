@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from prometheus_client import Counter
 
 from edumatch.api.audit import JournalAudit
+from edumatch.api.auth import get_conseiller_courant
 from edumatch.api.deps import get_etat_matching, get_journal_audit, get_limiteur_matching
 from edumatch.api.rate_limit import LimiteurDebit
 from edumatch.api.schemas import (
@@ -91,10 +92,12 @@ def _libelle_formation(catalogue: pd.DataFrame, identifiant_cellule: str) -> str
     return str(lignes.iloc[0]) if not lignes.empty else identifiant_cellule
 
 
-def _entrees_journal(profil: ProfilRequete, session: int) -> dict[str, Any]:
+def _entrees_journal(profil: ProfilRequete, session: int, conseiller: str) -> dict[str, Any]:
     """Les variables d'entrée de l'inférence, au sens de T5 (`docs/registres.html`) : la
-    session courante, déterminée côté serveur, plus le profil déclaré par le candidat — jamais
-    son genre, qui n'existe même pas dans `ProfilRequete` (voir le docstring du module)."""
+    session courante, déterminée côté serveur, le profil déclaré par le candidat — jamais son
+    genre, qui n'existe même pas dans `ProfilRequete` (voir le docstring du module) — et
+    l'identifiant du conseiller authentifié qui a déclenché la requête (revue de sécurité, motif
+    A) : sans lui, une inférence contestée ne remonterait à aucune personne identifiée."""
     return {
         "session": session,
         "type_bac": profil.type_bac,
@@ -102,6 +105,7 @@ def _entrees_journal(profil: ProfilRequete, session: int) -> dict[str, Any]:
         "type_formation": profil.type_formation,
         "domaine": profil.domaine,
         "departement": profil.departement,
+        "identifiant_conseiller": conseiller,
     }
 
 
@@ -136,17 +140,20 @@ def matching(
     etat: EtatMatching = Depends(get_etat_matching),
     journal: JournalAudit = Depends(get_journal_audit),
     limiteur: LimiteurDebit = Depends(get_limiteur_matching),
+    conseiller: str = Depends(get_conseiller_courant),
 ) -> ReponseMatching:
     """Score le catalogue de la session courante pour le profil déclaré et retourne les
     meilleures formations, chaque terme du score restant visible séparément — jamais un score
     seul (voir `matching/score.py`, l'effet du produit de trois termes).
 
-    Chaque appel journalise l'inférence (T5, article 12) avant de répondre — voir `api/audit.py`
-    et `_entrees_journal`/`_sortie_journal` ci-dessus pour ce qui est écrit.
+    Chaque appel journalise l'inférence (T5, article 12) avant de répondre, avec l'identifiant du
+    conseiller authentifié qui l'a déclenchée — voir `api/audit.py` et
+    `_entrees_journal`/`_sortie_journal` ci-dessus pour ce qui est écrit.
 
-    Cette route n'authentifie pas l'appelant (contrairement à `/feedback` depuis la revue de
-    sécurité) : le plafond de débit (revue de sécurité) est donc appliqué par adresse IP, pas
-    par identité — voir `rate_limit.py`."""
+    Authentifiée depuis la revue de sécurité (motif A), comme `/feedback` (`api/auth.py`) : le
+    plafond de débit (revue de sécurité) reste appliqué par adresse IP plutôt que par identité —
+    voir `rate_limit.py` — car c'est la ressource de calcul du service, partagée par tous les
+    conseillers d'un même poste, que ce plafond protège, pas l'imputabilité d'une décision."""
     identite = requete_http.client.host if requete_http.client is not None else "inconnue"
     if not limiteur.autoriser(identite):
         raise HTTPException(
@@ -161,7 +168,7 @@ def matching(
         reponse = _reponse_vide(etat)
         journal.enregistrer(
             version_modele=settings.projet.version,
-            entrees=_entrees_journal(profil, etat.session_courante),
+            entrees=_entrees_journal(profil, etat.session_courante, conseiller),
             sortie=_sortie_journal(reponse),
         )
         return reponse
@@ -219,7 +226,7 @@ def matching(
     )
     journal.enregistrer(
         version_modele=settings.projet.version,
-        entrees=_entrees_journal(profil, etat.session_courante),
+        entrees=_entrees_journal(profil, etat.session_courante, conseiller),
         sortie=_sortie_journal(reponse),
     )
     return reponse

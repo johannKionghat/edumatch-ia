@@ -25,6 +25,7 @@ configuration — voir l'ADR.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, get_args
@@ -57,6 +58,59 @@ class ConfigurationError(RuntimeError):
 
     Levée plutôt que de laisser une valeur par défaut masquer un problème.
     """
+
+
+@dataclass(frozen=True)
+class CompteConseiller:
+    """Un compte conseiller nominatif : un identifiant, l'empreinte de son mot de passe.
+
+    `empreinte_mot_de_passe` n'est jamais un mot de passe en clair : c'est le résultat de
+    `api.auth.calculer_empreinte`, au format `scrypt$<sel hexadécimal>$<hachage hexadécimal>` — voir
+    ce module pour la vérification. Un compte partagé unique (l'ancien mécanisme, revue de
+    sécurité initiale) rendait un écartement ou une inférence imputables à « le conseiller » en
+    général, jamais à une personne précise : ce type porte désormais un compte par personne.
+    """
+
+    identifiant: str
+    empreinte_mot_de_passe: str
+
+
+def _parser_comptes_conseiller(brut: str | None) -> tuple[CompteConseiller, ...]:
+    """Parse `CONSEILLER_COMPTES` : une liste de comptes nominatifs, jamais un compte partagé.
+
+    Format d'une entrée : `identifiant:empreinte`, plusieurs comptes séparés par `;` — voir
+    `.env.example` pour un exemple complet et la commande qui génère une empreinte. Un format
+    invalide lève `ConfigurationError` au démarrage plutôt que de laisser un compte mal formé
+    échouer silencieusement à chaque tentative d'authentification.
+    """
+    if brut is None or not brut.strip():
+        return ()
+    comptes: list[CompteConseiller] = []
+    identifiants_vus: set[str] = set()
+    for entree in brut.split(";"):
+        entree = entree.strip()
+        if not entree:
+            continue
+        if ":" not in entree:
+            raise ConfigurationError(
+                f"CONSEILLER_COMPTES : entrée {entree!r} invalide, format attendu "
+                "'identifiant:empreinte' (comptes séparés par ';')."
+            )
+        identifiant, empreinte = entree.split(":", 1)
+        identifiant = identifiant.strip()
+        empreinte = empreinte.strip()
+        if not identifiant or not empreinte:
+            raise ConfigurationError(
+                f"CONSEILLER_COMPTES : entrée {entree!r} incomplète, identifiant et empreinte "
+                "sont tous deux requis."
+            )
+        if identifiant in identifiants_vus:
+            raise ConfigurationError(
+                f"CONSEILLER_COMPTES : identifiant {identifiant!r} déclaré plusieurs fois."
+            )
+        identifiants_vus.add(identifiant)
+        comptes.append(CompteConseiller(identifiant=identifiant, empreinte_mot_de_passe=empreinte))
+    return tuple(comptes)
 
 
 # ─── Modèles reflétant configs/base.yaml ────────────────────────────────────
@@ -920,11 +974,12 @@ class Settings(BaseSettings):
     scw_access_key: str | None = Field(default=None, validation_alias="SCW_ACCESS_KEY")
     scw_secret_key: SecretStr | None = Field(default=None, validation_alias="SCW_SECRET_KEY")
     scw_default_project_id: str | None = Field(default=None, validation_alias="SCW_DEFAULT_PROJECT_ID")
-    # Revue de sécurité de l'API : identifiants HTTP Basic de l'écran conseiller
-    # (`api/auth.py`). Un seul principal partagé, jamais un identifiant en dur dans le code —
-    # voir l'ADR de l'étape pour pourquoi HTTP Basic plutôt qu'OAuth2/OIDC ici.
-    conseiller_identifiant: str | None = Field(default=None, validation_alias="CONSEILLER_IDENTIFIANT")
-    conseiller_mot_de_passe: SecretStr | None = Field(default=None, validation_alias="CONSEILLER_MOT_DE_PASSE")
+    # Revue de sécurité de l'API : comptes conseillers nominatifs de l'écran conseiller, de
+    # `/matching` et de `/feedback` (`api/auth.py`). Jamais un identifiant en dur dans le code,
+    # jamais un mot de passe en clair — seule une empreinte scrypt est portée par cette variable.
+    # Voir `docs/decisions.html` pour pourquoi HTTP Basic plutôt qu'OAuth2/OIDC ici, et
+    # `CompteConseiller`/`_parser_comptes_conseiller` ci-dessus pour le format.
+    conseiller_comptes_brut: str | None = Field(default=None, validation_alias="CONSEILLER_COMPTES")
 
     @classmethod
     def settings_customise_sources(
@@ -972,6 +1027,14 @@ class Settings(BaseSettings):
     def samples_dir(self) -> Path:
         """Échantillons versionnés pour les tests — reste dans le dépôt, pas sous data_root."""
         return PROJECT_ROOT / "data" / "samples"
+
+    @property
+    def comptes_conseiller(self) -> tuple[CompteConseiller, ...]:
+        """Comptes conseillers nominatifs, parsés depuis `CONSEILLER_COMPTES` (revue de sécurité,
+        motif A). Recalculé à chaque accès plutôt que mis en cache : ce n'est jamais sur le
+        chemin chaud d'une requête (une seule fois par authentification), et cela évite un état
+        périmé si la variable d'environnement changeait entre deux appels dans un test."""
+        return _parser_comptes_conseiller(self.conseiller_comptes_brut)
 
 
 def load_settings(environnement: str | None = None, configs_dir: Path | None = None) -> Settings:
