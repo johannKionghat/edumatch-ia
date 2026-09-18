@@ -9,6 +9,7 @@ en plus du contrat HTTP de bout en bout.
 
 from __future__ import annotations
 
+import base64
 import shutil
 from pathlib import Path
 
@@ -16,12 +17,35 @@ import pytest
 from fastapi.testclient import TestClient
 
 from edumatch.api.audit import JournalAudit
+from edumatch.api.auth import calculer_empreinte
 from edumatch.api.deps import get_etat_matching, get_journal_audit
 from edumatch.api.main import create_app
 from edumatch.api.state import construire_etat_matching
-from edumatch.config import Settings, load_settings
+from edumatch.config import Settings, get_settings, load_settings
 from edumatch.features import build
 from edumatch.transform import run, run_etoile
+
+
+IDENTIFIANT_TEST = "conseiller-test"
+MOT_DE_PASSE_TEST = "mot-de-passe-test"
+
+
+def _en_tete_basic(identifiant: str, mot_de_passe: str) -> dict[str, str]:
+    jeton = base64.b64encode(f"{identifiant}:{mot_de_passe}".encode()).decode("ascii")
+    return {"Authorization": f"Basic {jeton}"}
+
+
+@pytest.fixture()
+def _authentification(monkeypatch: pytest.MonkeyPatch):
+    """`/matching` est réservé aux conseillers authentifiés : un appel de bout en
+    bout doit donc présenter des identifiants, comme le fera l'écran en production."""
+    monkeypatch.setenv(
+        "CONSEILLER_COMPTES",
+        f"{IDENTIFIANT_TEST}:{calculer_empreinte(MOT_DE_PASSE_TEST)}",
+    )
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture(scope="module")
@@ -58,11 +82,13 @@ def test_etat_matching_degrade_le_terme_debouches_sans_planter(etat_matching) ->
     assert etat_matching.motif_indisponibilite_debouches is not None
 
 
-def test_matching_repond_sur_un_catalogue_reel(etat_matching, tmp_path: Path) -> None:
+def test_matching_repond_sur_un_catalogue_reel(
+    etat_matching, tmp_path: Path, _authentification: None
+) -> None:
     app = create_app()
     app.dependency_overrides[get_etat_matching] = lambda: etat_matching
     app.dependency_overrides[get_journal_audit] = lambda: JournalAudit(tmp_path / "journal.jsonl")
-    client = TestClient(app)
+    client = TestClient(app, headers=_en_tete_basic(IDENTIFIANT_TEST, MOT_DE_PASSE_TEST))
 
     # Le premier profil disponible dans le catalogue réel de la session de test.
     ligne = etat_matching.catalogue.iloc[0]
