@@ -1,7 +1,7 @@
-"""Purge du journal d'inférence : exécute les trois paliers de conservation décidés par
-la gouvernance — voir `audit.py` et `docs/registres.html#traitements`
-(T5), pour la conciliation entre le plancher de l'article 12 du règlement sur l'IA et le
-plafond de l'article 5.1.e du RGPD.
+"""Purge des journaux d'inférence (T5) et de supervision (T6) : exécute les trois paliers
+de conservation décidés par la gouvernance — voir `audit.py`, `feedback_store.py` et
+`docs/registres.html#traitements`, pour la conciliation entre le plancher de l'article 12
+du règlement sur l'IA et le plafond de l'article 5.1.e du RGPD.
 
 ## Pourquoi ce module existe
 
@@ -33,6 +33,20 @@ Chaque exécution — simulée ou réelle — ajoute une ligne à
 Aucune donnée personnelle n'y figure, uniquement des décomptes. C'est ce qui
 permet de répondre, en audit, à la question « la purge tourne-t-elle
 vraiment ? » par un fichier plutôt que par une affirmation.
+
+## Le journal de supervision (T6) suit la même logique
+
+`docs/registres.html#t6` aligne la durée du journal des décisions du
+conseiller (`feedback_store.py`) sur celle de T5 : 12 mois en clair. Ce
+module réutilise donc les mêmes seuils de configuration
+(`settings.api.audit`) plutôt que d'en déclarer de nouveaux, et la même
+mécanique de classement par âge (`_classer`), pour purger ce second journal :
+`purger_feedback` en est l'équivalent, `chemins_supervision` son
+équivalent de `chemins_audit`. Seule diffère la clé d'agrégat (session, type
+de baccalauréat, boursier **et décision**, plutôt que la seule cellule), et
+le champ pseudonymisé (`identifiant_conseiller` plutôt que
+`identifiant_execution`). C'est ce qui lève le motif de blocage B du
+registre : une durée sans tâche qui l'applique n'est pas une durée.
 """
 
 from __future__ import annotations
@@ -49,6 +63,8 @@ from typing import Any
 from uuid import uuid4
 
 from edumatch.api.audit import NOM_FICHIER_JOURNAL, SOUS_DOSSIER_AUDIT
+from edumatch.api.feedback_store import NOM_FICHIER_JOURNAL as NOM_FICHIER_JOURNAL_FEEDBACK
+from edumatch.api.feedback_store import SOUS_DOSSIER_JOURNAL as SOUS_DOSSIER_SUPERVISION
 from edumatch.config import Settings, get_settings
 
 LOGGER = logging.getLogger(__name__)
@@ -85,6 +101,19 @@ def chemins_audit(settings: Settings) -> CheminsAudit:
     dossier = settings.processed_dir / SOUS_DOSSIER_AUDIT
     return CheminsAudit(
         journal=dossier / NOM_FICHIER_JOURNAL,
+        agregats=dossier / NOM_FICHIER_AGREGATS,
+        purges=dossier / NOM_FICHIER_PURGES,
+    )
+
+
+def chemins_supervision(settings: Settings) -> CheminsAudit:
+    """Équivalent de `chemins_audit` pour le journal des décisions du conseiller (T6).
+
+    Le dossier diffère (`processed/supervision/` plutôt que `processed/audit/`), donc les
+    noms de fichiers peuvent être réutilisés tels quels sans collision."""
+    dossier = settings.processed_dir / SOUS_DOSSIER_SUPERVISION
+    return CheminsAudit(
+        journal=dossier / NOM_FICHIER_JOURNAL_FEEDBACK,
         agregats=dossier / NOM_FICHIER_AGREGATS,
         purges=dossier / NOM_FICHIER_PURGES,
     )
@@ -127,6 +156,33 @@ def _fusionner_agregats(existants: dict[str, dict[str, Any]], compteur: Counter)
         defaut = {"session": session, "type_bac": type_bac, "boursier": boursier, "nb_inferences": 0}
         bucket = fusion.setdefault(cle, defaut)
         bucket["nb_inferences"] += ajout
+    return fusion
+
+
+def _cle_agregat_feedback(enregistrement: dict[str, Any]) -> str:
+    """Équivalent de `_cle_agregat` pour le journal de supervision : la décision s'ajoute à la
+    cellule, car un agrégat de T6 sert à mesurer un taux d'écartement par cellule, pas
+    seulement un volume."""
+    session = enregistrement.get("session", "inconnue")
+    type_bac = enregistrement.get("type_bac", "inconnu")
+    boursier = enregistrement.get("boursier", "inconnu")
+    decision = enregistrement.get("decision", "inconnue")
+    return f"{session}|{type_bac}|{boursier}|{decision}"
+
+
+def _fusionner_agregats_feedback(existants: dict[str, dict[str, Any]], compteur: Counter) -> dict[str, dict[str, Any]]:
+    fusion = {cle: dict(valeur) for cle, valeur in existants.items()}
+    for cle, ajout in compteur.items():
+        session, type_bac, boursier, decision = cle.split("|")
+        defaut = {
+            "session": session,
+            "type_bac": type_bac,
+            "boursier": boursier,
+            "decision": decision,
+            "nb_decisions": 0,
+        }
+        bucket = fusion.setdefault(cle, defaut)
+        bucket["nb_decisions"] += ajout
     return fusion
 
 
@@ -216,9 +272,92 @@ def purger(
     return rapport
 
 
+def purger_feedback(
+    settings: Settings,
+    *,
+    maintenant: datetime | None = None,
+    simulation: bool = True,
+) -> RapportPurge:
+    """Applique (ou simule) les trois paliers sur le journal des décisions du conseiller (T6).
+
+    Même mécanique que `purger` — voir le docstring du module — appliquée au journal de
+    supervision : les seuils viennent de la même configuration (`settings.api.audit`), le
+    champ pseudonymisé est `identifiant_conseiller` plutôt que `identifiant_execution`, et
+    l'agrégat conserve la décision (`_cle_agregat_feedback`) pour rester utile au suivi du
+    taux d'écartement (R6) une fois les lignes individuelles disparues.
+    """
+    maintenant = maintenant or datetime.now(UTC)
+    delai_pseudonymisation = timedelta(days=settings.api.audit.delai_pseudonymisation_jours)
+    delai_agregation = timedelta(days=settings.api.audit.delai_agregation_jours)
+    chemins = chemins_supervision(settings)
+
+    lignes = _lire_lignes_journal(chemins.journal)
+    lignes_conservees: list[dict[str, Any]] = []
+    compteur_agregats: Counter = Counter()
+    decomptes = Counter()
+
+    for enregistrement in lignes:
+        age = maintenant - datetime.fromisoformat(enregistrement["horodatage"])
+        palier = _classer(
+            enregistrement, age=age, delai_pseudonymisation=delai_pseudonymisation, delai_agregation=delai_agregation
+        )
+        if palier == "agreger":
+            compteur_agregats[_cle_agregat_feedback(enregistrement)] += 1
+            decomptes["agregees"] += 1
+            continue
+        if palier == "pseudonymiser":
+            enregistrement = {**enregistrement, "identifiant_conseiller": str(uuid4()), "pseudonymise": True}
+            decomptes["pseudonymisees"] += 1
+        elif palier == "deja_pseudonymise":
+            decomptes["pseudonymisees"] += 1
+        else:
+            decomptes["conservees_en_clair"] += 1
+        lignes_conservees.append(enregistrement)
+
+    rapport = RapportPurge(
+        horodatage_execution=maintenant.isoformat(),
+        mode=MODE_REEL if not simulation else MODE_SIMULATION,
+        lignes_examinees=len(lignes),
+        lignes_conservees_en_clair=decomptes["conservees_en_clair"],
+        lignes_pseudonymisees=decomptes["pseudonymisees"],
+        lignes_agregees=decomptes["agregees"],
+        chemin_journal=str(chemins.journal),
+    )
+
+    if not simulation:
+        _ecrire_texte_atomique(
+            chemins.journal, "".join(json.dumps(ligne, ensure_ascii=False) + "\n" for ligne in lignes_conservees)
+        )
+        if compteur_agregats:
+            agregats_fusionnes = _fusionner_agregats_feedback(_lire_agregats(chemins.agregats), compteur_agregats)
+            _ecrire_texte_atomique(chemins.agregats, json.dumps(agregats_fusionnes, indent=2, ensure_ascii=False))
+
+    chemins.purges.parent.mkdir(parents=True, exist_ok=True)
+    with chemins.purges.open("a", encoding="utf-8") as flux:
+        flux.write(json.dumps(asdict(rapport), ensure_ascii=False) + "\n")
+
+    LOGGER.info(
+        "Purge du journal de supervision (%s) : %s examinées, %s conservées en clair, %s pseudonymisées, "
+        "%s agrégées.",
+        rapport.mode,
+        rapport.lignes_examinees,
+        rapport.lignes_conservees_en_clair,
+        rapport.lignes_pseudonymisees,
+        rapport.lignes_agregees,
+    )
+    return rapport
+
+
 def _analyser_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     analyseur = argparse.ArgumentParser(
-        description="Applique les trois paliers de conservation du journal d'inférence (art. 12 / RGPD 5.1.e)."
+        description="Applique les trois paliers de conservation d'un journal (art. 12 / RGPD 5.1.e)."
+    )
+    analyseur.add_argument(
+        "--journal",
+        choices=["inference", "supervision"],
+        default="inference",
+        help="Journal à purger : 'inference' (T5, article 12, par défaut) ou 'supervision' "
+        "(T6, décisions du conseiller).",
     )
     analyseur.add_argument(
         "--appliquer",
@@ -231,7 +370,9 @@ def _analyser_arguments(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> None:
     arguments = _analyser_arguments(argv)
-    rapport = purger(get_settings(), simulation=not arguments.appliquer)
+    settings = get_settings()
+    fonction = purger if arguments.journal == "inference" else purger_feedback
+    rapport = fonction(settings, simulation=not arguments.appliquer)
     print(json.dumps(asdict(rapport), indent=2, ensure_ascii=False))
 
 

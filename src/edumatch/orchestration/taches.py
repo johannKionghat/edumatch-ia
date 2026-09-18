@@ -179,3 +179,15 @@ def purger_audit(settings: Settings | None = None) -> Any:
     """
     settings = settings or get_settings()
     return audit_purge.purger(settings, simulation=False)
+
+
+def purger_supervision(settings: Settings | None = None) -> Any:
+    """Applique réellement les trois paliers de conservation du journal de supervision (T6).
+
+    Même exigence que `purger_audit` — `simulation=False` explicite — appliquée à
+    `audit_purge.purger_feedback`, qui referme le motif de blocage B du registre : une durée
+    de conservation documentée (`docs/registres.html#t6`) mais qu'aucune tâche planifiée
+    n'appliquait.
+    """
+    settings = settings or get_settings()
+    return audit_purge.purger_feedback(settings, simulation=False)

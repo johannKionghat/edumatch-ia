@@ -110,9 +110,13 @@ def test_dag_referentiels_enchaine_ingestion_qualite_naf_rome(module_pipeline) -
     assert _ids_taches(dag) == {"ingerer_referentiels", "controler_qualite", "reconcilier_naf_rome"}
 
 
-def test_dag_audit_purge_ne_porte_qu_une_seule_tache(module_pipeline) -> None:
+def test_dag_audit_purge_porte_la_purge_d_inference_et_de_supervision(module_pipeline) -> None:
+    """Le journal d'inférence (T5) et celui de supervision (T6) sont purgés par deux tâches
+    distinctes du même DAG quotidien — voir `taches.purger_audit` et
+    `taches.purger_supervision`, dont le contrat (appel réel, `simulation=False`) est
+    vérifié indépendamment d'Airflow par `tests/unit/test_orchestration_taches_purge.py`."""
     dag = module_pipeline.dag_audit_purge
-    assert _ids_taches(dag) == {"purger_audit"}
+    assert _ids_taches(dag) == {"purger_audit", "purger_supervision"}
 
 
 def test_aucun_dag_ne_retente_au_niveau_airflow(module_pipeline) -> None:

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from edumatch.api.audit_purge import chemins_audit, purger
+from edumatch.api.audit_purge import chemins_audit, chemins_supervision, purger, purger_feedback
 from edumatch.config import Settings, load_settings
 
 MAINTENANT = datetime(2026, 8, 30, tzinfo=UTC)
@@ -272,3 +272,167 @@ def test_cli_appliquer_execute_reellement(settings: Settings, monkeypatch: pytes
     lignes_apres = _lire_lignes(chemins_audit(settings).journal)
     assert lignes_apres[0]["pseudonymise"] is True
     assert lignes_apres[0]["identifiant_execution"] != "exec-original"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Journal de supervision (T6) — même logique de paliers, même prudence
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# `docs/registres.html#t6` aligne la durée de ce journal sur celle de T5 :
+# 12 mois en clair. Les tests réutilisent donc les mêmes seuils raccourcis
+# que ceux du journal d'inférence (`settings` ci-dessus), sans dupliquer une
+# nouvelle configuration — c'est exactement ce que `purger_feedback` fait en
+# production (voir son docstring).
+
+
+def _ligne_feedback(
+    *,
+    horodatage: datetime,
+    identifiant_feedback: str = "feedback-original",
+    identifiant_conseiller: str = "conseiller-original",
+    session: int = 2025,
+    type_bac: str = "bg",
+    boursier: bool = False,
+    decision: str = "retenue",
+    motif: str | None = None,
+) -> dict:
+    return {
+        "identifiant_feedback": identifiant_feedback,
+        "horodatage": horodatage.isoformat(),
+        "session": session,
+        "identifiant_formation": "F1",
+        "type_bac": type_bac,
+        "boursier": boursier,
+        "decision": decision,
+        "motif": motif,
+        "identifiant_conseiller": identifiant_conseiller,
+    }
+
+
+def _ecrire_journal_supervision(settings: Settings, lignes: list[dict]) -> Path:
+    chemin = chemins_supervision(settings).journal
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    chemin.write_text("".join(json.dumps(ligne, ensure_ascii=False) + "\n" for ligne in lignes), encoding="utf-8")
+    return chemin
+
+
+def test_purge_supervision_conserve_en_clair_une_ligne_recente(settings: Settings) -> None:
+    chemin = _ecrire_journal_supervision(settings, [_ligne_feedback(horodatage=MAINTENANT - timedelta(days=1))])
+    rapport = purger_feedback(settings, maintenant=MAINTENANT, simulation=False)
+
+    assert rapport.lignes_conservees_en_clair == 1
+    assert rapport.lignes_pseudonymisees == 0
+    assert rapport.lignes_agregees == 0
+    restantes = _lire_lignes(chemin)
+    assert len(restantes) == 1
+    assert restantes[0]["identifiant_conseiller"] == "conseiller-original"
+
+
+def test_purge_supervision_pseudonymise_le_palier_intermediaire(settings: Settings) -> None:
+    age_intermediaire = MAINTENANT - timedelta(days=DELAI_PSEUDO_JOURS + 1)
+    chemin = _ecrire_journal_supervision(settings, [_ligne_feedback(horodatage=age_intermediaire)])
+    rapport = purger_feedback(settings, maintenant=MAINTENANT, simulation=False)
+
+    assert rapport.lignes_pseudonymisees == 1
+    restantes = _lire_lignes(chemin)
+    assert restantes[0]["identifiant_conseiller"] != "conseiller-original"
+    assert restantes[0]["pseudonymise"] is True
+    # La décision et le motif — utiles à un audit du taux d'écartement — restent lisibles.
+    assert restantes[0]["decision"] == "retenue"
+
+
+def test_purge_supervision_agrege_et_supprime_le_palier_final(settings: Settings) -> None:
+    age_ancien = MAINTENANT - timedelta(days=DELAI_AGREGATION_JOURS + 1)
+    chemin = _ecrire_journal_supervision(
+        settings, [_ligne_feedback(horodatage=age_ancien, decision="ecartee")]
+    )
+    rapport = purger_feedback(settings, maintenant=MAINTENANT, simulation=False)
+
+    assert rapport.lignes_agregees == 1
+    assert _lire_lignes(chemin) == []  # au-delà de la durée documentée, la ligne disparaît
+
+    agregats = json.loads(chemins_supervision(settings).agregats.read_text(encoding="utf-8"))
+    cle = "2025|bg|False|ecartee"
+    assert agregats[cle]["nb_decisions"] == 1
+
+
+def test_purge_supervision_est_idempotente(settings: Settings) -> None:
+    """Un second passage à la même date ne change rien : la ligne récente reste intacte, la
+    pseudonymisée n'est pas retouchée, l'agrégat n'est pas compté deux fois."""
+    lignes = [
+        _ligne_feedback(horodatage=MAINTENANT - timedelta(days=1), identifiant_feedback="frais"),
+        _ligne_feedback(
+            horodatage=MAINTENANT - timedelta(days=DELAI_PSEUDO_JOURS + 1),
+            identifiant_feedback="a-pseudonymiser",
+        ),
+        _ligne_feedback(
+            horodatage=MAINTENANT - timedelta(days=DELAI_AGREGATION_JOURS + 1),
+            identifiant_feedback="a-agreger",
+        ),
+    ]
+    chemin = _ecrire_journal_supervision(settings, lignes)
+
+    purger_feedback(settings, maintenant=MAINTENANT, simulation=False)
+    etat_apres_premiere_purge = chemin.read_text(encoding="utf-8")
+    agregats_apres_premiere_purge = chemins_supervision(settings).agregats.read_text(encoding="utf-8")
+
+    rapport_second_passage = purger_feedback(settings, maintenant=MAINTENANT, simulation=False)
+
+    assert chemin.read_text(encoding="utf-8") == etat_apres_premiere_purge
+    assert chemins_supervision(settings).agregats.read_text(encoding="utf-8") == agregats_apres_premiere_purge
+    assert rapport_second_passage.lignes_agregees == 0  # plus rien à agréger, déjà fait
+    assert rapport_second_passage.lignes_pseudonymisees == 1  # déjà pseudonymisée, comptée mais inchangée
+    assert rapport_second_passage.lignes_conservees_en_clair == 1
+
+    restantes = _lire_lignes(chemin)
+    identifiants_restants = {ligne["identifiant_feedback"] for ligne in restantes}
+    assert identifiants_restants == {"frais", "a-pseudonymiser"}
+
+
+def test_purge_supervision_simulation_ne_modifie_rien_sur_disque(settings: Settings) -> None:
+    chemin = _ecrire_journal_supervision(
+        settings, [_ligne_feedback(horodatage=MAINTENANT - timedelta(days=DELAI_AGREGATION_JOURS + 1))]
+    )
+    contenu_avant = chemin.read_text(encoding="utf-8")
+
+    rapport = purger_feedback(settings, maintenant=MAINTENANT, simulation=True)
+
+    assert rapport.mode == "simulation"
+    assert rapport.lignes_agregees == 1
+    assert chemin.read_text(encoding="utf-8") == contenu_avant
+    assert not chemins_supervision(settings).agregats.exists()
+
+
+def test_purge_supervision_fonctionne_sans_journal_existant(settings: Settings) -> None:
+    assert not chemins_supervision(settings).journal.exists()
+
+    rapport = purger_feedback(settings, maintenant=MAINTENANT, simulation=False)
+
+    assert rapport.lignes_examinees == 0
+    lignes_purges = _lire_lignes(chemins_supervision(settings).purges)
+    assert len(lignes_purges) == 1
+
+
+def test_cli_journal_supervision_purge_le_bon_fichier(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
+    """`--journal supervision` cible bien `feedback.jsonl`, pas le journal d'inférence — les
+    deux fixtures écrivent dans des dossiers distincts, une confusion serait visible ici."""
+    from edumatch.api import audit_purge
+
+    age_intermediaire = MAINTENANT - timedelta(days=DELAI_PSEUDO_JOURS + 1)
+    _ecrire_journal_supervision(settings, [_ligne_feedback(horodatage=age_intermediaire)])
+    monkeypatch.setattr(audit_purge, "get_settings", lambda: settings)
+    # Un vrai horodatage système, cohérent avec `main()` qui n'accepte pas de date injectée.
+    _ecrire_journal_supervision(
+        settings, [_ligne_feedback(horodatage=datetime.now(UTC) - timedelta(days=DELAI_PSEUDO_JOURS + 1))]
+    )
+
+    audit_purge.main(["--journal", "supervision", "--appliquer"])
+
+    sortie = json.loads(capsys.readouterr().out)
+    assert sortie["mode"] == "reel"
+    lignes_apres = _lire_lignes(chemins_supervision(settings).journal)
+    assert lignes_apres[0]["pseudonymise"] is True
+    assert lignes_apres[0]["identifiant_conseiller"] != "conseiller-original"
+    assert not chemins_audit(settings).journal.exists()  # le journal d'inférence n'a pas bougé

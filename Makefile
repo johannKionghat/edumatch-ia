@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer ecran-verifier assistant-exemple test lint fmt clean up-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
+.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer supervision-purge supervision-purge-appliquer droits ecran-verifier assistant-exemple test lint fmt clean up-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -144,6 +144,15 @@ audit-purge:  ## Purge du journal d'inférence (article 12) : SIMULATION, rien n
 
 audit-purge-appliquer:  ## Purge du journal d'inférence : exécution RÉELLE (journal réécrit, agrégats mis à jour)
 	PYTHONPATH=src python -m edumatch.api.audit_purge --appliquer
+
+supervision-purge:  ## Purge du journal de supervision (T6) : SIMULATION, rien n'est modifié
+	PYTHONPATH=src python -m edumatch.api.audit_purge --journal supervision
+
+supervision-purge-appliquer:  ## Purge du journal de supervision (T6) : exécution RÉELLE
+	PYTHONPATH=src python -m edumatch.api.audit_purge --journal supervision --appliquer
+
+droits:  ## Exercice des droits (T8), simulation par défaut pour l'effacement : `make droits ARGS="retrouver --journal inference --identifiant ID"`
+	PYTHONPATH=src python -m edumatch.api.droits $(ARGS)
 
 ecran-verifier:  ## Vérifie la syntaxe de l'écran conseiller : `node --check` sur app.js
 	node --check src/edumatch/api/static/app.js

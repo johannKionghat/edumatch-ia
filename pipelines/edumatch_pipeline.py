@@ -166,11 +166,21 @@ with DAG(
 
 with DAG(
     dag_id="edumatch_audit_purge",
-    description="Purge planifiée du journal d'inférence, article 12 du règlement sur l'IA.",
+    description=(
+        "Purge planifiée des journaux d'inférence (article 12 du règlement sur l'IA, T5) et "
+        "de supervision (décisions du conseiller, T6)."
+    ),
     schedule=_PLANIFICATION.purge_audit,
     start_date=DATE_DEPART,
     catchup=False,
     default_args=ARGUMENTS_PAR_DEFAUT,
     tags=["edumatch", "gouvernance"],
 ) as dag_audit_purge:
-    t_purge = _construire_operateur(dag_audit_purge, "purger_audit", taches.purger_audit)
+    # Deux tâches indépendantes plutôt qu'une seule combinée : chacune purge un journal
+    # distinct, sur des fichiers distincts — l'échec de l'une (par exemple un journal de
+    # supervision corrompu) n'empêche pas l'autre de s'exécuter, cohérent avec la règle
+    # « une tâche fait une chose » du module `taches.py`.
+    t_purge_audit = _construire_operateur(dag_audit_purge, "purger_audit", taches.purger_audit)
+    t_purge_supervision = _construire_operateur(
+        dag_audit_purge, "purger_supervision", taches.purger_supervision
+    )
