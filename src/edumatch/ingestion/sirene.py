@@ -23,6 +23,7 @@ retient un délai plus long, propre au poids réel de ces fichiers.
 from __future__ import annotations
 
 import logging
+import sys
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -491,3 +492,25 @@ def resultat_en_dict(resultat: ResultatTelechargementSirene) -> dict[str, object
     donnees = asdict(resultat)
     donnees["chemin"] = str(donnees["chemin"])
     return donnees
+
+
+def main() -> int:
+    """Point d'entrée : télécharge les fichiers de stock Sirene configurés, puis résume ce qui a été fait.
+
+    `--forcer` retélécharge même si le manifeste annonce le fichier déjà pris.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    forcer = "--forcer" in sys.argv[1:]
+    resultats = telecharger_tous(forcer=forcer)
+    telecharges = sum(1 for resultat in resultats if resultat.telecharge)
+    LOGGER.info(
+        "les fichiers de stock Sirene configurés : %d ressource(s) traitée(s), %d téléchargée(s), %d déjà à jour.",
+        len(resultats),
+        telecharges,
+        len(resultats) - telecharges,
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

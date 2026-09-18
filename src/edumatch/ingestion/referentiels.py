@@ -32,6 +32,7 @@ pour que l'appelant n'ait qu'un seul module à importer.
 from __future__ import annotations
 
 import logging
+import sys
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -233,3 +234,25 @@ def resultat_en_dict(resultat: ResultatTelechargementReferentiel) -> dict[str, o
     donnees = asdict(resultat)
     donnees["chemin"] = str(donnees["chemin"])
     return donnees
+
+
+def main() -> int:
+    """Point d'entrée : télécharge les référentiels IDÉO, RNCP et France Travail, puis résume ce qui a été fait.
+
+    `--forcer` retélécharge même si le manifeste annonce le fichier déjà pris.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    forcer = "--forcer" in sys.argv[1:]
+    resultats = telecharger_tous(forcer=forcer)
+    telecharges = sum(1 for resultat in resultats if resultat.telecharge)
+    LOGGER.info(
+        "les référentiels IDÉO, RNCP et France Travail : %d ressource(s) traitée(s), %d téléchargée(s), %d déjà à jour.",
+        len(resultats),
+        telecharges,
+        len(resultats) - telecharges,
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
