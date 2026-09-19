@@ -52,6 +52,7 @@
               <tr><td><a href="#adr-0018">0018</a></td><td>Dérive : PSI médian sur 46 variables, seuil 0,20, sans Evidently</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
               <tr><td><a href="#adr-0019">0019</a></td><td>Airflow en production sur une instance Scaleway dédiée</td><td><span class="badge info">Amendée</span></td><td>2 · 3</td></tr>
               <tr><td><a href="#adr-0020">0020</a></td><td>Appariement textuel exact Parcoursup ↔ IDÉO pour le terme de débouchés, indisponibilité déclarée ailleurs</td><td><span class="badge ok">Acceptée</span></td><td>1 · 3 · 4</td></tr>
+              <tr><td><a href="#adr-0021">0021</a></td><td>Protocole de sélection pré-enregistré pour passer sous le plancher de l'AIPD</td><td><span class="badge ok">Acceptée</span></td><td>4</td></tr>
             </tbody>
           </table>
         </div>
@@ -1134,6 +1135,116 @@ flowchart TD
           <div>
             <span class="title">Seuil de bascule</span>
             <p>Un identifiant de certification (RNCP, NSF ou ROME) publié dans un millésime Parcoursup : la jointure par clé remplacerait alors l'appariement textuel. Une table ROME ↔ NAF à la sous-classe publiée par France Travail ou l'INSEE. Ou un appariement approché dont la couverture et le taux d'erreur, mesurés et relus, montreraient un gain réel sans exposer de débouché faux. Je ne fixe pas de seuil chiffré de couverture : la documentation n'en arrête aucun.</p>
+          </div>
+        </div>
+
+        <h2 id="adr-0021">ADR 0021 — Protocole de sélection pré-enregistré pour passer sous le plancher de l'AIPD</h2>
+        <p><span class="badge ok">Acceptée</span> le 18 septembre 2026 · Bloc 4 · s'appuie sur les ADR <a href="#adr-0009">0009</a>, <a href="#adr-0011">0011</a>, <a href="#adr-0012">0012</a> et <a href="#adr-0013">0013</a>, sans les rouvrir</p>
+        <h3>Contexte</h3>
+        <p>L'AIPD fixe un plancher que le modèle actuel ne franchit pas : MAE pondérée &lt; 0,0701 <strong>et</strong> ECE &lt; 0,0322 en test 2025, et l'ECE du groupe « plus de 80 % de femmes parmi les candidats » ramené à l'ordre de grandeur des deux autres groupes (mesuré : mixte 0,0319, moins de 20 % 0,0341, plus de 80 % 0,0656). Le modèle actuellement non commité (objectif <code>cross_entropy</code>, voir <code>models/train.py</code>) vaut 0,0749 de MAE pondérée en test — au-dessus du plancher — après un premier passage en moindres carrés à 0,0758, changé pour une raison de bornage des prédictions, pas pour le score. La porte de promotion (<code>orchestration/promotion.py</code>) ne teste aujourd'hui que la moitié de la conjonction : la MAE, jamais l'ECE.</p>
+        <p>Le risque à écrire cet ADR après avoir mesuré les candidats est connu sous le nom de <em>p-hacking</em> : essayer des variantes jusqu'à en trouver une qui passe, puis raconter a posteriori une histoire qui la justifie. La parade n'est pas un candidat de plus, c'est un engagement écrit et daté sur la grille complète et le critère de choix, avant la première mesure — un pré-enregistrement, au sens où l'entend la méthode expérimentale.</p>
+        <h3>Décision</h3>
+        <ol>
+          <li>
+            <strong>La grille exhaustive, rien d'autre ne sera essayé</strong> : 8 modèles × {sans calibration, isotonique globale}, soit 16 candidats.
+            <ul>
+              <li><strong>Modèle actuel</strong> : la configuration déjà commise (<code>configs/base.yaml</code>), sans modification.</li>
+              <li><strong>A-h1 / A-h2 / A-h3</strong> : pondération d'effectif multipliée par une décroissance de récence <code>0,5^((s_ref − s)/h)</code>, avec <code>s_ref</code> la dernière session d'entraînement et <code>h</code> ∈ {1, 2, 3} sessions. Une cellule de la session la plus récente pèse plein, une cellule à <code>h</code> sessions de distance pèse moitié moins — une réponse directe à la dérive 2024→2025 déjà mesurée par le suivi de dérive (ADR 0018), sans changer ni la cible ni l'objectif.</li>
+              <li><strong>B</strong> : la cible devient un écart, <code>taux − ancre</code>, où <code>ancre</code> est la prédiction de la baseline <code>session_precedente_avec_repli</code> (le repli sur la moyenne de groupe est donc déjà géré, et l'ancre ne lit rien de postérieur à la décision). Objectif L2 — la cible est dans [-1, 1], l'entropie croisée ne s'y applique pas. La prédiction finale est <code>ancre + écart</code>, écrêtée dans [0, 1] ; le nombre de cellules écrêtées est mesuré et rapporté, jamais tu. Un modèle qui n'a rien à ajouter dégrade vers la baseline plutôt que vers une valeur arbitraire — c'est la propriété que je recherche : le modèle n'est plus obligé de réapprendre ce que la baseline sait déjà.</li>
+              <li><strong>C-h1 / C-h2 / C-h3</strong> : A et B combinés, aux trois mêmes demi-vies.</li>
+              <li><strong>Calibration isotonique globale</strong>, ajustée sur la validation 2024 seulement, sans aucune information de genre. Pas de calibration par groupe : l'invariant du projet interdit au genre d'entrer où que ce soit dans l'entraînement, et calibrer par groupe l'y ferait entrer par la fenêtre — sans compter que la féminisation de la session 2025 n'est connue qu'après la session, une fuite temporelle en plus d'une fuite de variable.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Métriques honnêtes pour les variantes calibrées</strong> : un calibrateur ajusté sur la validation et noté sur cette même validation se noterait lui-même de façon optimiste. Ses métriques de sélection sont donc calculées en validation croisée à 5 plis <strong>à l'intérieur</strong> de la seule session 2024, les plis groupés par <code>cod_aff_form</code> — la même formation n'est jamais à la fois dans le pli qui ajuste le calibrateur et dans celui qui le note, pour la même raison que le split principal groupe par entité plutôt que par ligne. Le calibrateur retenu au final est ajusté sur la validation entière : la validation croisée ne sert qu'à estimer honnêtement sa performance, pas à produire l'artefact.
+          </li>
+          <li>
+            <strong>Le critère de choix, lexicographique et à tolérances pré-enregistrées</strong>, toutes les mesures étant prises à couverture égale avec la baseline :
+            <ol>
+              <li>la MAE pondérée de validation la plus basse ; les candidats à moins de 0,0005 du meilleur sont à égalité ;</li>
+              <li>parmi eux, l'ECE global de validation le plus bas ; égalité à moins de 0,001 ;</li>
+              <li>départage final par l'ECE du groupe « plus de 80 % de femmes parmi les candidats ».</li>
+            </ol>
+          </li>
+          <li>
+            <strong>Le refit après sélection</strong> : le candidat retenu sera réentraîné sur 2020-2024 (entraînement + validation réunis), avant l'unique passage sur le test 2025. Argument : la baseline du test connaît déjà les taux 2024 (c'est sa définition même, le taux de la session précédente) ; un modèle qui ne les a pas vus part avec un an de retard sur son concurrent direct, ce que le refit corrige — une pratique standard une fois la sélection close, jamais avant. Le nombre d'arbres du refit est la meilleure itération trouvée en sélection, sans nouvelle validation disponible pour un arrêt anticipé propre. Pour la variante à décroissance de récence, <code>s_ref</code> devient 2024. Si le candidat retenu est calibré, le calibrateur appliqué est celui ajusté sur les prédictions 2024 du modèle entraîné sur 2020-2023 — jamais recalculé sur le modèle refitté, faute d'une session non vue pour le faire proprement. C'est une approximation déclarée : le calibrateur a vu des prédictions légèrement différentes de celles que produira le modèle final, et ce risque n'est pas mesuré ici.
+          </li>
+          <li>
+            <strong>La porte de promotion est complétée</strong>, décision prise ici avant toute mesure de test : à la condition déjà en place (<code>mae_modele &lt; mae_baseline</code>), <code>orchestration/promotion.py::decider_promotion</code> devra ajouter <code>ece_modele_test &lt; 0,0322</code>. Le plancher de l'AIPD est une conjonction, MAE <strong>et</strong> ECE ; une porte qui n'en teste que la moitié laisse passer un modèle rapide mais mal calibré. L'ECE du groupe le plus féminisé sera rapporté à chaque exécution, mais ne conditionnera pas la porte : le critère de l'AIPD sur ce point est formulé en ordre de grandeur (« ramené à l'ordre de grandeur des autres groupes »), pas en seuil chiffré, et une porte automatique ne peut pas trancher un ordre de grandeur.
+          </li>
+          <li>
+            <strong>Le test 2025 est déclaré contaminé</strong>, et je ne le maquille pas. Il a déjà été consulté deux fois — 0,0758 pour le modèle en moindres carrés, 0,0749 après le passage à l'entropie croisée — et ce second passage a été motivé par des prédictions hors de [0, 1], pas par le score obtenu. La variante B (cible en écart à l'ancre) a par ailleurs été conçue en connaissant déjà la dérive 2024→2025 documentée par le suivi de dérive. L'évaluation finale reste unique et sera rapportée telle quelle, mais un succès à l'issue de cette phase <strong>ne remplira pas à la lettre</strong> la clause de l'AIPD qui exige une session de test non consultée pendant le réglage. La confirmation propre de ce travail viendra de la session 2026, la première que ce protocole n'aura jamais vue sous quelque forme que ce soit.
+          </li>
+        </ol>
+        <h3>Alternatives écartées</h3>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Rechercher les hyperparamètres LightGBM en même temps que les variantes</span>
+            <p>Deux degrés de liberté à la fois rendraient impossible d'attribuer un gain à l'une ou à l'autre cause, et multiplieraient le nombre de candidats sur une machine à 2 Go de RAM libre. Les hyperparamètres restent ceux déjà arrêtés par <code>configs/base.yaml</code>, figés pour cette phase.</p>
+          </div>
+        </div>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Calibration par groupe de mixité</span>
+            <p>Ferait entrer le genre dans le chemin d'entraînement du modèle par la fenêtre de la calibration, ce que l'invariant du projet interdit sans exception. Et la composition candidate d'une formation à la session 2025 n'est connue qu'après cette session : l'utiliser pour calibrer une prédiction 2025 serait une fuite temporelle, pas seulement une fuite de variable.</p>
+          </div>
+        </div>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Repartir d'une cible en logit ou d'un autre changement d'objectif</span>
+            <p>Envisagé puis écarté pour cette phase : la grille est déjà à 16 candidats sur une machine contrainte en mémoire, et rien dans le diagnostic actuel (dérive temporelle, pas mauvaise forme fonctionnelle) ne motive un changement d'objectif plutôt qu'un changement de cible ou de pondération.</p>
+          </div>
+        </div>
+        <div class="callout">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <span class="title">Ne rapporter que le meilleur candidat, sans le tableau complet</span>
+            <p>Rendrait le choix invérifiable et masquerait un éventuel candidat proche selon un autre critère que celui retenu. Les 16 candidats sont journalisés dans MLflow, avec leurs métriques complètes, que le critère les retienne ou non.</p>
+          </div>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Non tenté, et non présenté comme résolu</span>
+            <p>Une calibration de Platt plutôt qu'isotonique (plus économe en données, potentiellement plus stable sur 2024 seule) n'est pas comparée ici. Une pondération de récence à base exponentielle continue plutôt que la fonction en escalier par session n'est pas non plus essayée : la grille s'arrête à ce qui est pré-enregistré, par construction.</p>
+          </div>
+        </div>
+        <h3>Conséquences</h3>
+        <ul>
+          <li>Le choix du candidat sera entièrement mécanique une fois la validation mesurée : aucune marge d'appréciation ne reste ouverte après cet ADR, exactement le but d'un pré-enregistrement.</li>
+          <li>La comparaison à la baseline reste à couverture égale, cohérente avec tout ce qui précède (<code>models/metrics.py::score_baseline_couverture_egale</code>) : je ne change pas cette règle pour cette phase.</li>
+          <li>Le refit après sélection introduit une approximation sur le calibrateur (point 4) : elle est déclarée, pas mesurée dans cette phase — à vérifier dans une phase ultérieure si le candidat retenu est calibré.</li>
+          <li>La contamination du test (point 6) limite la portée de la conclusion : passer sous le plancher confirmera que le protocole de sélection fonctionne sur les données disponibles, pas qu'il généralisera sans biais d'optimisme à une session jamais vue. Je ne peux le savoir qu'avec 2026.</li>
+          <li>Cette phase s'arrête à la désignation du candidat sur la validation. Le refit, l'unique passage sur le test 2025 et la décision de promotion relèvent d'une phase ultérieure, distincte, qui n'est pas ouverte par cet ADR.</li>
+        </ul>
+        <p><strong>Résultat de la sélection, exécutée le 18 septembre 2026</strong> (chiffres bruts MLflow, non arrondis pour l'application du critère) : le plancher (baseline à couverture égale) vaut 0,0727 de MAE pondérée en validation. La MAE pondérée la plus basse est 0,068296 (C-h1, sans calibration) ; avec la tolérance de 0,0005, dix candidats restent en lice à l'étape 1. Parmi eux, l'ECE global le plus bas est 0,000348 (A-h1, isotonique) ; avec la tolérance de 0,001, quatre candidats restent en lice à l'étape 2 : A-h1, A-h2, C-h1 et C-h2, tous calibrés isotonique. Le départage de l'étape 3 sur l'ECE du groupe « plus de 80 % de femmes » retient <strong>C-h2, calibré isotonique globalement</strong> (0,009605, contre 0,010844 pour A-h2, 0,011043 pour C-h1 et 0,011810 pour A-h1) : décroissance de récence à demi-vie 2 sessions, cible en écart à l'ancre baseline, calibration isotonique globale. Les 16 candidats sont journalisés dans l'expérience MLflow <code>edumatch-selection-adr0021</code>.</p>
+        <h3>Résultat de l'évaluation unique du 18 septembre 2026 : la porte refuse</h3>
+        <p>Le candidat retenu, C-h2 avec calibration isotonique globale, a été figé avant la mesure : j'ai relevé l'empreinte SHA-256 de <code>configs/base.yaml</code>, <code>models/train.py</code>, <code>models/selection.py</code> et <code>orchestration/promotion.py</code> avant l'évaluation et après, identique aux deux moments. Il a ensuite été réentraîné sur 2020-2024 et évalué une seule fois sur le test 2025, par la tâche de réentraînement du DAG et sa porte de promotion complétée de la condition sur l'ECE.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Test 2025, couverture égale</th><th>Candidat C-h2</th><th>Plancher</th><th>Condition</th></tr></thead>
+            <tbody>
+              <tr><td>MAE pondérée</td><td>0,070326</td><td>0,070067</td><td>non remplie, écart de 0,00026</td></tr>
+              <tr><td>ECE</td><td>0,0341</td><td>seuil de l'AIPD : 0,0322</td><td>non remplie</td></tr>
+              <tr><td>MAE non pondérée</td><td>0,1377</td><td>0,1418</td><td>meilleure, hors critère</td></tr>
+              <tr><td>ECE, plus de 80 % de femmes</td><td>0,0639</td><td>baseline : 0,0475</td><td>objectif de l'AIPD non atteint</td></tr>
+              <tr><td>Prédictions écrêtées</td><td>1 329 sur 77 159</td><td>—</td><td>mesuré</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>La porte refuse sur ses deux conditions. Aucune version n'est publiée au registre de modèles ; le modèle servi reste la version 1.</strong> Trace complète dans MLflow, expérience <code>edumatch-accessibilite</code>, exécution <code>30907292230641259de58b5328b8b4f9</code> : paramètres, empreintes du gel, métriques de test, verdict. Les figures de calibration et d'équité de ce candidat sont rattachées à cette exécution ; celles du dépôt continuent de documenter le modèle servi.</p>
+        <p>Les prédictions de test ont été calculées quatre fois — tâche du DAG, puis réentraînements internes de l'évaluation, de l'audit d'équité et d'une vérification — sur le même candidat figé, avec un écart absolu maximal nul entre les quatre. C'est une seule évaluation au sens du protocole : un seul candidat, un seul jeu de prédictions. L'ablation n'a pas été relancée, parce qu'elle aurait évalué sur le test d'autres modèles que le candidat figé.</p>
+        <p>Ce résultat confirme le risque déclaré au point 6 au lieu de le contredire. Le pré-enregistrement protège le choix du candidat contre la lecture du test. Il ne protège pas contre une dérive 2024→2025 que la validation ne pouvait pas voir : le candidat avait un ECE de 0,0008 en validation croisée sur 2024, et de 0,0341 sur 2025. Je ne relance aucune variante sur ce test, déjà consulté : ce serait précisément le biais que ce protocole devait empêcher.</p>
+        <p>La configuration du dépôt revient au modèle servi (<code>modele.variante</code> à ses valeurs par défaut). Un réentraînement futur ne repartira de C-h2 que si une décision écrite le prévoit, sur la session 2026 : c'est la première que ni la grille ni moi n'aurons vue sous aucune forme.</p>
+
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Seuil de bascule</span>
+            <p>Si aucun des 16 candidats ne passe sous 0,0701 de MAE pondérée en validation à couverture égale, ou si le meilleur MAE et le meilleur ECE recommandent deux candidats différents au point de rendre le critère lexicographique arbitraire (tolérances trop larges pour départager), la grille aura échoué et je le rapporte comme tel plutôt que d'assouplir les tolérances a posteriori. Un plateau qui persisterait au-delà de cette grille reviendrait interroger l'un des choix figés pour cette phase : les hyperparamètres, l'objectif, ou l'hypothèse que la dérive temporelle est la cause dominante de l'écart au plancher.</p>
           </div>
         </div>
 
