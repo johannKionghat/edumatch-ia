@@ -28,7 +28,14 @@ def test_reentrainer_modele_retourne_le_rapport_de_promotion(
 ) -> None:
     resultat_factice = object()
     rapport_attendu = RapportPromotion(
-        promu=True, mae_modele=0.06, mae_baseline=0.07, chemin_catalogue=Path("catalogue.parquet")
+        promu=True,
+        mae_modele=0.06,
+        mae_baseline=0.07,
+        ece_modele=0.01,
+        seuil_ece=0.0322,
+        mae_ok=True,
+        ece_ok=True,
+        chemin_catalogue=Path("catalogue.parquet"),
     )
 
     monkeypatch.setattr(taches.models_train, "entrainer_et_evaluer", lambda settings: resultat_factice)
@@ -52,7 +59,16 @@ def test_reentrainer_modele_ne_leve_pas_quand_la_promotion_est_refusee(
     """Un modèle qui perd contre le plancher est un résultat attendu, pas une panne
     du graphe : la tâche doit se terminer normalement, la reprise ne doit jamais
     rejouer une comparaison déjà tranchée."""
-    rapport_refuse = RapportPromotion(promu=False, mae_modele=0.0758, mae_baseline=0.0701, chemin_catalogue=None)
+    rapport_refuse = RapportPromotion(
+        promu=False,
+        mae_modele=0.0758,
+        mae_baseline=0.0701,
+        ece_modele=0.01,
+        seuil_ece=0.0322,
+        mae_ok=False,
+        ece_ok=True,
+        chemin_catalogue=None,
+    )
     monkeypatch.setattr(taches.models_train, "entrainer_et_evaluer", lambda settings: object())
     monkeypatch.setattr(taches.models_promotion, "promouvoir_si_meilleur", lambda resultat, settings: rapport_refuse)
 

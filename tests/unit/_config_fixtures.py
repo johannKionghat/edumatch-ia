@@ -105,6 +105,7 @@ evaluation:
   n_tranches_calibration: 10
   courbe_apprentissage: [0.5, 1.0]
   baseline: taux_session_precedente
+  seuil_ece_test: 0.0322
 
 equite:
   dimensions: [type_bac]

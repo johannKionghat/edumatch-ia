@@ -441,6 +441,45 @@ class VariablesConfig(_Strict):
         return self
 
 
+class VarianteModeleConfig(_Strict):
+    """Options de variante du candidat retenu par la sélection pré-enregistrée (ADR 0021).
+
+    Valeurs par défaut = comportement actuel de `models/train.py` (aucune
+    décroissance de récence, cible = taux, aucune calibration) : ajouter cette
+    section ne change rien à un entraînement existant tant qu'elle n'est pas
+    renseignée explicitement. Elle existe pour que
+    `orchestration.taches.reentrainer_modele` puisse un jour reproduire
+    exactement le candidat désigné par `models/selection.py`, sans dupliquer
+    sa logique.
+
+    `demi_vie_recence` : nombre de sessions au bout desquelles le poids
+    d'une cellule est divisé par deux (`0,5 ** ((s_ref - session) / demi_vie)`,
+    multiplié au poids d'effectif). `None` : aucune décroissance, le poids
+    reste celui de `features.label.poids_effectif` seul.
+
+    `cible` : `"taux"` (comportement actuel, la cible brute) ou `"ecart"`
+    (la cible devient `taux - ancre`, `ancre` étant la prédiction de la
+    baseline `session_precedente_avec_repli` ; la prédiction finale reconstruit
+    `ancre + écart`, écrêtée à [0, 1]).
+
+    `calibration` : `"aucune"` (comportement actuel) ou
+    `"isotonique_globale"` (régression isotonique ajustée sur la validation
+    seule, sans aucune information de genre — jamais par groupe, voir
+    `docs/decisions.html#adr-0021`).
+    """
+
+    demi_vie_recence: int | None = Field(default=None, ge=1)
+    cible: Literal["taux", "ecart"] = "taux"
+    calibration: Literal["aucune", "isotonique_globale"] = "aucune"
+    # Nombre d'arbres figé pour le candidat retenu (`models/selection.py`,
+    # `meilleure_iteration` de l'exécution de sélection) : remplace l'arrêt
+    # anticipé une fois la sélection close (ADR 0021, point 4) — la
+    # validation qui aurait servi de garde-fou pendant l'entraînement du
+    # refit a déjà servi à cet arrêt lors de la sélection elle-même. `None` :
+    # comportement actuel, arrêt anticipé normal sur `hyperparametres.n_estimators`.
+    n_estimators_fige: int | None = Field(default=None, ge=1)
+
+
 class ModeleConfig(_Strict):
     type: str
     objectif: str
@@ -452,6 +491,9 @@ class ModeleConfig(_Strict):
     # comme variable explicite plutôt que comme seul concurrent (comparaison
     # à couverture égale). Décidé sur la seule validation 2024.
     inclure_taux_precedent: bool
+    # Variante du candidat retenu par la sélection pré-enregistrée (ADR 0021).
+    # Par défaut, comportement inchangé (voir VarianteModeleConfig).
+    variante: VarianteModeleConfig = Field(default_factory=VarianteModeleConfig)
 
 
 class EvaluationConfig(_Strict):
@@ -464,6 +506,10 @@ class EvaluationConfig(_Strict):
     n_tranches_calibration: int = Field(ge=2)
     courbe_apprentissage: list[float] = Field(min_length=1)
     baseline: str
+    # Plancher de l'AIPD sur l'erreur de calibration attendue (ECE) en test,
+    # conjoint à la MAE dans la porte de promotion (`orchestration/promotion.py`,
+    # ADR 0021 point 5) : la porte teste MAE ET ECE, jamais l'une sans l'autre.
+    seuil_ece_test: float = Field(gt=0, le=1)
 
 
 class EquiteConfig(_Strict):
