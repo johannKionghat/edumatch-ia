@@ -53,6 +53,14 @@ COLONNE_ANCRE_IDEO: dict[str, str] = {
 }
 
 COLONNES_RNCP_ATTENDUES = 16
+# Le fichier de correspondance ROME est un second export, au schéma distinct : trois colonnes,
+# une ligne par couple (fiche, code métier). Lui appliquer le schéma des fiches faisait échouer
+# la chaîne sur un fichier pourtant valide.
+COLONNES_RNCP_ROME_OBLIGATOIRES: tuple[str, ...] = (
+    "Numero_Fiche",
+    "Codes_Rome_Code",
+    "Codes_Rome_Libelle",
+)
 COLONNES_RNCP_OBLIGATOIRES: tuple[str, ...] = ("Id_Fiche", "Numero_Fiche", "Intitule", "Actif")
 ACTIF_VALEURS_VALIDES = frozenset({"ACTIVE", "INACTIVE"})
 MOTIF_NUMERO_FICHE = re.compile(r"^(RNCP|RS)\d+$")
@@ -157,6 +165,65 @@ def controler_rncp(chemin: Path, encodage: str, delimiteur: str, seuil_completud
     if not anomalies:
         anomalies += _controler_completude_rncp(chemin.name, lignes, seuil_completude)
         anomalies += _controler_coherence_rncp(chemin.name, lignes)
+    return RapportControle(source="referentiels", anomalies=tuple(anomalies))
+
+
+def controler_rncp_rome(
+    chemin: Path, encodage: str, delimiteur: str, seuil_completude: float
+) -> RapportControle:
+    """Schéma et complétude de la correspondance RNCP vers ROME.
+
+    Ce fichier porte trois colonnes et une ligne par couple (fiche, code métier). Il alimente la
+    chaîne formation vers métier vers secteur d'activité, donc le terme de débouchés : un code
+    ROME manquant y casse la chaîne en silence, d'où le contrôle de complétude.
+    """
+    lignes = _lire_csv(chemin, encodage, delimiteur)
+    anomalies: list[Anomalie] = []
+    if not lignes:
+        anomalies.append(
+            Anomalie(
+                "referentiels", "schema", Gravite.BLOQUANT, f"RNCP-ROME ({chemin.name}) : fichier vide."
+            )
+        )
+        return RapportControle(source="referentiels", anomalies=tuple(anomalies))
+    manquantes = [c for c in COLONNES_RNCP_ROME_OBLIGATOIRES if c not in lignes[0]]
+    if manquantes:
+        anomalies.append(
+            Anomalie(
+                "referentiels",
+                "schema",
+                Gravite.BLOQUANT,
+                f"RNCP-ROME ({chemin.name}) : colonne(s) obligatoire(s) absente(s) — {manquantes}.",
+            )
+        )
+        return RapportControle(source="referentiels", anomalies=tuple(anomalies))
+    for colonne in ("Numero_Fiche", "Codes_Rome_Code"):
+        taux = sum(1 for ligne in lignes if ligne[colonne]) / len(lignes)
+        if taux < seuil_completude:
+            anomalies.append(
+                Anomalie(
+                    "referentiels",
+                    "completude",
+                    Gravite.BLOQUANT,
+                    f"RNCP-ROME ({chemin.name}) : {colonne!r} renseignée à {taux:.2%}, "
+                    f"sous le seuil de {seuil_completude:.0%}.",
+                )
+            )
+    invalides = [
+        ligne["Numero_Fiche"]
+        for ligne in lignes
+        if ligne["Numero_Fiche"] and not MOTIF_NUMERO_FICHE.match(ligne["Numero_Fiche"])
+    ]
+    if invalides:
+        anomalies.append(
+            Anomalie(
+                "referentiels",
+                "coherence",
+                Gravite.BLOQUANT,
+                f"RNCP-ROME ({chemin.name}) : {len(invalides)} numéro(s) de fiche hors format "
+                f"attendu (RNCPnnn ou RSnnn), par exemple {invalides[0]!r}.",
+            )
+        )
     return RapportControle(source="referentiels", anomalies=tuple(anomalies))
 
 
@@ -310,7 +377,23 @@ def _rapports_ideo(settings: Settings, dossier: Path) -> list[RapportControle]:
 
 
 def _rapports_rncp(settings: Settings, dossier: Path) -> list[RapportControle]:
+    """Contrôle les deux exports RNCP, chacun selon son propre schéma.
+
+    Le dossier contient `rncp_<date>.csv` (les fiches, 16 colonnes) et
+    `rncp_rome_<date>.csv` (la correspondance fiche vers code métier ROME, 3 colonnes). Un seul
+    motif `rncp_*.csv` les prenait tous deux pour des fiches : le contrôle bloquait la chaîne en
+    réclamant `Id_Fiche`, `Intitule` et `Actif` sur un fichier qui n'a aucune raison de les
+    porter. Les deux fichiers étaient valides, c'est la règle qui visait le mauvais.
+    """
     config = settings.donnees.referentiels.rncp
-    fichiers = sorted((dossier / "rncp").glob("rncp_*.csv")) if (dossier / "rncp").exists() else []
+    dossier_rncp = dossier / "rncp"
+    if not dossier_rncp.exists():
+        return []
     seuil = settings.qualite.referentiels.seuil_completude
-    return [controler_rncp(f, config.encodage, config.delimiteur, seuil) for f in fichiers]
+    rapports = []
+    for fichier in sorted(dossier_rncp.glob("rncp_*.csv")):
+        if fichier.name.startswith("rncp_rome_"):
+            rapports.append(controler_rncp_rome(fichier, config.encodage, config.delimiteur, seuil))
+        else:
+            rapports.append(controler_rncp(fichier, config.encodage, config.delimiteur, seuil))
+    return rapports

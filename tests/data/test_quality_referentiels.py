@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -148,3 +149,68 @@ def test_colonne_obligatoire_absente_bloque(tmp_path: Path) -> None:
     rapport = qr.controler_rncp(chemin, "utf-8", ";", 0.99)
     assert rapport.est_bloquant
     assert any(a.famille == "schema" for a in rapport.bloquantes)
+
+
+# ─── Correspondance RNCP → ROME ───────────────────────────────────────────
+
+
+LIGNE_RNCP_ROME_VALIDE = {
+    "Numero_Fiche": "RNCP1",
+    "Codes_Rome_Code": "M1203",
+    "Codes_Rome_Libelle": "Comptabilité",
+}
+
+
+def _settings_rncp() -> SimpleNamespace:
+    """Le strict nécessaire lu par `_rapports_rncp` : encodage, délimiteur, seuil."""
+    return SimpleNamespace(
+        donnees=SimpleNamespace(
+            referentiels=SimpleNamespace(rncp=SimpleNamespace(encodage="utf-8", delimiteur=";"))
+        ),
+        qualite=SimpleNamespace(referentiels=SimpleNamespace(seuil_completude=0.99)),
+    )
+
+
+def test_export_rome_valide_ne_bloque_plus_la_chaine(tmp_path: Path) -> None:
+    """Non-régression d'un faux blocage constaté sur les exports réels du 2026-09-17.
+
+    Le dossier RNCP contient deux exports au schéma distinct : les fiches
+    (`rncp_<date>.csv`, 16 colonnes) et la correspondance vers les codes métier
+    ROME (`rncp_rome_<date>.csv`, 3 colonnes). Le motif `rncp_*.csv` les
+    prenait tous deux pour des fiches : le contrôle réclamait `Id_Fiche`,
+    `Intitule` et `Actif` sur la correspondance ROME, et bloquait la chaîne sur
+    deux fichiers pourtant valides.
+    """
+    dossier = tmp_path / "rncp"
+    dossier.mkdir()
+    _ecrire_csv(dossier / "rncp_2026-09-17.csv", list(LIGNE_RNCP_VALIDE), [LIGNE_RNCP_VALIDE])
+    _ecrire_csv(
+        dossier / "rncp_rome_2026-09-17.csv", list(LIGNE_RNCP_ROME_VALIDE), [LIGNE_RNCP_ROME_VALIDE]
+    )
+
+    rapports = qr._rapports_rncp(_settings_rncp(), tmp_path)
+
+    assert len(rapports) == 2
+    assert all(rapport.anomalies == () for rapport in rapports)
+
+
+def test_export_rome_sans_code_metier_bloque(tmp_path: Path) -> None:
+    """Le contrôle dédié n'est pas un contrôle désactivé : une colonne absente bloque."""
+    chemin = tmp_path / "rncp_rome_2026-09-17.csv"
+    _ecrire_csv(chemin, ["Numero_Fiche", "Codes_Rome_Libelle"], [{"Numero_Fiche": "RNCP1", "Codes_Rome_Libelle": "x"}])
+
+    rapport = qr.controler_rncp_rome(chemin, "utf-8", ";", 0.99)
+
+    assert rapport.est_bloquant
+    assert any(a.famille == "schema" for a in rapport.bloquantes)
+
+
+def test_export_rome_numero_de_fiche_hors_format_bloque(tmp_path: Path) -> None:
+    chemin = tmp_path / "rncp_rome_2026-09-17.csv"
+    ligne = {**LIGNE_RNCP_ROME_VALIDE, "Numero_Fiche": "FICHE-1"}
+    _ecrire_csv(chemin, list(ligne), [ligne])
+
+    rapport = qr.controler_rncp_rome(chemin, "utf-8", ";", 0.99)
+
+    assert rapport.est_bloquant
+    assert any(a.famille == "coherence" for a in rapport.bloquantes)
