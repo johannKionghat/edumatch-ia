@@ -116,6 +116,25 @@ def test_type_invalide_leve_validationerror(configs_dir_isole: Path, monkeypatch
     assert "learning_rate" in str(exc_info.value)
 
 
+def test_variante_modele_par_defaut_reproduit_le_comportement_actuel(configs_dir_isole: Path) -> None:
+    """`modele.variante` absent du YAML : les valeurs par défaut ne doivent rien changer
+    à un entraînement existant (ADR 0021)."""
+    settings = load_settings("dev", configs_dir=configs_dir_isole)
+    assert settings.modele.variante.demi_vie_recence is None
+    assert settings.modele.variante.cible == "taux"
+    assert settings.modele.variante.calibration == "aucune"
+
+
+def test_variante_modele_est_surchargeable_par_le_yaml(configs_dir_isole: Path) -> None:
+    contenu = yaml.safe_load(BASE_YAML)
+    contenu["modele"]["variante"] = {"demi_vie_recence": 2, "cible": "ecart", "calibration": "isotonique_globale"}
+    (configs_dir_isole / "base.yaml").write_text(yaml.dump(contenu), encoding="utf-8")
+    settings = load_settings("dev", configs_dir=configs_dir_isole)
+    assert settings.modele.variante.demi_vie_recence == 2
+    assert settings.modele.variante.cible == "ecart"
+    assert settings.modele.variante.calibration == "isotonique_globale"
+
+
 def test_split_non_temporel_leve_validationerror(configs_dir_isole: Path) -> None:
     """Un split qui partage un millésime entre deux jeux doit être détecté (anti-fuite)."""
     contenu = yaml.safe_load(BASE_YAML)

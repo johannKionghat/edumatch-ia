@@ -309,6 +309,21 @@ modele:
   # mesure sur la seule validation 2024 (jamais le test) : voir le compte
   # rendu de l'étape pour le chiffre qui a tranché.
   inclure_taux_precedent: true
+  # Options de variante issues de la sélection pré-enregistrée (ADR 0021,
+  # src/edumatch/models/selection.py). Les valeurs ci-dessous reproduisent le
+  # modèle documenté et enregistré (v1) : la configuration du dépôt décrit ce
+  # qui est servi, pas un candidat.
+  # Le candidat C-h2 / isotonique_globale (demi_vie_recence 2, cible ecart,
+  # calibration isotonique_globale, n_estimators_fige 413) a été refusé par la
+  # porte de promotion le 18 septembre 2026 ; sa recette est consignée dans
+  # l'ADR 0021 et dans MLflow. Un futur réentraînement ne repartira de lui que
+  # si une décision écrite le prévoit — jamais par un défaut silencieux que la
+  # porte refuserait à chaque exécution.
+  variante:
+    demi_vie_recence: null      # null = aucune décroissance de récence du poids
+    cible: taux                  # "taux" (modèle v1) ou "ecart" (taux - ancre baseline)
+    calibration: aucune          # "aucune" (modèle v1) ou "isotonique_globale"
+    n_estimators_fige: null     # null = arrêt anticipé sur la validation (modèle v1)
 
 evaluation:
   metrique_principale: mae_ponderee
@@ -319,6 +334,9 @@ evaluation:
   n_tranches_calibration: 10
   courbe_apprentissage: [0.10, 0.25, 0.50, 1.00]
   baseline: taux_session_precedente
+  # Plancher AIPD sur l'ECE de test (ADR 0021 point 5) : conjonction avec la
+  # MAE dans la porte de promotion, jamais l'une sans l'autre.
+  seuil_ece_test: 0.0322
 
 # Seuils des contrôles qualité (src/edumatch/quality/). Un contrôle qui
 # journalise sans bloquer laisse une donnée corrompue atteindre le modèle
