@@ -34,7 +34,7 @@ import logging
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, datetime
 
 import lightgbm as lgb
 import numpy as np
@@ -44,6 +44,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import GroupKFold
 
 from edumatch.config import HyperparametresConfig, Settings, get_settings
+from edumatch.features.label import calculer_taux
 from edumatch.models import train
 from edumatch.models.baseline import COLONNES_GROUPE, predire_moyenne_expansive
 from edumatch.models.fairness import (
@@ -53,7 +54,6 @@ from edumatch.models.fairness import (
     chemin_silver,
     classer_composition_genre,
 )
-from edumatch.features.label import calculer_taux
 from edumatch.models.jeux import JeuDonnees, chemin_table_variables, extraire_jeu
 from edumatch.models.metrics import (
     RapportCalibration,
@@ -162,7 +162,7 @@ def charger_table_sans_test(settings: Settings) -> pd.DataFrame:
     session_max_validation = max(settings.modele.split.validation)
     table = pq.read_table(chemin, filters=[("session", "<=", session_max_validation)]).to_pandas()
 
-    sessions_presentes = set(int(s) for s in table["session"].unique())
+    sessions_presentes = {int(s) for s in table["session"].unique()}
     sessions_test = set(settings.modele.split.test)
     _assert_aucune_session_test(sessions_presentes, sessions_test)
     return train.ajouter_taux_precedent(table)
@@ -542,7 +542,7 @@ def executer(settings: Settings | None = None) -> RapportSelection:
     """
     settings = settings or get_settings()
     jeux = preparer_jeux_selection(settings)
-    date_donnees = date.today().isoformat()
+    date_donnees = datetime.now(UTC).date().isoformat()
     n_tranches = settings.evaluation.n_tranches_calibration
 
     tous_les_resultats: list[ResultatCandidat] = []

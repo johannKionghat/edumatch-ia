@@ -11,12 +11,10 @@ import pytest
 
 from edumatch.models.fairness import (
     CATEGORIE_GENRE_MAJORITAIRE,
-    CATEGORIE_GENRE_MINORITAIRE,
     CATEGORIE_GENRE_MIXTE,
 )
 from edumatch.models.selection import (
     CALIBRATION_AUCUNE,
-    CALIBRATION_ISOTONIQUE,
     CIBLE_ECART,
     CIBLE_TAUX,
     ErreurSelection,

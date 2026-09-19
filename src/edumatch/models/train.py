@@ -73,7 +73,14 @@ import pandas as pd
 import pyarrow.parquet as pq
 from sklearn.isotonic import IsotonicRegression
 
-from edumatch.config import PROJECT_ROOT, HyperparametresConfig, Settings, VariablesConfig, VarianteModeleConfig, get_settings
+from edumatch.config import (
+    PROJECT_ROOT,
+    HyperparametresConfig,
+    Settings,
+    VariablesConfig,
+    VarianteModeleConfig,
+    get_settings,
+)
 from edumatch.models.baseline import (
     COLONNES_GROUPE as _COLONNES_GROUPE_BASELINE,
 )
