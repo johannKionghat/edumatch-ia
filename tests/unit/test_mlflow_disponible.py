@@ -27,6 +27,8 @@ import sys
 import textwrap
 from pathlib import Path
 
+import pytest
+
 # ─── 1. Le test qui aurait détecté la panne ──────────────────────────────────
 
 
@@ -44,7 +46,7 @@ def test_import_mlflow_reussit() -> None:
 # ─── 2. Aller-retour minimal, magasin temporaire ─────────────────────────────
 
 
-def test_aller_retour_experience_parametre_metrique(tmp_path: Path) -> None:
+def test_aller_retour_experience_parametre_metrique(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Créer une expérience, journaliser un paramètre et une métrique, relire.
 
     C'est le geste que fait réellement `models/train.py` :
@@ -63,6 +65,13 @@ def test_aller_retour_experience_parametre_metrique(tmp_path: Path) -> None:
     magasin_sqlite = tmp_path / "mlflow_test.db"
     uri_magasin = f"sqlite:///{magasin_sqlite.as_posix()}"
 
+    # `mlflow.set_tracking_uri` n'agit pas seulement en mémoire : il écrit aussi la variable
+    # d'environnement MLFLOW_TRACKING_URI. Restaurer l'ancienne adresse par un second appel à
+    # `set_tracking_uri` figeait donc dans l'environnement l'adresse par défaut — le magasin
+    # `mlruns/` du dépôt — pour tout le reste de la suite : les tests suivants qui lisent la
+    # configuration voyaient une adresse MLflow et se mettaient à journaliser. Déclarer la
+    # variable par `monkeypatch` la fait supprimer au démontage, quoi que MLflow y ait écrit.
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", uri_magasin)
     ancienne_uri = mlflow.get_tracking_uri()
     try:
         mlflow.set_tracking_uri(uri_magasin)
