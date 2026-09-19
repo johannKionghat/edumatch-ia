@@ -25,7 +25,6 @@ from edumatch.config import Settings, get_settings, load_settings
 from edumatch.features import build
 from edumatch.transform import run, run_etoile
 
-
 IDENTIFIANT_TEST = "conseiller-test"
 MOT_DE_PASSE_TEST = "mot-de-passe-test"
 
