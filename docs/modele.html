@@ -143,7 +143,7 @@
         <pre><code>PYTHONPATH=src python -m edumatch.features.build</code></pre>
         <p>Écrit la table de variables au format Parquet et journalise le rapport de volumétrie et de complétude.</p>
         <pre><code>python -m pytest tests/unit/test_features_build.py tests/data/test_features_build_antifuite.py tests/data/test_features_build_run.py -v</code></pre>
-        <p>Suite complète vérifiée le 19 septembre 2026 : 837 tests passés, 1 ignoré. Les mutations décrites plus haut ont été appliquées puis retirées : elles ne laissent aucun test supplémentaire, seulement la preuve que les tests existants sont discriminants.</p>
+        <p>Suite complète vérifiée par l'intégration continue le 19 septembre 2026 : 834 passés, 4 ignorés sur la forge (837 sur le poste de développement, 3 tests supplémentaires dépendant de l'environnement local). Les mutations décrites plus haut ont été appliquées puis retirées : elles ne laissent aucun test supplémentaire, seulement la preuve que les tests existants sont discriminants.</p>
 
         <h2 id="protocole">Protocole et baseline</h2>
         <p>Le numérateur du label ventilé par type de baccalauréat n'existe qu'à partir de la session 2020, vérifié absent en 2018 et 2019 sur le fichier source. Le label n'est donc calculable que sur six sessions, pas huit. Inclure 2018-2019 dans l'entraînement aurait mis deux sessions sans cible réelle dans le jeu d'apprentissage, ce qui viole l'exigence d'une cible observée, pas simulée.</p>
