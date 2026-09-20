@@ -56,11 +56,17 @@ def ecran_conseiller(conseiller: str = Depends(get_conseiller_courant)) -> FileR
 
 @router.get("/sources-et-licences")
 def sources_et_licences() -> FileResponse:
-    """Rubrique « Sources et licences » (motif E) : producteur, jeu, licence et date de collecte
-    de chacune des cinq sources du projet — alimentée à la main depuis `docs/registres.html`,
-    plutôt que par une lecture dynamique des manifestes : cette page est statique comme le reste
-    de l'écran, et le contenu des manifestes ne change qu'au prochain téléchargement, jamais à la
-    requête. Voir le docstring du module pour pourquoi elle reste ouverte, sans authentification."""
+    """Rubrique « Sources et licences » : producteur, jeu, licence et date de collecte de chaque
+    source du projet.
+
+    La page est un fichier statique, servi tel quel — le contenu des manifestes ne change qu'au
+    prochain téléchargement, jamais à la requête. Mais elle n'est plus saisie à la main : elle est
+    **générée** depuis les manifestes d'ingestion par `api/sources_licences.py` (`make
+    sources-licences`), et `tests/data/test_sources_licences_a_jour.py` échoue si elle en diverge.
+    Alimentée à la main, elle annonçait une collecte du 28 août alors que les fichiers dataient du
+    17 septembre : une attribution fausse au regard de l'article 2 de la Licence Ouverte.
+
+    Voir le docstring du module pour pourquoi elle reste ouverte, sans authentification."""
     return FileResponse(DOSSIER_STATIQUE / "sources-et-licences.html", media_type="text/html")
 
 
