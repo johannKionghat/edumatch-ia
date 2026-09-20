@@ -909,7 +909,7 @@ flowchart TD
         </ul>
         <h3>Décision</h3>
         <p>Le seuil reste 0,20, mais il s'applique à la <strong>médiane</strong> du PSI des 46 variables, jamais à leur maximum : appliqué au maximum, il se déclencherait en permanence à cause des deux artefacts ci-dessus. Les variables individuellement au-delà du seuil restent rapportées comme diagnostic de dérive amont, jamais comme déclencheur. Le PSI catégoriel est toujours calculé sur la forme canonisée (accents, casse et séparateurs neutralisés).</p>
-        <p>La dérive de la cible et celle des prédictions gouvernent aussi le déclenchement, à égalité avec la médiane des variables (OU logique). Sans cela, une dérive du concept pure, où P(Y|X) change sans que P(X) bouge, ne serait jamais vue.</p>
+        <p>La dérive de la cible et celle des prédictions entrent aussi dans le verdict journalisé (<code>reentrainement_recommande</code>), sans déclenchement automatique, à égalité avec la médiane des variables (OU logique). Sans cela, une dérive du concept pure, où P(Y|X) change sans que P(X) bouge, ne serait jamais vue.</p>
 <pre><code>réentraîner si  médiane(PSI des 46 variables) ≥ 0,20
             ou  PSI(cible)       ≥ 0,20
             ou  PSI(prédictions) ≥ 0,20</code></pre>
