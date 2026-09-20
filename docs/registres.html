@@ -45,7 +45,7 @@
             </tbody>
           </table>
         </div>
-        <p>Ce registre distingue ce qui existe aujourd'hui dans le dépôt (T1 à T7, vérifiables par un fichier) de ce qui est spécifié et pas encore construit (T8). La colonne « statut » m'évite de décrire une intention au présent.</p>
+        <p>Ce registre recense huit traitements, tous construits et vérifiables par un fichier du dépôt depuis le 18 septembre 2026, date de construction de T8. La colonne « statut » m'évite de décrire une intention au présent.</p>
 
         <h3 id="qualification">La qualification qui structure tout le reste</h3>
 <pre><code>ENTRAÎNEMENT   comptages agrégés Parcoursup, par formation et par session
@@ -209,7 +209,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
         <div class="table-wrap">
           <table>
             <tbody>
-              <tr><th scope="row">Statut</th><td><span class="badge warn">Construit, purge absente</span> <code>src/edumatch/api/static/</code>, <code>routes/ecran.py</code>, <code>feedback_store.py</code>. Détail dans <a href="service.html">écran conseiller</a></td></tr>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Construit</span> <code>src/edumatch/api/static/</code>, <code>routes/ecran.py</code>, <code>feedback_store.py</code> ; purge des trois paliers dans <code>api/audit_purge.purger_feedback</code>, exécutée par la tâche <code>purger_supervision</code> du DAG quotidien. Détail dans <a href="service.html">écran conseiller</a></td></tr>
               <tr><th scope="row">Finalité</th><td>Permettre à un conseiller de comprendre une recommandation et de l'écarter avec motif (article 14 de l'AI Act)</td></tr>
               <tr><th scope="row">Données personnelles ?</th><td>Oui : celles du candidat et l'identifiant du conseiller</td></tr>
               <tr><th scope="row">Base légale</th><td>Mission d'intérêt public ou intérêt légitime du déployeur ; obligation légale pour la part imposée par l'article 14</td></tr>
@@ -248,7 +248,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
         <div class="table-wrap">
           <table>
             <tbody>
-              <tr><th scope="row">Statut</th><td><span class="badge bad">À construire</span> Procédure non construite</td></tr>
+              <tr><th scope="row">Statut</th><td><span class="badge ok">Construit</span> <code>src/edumatch/api/droits.py</code> : retrouver, exporter, effacer, sur le journal d'inférence comme sur celui de supervision. L'effacement simule par défaut ; chaque exercice laisse une trace horodatée qui ne contient aucun identifiant</td></tr>
               <tr><th scope="row">Finalité</th><td>Recevoir, tracer et traiter les demandes d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité</td></tr>
               <tr><th scope="row">Délai</th><td>Un mois à réception (art. 12.3), prorogeable de deux mois pour les demandes complexes</td></tr>
               <tr><th scope="row">Traçabilité</th><td>Chaque demande enregistrée : date, nature, identité vérifiée, date et sens de la réponse</td></tr>
@@ -267,9 +267,9 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
               <tr><td>T3 agrégat territorial</td><td>Oui (indirecte)</td><td>art. 6.1.f</td><td>Écrasé chaque mois</td><td><span class="badge ok">Oui</span> par écrasement ; k = 5 et filtre de diffusion appliqués</td></tr>
               <tr><td>T4 inférence</td><td>Oui, mineurs</td><td>art. 6.1.a ou 6.1.e</td><td>Aucune conservation</td><td><span class="badge warn">À implémenter</span></td></tr>
               <tr><td>T5 journalisation</td><td>Oui</td><td>art. 6.1.c</td><td>12 / 36 mois</td><td><span class="badge ok">Oui</span> testée, idempotente, planifiée. Lacune L2 levée</td></tr>
-              <tr><td>T6 supervision</td><td>Oui</td><td>art. 6.1.c et 6.1.e</td><td>12 mois</td><td><span class="badge bad">Non</span> écran construit, purge non construite. Motif de blocage actif</td></tr>
+              <tr><td>T6 supervision</td><td>Oui</td><td>art. 6.1.c et 6.1.e</td><td>12 mois</td><td><span class="badge ok">Oui</span> écran et purge construits, purge planifiée quotidiennement. Motif B levé le 18 septembre 2026</td></tr>
               <tr><td>T7 assistant</td><td>Oui, possible</td><td>art. 6.1.a</td><td>Aucune</td><td><span class="badge warn">Non</span></td></tr>
-              <tr><td>T8 droits</td><td>Oui</td><td>art. 6.1.c</td><td>3 ans après clôture</td><td><span class="badge bad">Non</span></td></tr>
+              <tr><td>T8 droits</td><td>Oui</td><td>art. 6.1.c</td><td>3 ans après clôture</td><td><span class="badge ok">Oui</span> <code>api/droits.py</code>, construit le 18 septembre 2026</td></tr>
             </tbody>
           </table>
         </div>
@@ -280,14 +280,14 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
             <thead><tr><th>Lacune</th><th>Contenu</th><th>État</th></tr></thead>
             <tbody>
               <tr><td>L1, localisation de la forge</td><td>Le dépôt public héberge <code>data/samples/</code>, qui contient des données pseudonymisées (T2), sans que la localisation des serveurs soit qualifiée. À trancher : qualifier le transfert, ou retirer les lignes d'entrepreneur individuel des échantillons, au prix de 56,4 % de représentativité perdue sur les catégories juridiques (<a href="decisions.html#adr-0008">ADR 0008</a>)</td><td><span class="badge warn">Ouverte</span></td></tr>
-              <tr><td>L2, purge des journaux</td><td>Levée pour T5, maintenue pour T6 (revue du 15 septembre 2026). T6 n'a toujours pas de purge, faute d'identifiant commun avec T5</td><td><span class="badge bad">Motif B</span></td></tr>
-              <tr><td>L3, notice candidat</td><td>Aucune notice d'information n'est rédigée pour les candidats. L'interface existe mais s'adresse au conseiller : la notice reste à produire, en français simple, affichée avant la saisie</td><td><span class="badge bad">Motif C</span></td></tr>
-              <tr><td>L4, accès et imputabilité</td><td>L'écran qui expose les caractéristiques d'un candidat et <code>/matching</code> restent ouverts. L'enregistrement d'une décision est authentifié, mais sur un compte partagé non nominatif : lacune de sécurité et de traçabilité</td><td><span class="badge bad">Motif A</span></td></tr>
-              <tr><td>L5, droits, violations, sous-traitance</td><td>Le dispositif d'exercice des droits (T8) reste à construire ; la procédure de notification de violation est écrite mais pas encore outillée ; le contrat de sous-traitance pour T7 reste à conclure. Trois réserves non bloquantes prises isolément, qui le deviennent au premier usage réel</td><td><span class="badge warn">Réserve</span></td></tr>
+              <tr><td>L2, purge des journaux</td><td>Levée pour T5, puis pour T6 le 18 septembre 2026 : <code>purger_feedback</code> applique les trois paliers au journal de supervision, et la tâche <code>purger_supervision</code> du DAG quotidien l'exécute. Vérifiée le 20 septembre sur un journal d'échantillon : pseudonymisation à 365 jours, agrégation et vidage à 1 095 jours</td><td><span class="badge ok">Levée</span></td></tr>
+              <tr><td>L3, notice candidat</td><td>Comblée le 18 septembre 2026 : la notice d'information du candidat est servie par <code>GET /notice-information</code>, en français simple, et reste ouverte sans authentification</td><td><span class="badge ok">Levée</span></td></tr>
+              <tr><td>L4, accès et imputabilité</td><td>Comblée le 18 septembre 2026 : l'écran, <code>/matching</code> et <code>/feedback</code> exigent un compte conseiller nominatif, dont l'identifiant est journalisé à chaque inférence et à chaque décision</td><td><span class="badge ok">Levée</span></td></tr>
+              <tr><td>L5, droits, violations, sous-traitance</td><td>Le dispositif d'exercice des droits (T8) est construit depuis le 18 septembre 2026 (<code>api/droits.py</code>). Restent la procédure de notification de violation, écrite mais pas encore outillée, et le contrat de sous-traitance pour T7, à conclure. Deux réserves non bloquantes prises isolément, qui le deviennent au premier usage réel</td><td><span class="badge warn">Réserve</span></td></tr>
             </tbody>
           </table>
         </div>
-        <p><em>Rédigé le 30 août 2026, mis à jour le 1er septembre après la construction du service, revu le 15 septembre avec l'analyse d'impact complète, la Model Card et la correspondance au règlement sur l'IA. T3 et T5 ont progressé ; T6 reste à compléter. Cinq lacunes sont désormais déclarées, contre trois précédemment : c'est la vigilance qui s'est affinée, pas la situation qui s'est dégradée.</em></p>
+        <p><em>Rédigé le 30 août 2026, mis à jour le 1er septembre après la construction du service, revu le 15 septembre avec l'analyse d'impact complète, la Model Card et la correspondance au règlement sur l'IA. Mis à jour le 20 septembre 2026 : T6 porte désormais sa purge, T8 est construit, et les lacunes L2, L3 et L4 sont levées — les motifs de blocage A, B et C avec elles. Restent L1 et L5, non bloquantes.</em></p>
 
         <h2 id="sources">Registre des sources et de leurs licences</h2>
         <div class="table-wrap">

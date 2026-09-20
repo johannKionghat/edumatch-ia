@@ -30,7 +30,7 @@
         <div class="stats">
           <div class="stat"><span class="v">11</span><span class="l">risques, dont 3 d'organisation</span></div>
           <div class="stat"><span class="v">3</span><span class="l">risques décidés et non traités : R3, R4, restriction d'accès de R1</span></div>
-          <div class="stat"><span class="v">5</span><span class="l">motifs de blocage actifs dans l'AIPD</span></div>
+          <div class="stat"><span class="v">1</span><span class="l">motif de blocage actif sur cinq : D — A, B, C et E levés</span></div>
           <div class="stat"><span class="v">6</span><span class="l">réserves fermes, non bloquantes</span></div>
         </div>
 
@@ -403,7 +403,7 @@ flowchart TD
           <table>
             <thead><tr><th>Risque</th><th>Impact potentiel</th><th>Vraisemblance</th><th>Mesures</th><th>Résiduel</th></tr></thead>
             <tbody>
-              <tr><td>Accès illégitime aux données</td><td>Divulgation du statut de boursier et du projet d'orientation d'un mineur</td><td>Relevée depuis la v0.9 : l'écran conseiller et <code>/matching</code> sont ouverts ; l'enregistrement d'une décision est authentifié, mais sur un compte partagé</td><td>Cloisonnement écrit dans le code d'infrastructure du second dépôt (réseau privé, registre et stockage privés, NetworkPolicy), à déployer ; chiffrement en transit à démontrer au déploiement ; purge du journal exécutée et planifiée</td><td><span class="badge bad">Élevé</span> tant que l'accès aux données de candidats n'est ni restreint ni imputable (<a href="#motifs">motif A</a>)</td></tr>
+              <tr><td>Accès illégitime aux données</td><td>Divulgation du statut de boursier et du projet d'orientation d'un mineur</td><td>Relevée depuis la v0.9, traitée le 18 septembre 2026 : l'écran conseiller, <code>/matching</code> et <code>/feedback</code> exigent un compte conseiller nominatif, et chaque inférence journalise l'identifiant de la personne qui l'a déclenchée</td><td>Cloisonnement écrit dans le code d'infrastructure du second dépôt (réseau privé, registre et stockage privés, NetworkPolicy), à déployer ; chiffrement en transit à démontrer au déploiement ; purge du journal exécutée et planifiée</td><td><span class="badge bad">Élevé</span> tant que l'accès aux données de candidats n'est ni restreint ni imputable (<a href="#motifs">motif A</a>)</td></tr>
               <tr><td>Modification non désirée</td><td>Caractéristique altérée, estimation fausse, conseil faux</td><td>Faible</td><td>Écriture atomique, empreintes SHA-256, contrôles qualité bloquants, idempotence testée</td><td><span class="badge ok">Faible</span></td></tr>
               <tr><td>Disparition de données</td><td>Impossibilité de retracer une recommandation contestée</td><td>Faible désormais</td><td>Journal d'inférence horodaté, version de modèle et empreinte de commit</td><td><span class="badge ok">Faible</span> pour T5 ; T6 ne se corrèle pas au journal d'inférence, faute d'identifiant commun</td></tr>
             </tbody>
@@ -552,21 +552,20 @@ flowchart TD
           </div>
         </div>
 
-        <h3 id="motifs">8.4 Les motifs de blocage encore actifs</h3>
-        <p>Chacun renvoie à la liste opposable du <a href="gouvernance.html">plan de gouvernance</a> et suffit, seul, à bloquer une mise en service auprès de candidats réels.</p>
+        <h3 id="motifs">8.4 Les motifs de blocage : état au 20 septembre 2026</h3>
+        <p>Chacun renvoie à la liste opposable du <a href="gouvernance.html">plan de gouvernance</a> et suffit, seul, à bloquer une mise en service auprès de candidats réels. <strong>Deux restent actifs sur les cinq</strong> : D et E.</p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Motif</th><th>Rattachement</th><th>Ce qui le lève</th></tr></thead>
+            <thead><tr><th>#</th><th>Motif</th><th>État</th><th>Preuve, ou ce qui le lève</th></tr></thead>
             <tbody>
-              <tr><td><span class="badge bad">A</span></td><td>Écran et <code>/matching</code> ouverts alors qu'ils exposent des données de candidats ; décision authentifiée sur un compte conseiller partagé, donc aucune trace imputable à une personne</td><td>Art. 32 RGPD, art. 14 AI Act</td><td>Comptes conseillers individuels ; accès à l'écran et à <code>/matching</code> restreint</td></tr>
-              <tr><td><span class="badge bad">B</span></td><td>Journal de supervision T6 sans purge, alors que la durée est écrite (12 mois), faute d'identifiant commun avec T5</td><td>Art. 5.1.e RGPD</td><td>Identifiant de corrélation T5/T6, extension de <code>audit_purge.py</code></td></tr>
-              <tr><td><span class="badge bad">C</span></td><td>Aucune notice d'information destinée au candidat</td><td>Art. 12, 13, 14 et 8 RGPD</td><td>Notice affichée avant la saisie, pour un lecteur de 17 ans</td></tr>
-              <tr><td><span class="badge bad">D</span></td><td>Restitution chiffrée d'une probabilité dont le défaut de calibration est connu : sur-annonce de six points en test</td><td>Art. 5.1.d RGPD, <a href="#calibration">§6.2</a></td><td>Le double seuil de l'avis (a)</td></tr>
-              <tr><td><span class="badge bad">E</span></td><td>Attribution des sources non effective, alors que la Licence Ouverte impose paternité et date</td><td>Art. 2 Licence Ouverte v2.0</td><td>Écran « Sources et licences » alimenté par les manifestes</td></tr>
+              <tr><td><span class="badge ok">A</span></td><td>Écran et <code>/matching</code> ouverts ; décision authentifiée sur un compte conseiller partagé, donc aucune trace imputable à une personne (art. 32 RGPD, art. 14 AI Act)</td><td><strong>Levé</strong> — levée prononcée par le pilote le 20/09 sur preuve technique du 18/09</td><td><code>CONSEILLER_COMPTES</code> porte des comptes nominatifs, chacun avec l'empreinte scrypt de son mot de passe ; l'écran (<code>GET /</code>), <code>/matching</code> et <code>/feedback</code> exigent tous les trois un compte (<code>api/auth.get_conseiller_courant</code>), et l'identifiant du conseiller est journalisé à chaque inférence</td></tr>
+              <tr><td><span class="badge ok">B</span></td><td>Journal de supervision T6 sans purge, alors que la durée est écrite (art. 5.1.e RGPD)</td><td><strong>Levé</strong> — levée prononcée par le pilote le 20/09 sur preuve technique du 18/09</td><td><code>api/audit_purge.purger_feedback</code> applique les trois paliers, et la tâche <code>purger_supervision</code> du DAG quotidien <code>edumatch_audit_purge</code> l'exécute réellement. Vérifié le 20 septembre sur un journal d'échantillon : à 365 jours l'identifiant du conseiller est remplacé par un pseudonyme, à 1 095 jours les six lignes sont agrégées et le journal vidé, chaque exécution laissant une trace horodatée. L'exercice des droits (T8, <code>api/droits.py</code>) retrouve, exporte et efface : sur trois traces, deux retrouvées, deux effacées, zéro retrouvée ensuite, et la trace d'exécution ne contient aucun identifiant</td></tr>
+              <tr><td><span class="badge ok">C</span></td><td>Aucune notice d'information destinée au candidat (art. 12, 13, 14 et 8 RGPD)</td><td><strong>Levé</strong> — levée prononcée par le pilote le 20/09 sur preuve technique du 18/09</td><td><code>GET /notice-information</code>, volontairement ouverte sans authentification : une notice qu'il faut un compte pour lire n'informe personne</td></tr>
+              <tr><td><span class="badge bad">D</span></td><td>Restitution chiffrée d'une probabilité dont le défaut de calibration est connu : sur-annonce de six points en test (art. 5.1.d RGPD, <a href="#calibration">§6.2</a>)</td><td><strong>Actif</strong></td><td>Le double seuil de l'avis (a). Le réentraînement du 18 septembre, conduit selon le protocole pré-enregistré de l'<a href="decisions.html#adr-0021">ADR 0021</a>, a été refusé par la porte de promotion : 0,070326 de MAE pondérée contre 0,070067 pour le plancher, et 0,0341 d'ECE contre 0,0322</td></tr>
+              <tr><td><span class="badge ok">E</span></td><td>Attribution des sources non effective, alors que la Licence Ouverte impose paternité et date (art. 2 Licence Ouverte v2.0)</td><td><strong>Levé</strong> — levée prononcée par le pilote le 20/09 sur preuve technique du 20/09</td><td>La page « Sources et licences » n'est plus saisie à la main : <code>api/sources_licences.py</code> la génère depuis les trois manifestes d'ingestion, écrits par les connecteurs au moment du téléchargement. La saisie manuelle annonçait une collecte du 28 au 30 août alors que Sirene et les référentiels dataient du 17 septembre, et le stock Sirene du 1<sup>er</sup> septembre et non du 1<sup>er</sup> août. <code>tests/data/test_sources_licences_a_jour.py</code> échoue si la page diverge des manifestes : vérifié le 20 septembre en modifiant une date, le test tombe et nomme la commande de régénération</td></tr>
             </tbody>
           </table>
         </div>
-
         <h3 id="reserves">8.5 Réserves fermes, non bloquantes</h3>
         <ol>
           <li>Aucun dispositif d'exercice des droits (T8), alors que le délai d'un mois court dès la première demande.</li>

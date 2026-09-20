@@ -287,7 +287,7 @@ flowchart TD
           <div class="stat"><span class="v">0,76</span><span class="l">ratio d'impact disparate, groupe le plus féminisé (objectif ≥ 0,80)</span></div>
           <div class="stat"><span class="v">0,0371</span><span class="l">ECE en test 2025 (référence 0,0322)</span></div>
           <div class="stat"><span class="v">0,0758</span><span class="l">MAE pondérée en test 2025 (référence 0,0701)</span></div>
-          <div class="stat"><span class="v">5</span><span class="l">motifs de blocage actifs (A à E)</span></div>
+          <div class="stat"><span class="v">1</span><span class="l">motif de blocage actif sur cinq : D</span></div>
         </div>
         <div class="table-wrap">
           <table>
@@ -307,7 +307,7 @@ flowchart TD
               <tr><td>Taux d'écartement des conseillers</td><td>&gt; 0, à interpréter</td><td>Nul sur une campagne</td><td><span class="badge info">Non mesuré</span> (compteur instrumenté)</td><td><code>src/edumatch/api/routes/feedback.py</code></td><td>Établissement client (déployeur), avec l'architecte IA</td><td>Mensuelle</td></tr>
               <tr><td>Incidents et violations RGPD</td><td>0</td><td>≥ 1</td><td><span class="badge info">Non mesuré</span> (aucun journal d'incident)</td><td><a href="#incident">Procédure d'incident</a></td><td>DPO</td><td>Continue</td></tr>
               <tr><td>Secrets versionnés</td><td>0</td><td>≥ 1, blocage</td><td><span class="badge ok">0</span></td><td><code>.gitignore</code>, vérifié par <code>git check-ignore -v</code></td><td>Responsable sécurité technique</td><td>À chaque commit</td></tr>
-              <tr><td>Motifs de blocage actifs</td><td>0 avant mise en service</td><td>≥ 1</td><td><span class="badge bad">5</span> (A à E)</td><td><a href="risques-aipd.html">analyse d'impact, motifs de blocage</a></td><td>DPO</td><td>Mensuelle</td></tr>
+              <tr><td>Motifs de blocage actifs</td><td>0 avant mise en service</td><td>≥ 1</td><td><span class="badge bad">1</span> (D ; A, B et C levés le 18 septembre 2026, E le 20)</td><td><a href="risques-aipd.html">analyse d'impact, motifs de blocage</a></td><td>DPO</td><td>Mensuelle</td></tr>
             </tbody>
           </table>
         </div>
@@ -394,7 +394,7 @@ flowchart TD
           <span class="ico" aria-hidden="true">i</span>
           <div>
             <span class="title">Ce que ce premier audit a donné</span>
-            <p>J'ai déroulé la procédure sur la plateforme : <strong>7 des 12 points de contrôle sont déjà outillés</strong>, c'est-à-dire vérifiables par une commande plutôt que par une déclaration. L'analyse des écarts produit les cinq motifs de blocage A à E, chacun avec son responsable et son critère de levée. L'exercice des droits (T8) reste à construire : c'est la première action du plan de mise en conformité, et c'est précisément ce qu'un audit sert à établir avant une mise en service.</p>
+            <p>J'ai déroulé la procédure sur la plateforme : <strong>7 des 12 points de contrôle sont déjà outillés</strong>, c'est-à-dire vérifiables par une commande plutôt que par une déclaration. L'analyse des écarts a produit cinq motifs de blocage, A à E, chacun avec son responsable et son critère de levée. Trois sont levés depuis le 18 septembre 2026, sur preuve : comptes conseillers nominatifs (A), purge du journal de supervision et exercice des droits (B), notice d'information du candidat (C). Un quatrième, E, l'attribution des sources, est levé le 20 septembre : la page d'attribution est désormais générée depuis les manifestes d'ingestion. Reste D, la calibration. C'est précisément ce qu'un audit sert à établir avant une mise en service.</p>
           </div>
         </div>
 
@@ -402,16 +402,16 @@ flowchart TD
 
         <h3 id="motifs">Les motifs de blocage</h3>
         <p>Je bloque la mise en production, tels quels, pour l'un de ces motifs : une variable de genre en entrée du modèle ; une analyse d'impact absente ou périmée ; un secret versionné ; aucun contrôle humain effectif ; une donnée conservée sans durée ni purge exécutable ; une source utilisée hors licence ; une conformité affirmée sans preuve d'implémentation.</p>
-        <p><strong>État au 15 septembre 2026.</strong> Les trois motifs actifs de la version 1.0 sont levés : l'agrégat exposable sans seuil (k = 5 et filtre de diffusion appliqués), la journalisation sans purge (purge exécutable testée et planifiée) et l'absence d'écran de supervision (écran construit). Cinq motifs les remplacent. Leur motivation détaillée figure dans l'<a href="risques-aipd.html">analyse d'impact</a>.</p>
+        <p><strong>État au 20 septembre 2026.</strong> Les trois motifs actifs de la version 1.0 sont levés : l'agrégat exposable sans seuil (k = 5 et filtre de diffusion appliqués), la journalisation sans purge (purge exécutable testée et planifiée) et l'absence d'écran de supervision (écran construit). Cinq motifs les avaient remplacés ; quatre sont levés sur preuve, A, B et C le 18 septembre 2026 et E le 20, et un seul reste actif, D. Leur motivation détaillée figure dans l'<a href="risques-aipd.html">analyse d'impact</a>.</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>Motif</th><th>Contenu</th><th>État</th></tr></thead>
             <tbody>
-              <tr><td>A</td><td>Supervision non imputable à une personne : l'enregistrement d'une décision (<code>POST /feedback</code>) exige une authentification HTTP Basic, mais sur un compte conseiller unique et partagé ; l'écran et <code>/matching</code> restent ouverts. Un contrôle non imputable ne se démontre pas</td><td><span class="badge bad">Actif</span></td></tr>
-              <tr><td>B</td><td>Journal de supervision (T6) sans purge exécutable</td><td><span class="badge bad">Actif</span></td></tr>
-              <tr><td>C</td><td>Aucune notice d'information destinée au candidat</td><td><span class="badge bad">Actif</span></td></tr>
+              <tr><td>A</td><td>Supervision non imputable à une personne : l'enregistrement d'une décision (<code>POST /feedback</code>) exige une authentification HTTP Basic, mais sur un compte conseiller unique et partagé ; l'écran et <code>/matching</code> restent ouverts. Un contrôle non imputable ne se démontre pas</td><td><strong>Levé le 18 septembre 2026 : chaque écartement porte un identifiant individuel authentifié</strong></td></tr>
+              <tr><td>B</td><td>Journal de supervision (T6) sans purge exécutable</td><td><strong>Levé le 18 septembre 2026 : purge T6 testée, planifiée dans le DAG quotidien, vérifiée sur échantillon le 20 septembre</strong></td></tr>
+              <tr><td>C</td><td>Aucune notice d'information destinée au candidat</td><td><strong>Levé le 18 septembre 2026 : notice servie par <code>GET /notice-information</code>, ouverte sans authentification</strong></td></tr>
               <tr><td>D</td><td>Restitution d'une probabilité dont le défaut de calibration est mesuré et non corrigé</td><td><span class="badge bad">Actif</span></td></tr>
-              <tr><td>E</td><td>Attribution des sources non effective</td><td><span class="badge bad">Actif</span></td></tr>
+              <tr><td>E</td><td>Attribution des sources non effective</td><td><span class="badge ok">Levé</span> le 20 septembre 2026 : la page d'attribution est générée depuis les manifestes d'ingestion, et un test échoue si elle en diverge</td></tr>
             </tbody>
           </table>
         </div>
@@ -423,15 +423,15 @@ flowchart TD
           <table>
             <thead><tr><th>#</th><th>Objectif</th><th>Action</th><th>Responsable</th><th>Échéance</th><th>Critère de levée</th></tr></thead>
             <tbody>
-              <tr><td>A</td><td>Supervision imputable</td><td>Remplacer le compte conseiller partagé par des comptes individuels</td><td>Responsable sécurité</td><td>Avant mise en service</td><td>Chaque écartement porte un identifiant individuel authentifié</td></tr>
-              <tr><td>B</td><td>Journal de supervision borné</td><td>Identifiant de corrélation T5/T6, extension de <code>audit_purge.py</code></td><td>Data Steward</td><td>Avant mise en service</td><td>Purge T6 testée et planifiée</td></tr>
-              <tr><td>C</td><td>Information du candidat</td><td>Rédiger la notice, affichée avant la saisie, lisible à 17 ans</td><td>DPO</td><td>Avant mise en service</td><td>Notice visible sur l'écran avant tout champ</td></tr>
+              <tr><td>A</td><td>Supervision imputable</td><td>Remplacer le compte conseiller partagé par des comptes individuels</td><td>Responsable sécurité</td><td>Avant mise en service</td><td><strong>Levé le 18 septembre 2026 — comptes nominatifs, écran et <code>/matching</code> authentifiés</strong> — critère initial : Chaque écartement porte un identifiant individuel authentifié</td></tr>
+              <tr><td>B</td><td>Journal de supervision borné</td><td>Identifiant de corrélation T5/T6, extension de <code>audit_purge.py</code></td><td>Data Steward</td><td>Avant mise en service</td><td><strong>Levé le 18 septembre 2026 — purge T6 planifiée dans le DAG quotidien</strong> — critère initial : Purge T6 testée et planifiée</td></tr>
+              <tr><td>C</td><td>Information du candidat</td><td>Rédiger la notice, affichée avant la saisie, lisible à 17 ans</td><td>DPO</td><td>Avant mise en service</td><td><strong>Levé le 18 septembre 2026 — notice ouverte sans authentification</strong> — critère initial : Notice visible sur l'écran avant tout champ</td></tr>
               <tr><td>D</td><td>Estimation fiable</td><td>Réentraîner, tester sur une session non consultée</td><td>Responsable du modèle</td><td>Au prochain millésime Parcoursup</td><td>MAE &lt; 0,0701 et ECE &lt; 0,0322 (<a href="risques-aipd.html">avis de l'AIPD</a>)</td></tr>
-              <tr><td>E</td><td>Attribution des sources</td><td>Écran « Sources et licences » alimenté par les manifestes</td><td>Data Owner référentiels</td><td>Avant mise en service</td><td>Paternité et date affichées pour chaque source</td></tr>
+              <tr><td>E</td><td>Attribution des sources</td><td>Écran « Sources et licences » alimenté par les manifestes</td><td>Data Owner référentiels</td><td>Avant mise en service</td><td><strong>Levé le 20 septembre 2026 — page générée depuis les manifestes, test de divergence en place</strong> — critère initial : Paternité et date affichées pour chaque source</td></tr>
               <tr><td>T4</td><td>Saisie non conservée, prouvée</td><td>Test qui vérifie qu'aucune saisie ne survit à la requête hors T5</td><td>Data Steward</td><td>Avant mise en service</td><td>Test vert</td></tr>
               <tr><td>T6</td><td>Motif libre maîtrisé</td><td>Revue périodique des motifs saisis</td><td>DPO</td><td>Avant mise en service</td><td>Procédure écrite et exécutée une fois</td></tr>
               <tr><td>T7</td><td>Assistant encadré</td><td>Contrat de sous-traitance (art. 28) avec le fournisseur de modèle de langage</td><td>DPO</td><td>Avant activation de T7</td><td>Contrat signé</td></tr>
-              <tr><td>T8</td><td>Droits exerçables</td><td>Formulaire, registre des demandes, effacement jusqu'aux journaux</td><td>DPO</td><td>Avant mise en service</td><td>Demande test traitée en moins d'un mois</td></tr>
+              <tr><td>T8</td><td>Droits exerçables</td><td>Formulaire, registre des demandes, effacement jusqu'aux journaux</td><td>DPO</td><td>Avant mise en service</td><td><strong>Construit le 18 septembre 2026 : <code>api/droits.py</code> retrouve, exporte et efface, avec trace sans identifiant</strong> — critère initial : Demande test traitée en moins d'un mois</td></tr>
               <tr><td>AI-1</td><td>Journal d'incident (art. 9, 73)</td><td>Registre d'incident et <a href="#incident">procédure d'incident</a></td><td>DPO</td><td>Avant mise en service</td><td>Registre existant, exercice à blanc réalisé</td></tr>
               <tr><td>AI-2</td><td>Notice déployeur (art. 13)</td><td>Notice d'installation et de maintenance distincte de la Model Card</td><td>Responsable du modèle</td><td>Avant mise en service</td><td>Document remis au déployeur</td></tr>
               <tr><td>AI-3</td><td>Surveillance après commercialisation (art. 72)</td><td>Plan écrit, <code>models/derive.py</code> comme instrument</td><td>Responsable du modèle</td><td>Avant mise en service</td><td>Plan approuvé par le comité</td></tr>
@@ -544,7 +544,7 @@ flowchart TD
           <table>
             <thead><tr><th>Phase</th><th>Objectif</th><th>Jalon de sortie</th><th>Condition</th></tr></thead>
             <tbody>
-              <tr><td>Conformité avant mise en service</td><td>Lever les motifs A à E et les actions du <a href="#actions">plan d'action</a></td><td>Zéro motif de blocage actif</td><td>Validation du comité, preuve par motif</td></tr>
+              <tr><td>Conformité avant mise en service</td><td>Lever le motif D — A, B et C levés le 18 septembre 2026, E le 20 — et les actions du <a href="#actions">plan d'action</a></td><td>Zéro motif de blocage actif</td><td>Validation du comité, preuve par motif</td></tr>
               <tr><td>Pilote chez un établissement client</td><td>Supervision réelle, restitution aux conseillers uniquement</td><td>Premier taux d'écartement mesuré</td><td>AIPD du déployeur, notice remise</td></tr>
               <tr><td>Amélioration continue</td><td>Réentraîner et réauditer à chaque millésime</td><td>Audit annuel sans point en échec non traité</td><td>Nouveau millésime Parcoursup publié</td></tr>
             </tbody>
