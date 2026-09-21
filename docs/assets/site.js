@@ -59,13 +59,42 @@
       .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   }
 
+  // Donne une ancre unique à chaque titre qui n'en a pas. Un h3 prend l'ancre de son h2 parent
+  // en préfixe : sans cela, les vingt ADR de decisions.html partageaient tous « #contexte »,
+  // et un lien vers le contexte de l'ADR 0019 menait à celui de l'ADR 0001. Même règle dans
+  // scripts/generer_index_recherche.py, qui calcule les ancres de l'index de recherche.
+  function donnerAncres(titres) {
+    var dernierH2 = "";
+    titres.forEach(function (t) {
+      if (!t.id) {
+        var base = slug(t.textContent);
+        if (t.tagName === "H3" && dernierH2) base = dernierH2 + "-" + base;
+        var candidat = base;
+        var n = 2;
+        while (document.getElementById(candidat)) candidat = base + "-" + n++;
+        t.id = candidat;
+      }
+      if (t.tagName === "H2") dernierH2 = t.id;
+    });
+  }
+
+  // Le navigateur fait défiler vers #ancre pendant l'analyse de la page, avant que ce script
+  // ait créé les ancres manquantes : on refait le défilement une fois qu'elles existent.
+  function rejoindreAncre() {
+    if (!location.hash) return;
+    var cible = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (cible) cible.scrollIntoView();
+  }
+
   function construireSommaire() {
     var cible = document.getElementById("toc");
     var titres = document.querySelectorAll(".content h2, .content h3");
-    if (!cible || !titres.length) return;
+    if (!titres.length) return;
+    donnerAncres(titres);
+    rejoindreAncre();
+    if (!cible) return;
     var html = "<h5>Sur cette page</h5><ul>";
     titres.forEach(function (t) {
-      if (!t.id) t.id = slug(t.textContent);
       html += '<li class="' + t.tagName.toLowerCase() + '"><a href="#' + t.id + '">' + t.textContent + "</a></li>";
     });
     cible.innerHTML = html + "</ul>";
@@ -101,11 +130,40 @@
       try { localStorage.setItem("edumatch-theme", t); } catch (e) { /* stockage indisponible : thème non mémorisé */ }
       dessinerSchemas();
     });
+    brancherMenu();
+  }
+
+  // Menu des écrans étroits (moins de 860 px) : il s'ouvre et se ferme par son bouton, se
+  // referme au clic sur un lien ou hors du panneau, et à la touche Échap — qui rend alors le
+  // focus au bouton, pour qu'un utilisateur au clavier ne se retrouve pas en haut de page.
+  function brancherMenu() {
     var bMenu = document.getElementById("menu-btn");
-    if (bMenu) bMenu.addEventListener("click", function () {
-      var ouvert = document.body.classList.toggle("nav-open");
-      bMenu.setAttribute("aria-expanded", ouvert ? "true" : "false");
+    var panneau = document.getElementById("sidebar");
+    if (!bMenu || !panneau) return;
+
+    function ouvert() { return document.body.classList.contains("nav-open"); }
+    function fermer(rendreFocus) {
+      if (!ouvert()) return;
+      document.body.classList.remove("nav-open");
+      bMenu.setAttribute("aria-expanded", "false");
+      if (rendreFocus) bMenu.focus();
+    }
+
+    bMenu.addEventListener("click", function () {
+      var etat = document.body.classList.toggle("nav-open");
+      bMenu.setAttribute("aria-expanded", etat ? "true" : "false");
     });
+    panneau.addEventListener("click", function (e) {
+      if (e.target.closest("a")) fermer(false);
+    });
+    document.addEventListener("click", function (e) {
+      if (ouvert() && !panneau.contains(e.target) && !bMenu.contains(e.target)) fermer(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && ouvert()) fermer(true);
+    });
+    // Retour arrière : le navigateur peut restaurer la page telle qu'elle était, menu ouvert.
+    window.addEventListener("pageshow", function () { fermer(false); });
   }
 
   // Dans un sous-groupe vertical, Mermaid place côte à côte les éléments qui ne
