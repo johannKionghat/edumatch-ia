@@ -297,3 +297,53 @@ figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* ── Libellé réservé aux technologies d'assistance ─────────── */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ── Recherche dans la documentation ─────────────────────── */
+.recherche { position: relative; flex: 0 1 340px; min-width: 0; }
+.recherche input {
+  width: 100%; font: inherit; font-size: 14px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 12px;
+}
+.recherche input::placeholder { color: var(--muted); opacity: 1; }
+.recherche-panneau {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+  width: min(520px, calc(100vw - 32px)); max-height: 70vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 27, 45, 0.18);
+}
+.recherche-panneau ul { list-style: none; margin: 0; padding: 6px; }
+.recherche-panneau li {
+  display: grid; gap: 2px; padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  border: 2px solid transparent;
+}
+.recherche-panneau li:hover { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+/* Le résultat actif garde un contour visible : c'est lui que signale aria-activedescendant. */
+.recherche-panneau li[aria-selected="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+.recherche-titre { color: var(--ink); font-weight: 600; font-size: 14px; }
+.recherche-page { color: var(--muted); font-size: 12px; }
+.recherche-extrait { color: var(--ink-2); font-size: 13px; line-height: 1.45; }
+.recherche-extrait strong { color: var(--ink); background: color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 3px; padding: 0 2px; }
+.recherche-vide { margin: 0; padding: 14px 16px; color: var(--ink-2); font-size: 14px; }
+
+@media (max-width: 860px) {
+  .recherche { flex: 1 1 auto; }
+  .topbar { gap: 10px; padding-inline: 12px; }
+}
+@media (max-width: 600px) {
+  /* Place au champ : on garde la marque, pas le nom écrit en toutes lettres. */
+  .brand { font-size: 0; gap: 0; }
+  .brand-mark { font-size: 13px; }
+  #theme-btn { font-size: 0; padding: 6px 10px; }
+  #theme-btn::before { content: "◐" / ""; font-size: 16px; }
+  .recherche-panneau { position: fixed; top: calc(var(--top-h) + 6px); left: 16px; right: 16px; width: auto; }
+}

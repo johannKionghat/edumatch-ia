@@ -166,6 +166,15 @@
     window.addEventListener("pageshow", function () { fermer(false); });
   }
 
+  // La recherche vit dans son propre fichier, chargé par ce script : aucune page n'a besoin
+  // d'être modifiée pour en disposer.
+  function chargerRecherche() {
+    var s = document.createElement("script");
+    s.src = "assets/recherche.js";
+    s.defer = true;
+    document.head.appendChild(s);
+  }
+
   // Dans un sous-groupe vertical, Mermaid place côte à côte les éléments qui ne
   // sont pas reliés entre eux. On les enchaîne par des liens invisibles (~~~)
   // pour qu'ils s'empilent : le schéma se lit en défilant vers le bas.
@@ -234,6 +243,7 @@
     construirePager();
     construireSommaire();
     brancherBoutons();
+    chargerRecherche();
     // Les boîtes sont dimensionnées sur la police réelle : on attend qu'elle soit chargée.
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(dessinerSchemas);
     else dessinerSchemas();
