@@ -18,6 +18,14 @@ volume qui ne l'exige pas. **Ce qui ferait reconsidérer ce choix** : un
 corpus documentaire qui dépasserait l'ordre du million de lignes, ou une
 mesure montrant qu'une part significative des questions réelles n'obtient
 aucun résultat pertinent en similarité lexicale.
+
+## La limite qui subsiste, mesurée
+
+Retirer les mots vides (voir `MOTS_VIDES`) suffit à refuser une question hors
+sujet, mais pas à comprendre un synonyme : « je veux travailler dans la data »
+ne rapproche pas « données », et une question sur le fonctionnement du système
+lui-même obtient des formations, puisque le corpus n'en parle pas. Ces deux
+limites tiennent à la nature lexicale de l'index, pas à son réglage.
 """
 
 from __future__ import annotations
@@ -51,6 +59,29 @@ class ResultatRecherche:
     score: float
 
 
+# Mots vides du français, retirés de l'index et des questions.
+#
+# Mesuré avant de les retirer : la question « Quelle est la recette du gâteau au chocolat ? »,
+# entièrement hors sujet, obtenait un score de 0,223 — plus élevé que « Je veux travailler dans
+# la data, quelle licence choisir ? » (0,218), qui est légitime. Aucun seuil ne pouvait les
+# séparer. La similarité de la question absurde venait du terme « est » (0,213 à lui seul), qui
+# correspondait au « Est » de « EGC Centre Est » : un nom propre. Sans cette liste, le refus
+# documenté par `assistant.py` ne se déclenchait que sur du charabia, jamais sur une phrase
+# française hors sujet.
+#
+# Après retrait, mesuré sur le même corpus : la question absurde tombe à 0,000 (donc refusée),
+# la question pertinente monte de 0,323 à 0,360. Liste explicite plutôt qu'une dépendance
+# supplémentaire pour quelques dizaines de mots — et elle se lit, donc elle se discute.
+MOTS_VIDES: tuple[str, ...] = (
+    "a", "au", "aux", "avec", "c", "ce", "ces", "d", "dans", "de", "des", "du", "elle", "en",
+    "es", "est", "et", "etait", "ete", "eux", "il", "j", "je", "l", "la", "le", "les", "leur",
+    "lui", "m", "ma", "mais", "me", "meme", "mes", "moi", "mon", "n", "ne", "nos", "notre",
+    "nous", "on", "ou", "par", "pas", "pour", "qu", "que", "quel", "quelle", "quelles", "quels",
+    "qui", "s", "sa", "se", "ses", "soit", "son", "sont", "suis", "sur", "t", "ta", "te", "tes",
+    "toi", "ton", "tu", "un", "une", "vos", "votre", "vous", "y",
+)
+
+
 def construire_index(documents: list[Document]) -> IndexDocumentaire:
     if not documents:
         raise ErreurIndexRag(
@@ -61,7 +92,12 @@ def construire_index(documents: list[Document]) -> IndexDocumentaire:
     # doit tout de même retrouver les passages accentués du référentiel. Les vecteurs TF-IDF
     # sont L2-normalisés par défaut : `linear_kernel` (produit scalaire) équivaut donc
     # exactement à la similarité cosinus, sans normalisation supplémentaire à faire ici.
-    vectoriseur = TfidfVectorizer(lowercase=True, strip_accents="unicode", ngram_range=(1, 2))
+    vectoriseur = TfidfVectorizer(
+        lowercase=True,
+        strip_accents="unicode",
+        ngram_range=(1, 2),
+        stop_words=list(MOTS_VIDES),
+    )
     matrice = vectoriseur.fit_transform([document.texte for document in documents])
     return IndexDocumentaire(vectoriseur=vectoriseur, matrice=matrice, documents=tuple(documents))
 
