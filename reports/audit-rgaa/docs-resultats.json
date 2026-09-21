@@ -1,0 +1,299 @@
+{
+  "menu": [
+    {
+      "page": "index.html",
+      "bouton_visible": true,
+      "panneau_cache_au_depart": true,
+      "ouverture": true,
+      "fermeture_hors_panneau": true,
+      "fermeture_echap": true,
+      "focus_rendu_au_bouton": true,
+      "fermeture_clic_lien": true,
+      "pas_de_defilement_horizontal": true
+    },
+    {
+      "page": "modele.html",
+      "bouton_visible": true,
+      "panneau_cache_au_depart": true,
+      "ouverture": true,
+      "fermeture_hors_panneau": true,
+      "fermeture_echap": true,
+      "focus_rendu_au_bouton": true,
+      "fermeture_clic_lien": true,
+      "pas_de_defilement_horizontal": true
+    },
+    {
+      "page": "decisions.html",
+      "bouton_visible": true,
+      "panneau_cache_au_depart": true,
+      "ouverture": true,
+      "fermeture_hors_panneau": true,
+      "fermeture_echap": true,
+      "focus_rendu_au_bouton": true,
+      "fermeture_clic_lien": true,
+      "pas_de_defilement_horizontal": true
+    }
+  ],
+  "recherche": [
+    {
+      "largeur": 1280,
+      "requete": "porte de promotion",
+      "resultats": 9,
+      "premier": "Le réentraînement automatique et la porte de promotion",
+      "page_du_premier": "Pipeline de données",
+      "terme_en_gras": true,
+      "label_accessible": true,
+      "actif_signale": true,
+      "url": "/pipeline.html#reentrainement",
+      "page_attendue": true,
+      "ancre_existe": true,
+      "ancre_visible_en_haut": true,
+      "section_contient_le_terme": true
+    },
+    {
+      "largeur": 1280,
+      "requete": "PSI",
+      "resultats": 10,
+      "premier": "La limite déclarée : ce que le PSI n'a pas vu",
+      "page_du_premier": "Modèle",
+      "terme_en_gras": true,
+      "label_accessible": true,
+      "actif_signale": true,
+      "url": "/modele.html#derive-limite",
+      "page_attendue": true,
+      "ancre_existe": true,
+      "ancre_visible_en_haut": true,
+      "section_contient_le_terme": true
+    },
+    {
+      "largeur": 1280,
+      "requete": "purge",
+      "resultats": 10,
+      "premier": "Journalisation article 12 et purge exécutable",
+      "page_du_premier": "Service et accessibilité",
+      "terme_en_gras": true,
+      "label_accessible": true,
+      "actif_signale": true,
+      "url": "/service.html#journalisation",
+      "page_attendue": true,
+      "ancre_existe": true,
+      "ancre_visible_en_haut": true,
+      "section_contient_le_terme": true
+    },
+    {
+      "largeur": 375,
+      "requete": "porte de promotion",
+      "resultats": 9,
+      "premier": "Le réentraînement automatique et la porte de promotion",
+      "page_du_premier": "Pipeline de données",
+      "terme_en_gras": true,
+      "label_accessible": true,
+      "actif_signale": true,
+      "url": "/pipeline.html#reentrainement",
+      "page_attendue": true,
+      "ancre_existe": true,
+      "ancre_visible_en_haut": true,
+      "section_contient_le_terme": true
+    },
+    {
+      "largeur": 375,
+      "requete": "PSI",
+      "resultats": 10,
+      "premier": "La limite déclarée : ce que le PSI n'a pas vu",
+      "page_du_premier": "Modèle",
+      "terme_en_gras": true,
+      "label_accessible": true,
+      "actif_signale": true,
+      "url": "/modele.html#derive-limite",
+      "page_attendue": true,
+      "ancre_existe": true,
+      "ancre_visible_en_haut": true,
+      "section_contient_le_terme": true
+    },
+    {
+      "largeur": 375,
+      "requete": "purge",
+      "resultats": 10,
+      "premier": "Journalisation article 12 et purge exécutable",
+      "page_du_premier": "Service et accessibilité",
+      "terme_en_gras": true,
+      "label_accessible": true,
+      "actif_signale": true,
+      "url": "/service.html#journalisation",
+      "page_attendue": true,
+      "ancre_existe": true,
+      "ancre_visible_en_haut": true,
+      "section_contient_le_terme": true
+    },
+    {
+      "requete": "xyzzyqwv",
+      "message": "Aucun résultat pour « xyzzyqwv ».",
+      "echap_ferme": true,
+      "tab_quitte_le_champ": true
+    }
+  ],
+  "ancres": {
+    "ancres_de_l_index": 389,
+    "absentes_du_dom": []
+  },
+  "axe": [
+    {
+      "largeur": 1280,
+      "page": "index.html",
+      "violations": [
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "noeuds": 1,
+          "cibles": [
+            "article > pre"
+          ]
+        }
+      ]
+    },
+    {
+      "largeur": 1280,
+      "page": "modele.html",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "noeuds": 2,
+          "cibles": [
+            ".table-wrap:nth-child(80) > table > tbody > tr:nth-child(1) > td:nth-child(4) > .ok.badge",
+            ".table-wrap:nth-child(87) > table > tbody > tr:nth-child(1) > td:nth-child(4) > .ok.badge"
+          ]
+        },
+        {
+          "id": "link-in-text-block",
+          "impact": "serious",
+          "noeuds": 19,
+          "cibles": [
+            "a[href$=\"donnees.html#label\"]",
+            "p:nth-child(6) > a[href$=\"decisions.html#adr-0013\"]",
+            "a[href$=\"decisions.html#adr-0009\"]"
+          ]
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "noeuds": 1,
+          "cibles": [
+            "pre:nth-child(48)"
+          ]
+        }
+      ]
+    },
+    {
+      "largeur": 1280,
+      "page": "decisions.html",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "noeuds": 38,
+          "cibles": [
+            "tr:nth-child(3) > td:nth-child(3) > .ok.badge",
+            "tr:nth-child(4) > td:nth-child(3) > .ok.badge",
+            "tr:nth-child(5) > td:nth-child(3) > .ok.badge"
+          ]
+        },
+        {
+          "id": "link-in-text-block",
+          "impact": "serious",
+          "noeuds": 52,
+          "cibles": [
+            "p:nth-child(14) > a[href$=\"pipeline.html\"]",
+            ".warn.callout:nth-child(29) > div > p > a[href$=\"#adr-0016\"]",
+            "p:nth-child(67) > a[href$=\"#adr-0006\"]"
+          ]
+        }
+      ]
+    },
+    {
+      "largeur": 375,
+      "page": "index.html",
+      "violations": [
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "noeuds": 1,
+          "cibles": [
+            "article > pre"
+          ]
+        }
+      ]
+    },
+    {
+      "largeur": 375,
+      "page": "modele.html",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "noeuds": 2,
+          "cibles": [
+            ".table-wrap:nth-child(80) > table > tbody > tr:nth-child(1) > td:nth-child(4) > .ok.badge",
+            ".table-wrap:nth-child(87) > table > tbody > tr:nth-child(1) > td:nth-child(4) > .ok.badge"
+          ]
+        },
+        {
+          "id": "link-in-text-block",
+          "impact": "serious",
+          "noeuds": 20,
+          "cibles": [
+            "a[href$=\"service.html#score\"]",
+            "a[href$=\"donnees.html#label\"]",
+            "p:nth-child(6) > a[href$=\"decisions.html#adr-0013\"]"
+          ]
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "noeuds": 9,
+          "cibles": [
+            "pre:nth-child(46)",
+            "pre:nth-child(48)",
+            ".table-wrap:nth-child(69)"
+          ]
+        }
+      ]
+    },
+    {
+      "largeur": 375,
+      "page": "decisions.html",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "noeuds": 40,
+          "cibles": [
+            "tr:nth-child(1) > td:nth-child(3) > .ok.badge",
+            "tr:nth-child(2) > td:nth-child(3) > .ok.badge",
+            "tr:nth-child(3) > td:nth-child(3) > .ok.badge"
+          ]
+        },
+        {
+          "id": "link-in-text-block",
+          "impact": "serious",
+          "noeuds": 52,
+          "cibles": [
+            "p:nth-child(14) > a[href$=\"pipeline.html\"]",
+            ".warn.callout:nth-child(29) > div > p > a[href$=\"#adr-0016\"]",
+            "p:nth-child(67) > a[href$=\"#adr-0006\"]"
+          ]
+        },
+        {
+          "id": "scrollable-region-focusable",
+          "impact": "serious",
+          "noeuds": 3,
+          "cibles": [
+            "pre:nth-child(123)",
+            "pre:nth-child(302)",
+            ".table-wrap:nth-child(381)"
+          ]
+        }
+      ]
+    }
+  ]
+}
