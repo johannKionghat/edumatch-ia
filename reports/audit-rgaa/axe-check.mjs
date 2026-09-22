@@ -44,7 +44,9 @@ try {
   await page.type("#champ-conseiller", "audit_test");
   await page.click('input[name="type_bac"][value="bg"]');
   await page.click('input[name="boursier"][value="false"]');
-  await page.type("#champ-departement", "05");
+  // Le département est un menu déroulant alimenté par /departements : attendre ses options.
+  await page.waitForFunction(() => document.querySelectorAll("#champ-departement option").length > 1);
+  await page.select("#champ-departement", "05");
   await page.click('#formulaire-recherche button[type="submit"]');
   // attendre que la section résultats ne soit plus "hidden"
   await page.waitForFunction(

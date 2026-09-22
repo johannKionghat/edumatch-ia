@@ -13,7 +13,7 @@
     "orientationAngle": 0,
     "orientationType": "portrait-primary"
   },
-  "timestamp": "2026-09-16T17:17:25.803Z",
+  "timestamp": "2026-09-22T13:24:58.641Z",
   "url": "http://127.0.0.1:8010/",
   "toolOptions": {
     "runOnly": {
@@ -552,28 +552,6 @@
       "nodes": []
     },
     {
-      "id": "select-name",
-      "impact": null,
-      "tags": [
-        "cat.forms",
-        "wcag2a",
-        "wcag412",
-        "section508",
-        "section508.22.n",
-        "TTv5",
-        "TT5.c",
-        "EN-301-549",
-        "EN-9.4.1.2",
-        "ACT",
-        "RGAAv4",
-        "RGAA-11.1.1"
-      ],
-      "description": "Ensure select element has an accessible name",
-      "help": "Select element must have an accessible name",
-      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/select-name?application=axeAPI",
-      "nodes": []
-    },
-    {
       "id": "server-side-image-map",
       "impact": null,
       "tags": [
@@ -791,7 +769,7 @@
             }
           ],
           "impact": null,
-          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">\n    <ul>\n      <li><a href=\"#recherche\">Rechercher</a></li>\n      <li><a href=\"#resultats\">Résultats</a></li>\n    </ul>\n  </nav>",
+          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">",
           "target": [
             "nav"
           ]
@@ -871,7 +849,7 @@
             }
           ],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -1347,7 +1325,7 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">\n    <ul>\n      <li><a href=\"#recherche\">Rechercher</a></li>\n      <li><a href=\"#resultats\">Résultats</a></li>\n    </ul>\n  </nav>",
+          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">",
           "target": [
             "nav"
           ]
@@ -1383,7 +1361,7 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -1853,7 +1831,7 @@
             }
           ],
           "impact": null,
-          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">\n    <ul>\n      <li><a href=\"#recherche\">Rechercher</a></li>\n      <li><a href=\"#resultats\">Résultats</a></li>\n    </ul>\n  </nav>",
+          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">",
           "target": [
             "nav"
           ]
@@ -1889,7 +1867,7 @@
             }
           ],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -2673,7 +2651,7 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">\n    <ul>\n      <li><a href=\"#recherche\">Rechercher</a></li>\n      <li><a href=\"#resultats\">Résultats</a></li>\n    </ul>\n  </nav>",
+          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">",
           "target": [
             "nav"
           ]
@@ -2737,7 +2715,7 @@
           ],
           "none": [],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -3125,7 +3103,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">\n    <ul>\n      <li><a href=\"#recherche\">Rechercher</a></li>\n      <li><a href=\"#resultats\">Résultats</a></li>\n    </ul>\n  </nav>",
+          "html": "<nav class=\"navigation-page\" aria-label=\"Sections de la page\">",
           "target": [
             "nav"
           ]
@@ -3161,7 +3139,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -3868,25 +3846,25 @@
                   ]
                 },
                 {
-                  "html": "<h3>BTS - Services</h3>",
+                  "html": "<h3>D.E secteur sanitaire</h3>",
                   "target": [
                     ".carte-recommandation:nth-child(3) > h3"
                   ]
                 },
                 {
-                  "html": "<h3>D.E secteur sanitaire</h3>",
+                  "html": "<h3>BTS - Services</h3>",
                   "target": [
                     ".carte-recommandation:nth-child(4) > h3"
                   ]
                 },
                 {
-                  "html": "<h3>BTS - Services</h3>",
+                  "html": "<h3>D.E secteur sanitaire</h3>",
                   "target": [
                     ".carte-recommandation:nth-child(5) > h3"
                   ]
                 },
                 {
-                  "html": "<h3>D.E secteur sanitaire</h3>",
+                  "html": "<h3>BTS - Services</h3>",
                   "target": [
                     ".carte-recommandation:nth-child(6) > h3"
                   ]
@@ -3910,7 +3888,7 @@
                   ]
                 },
                 {
-                  "html": "<h3>BUT - Service</h3>",
+                  "html": "<h3>BTS - Services</h3>",
                   "target": [
                     ".carte-recommandation:nth-child(10) > h3"
                   ]
@@ -4061,6 +4039,56 @@
           "html": "<a href=\"#resultats\">Résultats</a>",
           "target": [
             "a[href$=\"#resultats\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#0b3d91",
+                "bgColor": "#ffffff",
+                "contrastRatio": 10.04,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element has sufficient color contrast of 10.04"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<a href=\"/sources-et-licences\">Sources et licences</a>",
+          "target": [
+            "a[href$=\"sources-et-licences\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "color-contrast",
+              "data": {
+                "fgColor": "#0b3d91",
+                "bgColor": "#ffffff",
+                "contrastRatio": 10.04,
+                "fontSize": "12.0pt (16px)",
+                "fontWeight": "normal",
+                "expectedContrastRatio": "4.5:1"
+              },
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element has sufficient color contrast of 10.04"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<a href=\"/notice-information\">Notice d'information du candidat</a>",
+          "target": [
+            "a[href$=\"notice-information\"]"
           ]
         },
         {
@@ -4433,7 +4461,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<label for=\"champ-departement\">Département visé (facultatif, code INSEE, ex. « 75 », « 2A »)</label>",
+          "html": "<label for=\"champ-departement\">Département visé (facultatif)</label>",
           "target": [
             "label[for=\"champ-departement\"]"
           ]
@@ -4458,7 +4486,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -4483,7 +4511,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<p id=\"aide-departement\" class=\"aide-champ\">Deux chiffres, trois pour l'outre-mer, ou 2A/2B pour la Corse.</p>",
+          "html": "<p id=\"aide-departement\" class=\"aide-champ\">Seuls les départements où le catalogue de la session compte au moins une formation sont proposés. « Tous » : aucun filtre.</p>",
           "target": [
             "#aide-departement"
           ]
@@ -4708,7 +4736,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.782</dd>",
+          "html": "<dd>0.799</dd>",
           "target": [
             ".carte-recommandation:nth-child(1) > dl > dd:nth-child(2)"
           ]
@@ -4808,7 +4836,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>78.2 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.782</span></dd>",
+          "html": "<dd>79.9 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.799</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(1) > dl > dd:nth-child(6)"
           ]
@@ -4833,7 +4861,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.782</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.799</span>",
           "target": [
             ".carte-recommandation:nth-child(1) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -5158,7 +5186,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.746</dd>",
+          "html": "<dd>0.794</dd>",
           "target": [
             ".carte-recommandation:nth-child(2) > dl > dd:nth-child(2)"
           ]
@@ -5258,7 +5286,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>74.6 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.746</span></dd>",
+          "html": "<dd>79.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.794</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(2) > dl > dd:nth-child(6)"
           ]
@@ -5283,7 +5311,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.746</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.794</span>",
           "target": [
             ".carte-recommandation:nth-child(2) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -5558,7 +5586,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<h3>BTS - Services</h3>",
+          "html": "<h3>D.E secteur sanitaire</h3>",
           "target": [
             ".carte-recommandation:nth-child(3) > h3"
           ]
@@ -5608,7 +5636,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.664</dd>",
+          "html": "<dd>0.732</dd>",
           "target": [
             ".carte-recommandation:nth-child(3) > dl > dd:nth-child(2)"
           ]
@@ -5708,7 +5736,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>66.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.664</span></dd>",
+          "html": "<dd>73.2 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.732</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(3) > dl > dd:nth-child(6)"
           ]
@@ -5733,7 +5761,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.664</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.732</span>",
           "target": [
             ".carte-recommandation:nth-child(3) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -6008,7 +6036,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<h3>D.E secteur sanitaire</h3>",
+          "html": "<h3>BTS - Services</h3>",
           "target": [
             ".carte-recommandation:nth-child(4) > h3"
           ]
@@ -6058,7 +6086,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.658</dd>",
+          "html": "<dd>0.710</dd>",
           "target": [
             ".carte-recommandation:nth-child(4) > dl > dd:nth-child(2)"
           ]
@@ -6158,7 +6186,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>65.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.658</span></dd>",
+          "html": "<dd>71.0 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.710</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(4) > dl > dd:nth-child(6)"
           ]
@@ -6183,7 +6211,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.658</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.710</span>",
           "target": [
             ".carte-recommandation:nth-child(4) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -6458,7 +6486,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<h3>BTS - Services</h3>",
+          "html": "<h3>D.E secteur sanitaire</h3>",
           "target": [
             ".carte-recommandation:nth-child(5) > h3"
           ]
@@ -6508,7 +6536,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.652</dd>",
+          "html": "<dd>0.668</dd>",
           "target": [
             ".carte-recommandation:nth-child(5) > dl > dd:nth-child(2)"
           ]
@@ -6608,7 +6636,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>65.2 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.652</span></dd>",
+          "html": "<dd>66.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.668</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(5) > dl > dd:nth-child(6)"
           ]
@@ -6633,7 +6661,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.652</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.668</span>",
           "target": [
             ".carte-recommandation:nth-child(5) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -6908,7 +6936,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<h3>D.E secteur sanitaire</h3>",
+          "html": "<h3>BTS - Services</h3>",
           "target": [
             ".carte-recommandation:nth-child(6) > h3"
           ]
@@ -6958,7 +6986,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.614</dd>",
+          "html": "<dd>0.664</dd>",
           "target": [
             ".carte-recommandation:nth-child(6) > dl > dd:nth-child(2)"
           ]
@@ -7058,7 +7086,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>61.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.614</span></dd>",
+          "html": "<dd>66.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.664</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(6) > dl > dd:nth-child(6)"
           ]
@@ -7083,7 +7111,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.614</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.664</span>",
           "target": [
             ".carte-recommandation:nth-child(6) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -7408,7 +7436,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.568</dd>",
+          "html": "<dd>0.614</dd>",
           "target": [
             ".carte-recommandation:nth-child(7) > dl > dd:nth-child(2)"
           ]
@@ -7508,7 +7536,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>56.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.568</span></dd>",
+          "html": "<dd>61.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.614</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(7) > dl > dd:nth-child(6)"
           ]
@@ -7533,7 +7561,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.568</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.614</span>",
           "target": [
             ".carte-recommandation:nth-child(7) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -7858,7 +7886,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.538</dd>",
+          "html": "<dd>0.607</dd>",
           "target": [
             ".carte-recommandation:nth-child(8) > dl > dd:nth-child(2)"
           ]
@@ -7958,7 +7986,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>53.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.538</span></dd>",
+          "html": "<dd>60.7 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.607</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(8) > dl > dd:nth-child(6)"
           ]
@@ -7983,7 +8011,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.538</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.607</span>",
           "target": [
             ".carte-recommandation:nth-child(8) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -8308,7 +8336,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.530</dd>",
+          "html": "<dd>0.541</dd>",
           "target": [
             ".carte-recommandation:nth-child(9) > dl > dd:nth-child(2)"
           ]
@@ -8408,7 +8436,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>53.0 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.530</span></dd>",
+          "html": "<dd>54.1 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.541</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(9) > dl > dd:nth-child(6)"
           ]
@@ -8433,7 +8461,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.530</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.541</span>",
           "target": [
             ".carte-recommandation:nth-child(9) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -8708,7 +8736,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<h3>BUT - Service</h3>",
+          "html": "<h3>BTS - Services</h3>",
           "target": [
             ".carte-recommandation:nth-child(10) > h3"
           ]
@@ -8758,7 +8786,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.497</dd>",
+          "html": "<dd>0.506</dd>",
           "target": [
             ".carte-recommandation:nth-child(10) > dl > dd:nth-child(2)"
           ]
@@ -8858,7 +8886,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>49.7 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.497</span></dd>",
+          "html": "<dd>50.6 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.506</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(10) > dl > dd:nth-child(6)"
           ]
@@ -8883,7 +8911,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.497</span>",
+          "html": "<span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.506</span>",
           "target": [
             ".carte-recommandation:nth-child(10) > dl > dd:nth-child(6) > .etat-indisponible"
           ]
@@ -9480,7 +9508,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.782</dd>",
+          "html": "<dd>0.799</dd>",
           "target": [
             ".carte-recommandation:nth-child(1) > dl > dd:nth-child(2)"
           ]
@@ -9552,7 +9580,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>78.2 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.782</span></dd>",
+          "html": "<dd>79.9 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.799</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(1) > dl > dd:nth-child(6)"
           ]
@@ -9624,7 +9652,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.746</dd>",
+          "html": "<dd>0.794</dd>",
           "target": [
             ".carte-recommandation:nth-child(2) > dl > dd:nth-child(2)"
           ]
@@ -9696,7 +9724,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>74.6 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.746</span></dd>",
+          "html": "<dd>79.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.794</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(2) > dl > dd:nth-child(6)"
           ]
@@ -9768,7 +9796,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.664</dd>",
+          "html": "<dd>0.732</dd>",
           "target": [
             ".carte-recommandation:nth-child(3) > dl > dd:nth-child(2)"
           ]
@@ -9840,7 +9868,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>66.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.664</span></dd>",
+          "html": "<dd>73.2 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.732</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(3) > dl > dd:nth-child(6)"
           ]
@@ -9912,7 +9940,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.658</dd>",
+          "html": "<dd>0.710</dd>",
           "target": [
             ".carte-recommandation:nth-child(4) > dl > dd:nth-child(2)"
           ]
@@ -9984,7 +10012,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>65.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.658</span></dd>",
+          "html": "<dd>71.0 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.710</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(4) > dl > dd:nth-child(6)"
           ]
@@ -10056,7 +10084,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.652</dd>",
+          "html": "<dd>0.668</dd>",
           "target": [
             ".carte-recommandation:nth-child(5) > dl > dd:nth-child(2)"
           ]
@@ -10128,7 +10156,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>65.2 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.652</span></dd>",
+          "html": "<dd>66.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.668</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(5) > dl > dd:nth-child(6)"
           ]
@@ -10200,7 +10228,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.614</dd>",
+          "html": "<dd>0.664</dd>",
           "target": [
             ".carte-recommandation:nth-child(6) > dl > dd:nth-child(2)"
           ]
@@ -10272,7 +10300,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>61.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.614</span></dd>",
+          "html": "<dd>66.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.664</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(6) > dl > dd:nth-child(6)"
           ]
@@ -10344,7 +10372,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.568</dd>",
+          "html": "<dd>0.614</dd>",
           "target": [
             ".carte-recommandation:nth-child(7) > dl > dd:nth-child(2)"
           ]
@@ -10416,7 +10444,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>56.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.568</span></dd>",
+          "html": "<dd>61.4 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.614</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(7) > dl > dd:nth-child(6)"
           ]
@@ -10488,7 +10516,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.538</dd>",
+          "html": "<dd>0.607</dd>",
           "target": [
             ".carte-recommandation:nth-child(8) > dl > dd:nth-child(2)"
           ]
@@ -10560,7 +10588,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>53.8 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.538</span></dd>",
+          "html": "<dd>60.7 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.607</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(8) > dl > dd:nth-child(6)"
           ]
@@ -10632,7 +10660,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.530</dd>",
+          "html": "<dd>0.541</dd>",
           "target": [
             ".carte-recommandation:nth-child(9) > dl > dd:nth-child(2)"
           ]
@@ -10704,7 +10732,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>53.0 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.530</span></dd>",
+          "html": "<dd>54.1 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.541</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(9) > dl > dd:nth-child(6)"
           ]
@@ -10776,7 +10804,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>0.497</dd>",
+          "html": "<dd>0.506</dd>",
           "target": [
             ".carte-recommandation:nth-child(10) > dl > dd:nth-child(2)"
           ]
@@ -10848,7 +10876,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<dd>49.7 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.497</span></dd>",
+          "html": "<dd>50.6 %<br><span class=\"etat-indisponible\">Valeur brute avant écrêtage : 0.506</span></dd>",
           "target": [
             ".carte-recommandation:nth-child(10) > dl > dd:nth-child(6)"
           ]
@@ -11031,7 +11059,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -11049,7 +11077,7 @@
           "all": [],
           "none": [],
           "impact": null,
-          "html": "<p id=\"aide-departement\" class=\"aide-champ\">Deux chiffres, trois pour l'outre-mer, ou 2A/2B pour la Corse.</p>",
+          "html": "<p id=\"aide-departement\" class=\"aide-champ\">Seuls les départements où le catalogue de la session compte au moins une formation sont proposés. « Tous » : aucun filtre.</p>",
           "target": [
             "#aide-departement"
           ]
@@ -11517,7 +11545,7 @@
               "data": null,
               "relatedNodes": [
                 {
-                  "html": "<label for=\"champ-departement\">Département visé (facultatif, code INSEE, ex. « 75 », « 2A »)</label>",
+                  "html": "<label for=\"champ-departement\">Département visé (facultatif)</label>",
                   "target": [
                     "label[for=\"champ-departement\"]"
                   ]
@@ -11528,7 +11556,7 @@
             }
           ],
           "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
           "target": [
             "#champ-departement"
           ]
@@ -12687,41 +12715,6 @@
           "html": "<input type=\"text\" id=\"champ-domaine\" name=\"domaine\" maxlength=\"128\">",
           "target": [
             "#champ-domaine"
-          ]
-        },
-        {
-          "any": [
-            {
-              "id": "explicit-label",
-              "data": {
-                "explicitLabel": "Département visé (facultatif, code INSEE, ex. « 75 », « 2A »)"
-              },
-              "relatedNodes": [
-                {
-                  "html": "<label for=\"champ-departement\">Département visé (facultatif, code INSEE, ex. « 75 », « 2A »)</label>",
-                  "target": [
-                    "label[for=\"champ-departement\"]"
-                  ]
-                }
-              ],
-              "impact": "critical",
-              "message": "Element has an explicit <label>"
-            }
-          ],
-          "all": [],
-          "none": [
-            {
-              "id": "hidden-explicit-label",
-              "data": null,
-              "relatedNodes": [],
-              "impact": "critical",
-              "message": "Form element has a visible explicit <label>"
-            }
-          ],
-          "impact": null,
-          "html": "<input type=\"text\" id=\"champ-departement\" name=\"departement\" maxlength=\"3\" aria-describedby=\"aide-departement\">",
-          "target": [
-            "#champ-departement"
           ]
         },
         {
@@ -13911,6 +13904,58 @@
           "target": [
             "a[href$=\"#resultats\"]"
           ]
+        },
+        {
+          "any": [
+            {
+              "id": "has-visible-text",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element has text that is visible to screen readers"
+            }
+          ],
+          "all": [],
+          "none": [
+            {
+              "id": "focusable-no-name",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element is not in tab order or has accessible text"
+            }
+          ],
+          "impact": null,
+          "html": "<a href=\"/sources-et-licences\">Sources et licences</a>",
+          "target": [
+            "a[href$=\"sources-et-licences\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "has-visible-text",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element has text that is visible to screen readers"
+            }
+          ],
+          "all": [],
+          "none": [
+            {
+              "id": "focusable-no-name",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element is not in tab order or has accessible text"
+            }
+          ],
+          "impact": null,
+          "html": "<a href=\"/notice-information\">Notice d'information du candidat</a>",
+          "target": [
+            "a[href$=\"notice-information\"]"
+          ]
         }
       ]
     },
@@ -13943,7 +13988,7 @@
             }
           ],
           "impact": null,
-          "html": "<ul>\n      <li><a href=\"#recherche\">Rechercher</a></li>\n      <li><a href=\"#resultats\">Résultats</a></li>\n    </ul>",
+          "html": "<ul>\n      <li><a href=\"#recherche\">Rechercher</a></li>\n      <li><a href=\"#resultats\">Résultats</a></li>\n      <li><a href=\"/sources-et-licences\">Sources et licences</a></li>\n      <li><a href=\"/notice-information\">Notice d'information du candidat</a></li>\n    </ul>",
           "target": [
             "ul"
           ]
@@ -14018,6 +14063,42 @@
           "html": "<li><a href=\"#resultats\">Résultats</a></li>",
           "target": [
             "ul > li:nth-child(2)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "listitem",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "List item has a <ul>, <ol> or role=\"list\" parent element"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li><a href=\"/sources-et-licences\">Sources et licences</a></li>",
+          "target": [
+            "ul > li:nth-child(3)"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "listitem",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "List item has a <ul>, <ol> or role=\"list\" parent element"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<li><a href=\"/notice-information\">Notice d'information du candidat</a></li>",
+          "target": [
+            "ul > li:nth-child(4)"
           ]
         },
         {
@@ -14345,6 +14426,1932 @@
           "html": "<input type=\"radio\" name=\"boursier\" value=\"false\">",
           "target": [
             "input[value=\"false\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"\">Tous</option>",
+          "target": [
+            "option[value=\"\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"01\">01 — Ain</option>",
+          "target": [
+            "option[value=\"01\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"02\">02 — Aisne</option>",
+          "target": [
+            "option[value=\"02\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"03\">03 — Allier</option>",
+          "target": [
+            "option[value=\"03\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"04\">04 — Alpes-de-Haute-Provence</option>",
+          "target": [
+            "option[value=\"04\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"05\">05 — Hautes-Alpes</option>",
+          "target": [
+            "option[value=\"05\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"06\">06 — Alpes-Maritimes</option>",
+          "target": [
+            "option[value=\"06\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"07\">07 — Ardèche</option>",
+          "target": [
+            "option[value=\"07\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"08\">08 — Ardennes</option>",
+          "target": [
+            "option[value=\"08\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"09\">09 — Ariège</option>",
+          "target": [
+            "option[value=\"09\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"10\">10 — Aube</option>",
+          "target": [
+            "option[value=\"10\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"11\">11 — Aude</option>",
+          "target": [
+            "option[value=\"11\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"12\">12 — Aveyron</option>",
+          "target": [
+            "option[value=\"12\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"13\">13 — Bouches-du-Rhône</option>",
+          "target": [
+            "option[value=\"13\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"14\">14 — Calvados</option>",
+          "target": [
+            "option[value=\"14\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"15\">15 — Cantal</option>",
+          "target": [
+            "option[value=\"15\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"16\">16 — Charente</option>",
+          "target": [
+            "option[value=\"16\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"17\">17 — Charente-Maritime</option>",
+          "target": [
+            "option[value=\"17\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"18\">18 — Cher</option>",
+          "target": [
+            "option[value=\"18\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"19\">19 — Corrèze</option>",
+          "target": [
+            "option[value=\"19\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"20\">20</option>",
+          "target": [
+            "option[value=\"20\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"2A\">2A — Corse-du-Sud</option>",
+          "target": [
+            "option[value=\"2A\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"2B\">2B — Haute-Corse</option>",
+          "target": [
+            "option[value=\"2B\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"21\">21 — Côte-d'Or</option>",
+          "target": [
+            "option[value=\"21\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"22\">22 — Côtes-d'Armor</option>",
+          "target": [
+            "option[value=\"22\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"23\">23 — Creuse</option>",
+          "target": [
+            "option[value=\"23\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"24\">24 — Dordogne</option>",
+          "target": [
+            "option[value=\"24\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"25\">25 — Doubs</option>",
+          "target": [
+            "option[value=\"25\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"26\">26 — Drôme</option>",
+          "target": [
+            "option[value=\"26\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"27\">27 — Eure</option>",
+          "target": [
+            "option[value=\"27\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"28\">28 — Eure-et-Loir</option>",
+          "target": [
+            "option[value=\"28\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"29\">29 — Finistère</option>",
+          "target": [
+            "option[value=\"29\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"30\">30 — Gard</option>",
+          "target": [
+            "option[value=\"30\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"31\">31 — Haute-Garonne</option>",
+          "target": [
+            "option[value=\"31\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"32\">32 — Gers</option>",
+          "target": [
+            "option[value=\"32\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"33\">33 — Gironde</option>",
+          "target": [
+            "option[value=\"33\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"34\">34 — Hérault</option>",
+          "target": [
+            "option[value=\"34\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"35\">35 — Ille-et-Vilaine</option>",
+          "target": [
+            "option[value=\"35\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"36\">36 — Indre</option>",
+          "target": [
+            "option[value=\"36\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"37\">37 — Indre-et-Loire</option>",
+          "target": [
+            "option[value=\"37\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"38\">38 — Isère</option>",
+          "target": [
+            "option[value=\"38\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"39\">39 — Jura</option>",
+          "target": [
+            "option[value=\"39\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"40\">40 — Landes</option>",
+          "target": [
+            "option[value=\"40\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"41\">41 — Loir-et-Cher</option>",
+          "target": [
+            "option[value=\"41\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"42\">42 — Loire</option>",
+          "target": [
+            "option[value=\"42\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"43\">43 — Haute-Loire</option>",
+          "target": [
+            "option[value=\"43\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"44\">44 — Loire-Atlantique</option>",
+          "target": [
+            "option[value=\"44\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"45\">45 — Loiret</option>",
+          "target": [
+            "option[value=\"45\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"46\">46 — Lot</option>",
+          "target": [
+            "option[value=\"46\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"47\">47 — Lot-et-Garonne</option>",
+          "target": [
+            "option[value=\"47\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"48\">48 — Lozère</option>",
+          "target": [
+            "option[value=\"48\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"49\">49 — Maine-et-Loire</option>",
+          "target": [
+            "option[value=\"49\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"50\">50 — Manche</option>",
+          "target": [
+            "option[value=\"50\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"51\">51 — Marne</option>",
+          "target": [
+            "option[value=\"51\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"52\">52 — Haute-Marne</option>",
+          "target": [
+            "option[value=\"52\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"53\">53 — Mayenne</option>",
+          "target": [
+            "option[value=\"53\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"54\">54 — Meurthe-et-Moselle</option>",
+          "target": [
+            "option[value=\"54\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"55\">55 — Meuse</option>",
+          "target": [
+            "option[value=\"55\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"56\">56 — Morbihan</option>",
+          "target": [
+            "option[value=\"56\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"57\">57 — Moselle</option>",
+          "target": [
+            "option[value=\"57\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"58\">58 — Nièvre</option>",
+          "target": [
+            "option[value=\"58\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"59\">59 — Nord</option>",
+          "target": [
+            "option[value=\"59\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"60\">60 — Oise</option>",
+          "target": [
+            "option[value=\"60\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"61\">61 — Orne</option>",
+          "target": [
+            "option[value=\"61\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"62\">62 — Pas-de-Calais</option>",
+          "target": [
+            "option[value=\"62\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"63\">63 — Puy-de-dôme</option>",
+          "target": [
+            "option[value=\"63\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"64\">64 — Pyrénées-atlantiques</option>",
+          "target": [
+            "option[value=\"64\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"65\">65 — Hautes-Pyrénées</option>",
+          "target": [
+            "option[value=\"65\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"66\">66 — Pyrénées-orientales</option>",
+          "target": [
+            "option[value=\"66\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"67\">67 — Bas-Rhin</option>",
+          "target": [
+            "option[value=\"67\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"68\">68 — Haut-Rhin</option>",
+          "target": [
+            "option[value=\"68\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"69\">69 — Rhône</option>",
+          "target": [
+            "option[value=\"69\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"70\">70 — Haute-saône</option>",
+          "target": [
+            "option[value=\"70\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"71\">71 — Saône-et-loire</option>",
+          "target": [
+            "option[value=\"71\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"72\">72 — Sarthe</option>",
+          "target": [
+            "option[value=\"72\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"73\">73 — Savoie</option>",
+          "target": [
+            "option[value=\"73\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"74\">74 — Haute-Savoie</option>",
+          "target": [
+            "option[value=\"74\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"75\">75 — Paris</option>",
+          "target": [
+            "option[value=\"75\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"76\">76 — Seine-Maritime</option>",
+          "target": [
+            "option[value=\"76\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"77\">77 — Seine-et-Marne</option>",
+          "target": [
+            "option[value=\"77\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"78\">78 — Yvelines</option>",
+          "target": [
+            "option[value=\"78\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"79\">79 — Deux-sèvres</option>",
+          "target": [
+            "option[value=\"79\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"80\">80 — Somme</option>",
+          "target": [
+            "option[value=\"80\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"81\">81 — Tarn</option>",
+          "target": [
+            "option[value=\"81\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"82\">82 — Tarn-et-Garonne</option>",
+          "target": [
+            "option[value=\"82\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"83\">83 — Var</option>",
+          "target": [
+            "option[value=\"83\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"84\">84 — Vaucluse</option>",
+          "target": [
+            "option[value=\"84\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"85\">85 — Vendée</option>",
+          "target": [
+            "option[value=\"85\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"86\">86 — Vienne</option>",
+          "target": [
+            "option[value=\"86\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"87\">87 — Haute-Vienne</option>",
+          "target": [
+            "option[value=\"87\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"88\">88 — Vosges</option>",
+          "target": [
+            "option[value=\"88\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"89\">89 — Yonne</option>",
+          "target": [
+            "option[value=\"89\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"90\">90 — Territoire de Belfort</option>",
+          "target": [
+            "option[value=\"90\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"91\">91 — Essonne</option>",
+          "target": [
+            "option[value=\"91\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"92\">92 — Hauts-de-Seine</option>",
+          "target": [
+            "option[value=\"92\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"93\">93 — Seine-Saint-Denis</option>",
+          "target": [
+            "option[value=\"93\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"94\">94 — Val-de-Marne</option>",
+          "target": [
+            "option[value=\"94\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"95\">95 — Val-d'oise</option>",
+          "target": [
+            "option[value=\"95\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"971\">971 — Guadeloupe</option>",
+          "target": [
+            "option[value=\"971\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"972\">972 — Martinique</option>",
+          "target": [
+            "option[value=\"972\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"973\">973 — Guyane</option>",
+          "target": [
+            "option[value=\"973\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"974\">974 — La Réunion</option>",
+          "target": [
+            "option[value=\"974\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"976\">976 — Mayotte</option>",
+          "target": [
+            "option[value=\"976\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"978\">978 — Saint-Martin</option>",
+          "target": [
+            "option[value=\"978\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"987\">987 — Polynésie française</option>",
+          "target": [
+            "option[value=\"987\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"988\">988 — Nouvelle-Calédonie</option>",
+          "target": [
+            "option[value=\"988\"]"
+          ]
+        },
+        {
+          "any": [
+            {
+              "id": "no-focusable-content",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "serious",
+              "message": "Element does not have focusable descendants"
+            }
+          ],
+          "all": [],
+          "none": [],
+          "impact": null,
+          "html": "<option value=\"99\">99 — Etranger</option>",
+          "target": [
+            "option[value=\"99\"]"
           ]
         },
         {
@@ -15083,6 +17090,64 @@
           "html": "<button type=\"submit\">Enregistrer ma décision</button>",
           "target": [
             ".carte-recommandation:nth-child(10) > div > .formulaire-decision > button[type=\"submit\"]"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "select-name",
+      "impact": null,
+      "tags": [
+        "cat.forms",
+        "wcag2a",
+        "wcag412",
+        "section508",
+        "section508.22.n",
+        "TTv5",
+        "TT5.c",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "ACT",
+        "RGAAv4",
+        "RGAA-11.1.1"
+      ],
+      "description": "Ensure select element has an accessible name",
+      "help": "Select element must have an accessible name",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/select-name?application=axeAPI",
+      "nodes": [
+        {
+          "any": [
+            {
+              "id": "explicit-label",
+              "data": {
+                "explicitLabel": "Département visé (facultatif)"
+              },
+              "relatedNodes": [
+                {
+                  "html": "<label for=\"champ-departement\">Département visé (facultatif)</label>",
+                  "target": [
+                    "label[for=\"champ-departement\"]"
+                  ]
+                }
+              ],
+              "impact": "critical",
+              "message": "Element has an explicit <label>"
+            }
+          ],
+          "all": [],
+          "none": [
+            {
+              "id": "hidden-explicit-label",
+              "data": null,
+              "relatedNodes": [],
+              "impact": "critical",
+              "message": "Form element has a visible explicit <label>"
+            }
+          ],
+          "impact": null,
+          "html": "<select id=\"champ-departement\" name=\"departement\" aria-describedby=\"aide-departement\">",
+          "target": [
+            "#champ-departement"
           ]
         }
       ]

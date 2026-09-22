@@ -90,7 +90,24 @@ try {
   await page.type("#champ-conseiller", "audit_test");
   await page.click('input[name="type_bac"][value="bg"]');
   await page.click('input[name="boursier"][value="false"]');
-  await page.type("#champ-departement", "7");
+  // Le menu déroulant n'offre que des codes valides : un département mal formé n'est plus
+  // saisissable. La valeur est forcée ici pour vérifier que le message d'erreur de l'API reste
+  // lisible si un client l'envoyait quand même (défense en profondeur, pas un parcours réel).
+  await page.waitForFunction(() => document.querySelectorAll("#champ-departement option").length > 1);
+  const selectionClavier = await page.evaluate(() => {
+    const liste = document.getElementById("champ-departement");
+    return { options: liste.options.length, premiere: liste.options[0].textContent, valeurPremiere: liste.options[0].value };
+  });
+  log("formulaires", "departement_liste_options", selectionClavier);
+  await page.focus("#champ-departement");
+  await page.keyboard.press("ArrowDown");
+  const valeurApresFleche = await page.$eval("#champ-departement", (e) => e.value);
+  log("clavier", "departement_selection_au_clavier", valeurApresFleche !== "");
+  await page.evaluate(() => {
+    const liste = document.getElementById("champ-departement");
+    liste.appendChild(new Option("7", "7"));
+    liste.value = "7";
+  });
   await page.click('#formulaire-recherche button[type="submit"]');
   await new Promise((r) => setTimeout(r, 800));
   const messageErreurDept = await page.evaluate(() => document.getElementById("messages-recherche").textContent);

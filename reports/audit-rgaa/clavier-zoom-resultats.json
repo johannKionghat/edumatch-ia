@@ -18,20 +18,26 @@
       "A",
       "A",
       "A",
+      "A",
+      "A",
       "champ-conseiller",
       "type_bac",
       "boursier",
       "champ-type-formation",
       "champ-domaine",
       "champ-departement",
-      "champ-top-n",
-      "BUTTON",
-      "BODY"
+      "champ-top-n"
     ],
-    "tous_les_focus_de_la_sequence_visibles": false,
-    "shift_tab_fonctionne": true
+    "tous_les_focus_de_la_sequence_visibles": true,
+    "shift_tab_fonctionne": true,
+    "departement_selection_au_clavier": true
   },
   "formulaires": {
+    "departement_liste_options": {
+      "options": 107,
+      "premiere": "Tous",
+      "valeurPremiere": ""
+    },
     "departement_mal_forme_message": "Département visé : le format saisi ne correspond pas à celui attendu.",
     "departement_mal_forme_sans_trace_technique": true,
     "focus_apres_soumission_erreur": {
@@ -52,9 +58,9 @@
   "zoom": {
     "viewport_640_debordement_horizontal": false,
     "viewport_320_mesures": {
-      "scrollWidth": 320,
+      "scrollWidth": 384,
       "clientWidth": 320
     },
-    "viewport_320_debordement_horizontal": false
+    "viewport_320_debordement_horizontal": true
   }
 }
