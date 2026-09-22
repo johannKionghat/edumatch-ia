@@ -67,10 +67,11 @@
         </div>
 
         <div class="champ">
-          <label for="champ-departement">Département visé (facultatif, code INSEE, ex. « 75 », « 2A »)</label>
-          <input type="text" id="champ-departement" name="departement" maxlength="3"
-                 aria-describedby="aide-departement">
-          <p id="aide-departement" class="aide-champ">Deux chiffres, trois pour l'outre-mer, ou 2A/2B pour la Corse.</p>
+          <label for="champ-departement">Département visé (facultatif)</label>
+          <select id="champ-departement" name="departement" aria-describedby="aide-departement">
+            <option value="">Tous</option>
+          </select>
+          <p id="aide-departement" class="aide-champ">Seuls les départements où le catalogue de la session compte au moins une formation sont proposés. « Tous » : aucun filtre.</p>
         </div>
 
         <div class="champ">

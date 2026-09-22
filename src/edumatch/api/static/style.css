@@ -110,7 +110,8 @@ fieldset.champ {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+select {
   width: 100%;
   max-width: 24rem;
   padding: 0.5rem;

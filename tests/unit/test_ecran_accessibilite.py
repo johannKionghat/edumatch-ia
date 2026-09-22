@@ -100,6 +100,41 @@ def test_les_groupes_de_boutons_radio_ont_une_legende() -> None:
         assert "<legend>" in bloc
 
 
+LISTES_DEROULANTES = re.findall(r'<select[^>]*id="([^"]+)"', HTML)
+
+
+@pytest.mark.parametrize("identifiant", LISTES_DEROULANTES)
+def test_chaque_liste_deroulante_a_un_label_associe(identifiant: str) -> None:
+    assert f'for="{identifiant}"' in HTML, f"aucun <label for=\"{identifiant}\"> trouvé"
+
+
+def test_departement_est_une_liste_deroulante_avec_loption_tous() -> None:
+    """Le département se choisit dans la liste des départements du catalogue (`/departements`),
+    plus au clavier dans un champ libre : l'option vide « Tous » reproduit l'absence de filtre."""
+    bloc = re.search(r'<select id="champ-departement"[^>]*>(.*?)</select>', HTML, flags=re.DOTALL)
+    assert bloc, "le département doit être un <select id=\"champ-departement\">"
+    assert 'name="departement"' in bloc.group(0)
+    assert re.fullmatch(r'\s*<option value="">Tous</option>\s*', bloc.group(1)), (
+        "seule l'option « Tous » est écrite en dur ; les départements viennent de l'API"
+    )
+    assert not re.search(r'<input[^>]*id="champ-departement"', HTML)
+
+
+def test_liste_des_departements_alimentee_par_lapi_sans_innerhtml() -> None:
+    fonction = re.search(r"async function chargerDepartements\(\) \{.*?\n\}", JS, flags=re.DOTALL).group(0)
+    assert 'fetch("/departements")' in fonction
+    assert "innerHTML" not in fonction
+    assert 'creerElement("option"' in fonction
+    assert "chargerDepartements();" in JS
+
+
+def test_liste_deroulante_stylee_comme_les_champs_texte() -> None:
+    """Même bordure et même taille que les champs texte ; le focus visible vient de la règle
+    globale `:focus` (contour de 3 px), qui s'applique aussi au <select>."""
+    assert re.search(r'input\[type="number"\],\s*select\s*\{', CSS)
+    assert re.search(r":focus\s*\{\s*outline: 3px solid", CSS)
+
+
 def test_aide_departement_est_reliee_au_champ_par_aria_describedby() -> None:
     assert 'aria-describedby="aide-departement"' in HTML
     assert 'id="aide-departement"' in HTML

@@ -461,9 +461,36 @@ async function enregistrerDecision(formulaire, decisionCochee, motif, statut, re
   statut.textContent = decision === "retenue" ? "Décision « retenue » enregistrée." : "Décision « écartée » enregistrée avec le motif fourni.";
 }
 
+// ─── Liste des départements ─────────────────────────────────────────────────
+
+/** Remplit le menu déroulant depuis `/departements` : les codes présents dans le catalogue de la
+ * session courante, jamais une liste codée en dur. L'option « Tous » (valeur vide, aucun filtre)
+ * est dans le HTML et reste la seule si la liste ne peut pas être chargée : la recherche
+ * fonctionne alors sans filtre de département, et l'aide du champ le dit. */
+async function chargerDepartements() {
+  const liste = document.getElementById("champ-departement");
+  const aide = document.getElementById("aide-departement");
+  let reponse;
+  try {
+    reponse = await fetch("/departements");
+  } catch {
+    reponse = null;
+  }
+  if (!reponse || !reponse.ok) {
+    aide.textContent = "La liste des départements n'a pas pu être chargée : la recherche porte sur tous les départements.";
+    return;
+  }
+  const donnees = await reponse.json();
+  for (const departement of donnees.departements) {
+    const texte = departement.libelle ? `${departement.code} — ${departement.libelle}` : departement.code;
+    liste.appendChild(creerElement("option", { texte, attributs: { value: departement.code } }));
+  }
+}
+
 // ─── Initialisation ─────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("formulaire-recherche").addEventListener("submit", rechercherFormations);
   document.getElementById("bouton-fermer-explication").addEventListener("click", fermerExplication);
+  chargerDepartements();
 });
