@@ -1,0 +1,105 @@
+{
+  "tailles_fixes": [
+    {
+      "n_formations": 100,
+      "p50_ms": 270.6,
+      "p95_ms": 370.4,
+      "max_ms": 508.3,
+      "repetitions": 50
+    },
+    {
+      "n_formations": 250,
+      "p50_ms": 345.0,
+      "p95_ms": 460.2,
+      "max_ms": 491.4,
+      "repetitions": 50
+    },
+    {
+      "n_formations": 500,
+      "p50_ms": 460.2,
+      "p95_ms": 529.6,
+      "max_ms": 583.0,
+      "repetitions": 50
+    },
+    {
+      "n_formations": 1000,
+      "p50_ms": 699.5,
+      "p95_ms": 827.9,
+      "max_ms": 901.1,
+      "repetitions": 50
+    },
+    {
+      "n_formations": 2000,
+      "p50_ms": 1152.4,
+      "p95_ms": 1274.9,
+      "max_ms": 1330.0,
+      "repetitions": 50
+    },
+    {
+      "n_formations": 5000,
+      "p50_ms": 2591.7,
+      "p95_ms": 2850.7,
+      "max_ms": 3176.5,
+      "repetitions": 50
+    }
+  ],
+  "departements_reels": [
+    {
+      "n_formations": 1010,
+      "p50_ms": 723.1,
+      "p95_ms": 843.7,
+      "max_ms": 1182.6,
+      "repetitions": 50,
+      "departement": "75",
+      "type_bac": "bg",
+      "boursier": false
+    },
+    {
+      "n_formations": 678,
+      "p50_ms": 564.2,
+      "p95_ms": 638.3,
+      "max_ms": 689.2,
+      "repetitions": 50,
+      "departement": "59",
+      "type_bac": "bg",
+      "boursier": false
+    },
+    {
+      "n_formations": 589,
+      "p50_ms": 513.1,
+      "p95_ms": 567.1,
+      "max_ms": 674.4,
+      "repetitions": 50,
+      "departement": "69",
+      "type_bac": "bg",
+      "boursier": false
+    },
+    {
+      "n_formations": 460,
+      "p50_ms": 454.3,
+      "p95_ms": 512.2,
+      "max_ms": 530.1,
+      "repetitions": 50,
+      "departement": "13",
+      "type_bac": "bg",
+      "boursier": false
+    }
+  ],
+  "contexte": {
+    "date": "2026-09-22T16:11:44+00:00",
+    "commit": "36739dd",
+    "session": 2025,
+    "slo_latence_p95_ms": 300,
+    "plus_grosse_cellule_departementale": 1010,
+    "departement_de_la_plus_grosse_cellule": "75",
+    "cellule_france_entiere": 13685,
+    "profil": {
+      "type_bac": "bg",
+      "boursier": false,
+      "type_formation": "Licence",
+      "domaine": "informatique",
+      "top_n": 10
+    },
+    "machine": "Windows 11, Intel64 Family 6 Model 142 Stepping 10, GenuineIntel, Python 3.12.4"
+  }
+}

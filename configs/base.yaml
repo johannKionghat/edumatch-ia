@@ -443,7 +443,14 @@ orchestration:
 
 api:
   slo_latence_p95_ms: 300
-  max_formations_evaluees: 500       # plafond du catalogue scoré par requête /matching (recommander non vectorisé)
+  # Plafond du sous-catalogue scoré par requête /matching, fixé sur la mesure
+  # (scripts/bench_matching.py, résultat dans reports/bench-matching.json) : il couvre le
+  # plus gros département réel du catalogue 2025, le 75 (1 010 formations pour la cellule
+  # bac général, non boursier), dont le p95 mesuré en local est de 844 ms de bout en bout,
+  # authentification comprise. Ce plafond ne tient donc PAS le SLO de 300 ms : il borne le
+  # coût d'une requête, il ne le garantit pas (voir docs/service.html#api-degradation).
+  # La France entière (13 685 formations) reste refusée, avec un 422 explicite.
+  max_formations_evaluees: 1100
   top_n_max: 50                      # plafond du nombre de recommandations demandables
   # Revue de sécurité : fenêtre glissante de 60 s, par adresse IP sur /matching et par
   # identifiant de conseiller authentifié sur /feedback (src/edumatch/api/rate_limit.py).

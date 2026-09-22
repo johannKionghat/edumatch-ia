@@ -779,14 +779,16 @@ class ApiConfig(_Strict):
 
     `max_formations_evaluees` : plafond de lignes du catalogue soumises à
     `matching.score.recommander` pour une seule requête `/matching`.
-    `recommander` boucle ligne à ligne, délibérément non vectorisé (voir son
-    docstring) : au-delà de ce plafond, le temps de calcul menacerait
-    `slo_latence_p95_ms`. Au-delà, l'API répond 422 et demande de préciser un
-    département ou un domaine plutôt que de tronquer silencieusement le
-    catalogue — aucune formation écartée sans que l'appelant en soit informé.
-    Valeur retenue par ordre de grandeur avec `matching/exemple.py`, qui
-    documente un catalogue « de la taille d'une recherche candidate (quelques
-    centaines de lignes) » ; à mesurer précisément si ce plafond doit changer.
+    `recommander` boucle ligne à ligne, sans vectorisation : le coût d'une
+    requête croît avec le nombre de lignes (0,47 ms par formation, mesuré par
+    `scripts/bench_matching.py`). Au-delà du plafond, l'API répond 422 et
+    demande de choisir un département, seul filtre qui réduit ce périmètre (le
+    domaine et le type de formation s'appliquent après, dans l'affinité) :
+    aucune formation écartée sans que l'appelant en soit informé. La valeur
+    couvre le plus gros département réel du catalogue et borne le coût d'une
+    requête ; elle ne garantit pas `slo_latence_p95_ms` (p95 mesuré : 844 ms
+    sur ce département, voir `configs/base.yaml` et
+    `reports/bench-matching.json`).
 
     `top_n_max` : borne du nombre de recommandations qu'un appelant peut
     demander (`ProfilRequete.top_n`) — protège des mêmes risques de latence

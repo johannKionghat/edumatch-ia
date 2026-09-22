@@ -176,10 +176,10 @@ def matching(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
-                f"{n_disponibles} formations correspondent à ce profil, au-delà du plafond "
-                f"({settings.api.max_formations_evaluees}) fixé pour tenir le SLO de latence "
-                f"p95 ({settings.api.slo_latence_p95_ms} ms) : préciser un département ou un domaine "
-                "pour réduire le périmètre plutôt que de tronquer le catalogue en silence."
+                f"{n_disponibles} formations correspondent à ce profil, au-delà du plafond de "
+                f"{settings.api.max_formations_evaluees} formations évaluées par requête : "
+                "choisir un département pour réduire le périmètre. Le catalogue n'est jamais "
+                "tronqué en silence."
             ),
         )
     top_n = min(profil.top_n, settings.api.top_n_max)

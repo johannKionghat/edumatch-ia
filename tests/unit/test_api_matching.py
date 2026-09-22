@@ -264,7 +264,7 @@ def test_matching_plafond_de_catalogue_renvoie_422_explicite(_authentification: 
                 "boursier": False,
                 "taux_predit": 0.5,
             }
-            for i in range(600)
+            for i in range(get_settings().api.max_formations_evaluees + 1)
         ]
     )
     etat = EtatMatching(
@@ -281,7 +281,13 @@ def test_matching_plafond_de_catalogue_renvoie_422_explicite(_authentification: 
 
     reponse = client.post("/matching", json={"type_bac": "bg", "boursier": False})
     assert reponse.status_code == 422
-    assert "plafond" in reponse.json()["detail"]
+    detail = reponse.json()["detail"]
+    assert "plafond" in detail
+    # Seul le département réduit le périmètre du plafond : le domaine et le type de formation
+    # s'appliquent après, dans l'affinité : les suggérer induirait le conseiller en erreur.
+    assert "département" in detail
+    assert "domaine" not in detail
+    assert "type de formation" not in detail
 
 
 def test_matching_service_non_initialise_repond_503(_authentification: None) -> None:
