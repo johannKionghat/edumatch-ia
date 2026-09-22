@@ -118,7 +118,22 @@ flowchart TD
 
         <h3 id="api-degradation">Dégradation explicite, jamais de panne totale ni de zéro silencieux</h3>
         <p>Si le stock Sirene manque au démarrage, le service démarre quand même : chaque formation porte le statut de chaîne rompue déjà défini par le module de débouchés, avec son motif dans la réponse. Un zéro n'est jamais confondu avec une absence réelle de débouché.</p>
-        <p>Si le sous-catalogue restreint au profil déclaré dépasse le plafond configuré, le service répond <strong>422</strong> et demande de préciser le département ou le domaine : le module de recommandation n'est pas vectorisé et ne peut pas classer un volume arbitraire en temps borné. Un plafond explicite vaut mieux qu'une troncature invisible.</p>
+        <p>Si le sous-catalogue restreint au profil déclaré dépasse le plafond configuré (<code>api.max_formations_evaluees</code>, <strong>1 100</strong> formations), le service répond <strong>422</strong> et demande de choisir un département. C'est le seul filtre qui réduit ce périmètre : le domaine et le type de formation s'appliquent après, dans le calcul d'affinité. Un plafond explicite vaut mieux qu'une troncature invisible.</p>
+        <p><strong>Ce plafond est fixé sur une mesure, et il ne tient pas le SLO de 300 ms.</strong> Il couvre le plus gros département réel du catalogue 2025, Paris (1 010 formations pour la cellule bac général, non boursier) ; la France entière (13 685) reste refusée. Mesure de bout en bout d'une requête <code>/matching</code>, authentification comprise, par <code>scripts/bench_matching.py</code> (résultat versionné : <code>reports/bench-matching.json</code>) :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sous-catalogue</th><th>p50</th><th>p95</th></tr></thead>
+            <tbody>
+              <tr><td>100 formations</td><td>271 ms</td><td>370 ms</td></tr>
+              <tr><td>500 formations</td><td>460 ms</td><td>530 ms</td></tr>
+              <tr><td>1 000 formations</td><td>700 ms</td><td>828 ms</td></tr>
+              <tr><td>5 000 formations</td><td>2 592 ms</td><td>2 851 ms</td></tr>
+              <tr><td>Paris (75), 1 010 formations</td><td>723 ms</td><td><strong>844 ms</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Décomposition mesurée : <strong>125 ms fixes</strong> de vérification scrypt du mot de passe, refaite à chaque requête ; <strong>0,47 ms par formation</strong> pour le calcul du score, une boucle Python non vectorisée ; environ <strong>95 ms</strong> pour le reste de la route (filtrage, libellés, journal d'audit, sérialisation). Conditions : poste local (Windows 11, Intel, Python 3.12), requête traitée dans le processus sans réseau, 50 répétitions après chauffe, profil prudent (domaine et type de formation renseignés). Un pod limité à un CPU sera plus lent, pas plus rapide. L'ancienne valeur de 500 avait été posée par ordre de grandeur, jamais mesurée : le banc montre qu'elle ne tenait pas non plus les 300 ms (p95 de 530 ms).</p>
+        <p><strong>Correction suivante : vectoriser le calcul du score.</strong> Le coût par formation vient de la boucle et de ses accès ligne à ligne, pas de la charge métier ; c'est lui qui interdit de tenir le SLO sur un grand département. Condition d'acceptation : un test d'équivalence stricte, qui compare sur tout le catalogue les scores de la version vectorisée à ceux de la boucle actuelle, puis le même banc rejoué. Autre piste, notée sans être retenue : mettre en cache pour quelques minutes la vérification scrypt d'un couple identifiant et mot de passe déjà validé. Elle retire 125 ms par requête, mais affaiblit la protection contre la force brute que le coût de scrypt apporte justement ; elle ne suffirait pas seule (environ 600 ms resteraient sur Paris).</p>
 
         <h3 id="api-rgpd">Article 22 du RGPD</h3>
         <p>Chaque réponse de <code>/matching</code> rappelle que le score assiste un conseiller, il ne décide jamais. <code>/feedback</code> est le point d'entrée où un écartement motivé et horodaté est journalisé, comme l'exige la matrice de risques de la gouvernance.</p>
