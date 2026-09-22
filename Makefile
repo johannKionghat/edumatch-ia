@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate explain api audit-purge audit-purge-appliquer sources-licences docs-index supervision-purge supervision-purge-appliquer droits ecran-verifier assistant-exemple test lint fmt clean up-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
+.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate departements explain api audit-purge audit-purge-appliquer sources-licences docs-index supervision-purge supervision-purge-appliquer droits ecran-verifier assistant-exemple test lint fmt clean up-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -115,6 +115,9 @@ train:  ## Entraîne le modèle et enregistre l'exécution dans MLflow
 
 evaluate:  ## Évalue sur le jeu de test, produit calibration et équité
 	python -m edumatch.models.evaluate
+
+departements:  ## Libellés des départements de la session courante, pour la liste déroulante de l'écran
+	python -m edumatch.matching.departements
 
 explain:  ## Explicabilité TreeSHAP : importance globale, exemples locaux, précalcul par cellule
 	python -m edumatch.models.explain

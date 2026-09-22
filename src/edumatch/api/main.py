@@ -33,7 +33,7 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from edumatch.api.errors import enregistrer_gestionnaires_erreurs
-from edumatch.api.routes import assistant, ecran, explain, feedback, health, matching
+from edumatch.api.routes import assistant, departements, ecran, explain, feedback, health, matching
 from edumatch.api.security_headers import enregistrer_en_tetes_securite
 from edumatch.api.state import construire_etat_explicabilite, construire_etat_matching
 from edumatch.config import get_settings
@@ -85,6 +85,7 @@ def create_app() -> FastAPI:
     enregistrer_en_tetes_securite(app)
     app.include_router(health.router)
     app.include_router(matching.router)
+    app.include_router(departements.router)
     app.include_router(explain.router)
     app.include_router(feedback.router)
     app.include_router(assistant.router)

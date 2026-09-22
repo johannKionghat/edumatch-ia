@@ -73,6 +73,23 @@ class ProfilRequete(BaseModel):
     top_n: int = Field(default=10, ge=1, description="Nombre de recommandations souhaitées (plafonné côté serveur).")
 
 
+class Departement(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(description="Code INSEE, tel que l'attend le champ `departement` de /matching.")
+    libelle: str | None = Field(description="Libellé Parcoursup de la session courante ; null si indisponible.")
+
+
+class ReponseDepartements(BaseModel):
+    """Les départements où le catalogue de la session courante compte au moins une formation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    session: int
+    libelles_disponibles: bool
+    departements: list[Departement]
+
+
 class TermeAffiniteReponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

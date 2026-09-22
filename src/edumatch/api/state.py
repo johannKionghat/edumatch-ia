@@ -59,7 +59,7 @@ calcul à la demande n'est pas réaliste pour une API (voir le docstring de
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pandas as pd
@@ -67,6 +67,7 @@ import polars as pl
 from polars.exceptions import ColumnNotFoundError, SchemaError
 
 from edumatch.config import Settings, get_settings
+from edumatch.matching import departements
 from edumatch.matching.agregat_sirene_debouches import RapportKAnonymat
 from edumatch.matching.debouches import (
     ArtefactsDebouches,
@@ -95,6 +96,9 @@ class EtatMatching:
     artefacts_debouches: ArtefactsDebouches
     debouches_disponible: bool
     motif_indisponibilite_debouches: str | None
+    # Code -> libellé pour la liste déroulante de l'écran (`matching/departements.py`) ; vide si
+    # l'artefact manque : la liste est alors servie en codes seuls, jamais inventée.
+    libelles_departements: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -204,6 +208,7 @@ def construire_etat_matching(settings: Settings | None = None) -> EtatMatching:
         artefacts_debouches=artefacts,
         debouches_disponible=disponible,
         motif_indisponibilite_debouches=motif,
+        libelles_departements=departements.charger_libelles(settings, sessions_test[0]),
     )
 
 
