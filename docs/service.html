@@ -298,7 +298,7 @@ flowchart TD
         <h3 id="rgaa-synthese">Synthèse des limites déclarées sur l'écran conseiller</h3>
         <ol>
           <li>L'audit manuel a été déroulé dans un vrai navigateur pour tout ce qui ne demande pas de lecteur d'écran (clavier, zoom, redimensionnement, simulation de daltonisme, outils automatisés). Les deux non-conformités trouvées ont été corrigées et revérifiées en conditions réelles (parcours clavier scripté et audit axe-core rejoués sur les trois états, 0 violation). La vérification au lecteur d'écran n'a pas été faite, faute d'un tel outil dans l'environnement audité — elle reste à dérouler par une personne humaine.</li>
-          <li>Le tableau de bord du taux d'écartement destiné au déployeur reste à construire : le tableau de supervision compte les décisions, sans en calculer le taux.</li>
+          <li>Le tableau de supervision compte les décisions sans en calculer le taux. Le tableau de bord du taux d'écartement destiné au déployeur est planifié avant mise en service, sous la responsabilité du délégué à la protection des données.</li>
           <li>L'authentification ne couvre que <code>/feedback</code> — <code>/matching</code> et l'écran restent anonymes, par choix assumé plutôt que par oubli.</li>
           <li>Aucun verrouillage après une série d'échecs d'authentification : la limitation de débit borne le rythme des appels, mais n'introduit pas de délai croissant ni de blocage après plusieurs mots de passe erronés.</li>
           <li>Résolu au 16 septembre 2026 : l'identifiant du conseiller n'est plus déclaratif, comme décrit dans la section <a href="#ecran-conseiller">Écran conseiller</a>.</li>

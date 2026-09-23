@@ -45,7 +45,7 @@
           <table>
             <thead><tr><th>#</th><th>Risque</th><th>Nature</th><th class="num">G</th><th class="num">V</th><th>Niveau</th><th>Réduit à</th><th>Statut</th></tr></thead>
             <tbody>
-              <tr><td><a href="#r1">R1</a></td><td>Violation de données personnelles</td><td>Personnes</td><td class="num">3</td><td class="num">3</td><td><span class="badge bad">Élevé</span></td><td><span class="badge ok">Faible</span></td><td>Aggravé le 15/09/2026 ; au 17/09/2026, écran et <code>/matching</code> ouverts, décision authentifiée sur un compte partagé</td></tr>
+              <tr><td><a href="#r1">R1</a></td><td>Violation de données personnelles</td><td>Personnes</td><td class="num">3</td><td class="num">3</td><td><span class="badge bad">Élevé</span></td><td><span class="badge ok">Faible</span></td><td>Aggravé le 15/09/2026 ; au 22/09/2026, l'écran, <code>/matching</code> et <code>/feedback</code> exigent un compte conseiller nominatif, et le service tourne sur le cluster avec son cloisonnement réseau</td></tr>
               <tr><td><a href="#r2">R2</a></td><td>Ré-identification par l'agrégat territorial</td><td>Personnes</td><td class="num">2</td><td class="num">4</td><td><span class="badge bad">Élevé</span></td><td><span class="badge ok">Faible</span></td><td>Traité : k = 5 et filtre de diffusion appliqués au point de restitution</td></tr>
               <tr><td><a href="#r3">R3</a></td><td>Discrimination indirecte par variable substitut</td><td>Personnes</td><td class="num">4</td><td class="num">3</td><td><span class="badge bad">Élevé</span></td><td><span class="badge bad">Élevé</span></td><td>Mesuré sur les prédictions : impact disparate 0,76, sous le seuil légal. Non résolu</td></tr>
               <tr><td><a href="#r4">R4</a></td><td>Boucle de rétroaction sur l'orientation</td><td>Personnes</td><td class="num">4</td><td class="num">2</td><td><span class="badge bad">Élevé</span></td><td><span class="badge warn">Modéré</span></td><td>Partiellement instrumenté, non mesuré</td></tr>
@@ -90,7 +90,7 @@
         <ul>
           <li>Minimisation vérifiée par <code>tests/data/test_echantillons_conformite.py</code>.</li>
           <li>Comptes conseillers individuels et restriction d'accès à l'écran : à construire, bloquant.</li>
-          <li>Cloisonnement écrit dans le code d'infrastructure du second dépôt, mais non déployé.</li>
+          <li>Cloisonnement déployé le 22 septembre 2026 : espace de noms dédié, politique réseau appliquée qui n'autorise en entrée que le port du service depuis l'intérieur du cluster, conteneurs non root, système de fichiers en lecture seule.</li>
           <li>Chiffrement en transit : à démontrer une fois l'infrastructure déployée.</li>
           <li>Procédure de notification de violation (72 heures, art. 33) : à écrire.</li>
         </ul>
@@ -207,7 +207,7 @@
               <tr><td>Horodaté et journalisé</td><td><span class="badge ok">Fait</span> <code>api/feedback_store.py</code></td></tr>
               <tr><td>Facteurs explicatifs présentés à côté du score</td><td><span class="badge ok">Fait</span></td></tr>
               <tr><td>Taux d'écartement mesuré et affiché au déployeur</td><td><span class="badge warn">Partiel</span> décisions comptées dans Grafana, aucun taux ; un taux nul sur une campagne serait un signal d'alerte, pas un signe de qualité</td></tr>
-              <tr><td>Identité du superviseur vérifiée</td><td><span class="badge warn">Partiel</span> authentification sur un compte partagé, non nominative</td></tr>
+              <tr><td>Identité du superviseur vérifiée</td><td><span class="badge ok">Couvert</span> authentification sur un compte conseiller nominatif</td></tr>
             </tbody>
           </table>
         </div>
@@ -266,7 +266,7 @@
           <li>La procédure de notification de violation (art. 33 et 34) est écrite ; elle n'a pas encore été exercée, faute d'incident, et suppose de savoir qui héberge quoi.</li>
           <li>Le registre d'incident est tenu et la procédure a été exercée à blanc le 23 septembre 2026, ce que l'article 9 du règlement sur l'IA suppose pour une gestion des risques continue.</li>
           <li>Aucun plan de surveillance après commercialisation (art. 72) : la mesure de dérive en est l'instrument, pas le plan.</li>
-          <li>L'ouverture de l'écran conseiller et le compte partagé relèvent de la sécurité technique. Ils sont portés ici par R1 et par le motif de blocage A de l'AIPD.</li>
+          <li>L'ouverture de l'écran conseiller et l'absence de compte nominatif relevaient de la sécurité technique : portées par R1 et par le motif de blocage A, elles ont été traitées le 18 septembre 2026 par des comptes conseillers nominatifs.</li>
         </ul>
 
         <h3 id="changements">Ce qui a changé au 15 septembre 2026</h3>
@@ -483,11 +483,11 @@ flowchart TD
               <tr><td>Facteurs explicatifs présentés à côté du score</td><td><span class="badge ok">Oui</span></td></tr>
               <tr><td>L'interface dit ce qu'elle ne sait pas</td><td><span class="badge ok">Oui</span> affiché</td></tr>
               <tr><td>Taux d'écartement mesuré et restitué</td><td><span class="badge warn">Partiel</span> un panneau Grafana compte les décisions sur 24 heures ; aucun taux n'est calculé</td></tr>
-              <tr><td>Identité du superviseur vérifiée</td><td><span class="badge warn">Partiel</span> authentification HTTP Basic sur l'enregistrement de la décision, compte partagé non nominatif</td></tr>
+              <tr><td>Identité du superviseur vérifiée</td><td><span class="badge ok">Couvert</span> authentification HTTP Basic sur un compte nominatif, exigée par l'écran comme par l'enregistrement de la décision</td></tr>
             </tbody>
           </table>
         </div>
-        <p>Ce sont deux manques différents. L'absence de taux d'écartement empêche de mesurer l'effectivité du contrôle : c'est une réserve. Le compte partagé est plus grave : une trace de supervision n'est imputable à aucune personne identifiée. C'est le <a href="#motifs">motif de blocage A</a>.</p>
+        <p>Ce sont deux manques différents. Le second, plus grave, est traité : une trace de supervision doit être imputable à une personne identifiée, ce qu'assurent les comptes nominatifs depuis le 18 septembre 2026, et c'est ce qui a levé le <a href="#motifs">motif de blocage A</a>. Le premier subsiste : sans taux d'écartement, l'effectivité du contrôle humain n'est pas mesurable. Sa mesure est planifiée avant mise en service, sous la responsabilité du délégué à la protection des données.</p>
 
         <h3 id="debouches">6.5 Information erronée sur les débouchés : tranché</h3>
         <p>Le risque : orienter un choix de vie sur un chiffre de débouchés faux. La mesure est sévère. L'appariement textuel exact des libellés couvre 7 libellés distincts sur 712 (1,0 %), soit 6 017 lignes sur 440 030 (1,4 %), relues à la main. Pour les 98,6 % restants, le terme est marqué indisponible avec son motif, jamais mis à zéro en silence, et ce motif remonte à l'écran.</p>
@@ -519,7 +519,7 @@ flowchart TD
             <tbody>
               <tr><td>1. Calibration non mesurée</td><td><span class="badge warn">Levé</span> comme motif d'ignorance ; la mesure est défavorable et fonde le motif D</td><td><code>models/evaluate.py</code></td></tr>
               <tr><td>2. Audit d'équité non réalisé</td><td><span class="badge ok">Levé</span> réalisé sur quatre dimensions</td><td><code>models/fairness.py</code>, page <a href="modele.html">Modèle</a></td></tr>
-              <tr><td>3. Aucun dispositif de contrôle humain</td><td><span class="badge warn">Levé sur l'existence</span> effectivité non mesurable, supervision authentifiée sur un compte partagé</td><td><code>api/static/</code>, <code>routes/feedback.py</code></td></tr>
+              <tr><td>3. Aucun dispositif de contrôle humain</td><td><span class="badge warn">Levé sur l'existence</span> supervision authentifiée sur un compte nominatif ; l'effectivité reste non mesurable faute de taux d'écartement, mesure planifiée avant mise en service</td><td><code>api/static/</code>, <code>routes/feedback.py</code></td></tr>
               <tr><td>4. Durées sans purge exécutable</td><td><span class="badge warn">Levé pour T5</span> pas pour T6</td><td><code>api/audit_purge.py</code>, DAG</td></tr>
             </tbody>
           </table>

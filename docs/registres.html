@@ -162,7 +162,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
               <tr><th scope="row">Base légale</th><td>Consentement (art. 6.1.a) en usage direct, ou mission d'intérêt public (art. 6.1.e) si le déployeur est un établissement public. Le choix appartient au responsable de traitement</td></tr>
               <tr><th scope="row">Durée de conservation</th><td>Aucune conservation de la saisie au-delà de la requête ; ce qui est conservé relève de T5</td></tr>
               <tr><th scope="row">Destinataires</th><td>Le candidat, et le conseiller (T6)</td></tr>
-              <tr><th scope="row">Transferts hors UE</th><td>Aucun : hébergement souverain prévu chez Scaleway, motivé par la présence de données de mineurs (infrastructure écrite dans le second dépôt, non déployée)</td></tr>
+              <tr><th scope="row">Transferts hors UE</th><td>Aucun : hébergement souverain chez Scaleway, motivé par la présence de données de mineurs. Infrastructure déployée le 22 septembre 2026, région fr-par, cluster Kubernetes Kapsule.</td></tr>
             </tbody>
           </table>
         </div>
@@ -224,7 +224,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
           <span class="ico" aria-hidden="true">×</span>
           <div>
             <span class="title">Deux motifs de blocage actifs sur ce traitement</span>
-            <p>L'enregistrement d'une décision exige déjà une authentification HTTP Basic (<code>api/auth.py</code>). Elle porte aujourd'hui sur un compte conseiller partagé, non nominatif : la trace n'est donc imputable à aucune personne identifiée (motif A). La purge de ce journal reste à construire, faute d'identifiant commun avec T5 (motif B). Voir les <a href="gouvernance.html#motifs">motifs de blocage</a>.</p>
+            <p>L'enregistrement d'une décision exige une authentification HTTP Basic (<code>api/auth.py</code>) sur un compte conseiller nominatif : chaque trace est imputable à une personne identifiée, ce qui a levé le motif A le 18 septembre 2026. La purge de ce journal est planifiée dans le DAG quotidien et vérifiée sur échantillon, ce qui a levé le motif B à la même date. Voir les <a href="gouvernance.html#motifs">motifs de blocage</a>.</p>
           </div>
         </div>
 
@@ -404,7 +404,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
 
         <h3 id="sources-limites">Ce que ce registre ne couvre pas encore</h3>
         <ul>
-          <li>La rubrique « Sources et licences » n'existe pas encore sur l'écran conseiller. L'attribution des cinq jeux sous Licence Ouverte n'est donc satisfaite que vis-à-vis d'un lecteur du dépôt, pas d'un utilisateur final.</li>
+          <li>La rubrique « Sources et licences » est servie par l'écran conseiller depuis le 20 septembre 2026, et sa page est générée depuis les manifestes d'ingestion : l'attribution des cinq jeux est satisfaite vis-à-vis d'un utilisateur final, pas seulement d'un lecteur du dépôt.</li>
           <li>La publication ODbL de la table dérivée est décidée, pas faite.</li>
           <li>Aucune source sous licence non commerciale, ou à réciprocité autre que l'ODbL, n'est utilisée. Je l'ai vérifié source par source.</li>
         </ul>
