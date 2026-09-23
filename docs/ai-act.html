@@ -269,7 +269,7 @@ flowchart TD
               <tr><td>Aucun secret dans le dépôt</td><td><code>.gitignore</code>, <code>.env.example</code> à valeurs factices, configuration externalisée</td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Prévention de l'injection dans l'interface</td><td>Rendu par <code>textContent</code> et <code>createElement</code>, jamais <code>innerHTML</code></td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Validation des entrées de l'API</td><td>Schémas Pydantic, plafonds explicites, erreurs typées</td><td><span class="badge ok">Couvert</span></td></tr>
-              <tr><td>Contrôle d'accès</td><td><code>api/auth.py</code> : HTTP Basic sur l'enregistrement des décisions</td><td><span class="badge warn">Partiel</span> compte partagé ; écran et <code>/matching</code> ouverts ; motif de blocage A</td></tr>
+              <tr><td>Contrôle d'accès</td><td><code>api/auth.py</code> : HTTP Basic sur l'enregistrement des décisions</td><td><span class="badge ok">Couvert</span> comptes conseillers nominatifs sur l'écran, <code>/matching</code> et <code>/feedback</code> ; motif de blocage A levé le 18 septembre 2026</td></tr>
               <tr><td>Chiffrement au repos et en transit, cloisonnement par rôles</td><td>Code d'infrastructure du second dépôt (<code>edumatch-cicd/terraform/</code>, <code>k8s/</code>) : réseau privé, registre et stockage privés, NetworkPolicy, conteneurs non root, système de fichiers en lecture seule, aucun jeton de compte de service monté</td><td><span class="badge warn">Partiel</span> écrit et non déployé ; chiffrement en transit et terminaison TLS à démontrer au déploiement</td></tr>
               <tr><td>Rotation et révocation des secrets</td><td>Politique écrite dans le <a href="gouvernance.html">plan de gouvernance</a></td><td><span class="badge warn">Partiel</span> non outillée</td></tr>
               <tr><td>Résistance à l'empoisonnement des données ou du modèle</td><td>Contrôles qualité bloquants et empreintes SHA-256</td><td><span class="badge warn">Partiel</span> aucun test adverse conduit</td></tr>
@@ -297,7 +297,7 @@ flowchart TD
           <table>
             <thead><tr><th>Article</th><th>Statut d'ensemble</th></tr></thead>
             <tbody>
-              <tr><td><a href="#art-9">9</a>, gestion des risques</td><td><span class="badge ok">Couvert</span> sauf le journal d'incident et un cycle de révision exécuté</td></tr>
+              <tr><td><a href="#art-9">9</a>, gestion des risques</td><td><span class="badge ok">Couvert</span> ; registre d'incident tenu et exercé à blanc, un cycle complet de révision annuelle restant à exécuter</td></tr>
               <tr><td><a href="#art-10">10</a>, gouvernance des données</td><td><span class="badge ok">Couvert</span> avec deux limites : correction des biais au bout de ce que l'exclusion de variables permet ; représentativité non établie sur la population du déployeur</td></tr>
               <tr><td><a href="#art-11">11</a>, documentation technique</td><td><span class="badge warn">Partiel</span> couvert sur le fond, partiel sur la forme : dossier consolidé à assembler</td></tr>
               <tr><td><a href="#art-12">12</a>, journalisation</td><td><span class="badge warn">Partiel</span> couvert pour l'inférence, avec purge exécutable, testée et planifiée ; non couvert pour la trace de supervision</td></tr>
@@ -316,7 +316,7 @@ flowchart TD
               <li>Information de la personne concernée : notice candidat et attribution des sources restent à produire.</li>
               <li>Imputabilité de la supervision : le compte conseiller est partagé, l'écran reste ouvert.</li>
               <li>Purge du journal de supervision : à construire, faute d'identifiant commun avec le journal d'inférence.</li>
-              <li>Plan de surveillance après commercialisation et journal d'incident : à écrire.</li>
+              <li>Journal d'incident : tenu, avec un exercice à blanc réalisé le 23 septembre 2026. Plan de surveillance après commercialisation (article 72) : planifié avant mise en service.</li>
               <li>Niveau d'exactitude : le modèle mesuré reste sous la règle de référence sur la session la plus récente.</li>
             </ol>
           </div>

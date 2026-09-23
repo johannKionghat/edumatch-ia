@@ -305,7 +305,7 @@ flowchart TD
               <tr><td>Seuil de k-anonymat des restitutions</td><td>k = 5</td><td>Cellule restituée sous 5</td><td><span class="badge ok">Appliqué</span></td><td><code>configs/base.yaml</code> (<code>matching.k_anonymat_debouches</code>), <code>src/edumatch/matching/agregat_sirene_debouches.py</code></td><td>DPO</td><td>À chaque restitution</td></tr>
               <tr><td>Purges du journal exécutées</td><td>Une par jour planifiée</td><td>Un jour sans purge</td><td><span class="badge info">Non mesuré</span> en exploitation (planifiée <code>@daily</code>)</td><td><code>pipelines/edumatch_pipeline.py</code>, <code>configs/base.yaml</code></td><td>Data Steward</td><td>Quotidienne</td></tr>
               <tr><td>Taux d'écartement des conseillers</td><td>&gt; 0, à interpréter</td><td>Nul sur une campagne</td><td><span class="badge info">Non mesuré</span> (compteur instrumenté)</td><td><code>src/edumatch/api/routes/feedback.py</code></td><td>Établissement client (déployeur), avec l'architecte IA</td><td>Mensuelle</td></tr>
-              <tr><td>Incidents et violations RGPD</td><td>0</td><td>≥ 1</td><td><span class="badge info">Non mesuré</span> (aucun journal d'incident)</td><td><a href="#incident">Procédure d'incident</a></td><td>DPO</td><td>Continue</td></tr>
+              <tr><td>Incidents et violations RGPD</td><td>0</td><td>≥ 1</td><td><span class="badge ok">0 incident réel</span> ; registre tenu, un exercice à blanc réalisé</td><td><a href="#incident">Procédure d'incident</a></td><td>DPO</td><td>Continue</td></tr>
               <tr><td>Secrets versionnés</td><td>0</td><td>≥ 1, blocage</td><td><span class="badge ok">0</span></td><td><code>.gitignore</code>, vérifié par <code>git check-ignore -v</code></td><td>Responsable sécurité technique</td><td>À chaque commit</td></tr>
               <tr><td>Motifs de blocage actifs</td><td>0 avant mise en service</td><td>≥ 1</td><td><span class="badge bad">1</span> (D ; A, B et C levés le 18 septembre 2026, E le 20)</td><td><a href="risques-aipd.html">analyse d'impact, motifs de blocage</a></td><td>DPO</td><td>Mensuelle</td></tr>
             </tbody>
@@ -432,10 +432,10 @@ flowchart TD
               <tr><td>T6</td><td>Motif libre maîtrisé</td><td>Revue périodique des motifs saisis</td><td>DPO</td><td>Avant mise en service</td><td>Procédure écrite et exécutée une fois</td></tr>
               <tr><td>T7</td><td>Assistant encadré</td><td>Contrat de sous-traitance (art. 28) avec le fournisseur de modèle de langage</td><td>DPO</td><td>Avant activation de T7</td><td>Contrat signé</td></tr>
               <tr><td>T8</td><td>Droits exerçables</td><td>Formulaire, registre des demandes, effacement jusqu'aux journaux</td><td>DPO</td><td>Avant mise en service</td><td><strong>Construit le 18 septembre 2026 : <code>api/droits.py</code> retrouve, exporte et efface, avec trace sans identifiant</strong> — critère initial : Demande test traitée en moins d'un mois</td></tr>
-              <tr><td>AI-1</td><td>Journal d'incident (art. 9, 73)</td><td>Registre d'incident et <a href="#incident">procédure d'incident</a></td><td>DPO</td><td>Avant mise en service</td><td>Registre existant, exercice à blanc réalisé</td></tr>
-              <tr><td>AI-2</td><td>Notice déployeur (art. 13)</td><td><a href="notice-deployeur.html">Notice du déployeur</a>, distincte de la Model Card</td><td>Responsable du modèle</td><td>Avant mise en service</td><td>Document remis au déployeur</td></tr>
+              <tr><td>AI-1</td><td>Journal d'incident (art. 9, 73)</td><td>Registre d'incident et <a href="#incident">procédure d'incident</a></td><td>DPO</td><td>Avant mise en service</td><td><strong>Fait le 23 septembre 2026</strong> : registre <code>reports/registre-incidents.json</code>, commande <code>python -m edumatch.gouvernance.incidents</code> (déclarer, lister, clore, délai des 72 heures calculé depuis la prise de connaissance), exercice à blanc INC-2026-001 déclaré puis clos. <code>tests/unit/test_gouvernance_incidents.py</code>, 18 tests.</td></tr>
+              <tr><td>AI-2</td><td>Notice déployeur (art. 13)</td><td><a href="notice-deployeur.html">Notice du déployeur</a>, distincte de la Model Card</td><td>Responsable du modèle</td><td>Avant mise en service</td><td><strong>Fait le 23 septembre 2026</strong> : <a href="notice-deployeur.html">notice du déployeur</a> publiée dans cette documentation. Sa remise contractuelle à un établissement client reste à faire, au premier déploiement réel.</td></tr>
               <tr><td>AI-3</td><td>Surveillance après commercialisation (art. 72)</td><td>Plan écrit, <code>models/derive.py</code> comme instrument</td><td>Responsable du modèle</td><td>Avant mise en service</td><td>Plan approuvé par le comité</td></tr>
-              <tr><td>AI-4</td><td>Détection de secrets</td><td>Analyse de secrets dans les workflows d'intégration continue</td><td>Responsable sécurité</td><td>Avant mise en service</td><td>Étape bloquante dans <code>ci.yml</code></td></tr>
+              <tr><td>AI-4</td><td>Détection de secrets</td><td>Analyse de secrets dans les workflows d'intégration continue</td><td>Responsable sécurité</td><td>Avant mise en service</td><td><strong>Fait le 23 septembre 2026</strong> : gitleaks 8.30.1, étape bloquante de <code>ci.yml</code> sur les deux dépôts. Historique complet analysé, un seul faux positif, déclaré par empreinte exacte. <code>scripts/verifier_env_prod.py</code> refuse en plus une valeur de gabarit au démarrage de la pile.</td></tr>
             </tbody>
           </table>
         </div>
@@ -484,11 +484,11 @@ flowchart TD
             </tbody>
           </table>
         </div>
-        <div class="callout warn">
-          <span class="ico" aria-hidden="true">!</span>
+        <div class="callout ok">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
-            <span class="title">Procédure écrite, journal d'incident non construit</span>
-            <p>La procédure est décrite ici. Le journal d'incident n'existe pas encore : c'est l'action AI-1.</p>
+            <span class="title">Procédure écrite, registre tenu, exercice à blanc réalisé</span>
+            <p>Le registre est versionné avec le code (<code>reports/registre-incidents.json</code>) et se tient par une commande, qui calcule le délai restant sur les 72 heures depuis la prise de connaissance. Il ne porte que des catégories de données, jamais une donnée personnelle : une entrée qui en contiendrait est refusée. L'exercice à blanc INC-2026-001 a parcouru toute la procédure, déclaration puis clôture avec mesures et revue de la matrice des risques.</p>
           </div>
         </div>
 
@@ -607,8 +607,8 @@ flowchart TD
         <h3 id="limites">Ce que cette gouvernance ne couvre pas encore</h3>
         <ul>
           <li>Aucun système de management de la qualité au sens de l'article 17 du règlement sur l'IA, ni de certification ISO/IEC 42001. Les cadres mobilisés (NIST AI RMF, ISO/IEC 27001) sont des cadres de travail, pas des normes harmonisées.</li>
-          <li>Aucun journal d'incident et aucun plan de surveillance après commercialisation. La procédure de notification de violation est écrite, mais n'a jamais été exercée.</li>
-          <li>Aucune détection de secrets en intégration continue.</li>
+          <li>Le registre d'incident est tenu et la procédure a été exercée à blanc. Le plan de surveillance après commercialisation (action AI-3) est planifié avant mise en service, sous la responsabilité du responsable du modèle.</li>
+          <li>La détection de secrets est en place et bloquante en intégration continue. Ce qu'elle ne couvre pas : la rotation périodique des clés et la séparation par environnement, planifiées avant mise en service, sous la responsabilité du responsable sécurité.</li>
           <li>Les instances préconisées n'ont encore produit aucun compte rendu de comité dans le dépôt.</li>
           <li>Plusieurs indicateurs sont « non mesurés », faute d'exploitation chez un établissement client.</li>
           <li>Les responsables du plan d'action sont des rôles, pas des personnes nommées.</li>
