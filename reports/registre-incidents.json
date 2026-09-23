@@ -1,0 +1,27 @@
+[
+  {
+    "identifiant": "INC-2026-001",
+    "exercice": true,
+    "date_detection": "2026-09-23T09:15:00+02:00",
+    "date_prise_de_connaissance": "2026-09-23T09:40:00+02:00",
+    "nature": "Exercice à blanc de la procédure d'incident : simulation d'un journal d'audit T5 devenu lisible par un compte de service du cluster qui n'avait pas besoin de cet accès. Aucune violation réelle.",
+    "categories_donnees": [
+      "cellule prédite (type de bac, statut de boursier, département)",
+      "identifiant de conseiller"
+    ],
+    "risque_evalue": "faible",
+    "justification_risque": "Exercice. Le journal ne porte aucune donnée directement identifiante du candidat, l'accès simulé reste interne au cluster, et aucune donnée n'a quitté le périmètre.",
+    "notification_cnil": false,
+    "justification_notification": "Exercice, donc aucune notification envoyée. En situation réelle avec ce niveau de risque, l'article 33.5 impose la documentation interne sans notification à la CNIL.",
+    "horodatage_notification": null,
+    "information_personnes": "non requise en exercice ; en situation réelle, information des personnes seulement si le risque est élevé (article 34)",
+    "mesures_correction": [
+      "Confinement simulé : droits du compte de service ramenés à la lecture du seul catalogue de prédictions.",
+      "Contrôle ajouté à la revue trimestrielle des accès du cluster.",
+      "Procédure d'incident relue à cette occasion : les deux dates, détection et prise de connaissance, sont bien distinctes dans le registre."
+    ],
+    "revue_matrice_risques": "Exercice du 23 septembre 2026 : risque R3 (accès non nécessaire aux journaux) relu, aucune réouverture de l'AIPD, aucun nouveau risque identifié.",
+    "statut": "clos",
+    "date_cloture": "2026-09-23T18:36:53+00:00"
+  }
+]

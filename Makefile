@@ -2,7 +2,7 @@
 # `make` sans argument affiche cette aide.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate departements explain api audit-purge audit-purge-appliquer sources-licences docs-index supervision-purge supervision-purge-appliquer droits ecran-verifier assistant-exemple test lint fmt clean up-prod verifier-env-prod down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
+.PHONY: help install up verifier-pile down config data quality transform transform-lignage gold sirene-agregats features baseline train evaluate departements explain api audit-purge audit-purge-appliquer sources-licences docs-index supervision-purge supervision-purge-appliquer droits ecran-verifier assistant-exemple test lint fmt clean up-prod verifier-env-prod incidents down-prod demo-panne-qualite demo-restaurer-qualite verifier-idempotence-capturer verifier-idempotence-comparer
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -43,6 +43,9 @@ up-prod: verifier-env-prod  ## Démarre la pile Airflow de production (LocalExec
 
 verifier-env-prod:  ## Refuse un .env de production qui porterait encore des valeurs de gabarit
 	python scripts/verifier_env_prod.py
+
+incidents:  ## Registre d'incident : liste les entrées et le délai restant avant l'échéance des 72 heures
+	python -m edumatch.gouvernance.incidents lister
 
 down-prod:  ## Arrête la pile Airflow de production (conserve les volumes de données)
 	docker compose -f docker-compose.prod.yml down
