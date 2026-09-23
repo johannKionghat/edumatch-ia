@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EduMatch-IA · Notice du déployeur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@500;600&display=swap">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script src="assets/site.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="sidebar" aria-expanded="false">Menu</button>
+    <a class="brand" href="index.html"><span class="brand-mark">EM</span> EduMatch-IA <small>Documentation</small></a>
+    <span class="spacer"></span>
+    <button id="theme-btn" type="button">Thème clair / sombre</button>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Sections de la documentation"></nav>
+
+    <main>
+      <article class="content">
+        <p class="eyebrow">Gouvernance · Action AI-2</p>
+        <h1>Notice du déployeur</h1>
+        <p class="lead">Ce document s'adresse à l'établissement qui met EduMatch-IA entre les mains de ses conseillers. Il répond aux obligations d'information du fournisseur envers le déployeur (articles 13 et 26 du règlement européen sur l'intelligence artificielle) : à quoi sert le système, ce qu'il ne sait pas faire, ce que l'établissement doit organiser avant de l'ouvrir, et ce qui est interdit aujourd'hui.</p>
+
+        <div class="callout bad">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <span class="title">Le système n'est pas autorisé à restituer son estimation à un candidat</span>
+            <p>Le motif de blocage D du <a href="gouvernance.html#motifs">plan de gouvernance</a> est toujours actif : le modèle est moins bon que la référence, et sa calibration est moins bonne aussi. Tant qu'il l'est, l'estimation apprise ne doit être montrée à aucun candidat, mineur ou majeur. Elle sert uniquement de matière de travail à un conseiller.</p>
+          </div>
+        </div>
+
+        <h2 id="finalite">Finalité et usage prévu</h2>
+        <p>EduMatch-IA aide un conseiller d'orientation à préparer un entretien. Pour un profil déclaré (type de baccalauréat, statut de boursier, département visé, domaine recherché), il classe des formations par un score à trois termes : affinité avec la demande, accessibilité estimée, débouchés territoriaux. Chaque terme reste visible séparément, et chaque recommandation porte son explication.</p>
+        <p>L'usage prévu est la <strong>préparation d'un dialogue</strong>, jamais la production d'un résultat. Le système classe l'annexe III du règlement sur l'IA comme usage à haut risque, parce qu'il touche l'accès à l'éducation : cela impose un contrôle humain effectif, décrit plus bas.</p>
+
+        <h2 id="hors-perimetre">Usages proscrits</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Usage</th><th>Pourquoi il est exclu</th></tr></thead>
+            <tbody>
+              <tr><td>Prendre ou préparer une décision d'admission</td><td>Le système estime une chance d'admission observée par cellule, il ne juge aucun dossier. Un établissement qui s'en servirait pour trier des candidatures sortirait de la finalité déclarée au <a href="registres.html">registre des traitements</a>.</td></tr>
+              <tr><td>Montrer le score au candidat</td><td>Motif D actif, voir ci-dessus.</td></tr>
+              <tr><td>Classer ou comparer des personnes entre elles</td><td>Le score porte sur une formation pour un profil, pas sur une personne. Aucune donnée d'une autre personne n'entre dans le calcul.</td></tr>
+              <tr><td>Utiliser le genre, ou le déduire</td><td>Le genre n'entre jamais dans le modèle. Il ne sert qu'à l'audit d'équité, après coup. Demander au candidat son genre pour alimenter le système serait une faute.</td></tr>
+              <tr><td>Réutiliser les journaux à d'autres fins</td><td>Les journaux servent la traçabilité et le contrôle humain. Les exploiter pour évaluer les conseillers ou les candidats serait un détournement de finalité.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="performance">Performances mesurées, et ce qu'elles valent</h2>
+        <p>Les chiffres ci-dessous sont ceux de la <a href="model-card.html">Model Card</a> et de l'<a href="modele.html">évaluation</a>, repris sans modification. La référence est le taux d'admission de la session précédente, appliqué tel quel.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Indicateur</th><th>Modèle</th><th>Référence</th><th>Lecture</th></tr></thead>
+            <tbody>
+              <tr><td>Erreur absolue moyenne pondérée, test 2025</td><td><span class="badge warn">0,0758</span></td><td>0,0701</td><td>Le modèle fait moins bien que la référence.</td></tr>
+              <tr><td>Erreur de calibration attendue, test 2025</td><td><span class="badge warn">0,0371</span></td><td>0,0322</td><td>Ses probabilités sont moins fidèles que celles de la référence.</td></tr>
+              <tr><td>Sous-populations où le modèle bat la référence</td><td><span class="badge warn">4 sur 27</span></td><td>sans objet</td><td>L'avantage n'est ni général ni stable.</td></tr>
+              <tr><td>Écart d'admission femmes et hommes sous 5 points</td><td>73,4 % des formations recommandées</td><td>sans objet</td><td>Mesuré sur 14 159 formations, le périmètre réellement recommandé.</td></tr>
+              <tr><td>Couverture du terme de débouchés</td><td><span class="badge warn">1,4 %</span> des lignes du catalogue</td><td>sans objet</td><td>Ailleurs, ce terme est neutre et déclaré indisponible, jamais nul en silence.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Deux limites à retenir avant toute mise en service. La première : ces chiffres sont mesurés sur la session 2025 et rien ne garantit qu'ils tiennent sur une autre session. La seconde : le modèle sur-annonce sur les formations très féminisées, ce que l'audit d'équité documente. Un conseiller qui l'ignore prendrait une estimation optimiste pour un fait.</p>
+
+        <h2 id="conseillers">Ce que l'établissement doit organiser</h2>
+        <h3 id="comptes">Un compte nominatif par conseiller</h3>
+        <p>Chaque conseiller reçoit son propre compte. Un compte partagé est exclu : sans identification, un écartement ou une consultation ne serait imputable à personne, et le contrôle humain exigé par l'article 14 ne serait pas démontrable. Les empreintes de mots de passe sont calculées hors ligne et déposées dans un secret du cluster, jamais dans le code.</p>
+
+        <h3 id="formation">La formation des conseillers</h3>
+        <p>Elle reste <strong>à organiser par l'établissement avant l'ouverture du service</strong>, et le contenu minimal est fixé par le <a href="gouvernance.html#adoption">plan de gouvernance</a> : ce que le modèle ne sait pas faire, pourquoi il sur-annonce sur les formations très féminisées, comment écarter une recommandation. Responsable côté fournisseur : le responsable du modèle.</p>
+
+        <h3 id="ecartement">L'écartement motivé</h3>
+        <p>Le conseiller peut écarter toute recommandation, et le motif est obligatoire. C'est la trace du contrôle humain : elle est horodatée et rattachée à son compte. Un taux d'écartement anormalement bas signale que le contrôle devient formel, et c'est l'indicateur d'adoption que suit le comité de gouvernance.</p>
+
+        <h2 id="journalisation">Journalisation et durées de conservation</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ce qui est journalisé</th><th>Conservation</th></tr></thead>
+            <tbody>
+              <tr><td>Inférences : profil déclaré, session, score produit, conseiller authentifié</td><td>12 mois en clair, puis pseudonymisation, puis agrégation à 36 mois, puis suppression</td></tr>
+              <tr><td>Écartements motivés du conseiller</td><td>Alignée sur la précédente : 12 mois en clair</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>La purge est automatique et planifiée chaque jour. Le motif d'écartement est un texte libre : l'établissement doit rappeler à ses conseillers de n'y écrire aucune donnée personnelle du candidat, puisque rien ne peut l'en empêcher techniquement.</p>
+
+        <h2 id="incident">En cas d'incident</h2>
+        <p>La procédure complète est dans le <a href="gouvernance.html#incident">plan de gouvernance</a>. Ce que le déployeur doit faire : signaler sans délai au fournisseur, qui inscrit l'incident au registre, évalue le risque et décide de la notification à la CNIL. Le délai qui compte est de <strong>72 heures après la prise de connaissance</strong>, pas après la détection technique. Si le risque pour les personnes est élevé, elles sont informées.</p>
+        <p>Le registre est tenu dans le dépôt du projet et un exercice à blanc a été réalisé pour éprouver la procédure.</p>
+
+        <h2 id="surveillance">Surveillance après commercialisation</h2>
+        <p>Le suivi de la dérive et le réentraînement annuel existent côté fournisseur. Le dispositif complet de surveillance après commercialisation, au sens de l'article 72, est <strong>planifié avant mise en service</strong> : il reste l'action AI-3 du plan de gouvernance, sous la responsabilité du délégué à la protection des données.</p>
+
+        <h2 id="contacts">Contacts</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rôle</th><th>Objet</th></tr></thead>
+            <tbody>
+              <tr><td>Délégué à la protection des données</td><td>Droits des personnes, incident, analyse d'impact</td></tr>
+              <tr><td>Responsable du modèle</td><td>Performance, dérive, réentraînement, formation des conseillers</td></tr>
+              <tr><td>Responsable sécurité technique</td><td>Comptes, accès, secrets, supervision</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Les personnes titulaires de ces rôles sont nommées dans l'<a href="gouvernance.html#organisation">organisation d'EduMatch</a>. Un candidat s'adresse d'abord à son établissement, qui relaie au délégué à la protection des données ; la notice qui lui est destinée est servie par le service lui-même, à l'adresse <code>GET /notice-information</code>.</p>
+
+        <nav class="pager" id="pager" aria-label="Pages précédente et suivante"></nav>
+      </article>
+      <aside class="toc" id="toc" aria-label="Sommaire de la page"></aside>
+    </main>
+  </div>
+</body>
+</html>

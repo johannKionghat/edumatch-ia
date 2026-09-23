@@ -19,6 +19,7 @@
       ["risques-aipd.html", "Risques et AIPD"],
       ["ai-act.html", "AI Act"],
       ["model-card.html", "Model Card"],
+      ["notice-deployeur.html", "Notice du déployeur"],
     ] },
     { groupe: "Décider", pages: [
       ["decisions.html", "Décisions d'architecture"],
