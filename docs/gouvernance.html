@@ -329,13 +329,13 @@ flowchart TD
               <tr><td>Architecture des données</td><td><a href="architecture.html">Architecture</a>, diagrammes C4, <a href="decisions.html#adr-0001">ADR 0001</a> (ELT)</td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Modélisation et conception</td><td><a href="architecture.html">Modèle en étoile</a>, <a href="decisions.html#adr-0015">ADR 0015</a></td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Stockage et opérations</td><td>Parquet par zone, <a href="decisions.html#adr-0016">ADR 0016</a>, <code>edumatch-cicd/terraform/</code></td><td><span class="badge ok">Couvert</span></td></tr>
-              <tr><td>Sécurité des données</td><td><a href="#secrets">Politique des secrets</a>, <code>src/edumatch/api/auth.py</code></td><td><span class="badge warn">Partiel</span> authentification en place ; individualisation du compte conseiller et démonstration du chiffrement en transit à finaliser au déploiement</td></tr>
+              <tr><td>Sécurité des données</td><td><a href="#secrets">Politique des secrets</a>, <code>src/edumatch/api/auth.py</code></td><td><span class="badge warn">Partiel</span> authentification en place sur des comptes conseillers nominatifs, chaque décision imputable à une personne identifiée ; la terminaison TLS devant le service et le chiffrement au repos sont planifiés avant mise en service, sous la responsabilité du responsable sécurité</td></tr>
               <tr><td>Intégration et interopérabilité</td><td><code>src/edumatch/ingestion/</code>, <a href="pipeline.html">réconciliation NAF ↔ ROME</a></td><td><span class="badge ok">Couvert</span> couverture NAF ↔ formation faible et déclarée</td></tr>
               <tr><td>Métadonnées</td><td>Manifestes d'ingestion, <code>dbt docs</code> (<a href="pipeline.html">transformation</a>)</td><td><span class="badge ok">Couvert</span> sans catalogue d'entreprise</td></tr>
               <tr><td>Qualité des données</td><td><code>src/edumatch/quality/</code>, <a href="decisions.html#adr-0014">ADR 0014</a>, <code>tests/data/test_quality_run_blocage.py</code></td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Données de référence et maîtresses</td><td><code>data/external/referentiels/</code>, <a href="registres.html#sources">registre des sources</a></td><td><span class="badge warn">Partiel</span> aucun référentiel maître de formations unifié</td></tr>
               <tr><td>Entrepôt et décisionnel</td><td>Modèle en étoile en zone gold</td><td><span class="badge ok">Couvert</span> pour le modèle, pas de décisionnel produit</td></tr>
-              <tr><td>Gestion documentaire et contenus</td><td><code>src/edumatch/rag/</code>, brique secondaire</td><td><span class="badge warn">Partiel</span></td></tr>
+              <tr><td>Gestion documentaire et contenus</td><td>documentation versionnée dans le dépôt (<code>docs/</code>, ADR, registres, AIPD), procédure de mise à jour et <a href="#historique">historique des versions</a> ; corpus de l'assistant documentaire, cité ligne par ligne (ODbL)</td><td><span class="badge ok">Couvert</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -446,7 +446,7 @@ flowchart TD
             <thead><tr><th>Élément</th><th>État</th></tr></thead>
             <tbody>
               <tr><td>Classification des données</td><td><span class="badge ok">Conforme</span> Écrite et appliquée</td></tr>
-              <tr><td>Rôles et périmètres de décision</td><td><span class="badge warn">Partiel</span> Écrits ; le superviseur humain dispose de l'écran de supervision, sa décision est authentifiée mais sur un compte partagé (motif A)</td></tr>
+              <tr><td>Rôles et périmètres de décision</td><td><span class="badge ok">Conforme</span> Écrits ; le superviseur humain dispose de l'écran de supervision et sa décision est authentifiée sur un compte nominatif, donc imputable à une personne identifiée</td></tr>
               <tr><td>Règles d'usage</td><td><span class="badge warn">Partiel</span> 6 des 7 contrôlées automatiquement</td></tr>
               <tr><td>Secrets, exclusion et externalisation</td><td><span class="badge ok">Conforme</span> En place et vérifiées</td></tr>
               <tr><td>Secrets, rotation, révocation, détection</td><td><span class="badge warn">Partiel</span> Écrites, non outillées</td></tr>
@@ -515,6 +515,7 @@ flowchart TD
               <tr><td>30 août 2026</td><td>Rédaction du plan de gouvernance</td></tr>
               <tr><td>15 septembre 2026</td><td>Motifs de blocage actualisés, motif D ajouté, état de mise en œuvre repris point par point</td></tr>
               <tr><td>17 septembre 2026</td><td>Version 1.1 : motif A reformulé après l'authentification de <code>/feedback</code>, état de l'intégration continue corrigé</td></tr>
+              <tr><td>23 septembre 2026</td><td>Version 1.2 : état du déploiement mis à jour (intégration continue verte, images publiées, cluster Kapsule), levée des motifs A, B, C et E inscrite à la feuille de route, comptes conseillers nominatifs, gestion documentaire couverte</td></tr>
             </tbody>
           </table>
         </div>
@@ -534,10 +535,12 @@ flowchart TD
               <tr><td>Service</td><td>Recommander et superviser</td><td>Écran conseiller</td><td>API, journal, purge, écran, assistant</td><td>1er septembre</td></tr>
               <tr><td>Industrialisation</td><td>Automatiser et surveiller</td><td>Dérive mesurée, SLO déclaré</td><td>DAG, conteneurs, Terraform, monitoring</td><td>1er au 16 septembre</td></tr>
               <tr><td>Gouvernance</td><td>Rendre la conformité opposable</td><td>Avis de l'AIPD rendu</td><td>Registres, AIPD, Model Card, AI Act</td><td>15 septembre</td></tr>
+              <tr><td>Levée des motifs</td><td>Lever ce qui bloquait la mise en service</td><td>Motifs A, B et C levés, puis E</td><td>Comptes conseillers nominatifs, purge du journal T6, notice du candidat servie par <code>GET /notice-information</code>, page d'attribution générée depuis les manifestes</td><td>18 et 20 septembre</td></tr>
+              <tr><td>Déploiement</td><td>Servir la solution sur l'infrastructure cible</td><td>Application en service derrière des comptes nominatifs</td><td>Intégration continue verte, trois images publiées sous l'empreinte <code>1acab97</code>, cluster Kapsule chez Scaleway, assistant documentaire en mode extractif</td><td>22 septembre</td></tr>
             </tbody>
           </table>
         </div>
-        <p>Restent ouverts : l'intégration continue et l'infrastructure, écrites dans le second dépôt mais non déployées ; la panne provoquée filmée ; les vidéos ; la relecture croisée entre le dossier et le dépôt.</p>
+        <p>L'intégration continue est verte, les trois images (service, entraînement, orchestration) sont publiées sous l'empreinte <code>1acab97</code>, et l'application est servie sur le cluster Kapsule derrière des comptes conseillers nominatifs. Restent ouverts : le motif D, la panne provoquée filmée, les trois vidéos de production et la relecture croisée entre le dossier et le dépôt.</p>
 
         <h3 id="phases-a-venir">Phases à venir</h3>
         <div class="table-wrap">
@@ -571,7 +574,7 @@ flowchart TD
           </table>
         </div>
         <p>Contenu minimal de la formation des conseillers : ce que le modèle ne sait pas faire (<a href="model-card.html">Model Card</a>), pourquoi il sur-annonce sur les formations très féminisées (<a href="modele.html">audit d'équité</a>), comment écarter une recommandation. Indicateur d'adoption : le taux d'écartement du <a href="#indicateurs">tableau de bord</a>.</p>
-        <p>État : formation et notice <strong>non rédigées</strong> (motif C, action AI-2).</p>
+        <p>État : la notice d'information du candidat est servie par <code>GET /notice-information</code> depuis la levée du <a href="#motifs">motif C</a>, le 18 septembre. La formation des conseillers et la notice du déployeur (action AI-2, responsable du modèle) sont planifiées avant mise en service.</p>
 
         <h2 id="ecartes">Choix écartés et limites</h2>
         <p>J'applique une règle de proportionnalité : un outil n'entre que s'il répond à un besoin réel d'EduMatch. En amorçage, l'entreprise a une petite équipe et un budget seed de 350 000 euros. Chaque licence et chaque outil à administrer se paie sur ce budget.</p>
