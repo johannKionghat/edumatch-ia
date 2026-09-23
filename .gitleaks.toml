@@ -1,0 +1,23 @@
+# Analyse de secrets (action AI-4 du plan de gouvernance). Les règles par défaut de gitleaks
+# s'appliquent toutes : ce fichier n'en désactive aucune, et n'exclut aucun fichier suivi.
+[extend]
+useDefault = true
+
+# `data/` n'est jamais versionné (plusieurs gigaoctets de Parquet et de CSV bruts, voir
+# .gitignore) : son parcours prend plus de sept minutes et ne protège rien. Les échantillons
+# versionnés de `data/samples/` restent analysés, eux.
+[[allowlists]]
+description = "Données brutes et intermédiaires, non versionnées"
+# Motifs non ancrés en début de chaîne : `gitleaks dir edumatch-ia` (la disposition de la
+# CI) rapporte les chemins préfixés par le dossier analysé, et un motif en `^data/` ne
+# correspondrait alors à rien.
+paths = [
+  '''(^|/)data/(raw|interim|processed|external)/''',
+  '''(^|/)mlruns/''',
+]
+
+# Le seul faux positif de l'historique est déclaré dans `.gitleaksignore`, par son empreinte
+# exacte (commit, fichier, règle, ligne) et non par une exclusion de chemin : une exclusion
+# portant sur `.env.example` masquerait aussi un vrai secret ajouté demain dans ce fichier.
+# Vérifié : avec cette configuration, un jeton de test placé dans `.env.example` est bien
+# détecté, alors que le faux positif daté ne remonte plus.

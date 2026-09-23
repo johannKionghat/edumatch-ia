@@ -1,0 +1,10 @@
+# Faux positifs déclarés, un par ligne, par empreinte exacte : commit, fichier, règle, ligne.
+# Chaque ligne vaut pour ce seul emplacement dans ce seul commit.
+#
+# Le commit a07c2a73 (16/09/2026) a introduit `.env.example` avec une clé Fernet d'exemple de
+# 48 caractères base64, indistinguable d'une vraie clé pour n'importe quel détecteur. Cette
+# valeur n'a jamais chiffré de base de métadonnées Airflow autre qu'une base locale de
+# développement sans connexion sensible, et elle n'apparaissait dans aucun autre fichier. Les
+# valeurs du gabarit sont désormais des chaînes explicitement invalides (`changez_moi_...`) ;
+# l'ancienne subsiste dans l'historique, qui n'est pas réécrit.
+a07c2a7384610397982900badcdcfdbce8933251:.env.example:generic-api-key:54
