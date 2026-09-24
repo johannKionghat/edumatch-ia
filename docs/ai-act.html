@@ -271,7 +271,7 @@ flowchart TD
               <tr><td>Validation des entrées de l'API</td><td>Schémas Pydantic, plafonds explicites, erreurs typées</td><td><span class="badge ok">Couvert</span></td></tr>
               <tr><td>Contrôle d'accès</td><td><code>api/auth.py</code> : HTTP Basic sur l'enregistrement des décisions</td><td><span class="badge ok">Couvert</span> comptes conseillers nominatifs sur l'écran, <code>/matching</code> et <code>/feedback</code> ; motif de blocage A levé le 18 septembre 2026</td></tr>
               <tr><td>Chiffrement au repos et en transit, cloisonnement par rôles</td><td>Code d'infrastructure du second dépôt (<code>edumatch-cicd/terraform/</code>, <code>k8s/</code>) : réseau privé, registre et stockage privés, NetworkPolicy, conteneurs non root, système de fichiers en lecture seule, aucun jeton de compte de service monté</td><td><span class="badge warn">Partiel</span> déployé sur le cluster Kapsule le 22 septembre 2026, cloisonnement réseau appliqué ; le chiffrement au repos et la terminaison TLS devant le service sont planifiés avant mise en service, sous la responsabilité du responsable sécurité technique</td></tr>
-              <tr><td>Rotation et révocation des secrets</td><td>Politique écrite dans le <a href="gouvernance.html">plan de gouvernance</a></td><td><span class="badge warn">Partiel</span> non outillée</td></tr>
+              <tr><td>Rotation et révocation des secrets</td><td>Politique écrite dans le <a href="gouvernance.html">plan de gouvernance</a> ; détection de secrets bloquante en intégration continue depuis le 23 septembre 2026</td><td><span class="badge warn">Partiel</span> rotation et révocation écrites, leur outillage est planifié avant mise en service, sous la responsabilité du responsable sécurité</td></tr>
               <tr><td>Résistance à l'empoisonnement des données ou du modèle</td><td>Contrôles qualité bloquants et empreintes SHA-256</td><td><span class="badge warn">Partiel</span> aucun test adverse conduit</td></tr>
             </tbody>
           </table>
@@ -313,9 +313,9 @@ flowchart TD
           <div>
             <span class="title">Cinq obligations à couvrir avant toute mise en service</span>
             <ol>
-              <li>Information de la personne concernée : notice candidat et attribution des sources restent à produire.</li>
-              <li>Imputabilité de la supervision : le compte conseiller est partagé, l'écran reste ouvert.</li>
-              <li>Purge du journal de supervision : à construire, faute d'identifiant commun avec le journal d'inférence.</li>
+              <li>Information de la personne concernée : notice du candidat servie depuis le 18 septembre 2026, attribution des sources générée depuis les manifestes et servie depuis le 20 septembre.</li>
+              <li>Imputabilité de la supervision : comptes conseillers nominatifs depuis le 18 septembre 2026, exigés par l'écran, <code>/matching</code> et <code>/feedback</code>.</li>
+              <li>Purge du journal de supervision : construite et planifiée dans le DAG quotidien depuis le 18 septembre 2026.</li>
               <li>Journal d'incident : tenu, avec un exercice à blanc réalisé le 23 septembre 2026. Plan de surveillance après commercialisation (article 72) : planifié avant mise en service.</li>
               <li>Niveau d'exactitude : le modèle mesuré reste sous la règle de référence sur la session la plus récente.</li>
             </ol>

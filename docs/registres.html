@@ -283,7 +283,7 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
               <tr><td>L2, purge des journaux</td><td>Levée pour T5, puis pour T6 le 18 septembre 2026 : <code>purger_feedback</code> applique les trois paliers au journal de supervision, et la tâche <code>purger_supervision</code> du DAG quotidien l'exécute. Vérifiée le 20 septembre sur un journal d'échantillon : pseudonymisation à 365 jours, agrégation et vidage à 1 095 jours</td><td><span class="badge ok">Levée</span></td></tr>
               <tr><td>L3, notice candidat</td><td>Comblée le 18 septembre 2026 : la notice d'information du candidat est servie par <code>GET /notice-information</code>, en français simple, et reste ouverte sans authentification</td><td><span class="badge ok">Levée</span></td></tr>
               <tr><td>L4, accès et imputabilité</td><td>Comblée le 18 septembre 2026 : l'écran, <code>/matching</code> et <code>/feedback</code> exigent un compte conseiller nominatif, dont l'identifiant est journalisé à chaque inférence et à chaque décision</td><td><span class="badge ok">Levée</span></td></tr>
-              <tr><td>L5, droits, violations, sous-traitance</td><td>Le dispositif d'exercice des droits (T8) est construit depuis le 18 septembre 2026 (<code>api/droits.py</code>). Restent la procédure de notification de violation, écrite mais pas encore outillée, et le contrat de sous-traitance pour T7, à conclure. Deux réserves non bloquantes prises isolément, qui le deviennent au premier usage réel</td><td><span class="badge warn">Réserve</span></td></tr>
+              <tr><td>L5, droits, violations, sous-traitance</td><td>Le dispositif d'exercice des droits (T8) est construit depuis le 18 septembre 2026 (<code>api/droits.py</code>). La procédure de notification de violation est écrite, outillée par le registre d'incident et exercée à blanc le 23 septembre 2026. Reste le contrat de sous-traitance pour T7, à conclure avant l'activation de l'assistant : une réserve non bloquante tant que l'assistant reste en mode extractif, qui le devient à la première activation d'un modèle de langage tiers</td><td><span class="badge warn">Réserve</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -341,11 +341,11 @@ INFÉRENCE      caractéristiques scolaires et intérêts déclarés du candidat
           </table>
         </div>
         <p>Une mention générique « source : données publiques » ne suffit pas, car elle omet la date. J'en fais donc une rubrique « Sources et licences » côté conseiller, alimentée par les manifestes plutôt que par une liste écrite en dur, qui deviendrait fausse au stock Sirene suivant. Elle affiche le producteur, l'intitulé, la licence et la date du fichier utilisé.</p>
-        <div class="callout bad">
-          <span class="ico" aria-hidden="true">×</span>
+        <div class="callout ok">
+          <span class="ico" aria-hidden="true">i</span>
           <div>
-            <span class="title">Reste à ajouter : la rubrique d'attribution (motif E)</span>
-            <p>L'écran conseiller existe. Il ne porte pas encore la rubrique « Sources et licences » alimentée par les manifestes. Le risque est inscrit à la <a href="risques-aipd.html">matrice des risques</a> sous R9, non-conformité de réutilisation.</p>
+            <span class="title">La rubrique d'attribution est servie (motif E levé)</span>
+            <p>L'écran conseiller porte la rubrique « Sources et licences » depuis le 20 septembre 2026, et sa page est générée depuis les manifestes d'ingestion : producteur, jeu, licence et date de collecte de chaque source y figurent, à la date réelle des fichiers. Un test échoue si la page diverge des manifestes. Le risque R9 de la <a href="risques-aipd.html">matrice des risques</a> est donc traité.</p>
           </div>
         </div>
 

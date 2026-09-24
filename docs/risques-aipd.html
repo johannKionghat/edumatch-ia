@@ -83,16 +83,16 @@
           <span class="ico" aria-hidden="true">×</span>
           <div>
             <span class="title">Aggravation du 15 septembre 2026</span>
-            <p>Une quatrième surface est apparue avec l'écran conseiller, qui expose les caractéristiques d'un candidat sans authentification. Depuis, l'enregistrement d'une décision exige une authentification HTTP Basic. Mais l'écran et <code>/matching</code> restent ouverts, et le compte conseiller est partagé. La vraisemblance passe de 1 à 3 et le risque de modéré à élevé, car une surface d'accès existe désormais sans contrôle. C'est le <a href="#motifs">motif de blocage A</a> de l'analyse d'impact.</p>
+            <p>Une quatrième surface est apparue avec l'écran conseiller, qui expose les caractéristiques d'un candidat sans authentification. Depuis, l'enregistrement d'une décision exige une authentification HTTP Basic. L'écran et <code>/matching</code> sont restés ouverts jusqu'au 18 septembre 2026 : depuis, ils exigent tous deux un compte conseiller nominatif. La vraisemblance passe de 1 à 3 et le risque de modéré à élevé, car une surface d'accès existe désormais sans contrôle. C'est le <a href="#motifs">motif de blocage A</a> de l'analyse d'impact.</p>
           </div>
         </div>
         <p><strong>Mesures.</strong></p>
         <ul>
           <li>Minimisation vérifiée par <code>tests/data/test_echantillons_conformite.py</code>.</li>
-          <li>Comptes conseillers individuels et restriction d'accès à l'écran : à construire, bloquant.</li>
+          <li>Comptes conseillers individuels et accès à l'écran restreint : en place depuis le 18 septembre 2026, ce qui a levé le motif de blocage A.</li>
           <li>Cloisonnement déployé le 22 septembre 2026 : espace de noms dédié, politique réseau appliquée qui n'autorise en entrée que le port du service depuis l'intérieur du cluster, conteneurs non root, système de fichiers en lecture seule.</li>
-          <li>Chiffrement en transit : à démontrer une fois l'infrastructure déployée.</li>
-          <li>Procédure de notification de violation (72 heures, art. 33) : à écrire.</li>
+          <li>Chiffrement en transit : la terminaison TLS devant le service est planifiée avant mise en service, sous la responsabilité du responsable sécurité technique.</li>
+          <li>Procédure de notification de violation (72 heures, art. 33) : écrite, outillée par le registre d'incident et exercée à blanc le 23 septembre 2026.</li>
         </ul>
 
         <h3 id="r2">R2 · Ré-identification par l'agrégat territorial</h3>
@@ -263,7 +263,7 @@
 
         <h2 id="hors-matrice">Ce que la matrice ne couvre pas</h2>
         <ul>
-          <li>La procédure de notification de violation (art. 33 et 34) est écrite ; elle n'a pas encore été exercée, faute d'incident, et suppose de savoir qui héberge quoi.</li>
+          <li>La procédure de notification de violation (art. 33 et 34) suppose de savoir qui héberge quoi : la cartographie des hébergeurs est planifiée avant mise en service, sous la responsabilité du délégué à la protection des données.</li>
           <li>Le registre d'incident est tenu et la procédure a été exercée à blanc le 23 septembre 2026, ce que l'article 9 du règlement sur l'IA suppose pour une gestion des risques continue.</li>
           <li>Aucun plan de surveillance après commercialisation (art. 72) : la mesure de dérive en est l'instrument, pas le plan.</li>
           <li>L'ouverture de l'écran conseiller et l'absence de compte nominatif relevaient de la sécurité technique : portées par R1 et par le motif de blocage A, elles ont été traitées le 18 septembre 2026 par des comptes conseillers nominatifs.</li>
@@ -361,9 +361,9 @@ flowchart TD
               <tr><td>Base légale</td><td><span class="badge ok">Satisfaite</span></td><td>Consentement (art. 6.1.a) en usage direct ; mission d'intérêt public (art. 6.1.e) pour un déployeur public ; intérêt légitime (art. 6.1.f) pour les échantillons Sirene (<a href="decisions.html#adr-0008">ADR 0008</a>)</td></tr>
               <tr><td>Minimisation</td><td><span class="badge ok">Satisfaite et testée</span></td><td>4 caractéristiques collectées ; 9 colonnes sur 128 lues sur la session prédite, 9 sur 54 pour Sirene ; genre exclu et contrôlé par mutation</td></tr>
               <tr><td>Exactitude</td><td><span class="badge bad">Mesurée, défavorable au modèle appris</span></td><td><a href="#test-necessite">§3.1</a>, le point qui commande l'avis</td></tr>
-              <tr><td>Limitation de conservation</td><td><span class="badge warn">Décidée, exécutée, planifiée</span></td><td><code>audit_purge.py</code>, testée, idempotente. Exception : T6 sans purge</td></tr>
-              <tr><td>Information</td><td><span class="badge bad">Non satisfaite</span></td><td>Aucune notice destinée au candidat ; l'écran construit s'adresse au conseiller</td></tr>
-              <tr><td>Droits des personnes</td><td><span class="badge bad">Non satisfaits</span></td><td>Aucun dispositif d'exercice (T8) ; délai d'un mois décrit, non outillé</td></tr>
+              <tr><td>Limitation de conservation</td><td><span class="badge warn">Décidée, exécutée, planifiée</span></td><td><code>audit_purge.py</code>, testée, idempotente. La purge de T6 a été construite le 18 septembre 2026 et planifiée dans le DAG quotidien</td></tr>
+              <tr><td>Information</td><td><span class="badge ok">Satisfaite</span></td><td>Notice destinée au candidat servie par <code>GET /notice-information</code> depuis le 18 septembre 2026, rédigée pour un lecteur de 17 ans, en plus de l'écran qui s'adresse au conseiller</td></tr>
+              <tr><td>Droits des personnes</td><td><span class="badge ok">Satisfaits</span></td><td>Dispositif d'exercice construit le 18 septembre 2026 (<code>api/droits.py</code>), effacement jusqu'aux journaux, trace d'exécution conservée ; le délai d'un mois reste une obligation de procédure</td></tr>
               <tr><td>Sous-traitance</td><td><span class="badge bad">Non conclu</span></td><td>Contrat art. 28 obligatoire avant la mise en service de l'assistant (T7)</td></tr>
             </tbody>
           </table>
@@ -503,9 +503,9 @@ flowchart TD
           <table>
             <thead><tr><th>Conséquence</th><th>État</th></tr></thead>
             <tbody>
-              <tr><td>L'information doit être rédigée pour un adolescent et affichée avant la saisie</td><td><span class="badge bad">Non satisfaite</span> le seul écran s'adresse au conseiller</td></tr>
+              <tr><td>L'information doit être rédigée pour un adolescent et affichée avant la saisie</td><td><span class="badge ok">Satisfaite</span> notice du candidat servie depuis le 18 septembre 2026, distincte de l'écran du conseiller</td></tr>
               <tr><td>Aucun public de moins de quinze ans sans rouvrir cette analyse et recueillir le consentement parental</td><td><span class="badge warn">Écrit, non outillé</span> la date de naissance n'est pas collectée</td></tr>
-              <tr><td>Vigilance sur le champ libre du motif d'écartement, où un conseiller peut consigner une information sur un mineur</td><td><span class="badge bad">Non satisfaite</span> avertissement affiché, purge inexistante</td></tr>
+              <tr><td>Vigilance sur le champ libre du motif d'écartement, où un conseiller peut consigner une information sur un mineur</td><td><span class="badge warn">Partiellement satisfaite</span> avertissement affiché et purge construite le 18 septembre 2026, planifiée dans le DAG quotidien ; la revue périodique des motifs saisis est planifiée avant mise en service, sous la responsabilité du délégué à la protection des données</td></tr>
             </tbody>
           </table>
         </div>

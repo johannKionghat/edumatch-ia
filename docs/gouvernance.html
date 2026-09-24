@@ -273,10 +273,10 @@ flowchart TD
           <table>
             <thead><tr><th>Règle</th><th>Contenu</th><th>État</th></tr></thead>
             <tbody>
-              <tr><td>Rotation</td><td>Clé cloud et clé API du modèle de langage : tous les 90 jours, et au départ de toute personne y ayant eu accès</td><td><span class="badge warn">Écrite, non outillée</span></td></tr>
-              <tr><td>Révocation</td><td>Un secret exposé est révoqué avant d'être remplacé, jamais l'inverse ; retirer le fichier du dépôt ne révoque rien</td><td><span class="badge warn">Écrite, non outillée</span></td></tr>
-              <tr><td>Détection</td><td>Analyse de secrets en intégration continue. Les trois workflows écrits dans le second dépôt (<code>edumatch-cicd/.github/workflows/</code>) portent lint, tests, construction et déploiement ; aucun n'analyse les secrets</td><td><span class="badge bad">Non implémentée</span></td></tr>
-              <tr><td>Portée minimale</td><td>Une clé par environnement, jamais partagée entre développement et production</td><td><span class="badge warn">Écrite, non outillée</span></td></tr>
+              <tr><td>Rotation</td><td>Clé cloud et clé API du modèle de langage : tous les 90 jours, et au départ de toute personne y ayant eu accès</td><td><span class="badge warn">Écrite ; outillage planifié avant mise en service, responsable sécurité</span></td></tr>
+              <tr><td>Révocation</td><td>Un secret exposé est révoqué avant d'être remplacé, jamais l'inverse ; retirer le fichier du dépôt ne révoque rien</td><td><span class="badge warn">Écrite ; procédure à dérouler dans la console du fournisseur, planifiée avant mise en service, responsable sécurité</span></td></tr>
+              <tr><td>Détection</td><td>Analyse de secrets en intégration continue : gitleaks, étape bloquante de <code>ci.yml</code> sur les deux dépôts, faux positifs déclarés par empreinte exacte. L'historique complet des deux dépôts a été analysé.</td><td><span class="badge ok">Outillée le 23 septembre 2026</span></td></tr>
+              <tr><td>Portée minimale</td><td>Une clé par environnement, jamais partagée entre développement et production</td><td><span class="badge warn">Écrite ; contrôle automatique planifié avant mise en service, responsable sécurité</span></td></tr>
             </tbody>
           </table>
         </div>
@@ -449,7 +449,7 @@ flowchart TD
               <tr><td>Rôles et périmètres de décision</td><td><span class="badge ok">Conforme</span> Écrits ; le superviseur humain dispose de l'écran de supervision et sa décision est authentifiée sur un compte nominatif, donc imputable à une personne identifiée</td></tr>
               <tr><td>Règles d'usage</td><td><span class="badge warn">Partiel</span> 6 des 7 contrôlées automatiquement</td></tr>
               <tr><td>Secrets, exclusion et externalisation</td><td><span class="badge ok">Conforme</span> En place et vérifiées</td></tr>
-              <tr><td>Secrets, rotation, révocation, détection</td><td><span class="badge warn">Partiel</span> Écrites, non outillées</td></tr>
+              <tr><td>Secrets, rotation, révocation, détection</td><td><span class="badge warn">Partiel</span> Détection outillée et bloquante en intégration continue depuis le 23 septembre 2026 ; rotation, révocation et séparation par environnement écrites, leur outillage est planifié avant mise en service, sous la responsabilité du responsable sécurité</td></tr>
               <tr><td>Procédure d'audit</td><td><span class="badge warn">Partiel</span> 7 des 12 points de contrôle déjà outillés par une commande ; l'exécution intégrale de la procédure reste à dérouler</td></tr>
               <tr><td>Procédure de mise à jour</td><td><span class="badge ok">Conforme</span> Écrite et appliquée trois fois</td></tr>
               <tr><td>Analyse d'impact</td><td><span class="badge ok">Conforme</span> Complète (version 1.0), avis rendu</td></tr>
@@ -574,7 +574,7 @@ flowchart TD
           </table>
         </div>
         <p>Contenu minimal de la formation des conseillers : ce que le modèle ne sait pas faire (<a href="model-card.html">Model Card</a>), pourquoi il sur-annonce sur les formations très féminisées (<a href="modele.html">audit d'équité</a>), comment écarter une recommandation. Indicateur d'adoption : le taux d'écartement du <a href="#indicateurs">tableau de bord</a>.</p>
-        <p>État : la notice d'information du candidat est servie par <code>GET /notice-information</code> depuis la levée du <a href="#motifs">motif C</a>, le 18 septembre. La formation des conseillers et la notice du déployeur (action AI-2, responsable du modèle) sont planifiées avant mise en service.</p>
+        <p>État : la notice d'information du candidat est servie par <code>GET /notice-information</code> depuis la levée du <a href="#motifs">motif C</a>, le 18 septembre. La <a href="notice-deployeur.html">notice du déployeur</a> (action AI-2) est publiée depuis le 23 septembre 2026. La formation des conseillers est planifiée avant mise en service, sous la responsabilité du responsable du modèle.</p>
 
         <h2 id="ecartes">Choix écartés et limites</h2>
         <p>J'applique une règle de proportionnalité : un outil n'entre que s'il répond à un besoin réel d'EduMatch. En amorçage, l'entreprise a une petite équipe et un budget seed de 350 000 euros. Chaque licence et chaque outil à administrer se paie sur ce budget.</p>

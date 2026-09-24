@@ -141,7 +141,7 @@ flowchart TD
         <h3 id="api-dettes">Deux dettes déclarées</h3>
         <ul>
           <li><strong>Le modèle est entraîné au démarrage</strong>, faute d'un chargeur depuis un registre de modèles (MLflow n'est pas encore branché sur le service) — acceptable pour la démonstration, à corriger avant une vraie mise en production.</li>
-          <li><strong>La durée de conservation du journal de retour</strong> n'est pas encore purgeable à cette étape — voir la section <a href="#journalisation">Journalisation et purge</a> pour ce qui a été construit ensuite et ce qui reste ouvert.</li>
+          <li><strong>La durée de conservation du journal de retour</strong> n'était pas purgeable à cette étape ; la purge a été construite le 18 septembre 2026 et planifiée dans le DAG quotidien. Voir la section <a href="#journalisation">Journalisation et purge</a>.</li>
         </ul>
 
         <h2 id="journalisation">Journalisation article 12 et purge exécutable</h2>
@@ -195,7 +195,7 @@ flowchart TD
           <li>la réserve sur le modèle, dont la baseline reste devant sur le jeu de test, est affichée et non enfouie dans la documentation ;</li>
           <li>le rappel que le score assiste sans décider (article 22 du RGPD) est lisible à l'écran, pas relégué à une mention légale.</li>
         </ul>
-        <p>Le flux d'écartement journalise, via <code>/feedback</code>, une décision motivée et horodatée — voir la section <a href="#journalisation">Journalisation et purge</a> pour ce que devient cette trace et ce qui n'est pas encore construit sur sa purge.</p>
+        <p>Le flux d'écartement journalise, via <code>/feedback</code>, une décision motivée et horodatée — voir la section <a href="#journalisation">Journalisation et purge</a> pour ce que devient cette trace et pour sa purge, construite et planifiée dans le DAG quotidien.</p>
 
         <p><strong>L'identifiant du conseiller n'est plus déclaratif</strong> (revue de sécurité du 16 septembre 2026). Jusqu'à cette date, <code>/feedback</code> acceptait un identifiant saisi librement dans le corps de la requête, ce qui permettait d'imputer un écartement à un conseiller qui ne l'avait jamais décidé. <code>/feedback</code> exige désormais une authentification HTTP Basic : l'identifiant journalisé est le principal authentifié, jamais une valeur saisie par le formulaire. Côté écran, le champ « Identifiant de conseiller » ne sert plus qu'à personnaliser l'affichage local, il n'est plus transmis à l'API. Une réponse <strong>401</strong> de <code>/feedback</code> affiche un message demandant de se reconnecter.</p>
         <p><code>/matching</code> et l'écran lui-même restent accessibles sans authentification : seule la route qui écrit une décision imputée à quelqu'un l'exige. Cette limite sera revue le jour où l'écran affichera une donnée nominative de candidat, ou s'il faudra tracer qui a consulté quoi et non plus seulement qui a décidé quoi.</p>
