@@ -48,9 +48,20 @@ ETAT_ACTIF = "A"
 VALEUR_EMPLOYEUR = "O"
 VALEUR_DIFFUSIBLE = "O"
 
+# La division NAF est lue sur les deux premiers caractères du code d'activité, ce qui n'a de sens
+# que dans la nomenclature en vigueur : un code NAF 1993 comme « 74.1J » donnerait la division
+# « 74 », qui désigne une autre activité en Rev.2. Ces établissements sont déjà écartés de fait
+# par les trois filtres ci-dessus, puisque les nomenclatures anciennes ne subsistent guère que sur
+# des établissements fermés ou non employeurs : sur le stock du 01/08/2026, la population agrégée
+# compte 2 400 061 lignes, dont 2 400 060 en NAFRev2 et une seule en NAF1993. Une exclusion par
+# effet de bord n'est pas une règle : ce filtre la rend explicite, et protège d'une bascule de
+# nomenclature à venir (NAF 2025, prévue pour janvier 2027) qui changerait cet équilibre.
+NOMENCLATURE_NAF_ATTENDUE = "NAFRev2"
+
 COLONNES_SIRENE_DEBOUCHES: tuple[str, ...] = (
     "codeCommuneEtablissement",
     "activitePrincipaleEtablissement",
+    "nomenclatureActivitePrincipaleEtablissement",
     "etatAdministratifEtablissement",
     "caractereEmployeurEtablissement",
     "statutDiffusionEtablissement",
@@ -96,7 +107,11 @@ class RapportKAnonymat:
 
     @property
     def part_etablissements_perdus(self) -> float:
-        return self.etablissements_perdus / self.etablissements_totaux if self.etablissements_totaux else 0.0
+        return (
+            self.etablissements_perdus / self.etablissements_totaux
+            if self.etablissements_totaux
+            else 0.0
+        )
 
     def en_dict(self) -> dict[str, object]:
         return {
@@ -121,6 +136,7 @@ def construire_agregat_departement_naf(chemin_sirene: Path) -> pl.DataFrame:
         (pl.col("etatAdministratifEtablissement") == ETAT_ACTIF)
         & (pl.col("caractereEmployeurEtablissement") == VALEUR_EMPLOYEUR)
         & (pl.col("statutDiffusionEtablissement") == VALEUR_DIFFUSIBLE)
+        & (pl.col("nomenclatureActivitePrincipaleEtablissement") == NOMENCLATURE_NAF_ATTENDUE)
         & pl.col("codeCommuneEtablissement").is_not_null()
     )
     lf = lf.with_columns(
@@ -139,7 +155,9 @@ def construire_agregat_departement_naf(chemin_sirene: Path) -> pl.DataFrame:
     return resultat
 
 
-def appliquer_k_anonymat(agregat: pl.DataFrame, k: int) -> tuple[pl.DataFrame, pl.DataFrame, RapportKAnonymat]:
+def appliquer_k_anonymat(
+    agregat: pl.DataFrame, k: int
+) -> tuple[pl.DataFrame, pl.DataFrame, RapportKAnonymat]:
     """Applique le seuil de k-anonymat (R2) et retourne trois choses distinctes :
 
     1. `conserve` — les cellules à effectif >= k, avec leur effectif : la

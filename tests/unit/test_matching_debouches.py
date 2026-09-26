@@ -70,6 +70,7 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
                 "activitePrincipaleEtablissement": "6201Z",
                 "etatAdministratifEtablissement": "A",
                 "caractereEmployeurEtablissement": "O",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
                 "statutDiffusionEtablissement": "O",
             },
             # exclu : fermé
@@ -78,6 +79,7 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
                 "activitePrincipaleEtablissement": "6201Z",
                 "etatAdministratifEtablissement": "F",
                 "caractereEmployeurEtablissement": "O",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
                 "statutDiffusionEtablissement": "O",
             },
             # exclu : non employeur
@@ -86,6 +88,7 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
                 "activitePrincipaleEtablissement": "6201Z",
                 "etatAdministratifEtablissement": "A",
                 "caractereEmployeurEtablissement": "N",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
                 "statutDiffusionEtablissement": "O",
             },
             # exclu : non diffusible (le filtre que l'agrégat Sirene n'applique pas, ce module si)
@@ -94,6 +97,7 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
                 "activitePrincipaleEtablissement": "6201Z",
                 "etatAdministratifEtablissement": "A",
                 "caractereEmployeurEtablissement": "O",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
                 "statutDiffusionEtablissement": "P",
             },
             # exclu : commune inconnue
@@ -102,6 +106,7 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
                 "activitePrincipaleEtablissement": "6201Z",
                 "etatAdministratifEtablissement": "A",
                 "caractereEmployeurEtablissement": "O",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
                 "statutDiffusionEtablissement": "O",
             },
         ],
@@ -112,6 +117,53 @@ def test_agregat_filtre_actif_employeur_diffusible(tmp_path: Path) -> None:
     assert ligne["departement"] == "75"
     assert ligne["naf_division"] == "62"
     assert ligne["nb_actifs_employeurs_diffusibles"] == 1
+
+
+def test_agregat_ne_retient_que_la_nomenclature_en_vigueur(tmp_path: Path) -> None:
+    """Un code d'une nomenclature ancienne donnerait une division qui désigne autre chose en Rev.2.
+
+    « 74.1J » est un code NAF 1993 : ses deux premiers caractères donneraient la division 74, qui
+    ne recouvre pas la même activité dans la nomenclature en vigueur. Ces établissements sont
+    déjà écartés de fait par les filtres actif, employeur et diffusible (une seule ligne sur
+    2 400 061 dans le stock réel), mais l'exclusion doit être explicite : la bascule vers NAF 2025
+    la rendrait décisive.
+    """
+    chemin = tmp_path / "sirene.parquet"
+    commun = {
+        "codeCommuneEtablissement": "75056",
+        "etatAdministratifEtablissement": "A",
+        "caractereEmployeurEtablissement": "O",
+        "statutDiffusionEtablissement": "O",
+    }
+    _ecrire_sirene(
+        chemin,
+        [
+            {
+                **commun,
+                "activitePrincipaleEtablissement": "62.01Z",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
+            },
+            {
+                **commun,
+                "activitePrincipaleEtablissement": "74.1J",
+                "nomenclatureActivitePrincipaleEtablissement": "NAF1993",
+            },
+            {
+                **commun,
+                "activitePrincipaleEtablissement": "70.2C",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev1",
+            },
+            {
+                **commun,
+                "activitePrincipaleEtablissement": "67.01",
+                "nomenclatureActivitePrincipaleEtablissement": "NAP",
+            },
+        ],
+    )
+    agregat = construire_agregat_departement_naf(chemin)
+    assert agregat.to_dicts() == [
+        {"departement": "75", "naf_division": "62", "nb_actifs_employeurs_diffusibles": 1}
+    ]
 
 
 def test_agregat_regroupe_par_division_naf_pas_par_sous_classe(tmp_path: Path) -> None:
@@ -126,6 +178,7 @@ def test_agregat_regroupe_par_division_naf_pas_par_sous_classe(tmp_path: Path) -
                 "activitePrincipaleEtablissement": "6201Z",
                 "etatAdministratifEtablissement": "A",
                 "caractereEmployeurEtablissement": "O",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
                 "statutDiffusionEtablissement": "O",
             },
             {
@@ -133,6 +186,7 @@ def test_agregat_regroupe_par_division_naf_pas_par_sous_classe(tmp_path: Path) -
                 "activitePrincipaleEtablissement": "6202A",
                 "etatAdministratifEtablissement": "A",
                 "caractereEmployeurEtablissement": "O",
+                "nomenclatureActivitePrincipaleEtablissement": "NAFRev2",
                 "statutDiffusionEtablissement": "O",
             },
         ],
@@ -152,7 +206,9 @@ def test_k_anonymat_distingue_conserve_supprime_et_absent() -> None:
             "naf_division": ["62", "85", "47"],
             "nb_actifs_employeurs_diffusibles": [10, 2, 0],
         }
-    ).filter(pl.col("nb_actifs_employeurs_diffusibles") > 0)  # une cellule à 0 n'existe jamais dans un groupby réel
+    ).filter(
+        pl.col("nb_actifs_employeurs_diffusibles") > 0
+    )  # une cellule à 0 n'existe jamais dans un groupby réel
     conserve, cellules_non_vides, rapport = appliquer_k_anonymat(agregat, k=5)
 
     assert conserve.height == 1
@@ -169,7 +225,11 @@ def test_k_anonymat_distingue_conserve_supprime_et_absent() -> None:
 def test_rapport_k_anonymat_sur_agregat_vide_ne_divise_pas_par_zero() -> None:
     agregat = pl.DataFrame(
         {"departement": [], "naf_division": [], "nb_actifs_employeurs_diffusibles": []},
-        schema={"departement": pl.Utf8, "naf_division": pl.Utf8, "nb_actifs_employeurs_diffusibles": pl.Int64},
+        schema={
+            "departement": pl.Utf8,
+            "naf_division": pl.Utf8,
+            "nb_actifs_employeurs_diffusibles": pl.Int64,
+        },
     )
     _, _, rapport = appliquer_k_anonymat(agregat, k=5)
     assert rapport.part_cellules_supprimees == 0.0
@@ -231,12 +291,20 @@ def table_naf() -> pl.DataFrame:
     return pl.DataFrame({"code_rncp_ideo": ["RNCP001", "RNCP001"], "naf_division": ["62", "63"]})
 
 
-def test_territoire_non_renseigne_est_indisponible(correspondance: pl.DataFrame, table_naf: pl.DataFrame) -> None:
+def test_territoire_non_renseigne_est_indisponible(
+    correspondance: pl.DataFrame, table_naf: pl.DataFrame
+) -> None:
     agregat_vide = pl.DataFrame(
-        schema={"departement": pl.Utf8, "naf_division": pl.Utf8, "nb_actifs_employeurs_diffusibles": pl.Int64}
+        schema={
+            "departement": pl.Utf8,
+            "naf_division": pl.Utf8,
+            "nb_actifs_employeurs_diffusibles": pl.Int64,
+        }
     )
     cellules_vides = pl.DataFrame(schema={"departement": pl.Utf8, "naf_division": pl.Utf8})
-    terme = calculer_terme_debouches("BTS SIO", None, correspondance, table_naf, agregat_vide, cellules_vides, 20)
+    terme = calculer_terme_debouches(
+        "BTS SIO", None, correspondance, table_naf, agregat_vide, cellules_vides, 20
+    )
     assert terme.disponible is False
     assert terme.statut == STATUT_INDISPONIBLE_TERRITOIRE_NON_RENSEIGNE
     assert terme.valeur == VALEUR_NEUTRE
@@ -246,7 +314,11 @@ def test_chaine_rompue_pour_un_libelle_sans_correspondance(
     correspondance: pl.DataFrame, table_naf: pl.DataFrame
 ) -> None:
     agregat_vide = pl.DataFrame(
-        schema={"departement": pl.Utf8, "naf_division": pl.Utf8, "nb_actifs_employeurs_diffusibles": pl.Int64}
+        schema={
+            "departement": pl.Utf8,
+            "naf_division": pl.Utf8,
+            "nb_actifs_employeurs_diffusibles": pl.Int64,
+        }
     )
     cellules_vides = pl.DataFrame(schema={"departement": pl.Utf8, "naf_division": pl.Utf8})
     terme = calculer_terme_debouches(
@@ -262,23 +334,41 @@ def test_certification_radiee_donne_un_zero_reel(correspondance: pl.DataFrame) -
         schema={"code_rncp_ideo": pl.Utf8, "naf_division": pl.Utf8}
     )  # aucune ligne : la certification a été filtrée en amont (rncp_actif == False)
     agregat_vide = pl.DataFrame(
-        schema={"departement": pl.Utf8, "naf_division": pl.Utf8, "nb_actifs_employeurs_diffusibles": pl.Int64}
+        schema={
+            "departement": pl.Utf8,
+            "naf_division": pl.Utf8,
+            "nb_actifs_employeurs_diffusibles": pl.Int64,
+        }
     )
     cellules_vides = pl.DataFrame(schema={"departement": pl.Utf8, "naf_division": pl.Utf8})
     terme = calculer_terme_debouches(
-        "BTS SIO", "75", correspondance, table_naf_sans_division_active, agregat_vide, cellules_vides, 20
+        "BTS SIO",
+        "75",
+        correspondance,
+        table_naf_sans_division_active,
+        agregat_vide,
+        cellules_vides,
+        20,
     )
     assert terme.disponible is True
     assert terme.statut == STATUT_INDISPONIBLE_CERTIFICATION_RADIEE
     assert terme.valeur == 0.0  # un terme nul, réel, qui doit supprimer la recommandation
 
 
-def test_zero_reel_sans_aucun_etablissement(correspondance: pl.DataFrame, table_naf: pl.DataFrame) -> None:
+def test_zero_reel_sans_aucun_etablissement(
+    correspondance: pl.DataFrame, table_naf: pl.DataFrame
+) -> None:
     agregat_vide = pl.DataFrame(
-        schema={"departement": pl.Utf8, "naf_division": pl.Utf8, "nb_actifs_employeurs_diffusibles": pl.Int64}
+        schema={
+            "departement": pl.Utf8,
+            "naf_division": pl.Utf8,
+            "nb_actifs_employeurs_diffusibles": pl.Int64,
+        }
     )
     cellules_vides = pl.DataFrame(schema={"departement": pl.Utf8, "naf_division": pl.Utf8})
-    terme = calculer_terme_debouches("BTS SIO", "75", correspondance, table_naf, agregat_vide, cellules_vides, 20)
+    terme = calculer_terme_debouches(
+        "BTS SIO", "75", correspondance, table_naf, agregat_vide, cellules_vides, 20
+    )
     assert terme.disponible is True
     assert terme.statut == STATUT_MESURE
     assert terme.valeur == 0.0
@@ -289,7 +379,11 @@ def test_suppression_par_k_anonymat_jamais_confondue_avec_un_zero_reel(
     correspondance: pl.DataFrame, table_naf: pl.DataFrame
 ) -> None:
     agregat_conserve_vide = pl.DataFrame(
-        schema={"departement": pl.Utf8, "naf_division": pl.Utf8, "nb_actifs_employeurs_diffusibles": pl.Int64}
+        schema={
+            "departement": pl.Utf8,
+            "naf_division": pl.Utf8,
+            "nb_actifs_employeurs_diffusibles": pl.Int64,
+        }
     )
     # la cellule existe (au moins un établissement), mais sous le seuil de k-anonymat :
     # elle a donc disparu de `agregat_conserve` sans disparaître de `cellules_non_vides`.
@@ -321,7 +415,9 @@ def test_valeur_mesuree_sature_a_un(correspondance: pl.DataFrame, table_naf: pl.
     assert terme.valeur == 1.0  # 25 / 20 saturé à 1,0, jamais > 1
 
 
-def test_valeur_mesuree_proportionnelle_sous_le_seuil(correspondance: pl.DataFrame, table_naf: pl.DataFrame) -> None:
+def test_valeur_mesuree_proportionnelle_sous_le_seuil(
+    correspondance: pl.DataFrame, table_naf: pl.DataFrame
+) -> None:
     agregat = pl.DataFrame(
         {"departement": ["75"], "naf_division": ["62"], "nb_actifs_employeurs_diffusibles": [5]}
     )
