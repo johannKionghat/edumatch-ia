@@ -42,14 +42,17 @@
   \quit 1
 \endif
 
-DO
-$do$
-BEGIN
-   IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = :'nom_role') THEN
-      EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', :'nom_role', :'mot_de_passe_role');
-   END IF;
-END
-$do$;
+-- Création du rôle applicatif, par `\gexec` et non dans un bloc `DO` : `psql` ne
+-- substitue jamais ses variables (`:'nom_role'`) à l'intérieur d'une chaîne entre
+-- dollars, si bien qu'un bloc `DO $do$ ... :'nom_role' ... $do$` partait tel quel
+-- vers PostgreSQL, qui répondait « syntax error at or near ":" ». Constaté le
+-- 26 septembre 2026, à la première mise en service réelle de la pile : le rôle
+-- n'était pas créé, et `airflow-init` échouait ensuite sur « password
+-- authentication failed for user "airflow" ». Même technique que la création de la
+-- base ci-dessous, qui fonctionnait déjà.
+SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', :'nom_role', :'mot_de_passe_role')
+WHERE NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = :'nom_role')
+\gexec
 
 -- `CREATE DATABASE` ne supporte pas `IF NOT EXISTS` avant PostgreSQL 18 :
 -- le contournement classique est cette requête sur le catalogue, exécutée
