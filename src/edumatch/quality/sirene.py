@@ -88,8 +88,33 @@ NOMENCLATURE_ACTUELLE = "NAFRev2"
 # 5 au-delà (dont une à l'année 5015).
 HORIZON_ANTICIPATION_ANS = 5
 
+# Au-delà de l'horizon d'anticipation, une date de création reste une anomalie, mais une anomalie
+# de saisie isolée, pas un signe que le fichier est corrompu : le répertoire national en porte
+# 5 sur 43 896 818 lignes, soit 0,000011 %. Bloquer la chaîne pour cinq lignes reviendrait à
+# empêcher tout le pipeline de tourner à cause d'une coquille de greffe, sans protéger personne :
+# ces lignes ne sont jamais agrégées (l'agrégat des débouchés ne lit ni la date de création, ni
+# les établissements non diffusibles). L'anomalie est donc déclarée en avertissement, et ne
+# devient bloquante qu'au-dessus de ce seuil de proportion, où elle cesse d'être une coquille
+# pour devenir un défaut de source. Seuil posé deux ordres de grandeur au-dessus du mesuré.
+PROPORTION_MAX_DATES_IMPLAUSIBLES = 0.001  # 0,1 % des lignes du fichier
+
 
 MOTIF_NAF_REV2 = r"^\d{2}\.\d{2}[A-Za-z]$"
+
+
+def _booleen(serie: pd.Series) -> pd.Series:
+    """Rend une série de booléens véritables, quel que soit le type d'origine.
+
+    `Series.str.fullmatch` renvoie des booléens dont le type dépend de la façon dont Arrow a été
+    converti en pandas : `bool` quand les chaînes sont adossées à Arrow, `object` sinon. Or `~`
+    appliqué à une série `object` inverse **arithmétiquement** chaque booléen Python (`~True`
+    vaut -2, qui est vrai) au lieu de le nier logiquement : toutes les lignes se retrouvent alors
+    comptées comme fautives. Le défaut s'est vu le 26 septembre 2026, à la première exécution du
+    pipeline sur l'instance de production : 7 411 217 codes NAF déclarés non conformes alors que
+    tous étaient valides (`32.12Z`, `47.89Z`), là où le même code sur le même fichier n'en
+    comptait aucun sur le poste de développement. Cette conversion supprime la dépendance au type.
+    """
+    return serie.fillna(False).astype(bool)
 
 
 class _Compteur:
@@ -124,8 +149,8 @@ class _Compteur:
 
     def _observer_domaines(self, trame: pd.DataFrame) -> None:
         siret = trame["siret"]
-        conforme = siret.str.fullmatch(r"\d{14}")
-        self.siret_non_conformes += int((siret.notna() & ~conforme.fillna(False)).sum())
+        conforme = _booleen(siret.str.fullmatch(r"\d{14}"))
+        self.siret_non_conformes += int((siret.notna() & ~conforme).sum())
 
         etat = trame["etatAdministratifEtablissement"]
         self.etats_invalides += int((etat.notna() & ~etat.isin(ETATS_ADMINISTRATIFS_VALIDES)).sum())
@@ -133,11 +158,15 @@ class _Compteur:
         caractere = trame["caractereEmployeurEtablissement"]
         self.caracteres_invalides += int((~caractere.isin(CARACTERES_EMPLOYEUR_VALIDES)).sum())
 
-        est_rev2 = trame["nomenclatureActivitePrincipaleEtablissement"] == NOMENCLATURE_ACTUELLE
+        # Le format ne vaut que pour la nomenclature déclarée sur la ligne : un code NAF 1993
+        # ou NAP a un autre format et n'est pas fautif pour autant (voir le docstring du module).
+        est_rev2 = _booleen(
+            trame["nomenclatureActivitePrincipaleEtablissement"] == NOMENCLATURE_ACTUELLE
+        )
         code = trame["activitePrincipaleEtablissement"]
-        conforme_naf = code.str.fullmatch(MOTIF_NAF_REV2)
+        conforme_naf = _booleen(code.str.fullmatch(MOTIF_NAF_REV2))
         self.naf_rev2_non_conformes += int(
-            (est_rev2 & code.notna() & ~conforme_naf.fillna(False)).sum()
+            (est_rev2 & _booleen(code.notna()) & ~conforme_naf).sum()
         )
 
         dates = pd.to_datetime(trame["dateCreationEtablissement"], errors="coerce")
@@ -172,7 +201,9 @@ def controler_fichier(chemin: Path, seuil_completude: float) -> RapportControle:
     return _rapport_depuis_compteur(chemin.name, compteur, seuil_completude)
 
 
-def _rapport_depuis_compteur(nom_fichier: str, compteur: _Compteur, seuil: float) -> RapportControle:
+def _rapport_depuis_compteur(
+    nom_fichier: str, compteur: _Compteur, seuil: float
+) -> RapportControle:
     anomalies: list[Anomalie] = []
     anomalies += _anomalies_completude(nom_fichier, compteur, seuil)
     anomalies += _anomalies_domaine(nom_fichier, compteur)
@@ -202,17 +233,32 @@ def _anomalies_domaine(nom_fichier: str, compteur: _Compteur) -> list[Anomalie]:
         (compteur.siret_non_conformes, "siret non conforme (14 chiffres attendus)"),
         (compteur.etats_invalides, "etatAdministratifEtablissement hors {A, F}"),
         (compteur.caracteres_invalides, "caractereEmployeurEtablissement hors {O, N, vide}"),
-        (compteur.naf_rev2_non_conformes, "activitePrincipaleEtablissement non conforme au format NAFRev2"),
         (
-            compteur.dates_futures_implausibles,
-            f"dateCreationEtablissement à plus de {HORIZON_ANTICIPATION_ANS} ans dans le futur",
+            compteur.naf_rev2_non_conformes,
+            "activitePrincipaleEtablissement non conforme au format NAFRev2",
         ),
     )
     anomalies = [
-        Anomalie("sirene", "coherence", Gravite.BLOQUANT, f"{nom_fichier} : {nb} ligne(s) — {libelle}.")
+        Anomalie(
+            "sirene", "coherence", Gravite.BLOQUANT, f"{nom_fichier} : {nb} ligne(s) — {libelle}."
+        )
         for nb, libelle in regles_bloquantes
         if nb > 0
     ]
+    if compteur.dates_futures_implausibles > 0:
+        proportion = compteur.dates_futures_implausibles / max(compteur.total, 1)
+        depasse = proportion > PROPORTION_MAX_DATES_IMPLAUSIBLES
+        anomalies.append(
+            Anomalie(
+                "sirene",
+                "coherence",
+                Gravite.BLOQUANT if depasse else Gravite.AVERTISSEMENT,
+                f"{nom_fichier} : {compteur.dates_futures_implausibles} ligne(s) sur "
+                f"{compteur.total} — dateCreationEtablissement à plus de "
+                f"{HORIZON_ANTICIPATION_ANS} ans dans le futur, soit {proportion:.6%} "
+                f"(seuil bloquant : {PROPORTION_MAX_DATES_IMPLAUSIBLES:.1%}).",
+            )
+        )
     if compteur.dates_futures_proches > 0:
         anomalies.append(
             Anomalie(
@@ -227,7 +273,9 @@ def _anomalies_domaine(nom_fichier: str, compteur: _Compteur) -> list[Anomalie]:
     return anomalies
 
 
-def controler_fraicheur_sirene(settings: Settings, manifeste: dict[str, dict[str, object]]) -> RapportControle:
+def controler_fraicheur_sirene(
+    settings: Settings, manifeste: dict[str, dict[str, object]]
+) -> RapportControle:
     """Fraîcheur de chaque fichier stock, sur `date_publication_stock` (pas la date de collecte locale)."""
     dates = {
         fichier: manifeste.get(fichier, {}).get("date_publication_stock")
@@ -255,11 +303,18 @@ def controler_tous(settings: Settings | None = None) -> RapportControle:
     dossier = settings.raw_dir / "sirene"
     manifeste_chemin = dossier / "manifeste.json"
     manifeste = (
-        json.loads(manifeste_chemin.read_text(encoding="utf-8")) if manifeste_chemin.exists() else {}
+        json.loads(manifeste_chemin.read_text(encoding="utf-8"))
+        if manifeste_chemin.exists()
+        else {}
     )
     rapports = []
     chemin_etablissement = dossier / f"{FICHIER_CONTROLE_APPROFONDI}.parquet"
-    if FICHIER_CONTROLE_APPROFONDI in settings.donnees.sirene.fichiers and chemin_etablissement.exists():
-        rapports.append(controler_fichier(chemin_etablissement, settings.qualite.sirene.seuil_completude))
+    if (
+        FICHIER_CONTROLE_APPROFONDI in settings.donnees.sirene.fichiers
+        and chemin_etablissement.exists()
+    ):
+        rapports.append(
+            controler_fichier(chemin_etablissement, settings.qualite.sirene.seuil_completude)
+        )
     rapports.append(controler_fraicheur_sirene(settings, manifeste))
     return fusionner("sirene", *rapports)
